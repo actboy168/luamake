@@ -1,0 +1,6 @@
+[submodule "test/lpeglabel"]
+	path = test/lpeglabel
+	url = https://github.com/sqmedeiros/lpeglabel.git
+[submodule "test/lua"]
+	path = test/lua
+	url = https://github.com/lua/lua

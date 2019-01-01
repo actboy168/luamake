@@ -191,15 +191,28 @@ local function generate(self, rule, name, attribute)
     end
     local fin_links = table.concat(tbl_links, " ")
     local fin_ldflags = table.concat(ldflags, " ")
+
+    local outname = name
+    if rule == "executable" then
+        if platform.OS == "Windows" then
+            outname = name .. ".exe"
+        end
+    elseif rule == "shared_library" then
+        if platform.OS == "Windows" then
+            outname = name .. ".dll"
+        else
+            outname = name .. ".so"
+        end
+    end
     if rule == "shared_library" then
         cc.rule_dll(w, name, fin_links, fin_ldflags)
     else
         cc.rule_exe(w, name, fin_links, fin_ldflags)
     end
-    w:build(fs.path("$bin") / name, "LINK_"..fmtname, objs, implicit)
+    w:build(fs.path("$bin") / outname, "LINK_"..fmtname, objs, implicit)
     self.target[name] = {
         rootdir = rootdir,
-        name = name,
+        name = outname,
         rule = rule,
     }
 end

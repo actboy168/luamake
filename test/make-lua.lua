@@ -4,7 +4,7 @@ local platform = require 'bee.platform'
 lm.rootdir = 'lua'
 
 if platform.OS == 'Windows' then
-   lm:shared_library 'lua54.dll' {
+   lm:shared_library 'lua54' {
       sources = {
          "*.c",
          "!lua.c",
@@ -14,15 +14,15 @@ if platform.OS == 'Windows' then
          "LUA_BUILD_AS_DLL"
       },
    }
-   lm:executable 'lua.exe' {
+   lm:executable 'lua' {
       deps = {
-         "lua54.dll",
+         "lua54",
       },
       sources = {
          "lua.c"
       }
    }
-   --lm:executable 'luac.exe' {
+   --lm:executable 'luac' {
    --   sources = {
    --      "*.c",
    --      "!lua.c",

@@ -53,9 +53,6 @@ return function (name)
         attribute.flags = flags
         if platform.OS == "Windows" then
             windowsDeps(lm.cc, name, attribute)
-            name = name .. ".dll"
-        else
-            name = name .. ".so"
         end
 
         lm:shared_library(name)(attribute)

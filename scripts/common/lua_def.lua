@@ -1,12 +1,17 @@
 local fs = require "bee.filesystem"
 
-local name = ARGUMENTS["name"] or "lua54.dll"
-local input = ARGUMENTS["in"] and fs.path(ARGUMENTS["in"]) or MAKEDIR / "tools" / "lua54"
-local output = ARGUMENTS["out"] and fs.path(ARGUMENTS["out"]) or input / "windeps" / "lua54.def"
-
+local input = fs.path(ARGUMENTS["in"])
+local output = fs.path(ARGUMENTS["out"])
 local export = {}
 
+local name = input:filename():string() .. ".dll"
+
 for line in io.lines((input / "lua.h"):string()) do
+    local version = line:match "^%s*#%s*define%s*LUA_VERSION_NUM%s*([0-9]+)%s*$"
+    if version then
+        version = tostring(tonumber(version:sub(1, -3))) .. tostring(tonumber(version:sub(-2, -1)))
+        name = ("lua%s.dll"):format(version)
+    end
     local api = line:match "^%s*LUA_API[%w%s%*_]+%(([%w_]+)%)"
     if api then
         export[#export+1] = api

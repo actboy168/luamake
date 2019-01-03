@@ -107,9 +107,9 @@ local function generate(self, rule, name, attribute)
     local includes = attribute.includes or self.includes or {}
     local links = attribute.links or self.links or {}
     local linkdirs = attribute.linkdirs or self.linkdirs or {}
-    local implicit = attribute.implicit or self.implicit or {}
     local sources = get_sources(rootdir, attribute.sources)
-    local objs = {}
+    local implicit = {}
+    local input = {}
 
     local flags = attribute.flags or self.flags or {}
     local ldflags = attribute.ldflags or self.ldflags or {}
@@ -158,7 +158,7 @@ local function generate(self, rule, name, attribute)
     local has_cxx = false
     for _, source in ipairs(sources) do
         local objname = fs.path("$obj") / name / fs.path(source):filename():replace_extension(".obj")
-        objs[#objs+1] = objname
+        input[#input+1] = objname
         local ext = fs.path(source):extension():string():sub(2):lower()
         local type = file_type[ext]
         if type == "c" then
@@ -209,7 +209,10 @@ local function generate(self, rule, name, attribute)
     else
         cc.rule_exe(w, name, fin_links, fin_ldflags)
     end
-    w:build(fs.path("$bin") / outname, "LINK_"..fmtname, objs, implicit)
+    if attribute.input or self.input then
+        tbl_append(input, attribute.input or self.input)
+    end
+    w:build(fs.path("$bin") / outname, "LINK_"..fmtname, input, implicit)
     self.target[name] = {
         rootdir = rootdir,
         name = outname,

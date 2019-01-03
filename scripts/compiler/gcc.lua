@@ -45,7 +45,7 @@ function gcc.mode(_, mode, flags, ldflags)
     if mode == 'debug' then
         flags[#flags+1] = '-g'
     else
-        ldflags[#flags+1] = '-s'
+        ldflags[#ldflags+1] = '-s'
     end
 end
 

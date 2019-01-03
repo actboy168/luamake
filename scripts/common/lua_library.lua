@@ -27,23 +27,20 @@ local function windowsDeps(cc, name, attribute, luaversion)
     fs.create_directories(MAKEDIR / "tools" / luaversion / "windeps")
 
     local ldflags = attribute.ldflags or {}
-    local implicit = attribute.implicit or {}
-
-    ldflags[#ldflags+1] = cc.linkdir(windeps)
-    ldflags[#ldflags+1] = cc.link("lua")
+    local input = attribute.input or {}
 
     w:build(windeps / "lua.def", "luadef", include)
 
     if cc.name == "cl" then
         ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
         w:build(windeps / "lua.lib", "luadeps", windeps / "lua.def")
-        implicit[#implicit+1] = windeps / "lua.lib"
+        input[#input+1] = windeps / "lua.lib"
     else
         w:build(windeps / "liblua.a", "luadeps", windeps / "lua.def")
-        implicit[#implicit+1] = windeps / "liblua.a"
+        input[#input+1] = windeps / "liblua.a"
     end
     attribute.ldflags = ldflags
-    attribute.implicit = implicit
+    attribute.input = input
 end
 
 return function (name)

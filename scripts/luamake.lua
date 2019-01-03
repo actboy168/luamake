@@ -130,7 +130,7 @@ local function generate(self, rule, name, attribute)
         flags[#flags+1] = cc.define(macro)
     end
 
-    if cc.name == "gcc" and rule == "shared_library" and platform.OS ~= "Windows" then
+    if rule == "shared_library" and platform.OS ~= "Windows" then
         flags[#flags+1] = "-fPIC"
     end
 
@@ -205,9 +205,9 @@ local function generate(self, rule, name, attribute)
         end
     end
     if rule == "shared_library" then
-        cc.rule_dll(w, name, fin_links, fin_ldflags)
+        cc.rule_dll(w, name, fin_links, fin_ldflags, mode)
     else
-        cc.rule_exe(w, name, fin_links, fin_ldflags)
+        cc.rule_exe(w, name, fin_links, fin_ldflags, mode)
     end
     if attribute.input or self.input then
         tbl_append(input, attribute.input or self.input)

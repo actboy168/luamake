@@ -22,13 +22,15 @@ if platform.OS == 'Windows' then
          "lua.c"
       }
    }
-   --lm:executable 'luac' {
-   --   sources = {
-   --      "*.c",
-   --      "!lua.c",
-   --      "!lopcodes.c",
-   --   }
-   --}
+elseif platform.OS == 'macOS' then
+   lm:executable 'lua' {
+      sources = {
+         "*.c",
+         "!luac.c",
+      },
+      defines = { "LUA_USE_MACOSX" },
+      links = { "m", "dl" },
+   }
 else
    lm:executable 'lua' {
       sources = {
@@ -39,13 +41,4 @@ else
       defines = { "LUA_USE_LINUX" },
       links = { "m", "dl" },
    }
-   --lm:executable 'luac' {
-   --   sources = {
-   --      "*.c",
-   --      "!lua.c",
-   --      "!lopcodes.c",
-   --   },
-   --   defines = { "LUA_USE_LINUX" },
-   --   links = { "m", "dl" },
-   --}
 end

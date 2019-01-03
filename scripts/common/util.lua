@@ -20,6 +20,13 @@ local function ninja(args)
                 args.env = msvc.env
             end
         end
+        if args.env then
+            args.env.VS_UNICODE_OUTPUT = false
+        else
+            args.env = {
+                VS_UNICODE_OUTPUT = false
+            }
+        end
         table.insert(args, 1, MAKEDIR / "tools" / 'ninja.exe')
     else
         args.searchPath = true
@@ -31,13 +38,6 @@ local function ninja(args)
     args.stderr = true
     args.stdout = true
     args.cwd = WORKDIR
-    if args.env then
-        args.env.VS_UNICODE_OUTPUT = false
-    else
-        args.env = {
-            VS_UNICODE_OUTPUT = false
-        }
-    end
     local process = assert(sp.spawn(args))
     for line in process.stdout:lines() do
         print(line)

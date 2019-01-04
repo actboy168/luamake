@@ -5,16 +5,15 @@ local gcc = {
     ldflags = {
     },
     optimize = {
-        none     = '',
-        smallest = '-Os',
-        faster   = '-O2',
-        fastest  = '-O3',
+        off      = '',
+        size     = '-Os',
+        speed    = '-O2',
+        maxspeed = '-O3',
     },
     warnings = {
-        none   = "-w",
-        less   = "",
-        normal = "-Wall",
-        all    = "-Wall",
+        off = "-w",
+        on  = "-Wall",
+        all = "-Wall",
     },
     cxx = {
         ['c++11'] = '-std=c++11',

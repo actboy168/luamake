@@ -99,20 +99,28 @@ end
 local function generate(self, rule, name, attribute)
     assert(self.target[name] == nil, ("`%s`: redefinition."):format(name))
     assert(type(attribute.sources) == "table" and #attribute.sources > 0, ("`%s`: sources cannot be empty."):format(name))
+
+    local function init(attr_name, default)
+        local result = attribute[attr_name] or self[attr_name] or default or {}
+        if type(result) == 'string' then
+            return {result}
+        end
+        return result
+    end
+
     local rootdir = fs.path(attribute.rootdir or self.rootdir or ".")
     local mode = attribute.mode or self.mode or "release"
-    local optimize = attribute.optimize or self.optimize or (mode == "debug" and "none" or "faster")
-    local warnings = attribute.warnings or self.warnings or "normal"
-    local defines = attribute.defines or self.defines or {}
-    local includes = attribute.includes or self.includes or {}
-    local links = attribute.links or self.links or {}
-    local linkdirs = attribute.linkdirs or self.linkdirs or {}
+    local optimize = attribute.optimize or self.optimize or (mode == "debug" and "off" or "speed")
+    local warnings = attribute.warnings or self.warnings or "on"
+    local defines = init('defines')
+    local includes = init('includes')
+    local links = init('links')
+    local linkdirs = init('linkdirs')
+    local flags =  init('flags')
+    local ldflags =  init('ldflags')
     local sources = get_sources(rootdir, attribute.sources)
     local implicit = {}
     local input = {}
-
-    local flags = attribute.flags or self.flags or {}
-    local ldflags = attribute.ldflags or self.ldflags or {}
 
     tbl_append(flags, cc.flags)
     tbl_append(ldflags, cc.ldflags)

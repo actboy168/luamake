@@ -10,16 +10,15 @@ local cl = {
         "/MACHINE:X86",
     },
     optimize = {
-        none     = '/Od',
-        smallest = '/O1 /GL /Zc:inline',
-        faster   = '/O2 /GL /Zc:inline',
-        fastest  = '/Ox /GL /Zc:inline /fp:fast',
+        off      = '/Od',
+        size     = '/O1 /GL /Zc:inline',
+        speed    = '/O2 /GL /Zc:inline',
+        maxspeed = '/Ox /GL /Zc:inline /fp:fast',
     },
     warnings = {
-        none   = "/W0",
-        less   = "/W1",
-        normal = "/W3",
-        all    = "/W4",
+        off = "/W0",
+        on  = "/W3",
+        all = "/W4",
     },
     cxx = {
         ['c++11'] = '/std:c++11',

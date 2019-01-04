@@ -93,7 +93,7 @@ end
 function ninja.as_list(input)
 	if isblank(input) then
 		return {}
-	elseif type(input) == 'table' then
+	elseif type(input) == 'table' and getmetatable(input) == nil then
 		return filter_blanks(input)
 	else
 		return { tostring(input) }
@@ -120,11 +120,6 @@ ninja.DEFAULT_BLANK_LINES = 1
 do
 	--- Build File Writer
 	-- @section writer
-
-	-- Determine whether an object is a table.
-	local function istable(obj)
-		return type(obj) == 'table'
-	end
 	
 	-- Determine whether a table is keyed (versus indexed)
 	local function iskeyed(T)
@@ -398,7 +393,7 @@ do
 		                          join(all_inputs)))
 
 		-- Handle build-specific variables
-		if istable(variables) then
+		if type(variables) == 'table' then
 			local key, value
 			if iskeyed(variables) then
 				for key,value in pairs(variables) do

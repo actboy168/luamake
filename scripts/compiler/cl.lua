@@ -19,6 +19,7 @@ local cl = {
         off = "/W0",
         on  = "/W3",
         all = "/W4",
+        error = "/WX",
     },
     cxx = {
         ['c++11'] = '/std:c++11',

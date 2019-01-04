@@ -10,17 +10,11 @@ if platform.OS == 'Windows' then
          "!lua.c",
          "!luac.c",
       },
-      defines = {
-         "LUA_BUILD_AS_DLL"
-      },
+      defines = "LUA_BUILD_AS_DLL"
    }
    lm:executable 'lua' {
-      deps = {
-         "lua54",
-      },
-      sources = {
-         "lua.c"
-      }
+      deps = "lua54",
+      sources = "lua.c"
    }
 elseif platform.OS == 'macOS' then
    lm:executable 'lua' {
@@ -28,7 +22,7 @@ elseif platform.OS == 'macOS' then
          "*.c",
          "!luac.c",
       },
-      defines = { "LUA_USE_MACOSX" },
+      defines = "LUA_USE_MACOSX",
       links = { "m", "dl" },
    }
 else
@@ -37,8 +31,8 @@ else
          "*.c",
          "!luac.c",
       },
-      ldflags = { "-Wl,-E" },
-      defines = { "LUA_USE_LINUX" },
+      ldflags = "-Wl,-E",
+      defines = "LUA_USE_LINUX",
       links = { "m", "dl" },
    }
 end

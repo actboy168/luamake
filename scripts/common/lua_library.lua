@@ -1,5 +1,4 @@
 local platform = require "bee.platform"
-local sp = require "bee.subprocess"
 local fs = require "bee.filesystem"
 local lm = LUAMAKE
 local w = lm.writer

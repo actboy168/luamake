@@ -1,7 +1,7 @@
 local clang = require 'compiler.gcc'
 clang.name = "clang"
 
-function clang.mode(_, mode, flags, ldflags)
+function clang.mode(_, mode, flags, _)
     if mode == 'debug' then
         flags[#flags+1] = '-g'
     end
@@ -15,7 +15,7 @@ function clang.rule_dll(w, name, links, ldflags, mode)
     })
 end
 
-function clang.rule_exe(w, name, links, ldflags)
+function clang.rule_exe(w, name, links, ldflags, mode)
     local STRIP = (mode == 'release') and [[&& strip -u -r -x $out]] or ''
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[gcc $in -o $out %s %s %s]]):format(ldflags, links, STRIP),
     {

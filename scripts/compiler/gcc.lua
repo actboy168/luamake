@@ -14,6 +14,7 @@ local gcc = {
         off = "-w",
         on  = "-Wall",
         all = "-Wall",
+        error = "-Werror",
     },
     cxx = {
         ['c++11'] = '-std=c++11',
@@ -66,14 +67,14 @@ function gcc.rule_cxx(w, name, flags, cxxflags)
     })
 end
 
-function gcc.rule_dll(w, name, links, ldflags)
+function gcc.rule_dll(w, name, links, ldflags, _)
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[gcc --shared $in -o $out %s %s]]):format(ldflags, links),
     {
         description = 'Link SharedLibrary $out'
     })
 end
 
-function gcc.rule_exe(w, name, links, ldflags)
+function gcc.rule_exe(w, name, links, ldflags, _)
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[gcc $in -o $out %s %s]]):format(ldflags, links),
     {
         description = 'Link Executable $out'

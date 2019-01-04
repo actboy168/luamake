@@ -61,7 +61,8 @@ local function expand_path(t, path)
         end
     end
 end
-local function get_sources(root, sources)
+local function get_sources(root, name, sources)
+    assert(type(sources) == "table" and #sources > 0, ("`%s`: sources cannot be empty."):format(name))
     local result = {}
     local ignore = {}
     for _, source in ipairs(sources) do
@@ -96,9 +97,21 @@ local function tbl_append(t, a)
     table.move(a, 1, #a, #t + 1, t)
 end
 
+local function get_warnings(warnings)
+    local error = nil
+    local level = 'on'
+    for _, warn in ipairs(warnings) do
+        if warn == 'error' then
+            error = true
+        else
+            level = warn
+        end
+    end
+    return {error = error, level = level}
+end
+
 local function generate(self, rule, name, attribute)
     assert(self.target[name] == nil, ("`%s`: redefinition."):format(name))
-    assert(type(attribute.sources) == "table" and #attribute.sources > 0, ("`%s`: sources cannot be empty."):format(name))
 
     local function init(attr_name, default)
         local result = attribute[attr_name] or self[attr_name] or default or {}
@@ -108,17 +121,18 @@ local function generate(self, rule, name, attribute)
         return result
     end
 
-    local rootdir = fs.path(attribute.rootdir or self.rootdir or ".")
-    local mode = attribute.mode or self.mode or "release"
-    local optimize = attribute.optimize or self.optimize or (mode == "debug" and "off" or "speed")
-    local warnings = attribute.warnings or self.warnings or "on"
+    local rootdir = fs.path(init('rootdir', '.')[1])
+    local sources = get_sources(rootdir, name, init('sources'))
+    local mode = init('mode', 'release')[1]
+    local optimize = init('optimize', (mode == "debug" and "off" or "speed"))[1]
+    local warnings = get_warnings(init('warnings'))
     local defines = init('defines')
     local includes = init('includes')
     local links = init('links')
     local linkdirs = init('linkdirs')
     local flags =  init('flags')
     local ldflags =  init('ldflags')
-    local sources = get_sources(rootdir, attribute.sources)
+    local deps =  init('deps')
     local implicit = {}
     local input = {}
 
@@ -126,7 +140,10 @@ local function generate(self, rule, name, attribute)
     tbl_append(ldflags, cc.ldflags)
 
     flags[#flags+1] = cc.optimize[optimize]
-    flags[#flags+1] = cc.warnings[warnings]
+    flags[#flags+1] = cc.warnings[warnings.level]
+    if warnings.error then
+        flags[#flags+1] = cc.warnings.error
+    end
 
     cc.mode(name, mode, flags, ldflags)
 
@@ -142,22 +159,20 @@ local function generate(self, rule, name, attribute)
         flags[#flags+1] = "-fPIC"
     end
 
-    if attribute.deps then
-        local linkbin = false
-        for _, dep in ipairs(attribute.deps) do
-            local depsTarget = self.target[dep]
-            assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+    local linkbin = false
+    for _, dep in ipairs(deps) do
+        local depsTarget = self.target[dep]
+        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
 
-            flags[#flags+1] = cc.includedir(depsTarget.rootdir)
-            if depsTarget.rule == "shared_library" then
-                if not linkbin then
-                    linkbin = true
-                    linkdirs[#linkdirs+1] = fs.path("$bin")
-                end
-                links[#links+1] = fs.path(depsTarget.name):replace_extension(""):string()
+        flags[#flags+1] = cc.includedir(depsTarget.rootdir)
+        if depsTarget.rule == "shared_library" then
+            if not linkbin then
+                linkbin = true
+                linkdirs[#linkdirs+1] = fs.path("$bin")
             end
-            implicit[#implicit+1] = fs.path("$bin") / depsTarget.name
+            links[#links+1] = fs.path(depsTarget.name):replace_extension(""):string()
         end
+        implicit[#implicit+1] = fs.path("$bin") / depsTarget.name
     end
 
     local fin_flags = table.concat(flags, " ")

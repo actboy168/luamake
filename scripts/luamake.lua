@@ -28,11 +28,6 @@ w:variable("makedir", MAKEDIR:string())
 w:variable("bin", "$builddir/bin")
 w:variable("obj", "$builddir/obj")
 
-if cc.name == "cl" then
-    local msvc = require "common.msvc"
-    w:variable("deps_prefix", msvc.prefix)
-end
-
 -- TODO 在某些平台上忽略大小写？
 local function glob_compile(pattern)
     return ("^%s$"):format(pattern:gsub("[%^%$%(%)%%%.%[%]%+%-%?]", "%%%0"):gsub("%*", ".*"))
@@ -263,6 +258,10 @@ function lm:executable(name)
 end
 
 function lm:close()
+    if cc.name == "cl" then
+        local msvc = require "common.msvc"
+        w:variable("deps_prefix", msvc.prefix)
+    end
     local build_lua = ARGUMENTS.f or 'make.lua'
     local build_ninja = (fs.path('$builddir') / build_lua):replace_extension(".ninja")
     w:variable("luamake", arg[-1])

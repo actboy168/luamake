@@ -39,11 +39,14 @@ local function parse_env(str)
     return strtrim(str:sub(1, pos - 1)), strtrim(str:sub(pos + 1))
 end
 
-local function get_env(path)
+local function get_env(self, path)
     local env = {}
     local vsvars32 = path / 'Common7' / 'Tools' / 'VsDevCmd.bat'
+    local args = self.winsdk 
+        and { vsvars32:string(), ('-winsdk=%s'):format(self.winsdk) }
+        or  { vsvars32:string() }
     local process = assert(sp.spawn {
-        'cmd', '/c', vsvars32:string(), '&', 'set',
+        'cmd', '/c', args, '&', 'set',
         stderr = true,
         stdout = true,
         searchPath = true,
@@ -95,7 +98,7 @@ return setmetatable({}, { __index = function(self, k)
         self.path = get_path()
         return self.path
     elseif k == 'env' then
-        self.env = get_env(self.path)
+        self.env = get_env(self, self.path)
         return self.env
     elseif k == 'prefix' then
         self.prefix = get_prefix(self.env)

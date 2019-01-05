@@ -43,6 +43,17 @@ local function accept_path(t, path)
     t[#t+1] = path:string()
     t[path:string()] = #t
 end
+local function expand_dir(t, pattern, dir)
+    for file in dir:list_directory() do
+        if fs.is_directory(file) then
+            expand_dir(t, pattern, file)
+        else
+            if glob_match(pattern, file:filename():string()) then
+                accept_path(t, file)
+            end
+        end
+    end
+end
 local function expand_path(t, path)
     local filename = path:filename():string()
     if filename:find("*", 1, true) == nil then
@@ -50,11 +61,7 @@ local function expand_path(t, path)
         return
     end
     local pattern = glob_compile(filename)
-    for file in path:parent_path():list_directory() do
-        if glob_match(pattern, file:filename():string()) then
-            accept_path(t, file)
-        end
-    end
+    expand_dir(t, pattern, path:parent_path())
 end
 local function get_sources(root, name, sources)
     assert(type(sources) == "table" and #sources > 0, ("`%s`: sources cannot be empty."):format(name))

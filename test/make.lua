@@ -9,6 +9,7 @@ if platform.OS == 'Windows' then
          "*.c",
          "!lua.c",
          "!luac.c",
+         "!testes/*.c",
       },
       defines = "LUA_BUILD_AS_DLL"
    }
@@ -21,6 +22,7 @@ elseif platform.OS == 'macOS' then
       sources = {
          "*.c",
          "!luac.c",
+         "!testes/*.c",
       },
       defines = "LUA_USE_MACOSX",
       links = { "m", "dl" },
@@ -30,6 +32,7 @@ else
       sources = {
          "*.c",
          "!luac.c",
+         "!testes/*.c",
       },
       ldflags = "-Wl,-E",
       defines = "LUA_USE_LINUX",

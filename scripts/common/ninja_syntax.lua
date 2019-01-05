@@ -226,7 +226,7 @@ do
 		-- Setup writer output
 		local outtype = type(output)
 		if outtype == 'string' then
-			self.output = io.open(output, 'w')
+			self.output = assert(io.open(output, 'w'))
 		elseif self:_isfile(output) then
 			self.output = output
 		else

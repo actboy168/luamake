@@ -255,17 +255,20 @@ function lm:add_script(filename)
 end
 
 function lm:finish()
+    local globals = self._export_globals
     local builddir = WORKDIR / 'build'
+    local bindir = globals.bindir or "$builddir/bin"
+    local objdir = globals.objdir or "$builddir/obj"
     fs.create_directories(builddir)
 
     local ninja = require "ninja_syntax"
     local w = ninja.Writer((builddir / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja"):string())
     ninja.DEFAULT_LINE_WIDTH = 100
 
-    w:variable("builddir", builddir:string())
     w:variable("makedir", MAKEDIR:string())
-    w:variable("bin", "$builddir/bin")
-    w:variable("obj", "$builddir/obj")
+    w:variable("builddir", builddir:string())
+    w:variable("bin", bindir)
+    w:variable("obj", objdir)
 
     self.writer = w
 
@@ -293,8 +296,7 @@ function lm:export()
     if self._export then
         return self._export
     end
-    self._export_targets = {}
-    local t = self._export_targets
+    local t = {}
     local globals = {}
     local function setter(_, k, v)
         globals[k] = v
@@ -310,8 +312,7 @@ function lm:export()
         end
         t[#t+1] = {type, name, attribute}
     end
-    self._export = setmetatable({}, {__index = getter, __newindex = setter})
-    local m = self._export
+    local m = setmetatable({}, {__index = getter, __newindex = setter})
     function m:shared_library(name)
         return function (attribute)
             accept('shared_library', name, attribute)
@@ -327,6 +328,9 @@ function lm:export()
             accept('lua_library', name, attribute)
         end
     end
+    self._export = m
+    self._export_targets = t
+    self._export_globals = globals
     return m
 end
 

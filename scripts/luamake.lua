@@ -113,7 +113,7 @@ local function get_warnings(warnings)
 end
 
 local function generate(self, rule, name, attribute)
-    assert(self.target[name] == nil, ("`%s`: redefinition."):format(name))
+    assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
     local function init(attr_name, default)
         local result = attribute[attr_name] or self[attr_name] or default or {}
@@ -163,7 +163,7 @@ local function generate(self, rule, name, attribute)
 
     local linkbin = false
     for _, dep in ipairs(deps) do
-        local depsTarget = self.target[dep]
+        local depsTarget = self._targets[dep]
         assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
 
         flags[#flags+1] = cc.includedir(depsTarget.rootdir)
@@ -238,7 +238,7 @@ local function generate(self, rule, name, attribute)
         tbl_append(input, attribute.input or self.input)
     end
     w:build(fs.path("$bin") / outname, "LINK_"..fmtname, input, implicit)
-    self.target[name] = {
+    self._targets[name] = {
         rootdir = rootdir,
         name = outname,
         rule = rule,
@@ -247,7 +247,8 @@ end
 
 local lm = {}
 
-lm.target = {}
+lm._scripts = {}
+lm._targets = {}
 lm.writer = w
 lm.cc = cc
 LUAMAKE = lm
@@ -264,6 +265,18 @@ function lm:executable(name)
     end
 end
 
+function lm:add_script(filename)
+    if fs.path(filename:sub(1, #(MAKEDIR:string()))) == MAKEDIR then
+        return
+    end
+    filename = fs.relative(fs.path(filename), WORKDIR):string()
+    if self._scripts[filename] then
+        return
+    end
+    self._scripts[filename] = true
+    self._scripts[#self._scripts+1] = filename
+end
+
 function lm:close()
     if cc.name == "cl" then
         local msvc = require "common.msvc"
@@ -273,7 +286,7 @@ function lm:close()
     local build_ninja = (fs.path('$builddir') / build_lua):replace_extension(".ninja")
     w:variable("luamake", arg[-1])
     w:rule('configure', '$luamake init -f $in', { generator = 1 })
-    w:build(build_ninja, 'configure', build_lua)
+    w:build(build_ninja, 'configure', build_lua, self._scripts)
     w:close()
 end
 

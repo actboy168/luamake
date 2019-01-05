@@ -7,7 +7,6 @@ local cl = {
     },
     ldflags = {
         "/SAFESEH",
-        "/MACHINE:X86",
     },
     optimize = {
         off      = '/Od',

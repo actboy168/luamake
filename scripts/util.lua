@@ -11,7 +11,7 @@ end
 local function ninja(args)
     if isMsvc() then
         if #args == 0 then
-            local msvc = require 'msvc'
+            local msvc = require "msvc"
             if args.env then
                 for k, v in pairs(msvc.env) do
                     args.env[k] = v

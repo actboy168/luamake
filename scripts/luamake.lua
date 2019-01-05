@@ -135,6 +135,10 @@ local function generate(self, rule, name, attribute)
         flags[#flags+1] = cc.warnings.error
     end
 
+    if cc.name == 'cl' then
+        ldflags[#ldflags+1] = "/MACHINE:" .. self.arch
+    end
+
     cc.mode(name, mode, flags, ldflags)
 
     for _, inc in ipairs(includes) do
@@ -273,9 +277,13 @@ function lm:finish()
     self.writer = w
 
     if cc.name == "cl" then
+        self.arch = globals.arch or "x86"
+        self.winsdk = globals.winsdk
         local msvc = require "msvc"
+        msvc:init(self.arch, self.winsdk)
         w:variable("deps_prefix", msvc.prefix)
     end
+
     for _, target in ipairs(self._export_targets) do
         if target[1] == 'lua_library' then
             local lua_library = require "lua_library"

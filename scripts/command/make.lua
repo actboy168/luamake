@@ -1,5 +1,5 @@
 local fs = require 'bee.filesystem'
-local util = require 'common.util'
+local util = require 'util'
 
 local build_ninja = (WORKDIR / 'build' / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja")
 

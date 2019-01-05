@@ -31,5 +31,5 @@ else
     end
 end
 
-local util = require 'common.util'
+local util = require 'util'
 util.command(what)

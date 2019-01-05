@@ -19,7 +19,7 @@ local cc = require("compiler." .. compiler)
 local builddir = WORKDIR / 'build'
 fs.create_directories(builddir)
 
-local ninja = require "common.ninja_syntax"
+local ninja = require "ninja_syntax"
 local w = ninja.Writer((builddir / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja"):string())
 ninja.DEFAULT_LINE_WIDTH = 100
 
@@ -282,7 +282,7 @@ end
 
 function lm:close()
     if cc.name == "cl" then
-        local msvc = require "common.msvc"
+        local msvc = require "msvc"
         w:variable("deps_prefix", msvc.prefix)
     end
     local build_lua = ARGUMENTS.f or 'make.lua'
@@ -294,7 +294,7 @@ function lm:close()
 end
 
 function lm:lua_library(name)
-    local lua_library = require "common.lua_library"
+    local lua_library = require "lua_library"
     return lua_library(name)
 end
 

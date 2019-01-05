@@ -1,6 +1,6 @@
 local lm = require 'luamake'
 
-local sandbox = require "common.sandbox"
+local sandbox = require "sandbox"
 sandbox(WORKDIR:string(), ARGUMENTS.f or 'make.lua', function(name, mode)
     local f, err = io.open(name, mode)
     if f then

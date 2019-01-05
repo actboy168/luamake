@@ -1,3 +1,3 @@
-local util = require "common.util"
+local util = require "util"
 
 util.ninja { "-t", "clean" }

@@ -4,10 +4,7 @@ local fs = require 'bee.filesystem'
 MAKEDIR = fs.exe_path():parent_path()
 WORKDIR = fs.current_path()
 
-package.path = table.concat({
-    (MAKEDIR / "scripts" / "?.lua"):string(),
-    (WORKDIR / "?.lua"):string(),
-}, ";")
+package.path = (MAKEDIR / "scripts" / "?.lua"):string()
 
 ARGUMENTS = {}
 

@@ -270,6 +270,9 @@ function lm:add_script(filename)
         return
     end
     filename = fs.relative(fs.path(filename), WORKDIR):string()
+    if filename == (ARGUMENTS.f or 'make.lua') then
+        return
+    end
     if self._scripts[filename] then
         return
     end

@@ -7,6 +7,6 @@ sandbox(WORKDIR:string(), ARGUMENTS.f or 'make.lua', function(name, mode)
         lm:add_script(name)
     end
     return f, err
-end, { luamake = lm:export() })()
+end, { luamake = lm:export() })(table.unpack(arg))
 
 lm:finish()

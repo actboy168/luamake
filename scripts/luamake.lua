@@ -15,19 +15,6 @@ end)()
 
 local cc = require("compiler." .. compiler)
 
-
-local builddir = WORKDIR / 'build'
-fs.create_directories(builddir)
-
-local ninja = require "ninja_syntax"
-local w = ninja.Writer((builddir / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja"):string())
-ninja.DEFAULT_LINE_WIDTH = 100
-
-w:variable("builddir", builddir:string())
-w:variable("makedir", MAKEDIR:string())
-w:variable("bin", "$builddir/bin")
-w:variable("obj", "$builddir/obj")
-
 -- TODO 在某些平台上忽略大小写？
 local function glob_compile(pattern)
     return ("^%s$"):format(pattern:gsub("[%^%$%(%)%%%.%[%]%+%-%?]", "%%%0"):gsub("%*", ".*"))
@@ -116,13 +103,14 @@ local function generate(self, rule, name, attribute)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
     local function init(attr_name, default)
-        local result = attribute[attr_name] or self[attr_name] or default or {}
+        local result = attribute[attr_name] or default or {}
         if type(result) == 'string' then
             return {result}
         end
         return result
     end
 
+    local w = self.writer
     local rootdir = fs.path(init('rootdir', '.')[1])
     local sources = get_sources(rootdir, name, init('sources'))
     local mode = init('mode', 'release')[1]
@@ -249,21 +237,7 @@ local lm = {}
 
 lm._scripts = {}
 lm._targets = {}
-lm.writer = w
 lm.cc = cc
-LUAMAKE = lm
-
-function lm:shared_library(name)
-    return function (attribute)
-        generate(self, "shared_library", name, attribute)
-    end
-end
-
-function lm:executable(name)
-    return function (attribute)
-        generate(self, "executable", name, attribute)
-    end
-end
 
 function lm:add_script(filename)
     if fs.path(filename:sub(1, #(MAKEDIR:string()))) == MAKEDIR then
@@ -280,10 +254,32 @@ function lm:add_script(filename)
     self._scripts[#self._scripts+1] = filename
 end
 
-function lm:close()
+function lm:finish()
+    local builddir = WORKDIR / 'build'
+    fs.create_directories(builddir)
+
+    local ninja = require "ninja_syntax"
+    local w = ninja.Writer((builddir / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja"):string())
+    ninja.DEFAULT_LINE_WIDTH = 100
+
+    w:variable("builddir", builddir:string())
+    w:variable("makedir", MAKEDIR:string())
+    w:variable("bin", "$builddir/bin")
+    w:variable("obj", "$builddir/obj")
+
+    self.writer = w
+
     if cc.name == "cl" then
         local msvc = require "msvc"
         w:variable("deps_prefix", msvc.prefix)
+    end
+    for _, target in ipairs(self._export_targets) do
+        if target[1] == 'lua_library' then
+            local lua_library = require "lua_library"
+            generate(lua_library(self, target[2], target[3]))
+        else
+            generate(self, target[1], target[2], target[3])
+        end
     end
     local build_lua = ARGUMENTS.f or 'make.lua'
     local build_ninja = (fs.path('$builddir') / build_lua):replace_extension(".ninja")
@@ -293,9 +289,45 @@ function lm:close()
     w:close()
 end
 
-function lm:lua_library(name)
-    local lua_library = require "lua_library"
-    return lua_library(name)
+function lm:export()
+    if self._export then
+        return self._export
+    end
+    self._export_targets = {}
+    local t = self._export_targets
+    local globals = {}
+    local function setter(_, k, v)
+        globals[k] = v
+    end
+    local function getter(_, k)
+        return globals[k]
+    end
+    local function accept(type, name, attribute)
+        for k, v in pairs(globals) do
+            if not attribute[k] then
+                attribute[k] = v
+            end
+        end
+        t[#t+1] = {type, name, attribute}
+    end
+    self._export = setmetatable({}, {__index = getter, __newindex = setter})
+    local m = self._export
+    function m:shared_library(name)
+        return function (attribute)
+            accept('shared_library', name, attribute)
+        end
+    end
+    function m:executable(name)
+        return function (attribute)
+            accept('executable', name, attribute)
+        end
+    end
+    function m:lua_library(name)
+        return function (attribute)
+            accept('lua_library', name, attribute)
+        end
+    end
+    return m
 end
 
 return lm

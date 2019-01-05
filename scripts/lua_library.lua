@@ -1,26 +1,33 @@
 local platform = require "bee.platform"
 local fs = require "bee.filesystem"
-local lm = LUAMAKE
-local w = lm.writer
+local inited = false
 
-w:rule("luadef", [[$makedir/luamake.exe lua $makedir/scripts/common/lua_def.lua -in $in -out $out]],
-{
-    description = 'Lua def $out',
-})
-
-if lm.cc.name == 'cl' then
-    w:rule("luadeps", [[lib /nologo /machine:i386 /def:$in /out:$out]],
+local function init(lm)
+    if inited then
+        return
+    end
+    inited = true
+    local w = lm.writer
+    w:rule("luadef", [[$makedir/luamake.exe lua $makedir/scripts/lua_def.lua -in $in -out $out]],
     {
-        description = 'Lua import lib $out'
+        description = 'Lua def $out',
     })
-elseif lm.cc.name == 'gcc' then
-    w:rule("luadeps", [[dlltool -d $in -l $out]],
-    {
-        description = 'Lua import lib $out'
-    })
+    if lm.cc.name == 'cl' then
+        w:rule("luadeps", [[lib /nologo /machine:i386 /def:$in /out:$out]],
+        {
+            description = 'Lua import lib $out'
+        })
+    elseif lm.cc.name == 'gcc' then
+        w:rule("luadeps", [[dlltool -d $in -l $out]],
+        {
+            description = 'Lua import lib $out'
+        })
+    end
 end
 
-local function windowsDeps(cc, name, attribute, luaversion)
+local function windowsDeps(lm, name, attribute, luaversion)
+    local w = lm.writer
+    local cc = lm.cc
     local include = fs.path('$makedir') / "tools" / luaversion
     local windeps = include / "windeps"
     fs.create_directories(MAKEDIR / "tools" / luaversion / "windeps")
@@ -42,16 +49,14 @@ local function windowsDeps(cc, name, attribute, luaversion)
     attribute.input = input
 end
 
-return function (name)
-    return function (attribute)
-        local flags = attribute.flags or {}
-        local luaversion = attribute.luaversion or "lua54"
-        flags[#flags+1] = lm.cc.includedir(MAKEDIR / "tools" / luaversion)
-        attribute.flags = flags
-        if platform.OS == "Windows" then
-            windowsDeps(lm.cc, name, attribute, luaversion)
-        end
-
-        lm:shared_library(name)(attribute)
+return function (lm, name, attribute)
+    init(lm)
+    local flags = attribute.flags or {}
+    local luaversion = attribute.luaversion or "lua54"
+    flags[#flags+1] = lm.cc.includedir(MAKEDIR / "tools" / luaversion)
+    attribute.flags = flags
+    if platform.OS == "Windows" then
+        windowsDeps(lm, name, attribute, luaversion)
     end
+    return lm, 'shared_library', name, attribute
 end

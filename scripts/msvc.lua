@@ -42,7 +42,7 @@ end
 local function get_env(self, path)
     local env = {}
     local vsvars32 = path / 'Common7' / 'Tools' / 'VsDevCmd.bat'
-    local args = self.winsdk 
+    local args = self.winsdk
         and { vsvars32:string(), ('-winsdk=%s'):format(self.winsdk) }
         or  { vsvars32:string() }
     local process = assert(sp.spawn {

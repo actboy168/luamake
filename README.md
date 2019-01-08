@@ -6,7 +6,6 @@ windows
 ```
 cd test
 ..\luamake.exe
-..\luamake.exe -f make-lua.lua
 build\bin\lua.exe -e "package.path=[[lpeglabel\?.lua]]" lpeglabel\test.lua
 ```
 
@@ -19,7 +18,6 @@ macOS / linux
 ```
 cd test
 luamake
-luamake -f make-lua.lua
 cd build/bin
 ./lua -e "package.path=[[../../lpeglabel/?.lua]]" ../../lpeglabel/test.lua
 ```

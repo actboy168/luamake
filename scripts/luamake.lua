@@ -32,6 +32,9 @@ local function accept_path(t, path)
     t[path:string()] = #t
 end
 local function expand_dir(t, pattern, dir)
+    if not fs.exists(dir) then
+        return
+    end
     for file in dir:list_directory() do
         if fs.is_directory(file) then
             expand_dir(t, pattern, file)

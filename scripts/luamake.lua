@@ -1,5 +1,6 @@
 local fs = require "bee.filesystem"
 local platform = require "bee.platform"
+local memfile = require "memfile"
 local compiler = (function ()
     if platform.OS == "Windows" then
         if os.getenv "MSYSTEM" then
@@ -266,7 +267,8 @@ function lm:finish()
     fs.create_directories(builddir)
 
     local ninja = require "ninja_syntax"
-    local w = ninja.Writer((builddir / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja"):string())
+    local ninja_script = (builddir / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja"):string()
+    local w = ninja.Writer(assert(memfile(ninja_script)))
     ninja.DEFAULT_LINE_WIDTH = 100
 
     w:variable("makedir", MAKEDIR:string())

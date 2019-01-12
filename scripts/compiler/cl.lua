@@ -53,7 +53,7 @@ function cl.mode(name, mode, flags, ldflags)
     else
         flags[#flags+1] = '/MD'
         ldflags[#ldflags+1] = '/DEBUG:NONE'
-        ldflags[#ldflags+1] = '/LTCG:incremental'
+        ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
     end
 end
 

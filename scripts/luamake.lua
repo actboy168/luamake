@@ -191,7 +191,9 @@ local function generate(self, rule, name, attribute)
         local depsTarget = self._targets[dep]
         assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
 
-        flags[#flags+1] = cc.includedir(depsTarget.rootdir)
+        if depsTarget.includedir then
+            flags[#flags+1] = cc.includedir(depsTarget.includedir)
+        end
         if depsTarget.rule == "shared_library" then
             input[#input+1] = depsTarget.output
         else
@@ -227,7 +229,7 @@ local function generate(self, rule, name, attribute)
     end
 
     local t = {
-        rootdir = rootdir,
+        includedir = rootdir,
         outname = outname,
         rule = rule,
     }
@@ -247,6 +249,52 @@ local function generate(self, rule, name, attribute)
         w:build(outname, "LINK_"..fmtname, input, implicit)
     end
     self._targets[name] = t
+end
+
+local GEN = {}
+
+local ruleCommand = false
+
+function GEN.build(self, name, attribute)
+    assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
+    local function init(attr_name, default)
+        local result = attribute[attr_name] or default or {}
+        if type(result) == 'string' then
+            return {result}
+        end
+        return result
+    end
+    local w = self.writer
+    local rootdir = fs.path(init('rootdir', '.')[1])
+    local deps =  init('deps')
+    local implicit = {}
+
+    for _, dep in ipairs(deps) do
+        local depsTarget = self._targets[dep]
+        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+        implicit[#implicit+1] = depsTarget.outname
+    end
+
+    if not ruleCommand then
+        ruleCommand = true
+        w:rule('command', attribute, {
+            command = '$COMMAND',
+            description = '$DESC'
+        })
+    end
+    local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
+    w:build(outname, 'command', nil, implicit, nil, {
+        COMMAND = attribute
+    })
+    self._targets[name] = {
+        outname = outname,
+        rule = 'build',
+    }
+end
+
+function GEN.lua_library(self, name, attribute)
+    local lua_library = require "lua_library"
+    generate(lua_library(self, name, attribute))
 end
 
 local lm = {}
@@ -298,9 +346,8 @@ function lm:finish()
     end
 
     for _, target in ipairs(self._export_targets) do
-        if target[1] == 'lua_library' then
-            local lua_library = require "lua_library"
-            generate(lua_library(self, target[2], target[3]))
+        if GEN[target[1]] then
+            GEN[target[1]](self, target[2], target[3])
         else
             generate(self, target[1], target[2], target[3])
         end
@@ -347,6 +394,11 @@ function lm:export()
     function m:lua_library(name)
         return function (attribute)
             accept('lua_library', name, attribute)
+        end
+    end
+    function m:build(name)
+        return function (attribute)
+            accept('build', name, attribute)
         end
     end
     self._export = m

@@ -44,3 +44,8 @@ lm.rootdir = 'lpeglabel'
 lm:lua_library 'lpeglabel' {
    sources = "*.c"
 }
+
+lm:build "test" {
+   "$luamake", "lua", "test.lua",
+   deps = { "lpeglabel", "lua" }
+}

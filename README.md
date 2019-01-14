@@ -6,7 +6,6 @@ windows
 ```
 cd test
 ..\luamake.exe
-..\luamake.exe lua test.lua
 ```
 
 macOS / linux
@@ -18,5 +17,4 @@ macOS / linux
 ```
 cd test
 luamake
-luamake lua test.lua
 ```

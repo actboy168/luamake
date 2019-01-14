@@ -372,20 +372,29 @@ do
 
 		-- Handle implicit parameter
 		if implicit ~= nil then
-			tinsert(all_inputs, '|')
-			extend(all_inputs, map(ninja.escape_path, ninja.as_list(implicit), {}))
+			local t = ninja.as_list(implicit)
+			if #t > 0 then
+				tinsert(all_inputs, '|')
+				extend(all_inputs, map(ninja.escape_path, t, {}))
+			end
 		end
 
 		-- Handle order_only parameter
 		if order_only ~= nil then
-			tinsert(all_inputs, '||')
-			extend(all_inputs, ninja.as_list(order_only))
+			local t = ninja.as_list(order_only)
+			if #t > 0 then
+				tinsert(all_inputs, '||')
+				extend(all_inputs, t)
+			end
 		end
 
 		-- Handle implicit_outputs parameter
 		if implicit_outputs ~= nil then
-			tinsert(out_outputs, '|')
-			map(ninja.escape_path, ninja.as_list(implicit_outputs), out_outputs)
+			local t = ninja.as_list(implicit_outputs)
+			if #t > 0 then
+				tinsert(out_outputs, '|')
+				map(ninja.escape_path, t, out_outputs)
+			end
 		end
 
 		-- Write build line

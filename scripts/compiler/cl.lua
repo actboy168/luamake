@@ -76,8 +76,8 @@ function cl.rule_cxx(w, name, flags, cxxflags)
 end
 
 function cl.rule_dll(w, name, links, ldflags)
-    lib = (fs.path('$bin') / name):replace_extension("")
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out /DLL /IMPLIB:%s.lib]]):format(links, ldflags, lib),
+    local lib = (fs.path('$bin') / name):replace_extension(".lib")
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out /DLL /IMPLIB:%s]]):format(links, ldflags, lib),
     {
         description = 'Link SharedLibrary $out'
     })

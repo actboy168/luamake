@@ -157,22 +157,6 @@ local function generate(self, rule, name, attribute)
         flags[#flags+1] = "-fPIC"
     end
 
-    local linkbin = false
-    for _, dep in ipairs(deps) do
-        local depsTarget = self._targets[dep]
-        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-
-        flags[#flags+1] = cc.includedir(depsTarget.rootdir)
-        if depsTarget.rule == "shared_library" then
-            if not linkbin then
-                linkbin = true
-                linkdirs[#linkdirs+1] = fs.path("$bin")
-            end
-            links[#links+1] = fs.path(depsTarget.name):replace_extension(""):string()
-        end
-        implicit[#implicit+1] = fs.path("$bin") / depsTarget.name
-    end
-
     local fin_flags = table.concat(flags, " ")
     local fmtname = name:gsub("[^%w_]", "_")
     local has_c = false
@@ -203,6 +187,18 @@ local function generate(self, rule, name, attribute)
         end
     end
 
+    for _, dep in ipairs(deps) do
+        local depsTarget = self._targets[dep]
+        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+
+        flags[#flags+1] = cc.includedir(depsTarget.rootdir)
+        if depsTarget.rule == "shared_library" then
+            input[#input+1] = depsTarget.output
+        else
+            implicit[#implicit+1] = depsTarget.outname
+        end
+    end
+
     local tbl_links = {}
     for _, link in ipairs(links) do
         tbl_links[#tbl_links+1] = cc.link(link)
@@ -213,32 +209,44 @@ local function generate(self, rule, name, attribute)
     local fin_links = table.concat(tbl_links, " ")
     local fin_ldflags = table.concat(ldflags, " ")
 
-    local outname = name
+    local outname = fs.path("$bin") /name
     if rule == "executable" then
         if platform.OS == "Windows" then
-            outname = name .. ".exe"
+            outname = fs.path("$bin") / (name .. ".exe")
         end
     elseif rule == "shared_library" then
         if platform.OS == "Windows" then
-            outname = name .. ".dll"
+            outname = fs.path("$bin") / (name .. ".dll")
         else
-            outname = name .. ".so"
+            outname = fs.path("$bin") / (name .. ".so")
         end
     end
-    if rule == "shared_library" then
-        cc.rule_dll(w, name, fin_links, fin_ldflags, mode)
-    else
-        cc.rule_exe(w, name, fin_links, fin_ldflags, mode)
-    end
+
     if attribute.input or self.input then
         tbl_append(input, attribute.input or self.input)
     end
-    w:build(fs.path("$bin") / outname, "LINK_"..fmtname, input, implicit)
-    self._targets[name] = {
+
+    local t = {
         rootdir = rootdir,
-        name = outname,
+        outname = outname,
         rule = rule,
     }
+
+    if rule == "shared_library" then
+        cc.rule_dll(w, name, fin_links, fin_ldflags, mode)
+        local lib
+        if cc.name == 'cl' then
+            lib = (fs.path('$bin') / name):replace_extension(".lib")
+        else
+            lib = (fs.path('$bin') / ("lib" .. name)):replace_extension(".a")
+        end
+        t.output = lib
+        w:build(outname, "LINK_"..fmtname, input, implicit, nil, nil, lib)
+    else
+        cc.rule_exe(w, name, fin_links, fin_ldflags, mode)
+        w:build(outname, "LINK_"..fmtname, input, implicit)
+    end
+    self._targets[name] = t
 end
 
 local lm = {}

@@ -1,3 +1,5 @@
+local fs = require "bee.filesystem"
+
 local gcc = {
     name = "gcc",
     flags = {

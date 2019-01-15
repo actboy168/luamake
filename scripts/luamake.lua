@@ -223,6 +223,8 @@ local function generate(self, rule, name, attribute)
         rule = rule,
     }
 
+    implicit[#implicit+1] = util.script(true)
+
     if rule == "shared_library" then
         cc.rule_dll(w, name, fin_links, fin_ldflags, mode)
         if cc.name == 'cl' then
@@ -273,6 +275,7 @@ function GEN.build(self, name, attribute)
         })
     end
     local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
+    implicit[#implicit+1] = util.script(true)
     w:build(outname, 'command', nil, implicit, nil, {
         COMMAND = attribute
     })

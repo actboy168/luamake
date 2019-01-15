@@ -1,3 +1,16 @@
+local ARGUMENTS = {}
+local i = 1
+while i <= #arg do
+    if arg[i]:sub(1, 1) == '-' then
+        local k = arg[i]:sub(2)
+        i = i + 1
+        ARGUMENTS[k] = arg[i]
+    else
+        error(('unknown option: %s'):format(arg[i]))
+    end
+    i = i + 1
+end
+
 local fs = require "bee.filesystem"
 
 local input = fs.path(ARGUMENTS["in"])

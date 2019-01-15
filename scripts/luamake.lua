@@ -269,8 +269,7 @@ function GEN.build(self, name, attribute)
 
     if not ruleCommand then
         ruleCommand = true
-        w:rule('command', attribute, {
-            command = '$COMMAND',
+        w:rule('command', '$COMMAND', {
             description = '$DESC'
         })
     end

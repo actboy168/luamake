@@ -14,7 +14,7 @@ if what == nil then
 else
     local i = 2
     if what == 'lua' then
-        i = 3
+        i = #arg + 1
     elseif what:sub(1, 1) == '-' then
         what = 'make'
         i = 1

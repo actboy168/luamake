@@ -183,7 +183,7 @@ local function generate(self, rule, name, attribute)
         if depsTarget.includedir then
             flags[#flags+1] = cc.includedir(depsTarget.includedir)
         end
-        if depsTarget.rule == "shared_library" then
+        if depsTarget.output then
             input[#input+1] = depsTarget.output
         else
             implicit[#implicit+1] = depsTarget.outname
@@ -225,14 +225,16 @@ local function generate(self, rule, name, attribute)
 
     if rule == "shared_library" then
         cc.rule_dll(w, name, fin_links, fin_ldflags, mode)
-        local lib
         if cc.name == 'cl' then
-            lib = (fs.path('$bin') / name):replace_extension(".lib")
+            local lib = (fs.path('$bin') / name):replace_extension(".lib")
+            t.output = lib
+            w:build(outname, "LINK_"..fmtname, input, implicit, nil, nil, lib)
         else
-            lib = (fs.path('$bin') / ("lib" .. name)):replace_extension(".a")
+            if platform.OS == "Windows" then
+                t.output = outname
+            end
+            w:build(outname, "LINK_"..fmtname, input, implicit)
         end
-        t.output = lib
-        w:build(outname, "LINK_"..fmtname, input, implicit, nil, nil, lib)
     else
         cc.rule_exe(w, name, fin_links, fin_ldflags, mode)
         w:build(outname, "LINK_"..fmtname, input, implicit)

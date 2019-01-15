@@ -1,7 +1,7 @@
 local fs = require 'bee.filesystem'
 local util = require 'util'
 
-local build_ninja = (WORKDIR / 'build' / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja")
+local build_ninja = util.script()
 
 if not fs.exists(build_ninja) then
     util.command('init')

@@ -1,20 +1,9 @@
 local fs = require "bee.filesystem"
 local platform = require "bee.platform"
 local memfile = require "memfile"
-local compiler = (function ()
-    if platform.OS == "Windows" then
-        if os.getenv "MSYSTEM" then
-            return "gcc"
-        end
-        return "cl"
-    elseif platform.OS == "Linux" then
-        return "gcc"
-    elseif platform.OS == "macOS" then
-        return "clang"
-    end
-end)()
+local util = require 'util'
 
-local cc = require("compiler." .. compiler)
+local cc = require("compiler." .. util.compiler)
 
 -- TODO 在某些平台上忽略大小写？
 local function glob_compile(pattern)
@@ -326,7 +315,7 @@ function lm:finish()
     fs.create_directories(builddir)
 
     local ninja = require "ninja_syntax"
-    local ninja_script = (builddir / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja"):string()
+    local ninja_script = util.script():string()
     local w = ninja.Writer(assert(memfile(ninja_script)))
     ninja.DEFAULT_LINE_WIDTH = 100
 
@@ -353,7 +342,7 @@ function lm:finish()
         end
     end
     local build_lua = ARGUMENTS.f or 'make.lua'
-    local build_ninja = (fs.path('$builddir') / build_lua):replace_extension(".ninja")
+    local build_ninja = util.script(true)
     w:variable("luamake", arg[-1])
     w:rule('configure', '$luamake init -f $in', { generator = 1 })
     w:build(build_ninja, 'configure', build_lua, self._scripts)

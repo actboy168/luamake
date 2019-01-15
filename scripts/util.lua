@@ -1,15 +1,28 @@
 local sp = require 'bee.subprocess'
 local platform = require 'bee.platform'
+local fs = require 'bee.filesystem'
 
-local function isMsvc()
-    if platform.OS == 'Windows' and os.getenv 'MSYSTEM' == nil then
-        return true
+local plat, compiler = (function ()
+    if platform.OS == "Windows" then
+        if os.getenv "MSYSTEM" then
+            return "mingw", "gcc"
+        end
+        return "msvc", "cl"
+    elseif platform.OS == "Linux" then
+        return "linux", "gcc"
+    elseif platform.OS == "macOS" then
+        return "macos", "clang"
     end
-    return false
+end)()
+
+local function script(v)
+    local builddir = v and fs.path('$builddir') or (WORKDIR / 'build')
+    local filename = builddir / (ARGUMENTS.f or 'make.lua')
+    return filename:parent_path() / ("%s-%s.ninja"):format(filename:stem():string(), plat)
 end
 
 local function ninja(args)
-    if isMsvc() then
+    if plat == 'msvc' then
         if #args == 0 then
             local msvc = require "msvc"
             if args.env then
@@ -32,7 +45,7 @@ local function ninja(args)
         args.searchPath = true
         table.insert(args, 1, 'ninja')
     end
-    local build_ninja = (WORKDIR / 'build' / (ARGUMENTS.f or 'make.lua')):replace_extension(".ninja")
+    local build_ninja = script()
     table.insert(args, 2, "-f")
     table.insert(args, 3, build_ninja)
     args.stderr = true
@@ -54,4 +67,7 @@ end
 return {
     ninja = ninja,
     command = command,
+    script = script,
+    plat = plat,
+    compiler = compiler,
 }

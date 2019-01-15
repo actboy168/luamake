@@ -8,7 +8,7 @@ local function init(lm)
     end
     inited = true
     local w = lm.writer
-    w:rule("luadef", [[$makedir/luamake.exe lua $makedir/scripts/lua_def.lua -in $in -out $out]],
+    w:rule("luadef", [[$luamake lua $makedir/scripts/lua_def.lua -in $in -out $out]],
     {
         description = 'Lua def $out',
     })

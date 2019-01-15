@@ -254,7 +254,6 @@ function GEN.build(self, name, attribute)
         return result
     end
     local w = self.writer
-    local rootdir = fs.path(init('rootdir', '.')[1])
     local deps =  init('deps')
     local implicit = {}
 
@@ -321,6 +320,7 @@ function lm:finish()
 
     w:variable("makedir", MAKEDIR:string())
     w:variable("builddir", builddir:string())
+    w:variable("luamake", platform.OS == "Windows" and '$makedir/luamake.exe' or '$makedir/luamake')
     w:variable("bin", bindir)
     w:variable("obj", objdir)
 
@@ -343,7 +343,6 @@ function lm:finish()
     end
     local build_lua = ARGUMENTS.f or 'make.lua'
     local build_ninja = util.script(true)
-    w:variable("luamake", arg[-1])
     w:rule('configure', '$luamake init -f $in', { generator = 1 })
     w:build(build_ninja, 'configure', build_lua, self._scripts)
     w:close()

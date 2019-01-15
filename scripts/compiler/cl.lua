@@ -38,6 +38,9 @@ local cl = {
         return "-I" .. dir:string()
     end,
     link = function (lib)
+        if lib == "stdc++fs" or lib == "stdc++" then
+            return
+        end
         return lib .. ".lib"
     end,
     linkdir = function (dir)

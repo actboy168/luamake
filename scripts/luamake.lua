@@ -92,15 +92,31 @@ local function get_warnings(warnings)
     return {error = error, level = level}
 end
 
+local function init_attribute(attribute, attr_name, default)
+    local result = attribute[attr_name] or default or {}
+    if type(result) == 'string' then
+        return {result}
+    end
+    local j = 1
+    for i = 1, #result do
+        if type(result[i]) == 'string' then
+            if i ~= j then
+                result[i] = result[j]
+            end
+            j = j + 1
+        end
+    end
+    for i = j, #result do
+        result[i] = nil
+    end
+    return result
+end
+
 local function generate(self, rule, name, attribute)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
     local function init(attr_name, default)
-        local result = attribute[attr_name] or default or {}
-        if type(result) == 'string' then
-            return {result}
-        end
-        return result
+        return init_attribute(attribute, attr_name, default)
     end
 
     local w = self.writer
@@ -251,12 +267,9 @@ local ruleCommand = false
 function GEN.build(self, name, attribute)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
     local function init(attr_name, default)
-        local result = attribute[attr_name] or default or {}
-        if type(result) == 'string' then
-            return {result}
-        end
-        return result
+        return init_attribute(attribute, attr_name, default)
     end
+
     local w = self.writer
     local deps =  init('deps')
     local implicit = {}

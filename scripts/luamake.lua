@@ -393,6 +393,7 @@ function lm:export()
             accept('build', name, attribute)
         end
     end
+    m.plat = util.plat
     self._export = m
     self._export_targets = t
     self._export_globals = globals

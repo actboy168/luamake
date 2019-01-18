@@ -313,8 +313,8 @@ end
 function lm:finish()
     local globals = self._export_globals
     local builddir = WORKDIR / 'build'
-    local bindir = globals.bindir or "$builddir/bin"
-    local objdir = globals.objdir or "$builddir/obj"
+    local bindir = globals.bindir and fs.absolute(fs.path(globals.bindir)):string() or "$builddir/bin"
+    local objdir = globals.objdir and fs.absolute(fs.path(globals.objdir)):string() or "$builddir/obj"
     fs.create_directories(builddir)
 
     local ninja = require "ninja_syntax"

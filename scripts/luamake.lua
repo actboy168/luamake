@@ -339,6 +339,14 @@ function lm:add_script(filename)
     self._scripts[#self._scripts+1] = filename
 end
 
+local function getexe()
+    local i = 0
+    while arg[i] ~= nil do
+        i = i - 1
+    end
+    return arg[i + 1]
+end
+
 function lm:finish()
     local globals = self._export_globals
     fs.create_directories(WORKDIR / 'build' / util.plat)
@@ -348,9 +356,8 @@ function lm:finish()
     local w = ninja.Writer(assert(memfile(ninja_script)))
     ninja.DEFAULT_LINE_WIDTH = 100
 
-    w:variable("makedir", MAKEDIR:string())
     w:variable("builddir", ('build/%s'):format(util.plat))
-    w:variable("luamake", isWindows() and '$makedir/luamake.exe' or '$makedir/luamake')
+    w:variable("luamake", getexe())
 
     if globals.bindir then
         w:variable("bin", globals.bindir)

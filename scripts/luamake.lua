@@ -2,7 +2,19 @@ local fs = require "bee.filesystem"
 local memfile = require "memfile"
 local util = require 'util'
 
-local cc = require("compiler." .. util.compiler)
+local compiler = (function ()
+    if util.plat == 'mingw' then
+        return "gcc"
+    elseif util.plat == "msvc" then
+        return "cl"
+    elseif util.plat == "linux" then
+        return "gcc"
+    elseif util.plat == "macos" then
+        return "clang"
+    end
+end)()
+
+local cc = require("compiler." .. compiler)
 
 local function isWindows()
     return util.plat == "msvc" or util.plat == "mingw"

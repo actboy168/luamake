@@ -2,18 +2,27 @@ local sp = require 'bee.subprocess'
 local platform = require 'bee.platform'
 local fs = require 'bee.filesystem'
 
-local plat, compiler = (function ()
+local plat = (function ()
+    if ARGUMENTS.p then
+        return ARGUMENTS.p
+    end
     if platform.OS == "Windows" then
         if os.getenv "MSYSTEM" then
-            return "mingw", "gcc"
+            return "mingw"
         end
-        return "msvc", "cl"
+        return "msvc"
     elseif platform.OS == "Linux" then
-        return "linux", "gcc"
+        return "linux"
     elseif platform.OS == "macOS" then
-        return "macos", "clang"
+        return "macos"
     end
 end)()
+
+assert(plat == "msvc" 
+    or plat == "mingw"
+    or plat == "linux"
+    or plat == "macos"
+)
 
 local function script(v)
     local builddir = v and fs.path('$builddir') or (WORKDIR / 'build')
@@ -69,5 +78,4 @@ return {
     command = command,
     script = script,
     plat = plat,
-    compiler = compiler,
 }

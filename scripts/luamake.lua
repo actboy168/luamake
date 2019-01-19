@@ -1,9 +1,12 @@
 local fs = require "bee.filesystem"
-local platform = require "bee.platform"
 local memfile = require "memfile"
 local util = require 'util'
 
 local cc = require("compiler." .. util.compiler)
+
+local function isWindows()
+    return util.plat == "msvc" or util.plat == "mingw"
+end
 
 -- TODO 在某些平台上忽略大小写？
 local function glob_compile(pattern)
@@ -158,7 +161,7 @@ local function generate(self, rule, name, attribute)
         flags[#flags+1] = cc.define(macro)
     end
 
-    if rule == "shared_library" and platform.OS ~= "Windows" then
+    if rule == "shared_library" and not isWindows() then
         flags[#flags+1] = "-fPIC"
     end
 
@@ -218,11 +221,11 @@ local function generate(self, rule, name, attribute)
 
     local outname = fs.path("$bin") /name
     if rule == "executable" then
-        if platform.OS == "Windows" then
+        if isWindows() then
             outname = fs.path("$bin") / (name .. ".exe")
         end
     elseif rule == "shared_library" then
-        if platform.OS == "Windows" then
+        if isWindows() then
             outname = fs.path("$bin") / (name .. ".dll")
         else
             outname = fs.path("$bin") / (name .. ".so")
@@ -248,7 +251,7 @@ local function generate(self, rule, name, attribute)
             t.output = lib
             w:build(outname, "LINK_"..fmtname, input, implicit, nil, nil, lib)
         else
-            if platform.OS == "Windows" then
+            if isWindows() then
                 t.output = outname
             end
             w:build(outname, "LINK_"..fmtname, input, implicit)
@@ -337,7 +340,7 @@ function lm:finish()
 
     w:variable("makedir", MAKEDIR:string())
     w:variable("builddir", builddir:string())
-    w:variable("luamake", platform.OS == "Windows" and '$makedir/luamake.exe' or '$makedir/luamake')
+    w:variable("luamake", isWindows() and '$makedir/luamake.exe' or '$makedir/luamake')
     w:variable("bin", bindir)
     w:variable("obj", objdir)
 

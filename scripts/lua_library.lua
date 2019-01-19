@@ -1,4 +1,3 @@
-local platform = require "bee.platform"
 local fs = require "bee.filesystem"
 local inited = false
 
@@ -55,7 +54,7 @@ return function (lm, name, attribute)
     local luaversion = attribute.luaversion or "lua54"
     flags[#flags+1] = lm.cc.includedir(MAKEDIR / "tools" / luaversion)
     attribute.flags = flags
-    if platform.OS == "Windows" then
+    if lm.plat == "msvc" or lm.plat == "mingw" then
         windowsDeps(lm, name, attribute, luaversion)
     end
     return lm, 'shared_library', name, attribute

@@ -1,9 +1,8 @@
 local lm = require 'luamake'
-local platform = require 'bee.platform'
 
 lm.rootdir = 'lua'
 
-if platform.OS == 'Windows' then
+if lm.plat == "msvc" or lm.plat == "mingw" then
    lm:shared_library 'lua54' {
       sources = {
          "*.c",
@@ -17,7 +16,7 @@ if platform.OS == 'Windows' then
       deps = "lua54",
       sources = "lua.c"
    }
-elseif platform.OS == 'macOS' then
+elseif lm.plat == 'macos' then
    lm:executable 'lua' {
       sources = {
          "*.c",

@@ -322,6 +322,7 @@ local lm = {}
 lm._scripts = {}
 lm._targets = {}
 lm.cc = cc
+lm.plat = util.plat
 
 function lm:add_script(filename)
     if fs.path(filename:sub(1, #(MAKEDIR:string()))) == MAKEDIR then

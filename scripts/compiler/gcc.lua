@@ -1,5 +1,3 @@
-local fs = require "bee.filesystem"
-
 local gcc = {
     name = "gcc",
     flags = {
@@ -51,8 +49,9 @@ function gcc.mode(_, mode, flags, ldflags)
     end
 end
 
-function gcc.rule_c(w, name, flags, cflags)
-    w:rule('C_'..name:gsub('[^%w_]', '_'), ([[gcc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]]):format(cflags, flags),
+function gcc.rule_c(w, name, flags, cflags, attribute)
+    w:rule('C_'..name:gsub('[^%w_]', '_'), ([[%s -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
+    :format(attribute.gcc and attribute.gcc or 'gcc', cflags, flags),
     {
         description = 'Compile C $out',
         deps = 'gcc',
@@ -60,8 +59,9 @@ function gcc.rule_c(w, name, flags, cflags)
     })
 end
 
-function gcc.rule_cxx(w, name, flags, cxxflags)
-    w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[g++ -MMD -MT $out -MF $out.d %s %s -o $out -c $in]]):format(cxxflags, flags),
+function gcc.rule_cxx(w, name, flags, cxxflags, attribute)
+    w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[%s -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
+    :format(attribute.gxx and attribute.gxx or 'g++', cxxflags, flags),
     {
         description = 'Compile CXX $out',
         deps = 'gcc',
@@ -69,15 +69,17 @@ function gcc.rule_cxx(w, name, flags, cxxflags)
     })
 end
 
-function gcc.rule_dll(w, name, links, ldflags, _)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[gcc --shared $in -o $out %s %s]]):format(ldflags, links),
+function gcc.rule_dll(w, name, links, ldflags, _, attribute)
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[%s --shared $in -o $out %s %s]])
+    :format(attribute.gcc and attribute.gcc or 'gcc', ldflags, links),
     {
         description = 'Link SharedLibrary $out'
     })
 end
 
-function gcc.rule_exe(w, name, links, ldflags, _)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[gcc $in -o $out %s %s]]):format(ldflags, links),
+function gcc.rule_exe(w, name, links, ldflags, _, attribute)
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[%s $in -o $out %s %s]])
+    :format(attribute.gcc and attribute.gcc or 'gcc', ldflags, links),
     {
         description = 'Link Executable $out'
     })

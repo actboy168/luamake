@@ -60,7 +60,7 @@ function cl.mode(name, mode, flags, ldflags)
     end
 end
 
-function cl.rule_c(w, name, flags, cflags)
+function cl.rule_c(w, name, flags, cflags, attribute)
     w:rule('C_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
     {
         description = 'Compile C $out',
@@ -69,7 +69,7 @@ function cl.rule_c(w, name, flags, cflags)
     })
 end
 
-function cl.rule_cxx(w, name, flags, cxxflags)
+function cl.rule_cxx(w, name, flags, cxxflags, attribute)
     w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
     {
         description = 'Compile CXX $out',
@@ -78,7 +78,7 @@ function cl.rule_cxx(w, name, flags, cxxflags)
     })
 end
 
-function cl.rule_dll(w, name, links, ldflags)
+function cl.rule_dll(w, name, links, ldflags, attribute)
     local lib = (fs.path('$bin') / name):replace_extension(".lib")
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out /DLL /IMPLIB:%s]]):format(links, ldflags, lib),
     {
@@ -86,7 +86,7 @@ function cl.rule_dll(w, name, links, ldflags)
     })
 end
 
-function cl.rule_exe(w, name, links, ldflags)
+function cl.rule_exe(w, name, links, ldflags, attribute)
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out]]):format(links, ldflags),
     {
         description = 'Link Executable $out'

@@ -191,7 +191,7 @@ local function generate(self, rule, name, attribute)
                 has_c = true
                 local c = attribute.c or self.c or "c89"
                 local cflags = assert(cc.c[c], ("`%s`: unknown std c: `%s`"):format(name, c))
-                cc.rule_c(w, name, fin_flags, cflags)
+                cc.rule_c(w, name, fin_flags, cflags, attribute)
             end
             w:build(objname, "C_"..fmtname, source)
         elseif type == "cxx" then
@@ -199,7 +199,7 @@ local function generate(self, rule, name, attribute)
                 has_cxx = true
                 local cxx = attribute.cxx or self.cxx or "c++17"
                 local cxxflags = assert(cc.cxx[cxx], ("`%s`: unknown std c++: `%s`"):format(name, cxx))
-                cc.rule_cxx(w, name, fin_flags, cxxflags)
+                cc.rule_cxx(w, name, fin_flags, cxxflags, attribute)
             end
             w:build(objname, "CXX_"..fmtname, source)
         else
@@ -257,7 +257,7 @@ local function generate(self, rule, name, attribute)
     implicit[#implicit+1] = util.script(true)
 
     if rule == "shared_library" then
-        cc.rule_dll(w, name, fin_links, fin_ldflags, mode)
+        cc.rule_dll(w, name, fin_links, fin_ldflags, mode, attribute)
         if cc.name == 'cl' then
             local lib = (fs.path('$bin') / name):replace_extension(".lib")
             t.output = lib
@@ -269,7 +269,7 @@ local function generate(self, rule, name, attribute)
             w:build(outname, "LINK_"..fmtname, input, implicit)
         end
     else
-        cc.rule_exe(w, name, fin_links, fin_ldflags, mode)
+        cc.rule_exe(w, name, fin_links, fin_ldflags, mode, attribute)
         w:build(outname, "LINK_"..fmtname, input, implicit)
     end
     self._targets[name] = t

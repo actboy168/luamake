@@ -1,13 +1,22 @@
 local fs = require "bee.filesystem"
 local inited = false
 
+local function copy_dir(from, to)
+    fs.create_directories(to)
+    for file in from:list_directory() do
+        if not fs.is_directory(file) then
+            fs.copy_file(file, to / file:filename(), true)
+        end
+    end
+end
+
 local function init(lm)
     if inited then
         return
     end
     inited = true
     local w = lm.writer
-    w:rule("luadef", [[$luamake lua $makedir/scripts/lua_def.lua -in $in -out $out]],
+    w:rule("luadef", [[$luamake lua build/lua_def.lua -in $in -out $out]],
     {
         description = 'Lua def $out',
     })
@@ -27,9 +36,10 @@ end
 local function windowsDeps(lm, name, attribute, luaversion)
     local w = lm.writer
     local cc = lm.cc
-    local include = fs.path('$makedir') / "tools" / luaversion
+    local include = fs.path('build') / luaversion
     local windeps = include / "windeps"
-    fs.create_directories(MAKEDIR / "tools" / luaversion / "windeps")
+    fs.create_directories(WORKDIR / 'build' / luaversion / "windeps")
+    fs.copy_file(MAKEDIR / "scripts" / "lua_def.lua", WORKDIR / 'build' / "lua_def.lua", true)
 
     local ldflags = attribute.ldflags or {}
     local input = attribute.input or {}
@@ -52,8 +62,9 @@ return function (lm, name, attribute)
     init(lm)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
-    flags[#flags+1] = lm.cc.includedir(MAKEDIR / "tools" / luaversion)
+    flags[#flags+1] = lm.cc.includedir(fs.path('build') / luaversion)
     attribute.flags = flags
+    copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
     if lm.plat == "msvc" or lm.plat == "mingw" then
         windowsDeps(lm, name, attribute, luaversion)
     end

@@ -341,7 +341,7 @@ end
 
 function lm:finish()
     local globals = self._export_globals
-    local builddir = WORKDIR / 'build'
+    local builddir = WORKDIR / 'build' / util.plat
     local bindir = globals.bindir and fs.absolute(fs.path(globals.bindir)):string() or "$builddir/bin"
     local objdir = globals.objdir and fs.absolute(fs.path(globals.objdir)):string() or "$builddir/obj"
     fs.create_directories(builddir)

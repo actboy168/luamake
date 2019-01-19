@@ -45,6 +45,6 @@ lm:lua_library 'lpeglabel' {
 }
 
 lm:build "test" {
-   "$luamake", "lua", "test.lua",
+   "$luamake", "lua", "test.lua", "$bin",
    deps = { "lpeglabel", "lua" }
 }

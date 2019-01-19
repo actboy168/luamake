@@ -113,13 +113,13 @@ function m:init(arch, winsdk)
     env[#env+1] = ""
     assert(
         assert(
-            io.open((WORKDIR / 'build' / 'env.luamake'):string(), 'w')
+            io.open((WORKDIR / 'build' / 'msvc' / 'env.luamake'):string(), 'w')
         ):write(table.concat(env, '\n'))
     ):close()
 end
 
 local function init_from_cache(self)
-    local f = assert(io.open((WORKDIR / 'build' / 'env.luamake'):string(), 'r'))
+    local f = assert(io.open((WORKDIR / 'build' / 'msvc' / 'env.luamake'):string(), 'r'))
     local env = assert(load(assert(f:read 'a')))()
     f:close()
 

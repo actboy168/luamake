@@ -1,17 +1,20 @@
+local bin = ...
+
 require 'bee'
 local subprocess = require 'bee.subprocess'
 local platform = require 'bee.platform'
 local fs = require 'bee.filesystem'
 
 local CWD = fs.current_path()
+local bindir = fs.path(bin)
 
 local lua, cpath
 if platform.OS == "Windows" then
-    lua = CWD / "build" / "bin" / "lua.exe"
-    cpath = "build/bin/?.dll"
+    lua = bindir / "lua.exe"
+    cpath = (bindir / "?.dll"):string()
 else
-    lua = CWD / "build" / "bin" / "lua"
-    cpath = "build/bin/?.so"
+    lua = bindir / "lua"
+    cpath = (bindir / "?.so"):string()
 end
 
 local process = assert(subprocess.shell {

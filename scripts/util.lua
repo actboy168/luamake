@@ -25,9 +25,9 @@ assert(plat == "msvc"
 )
 
 local function script(v)
-    local builddir = v and fs.path('$builddir') or (WORKDIR / 'build')
+    local builddir = v and fs.path('$builddir') or (WORKDIR / 'build' / plat)
     local filename = builddir / (ARGUMENTS.f or 'make.lua')
-    return filename:parent_path() / ("%s-%s.ninja"):format(filename:stem():string(), plat)
+    return filename:replace_extension(".ninja")
 end
 
 local function ninja(args)

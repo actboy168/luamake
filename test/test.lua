@@ -6,7 +6,7 @@ local platform = require 'bee.platform'
 local fs = require 'bee.filesystem'
 
 local CWD = fs.current_path()
-local bindir = fs.path(bin)
+local bindir = fs.absolute(fs.path(bin))
 
 local lua, cpath
 if platform.OS == "Windows" then

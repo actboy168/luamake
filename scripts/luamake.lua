@@ -341,10 +341,7 @@ end
 
 function lm:finish()
     local globals = self._export_globals
-    local builddir = WORKDIR / 'build' / util.plat
-    local bindir = globals.bindir and fs.absolute(fs.path(globals.bindir)):string() or "$builddir/bin"
-    local objdir = globals.objdir and fs.absolute(fs.path(globals.objdir)):string() or "$builddir/obj"
-    fs.create_directories(builddir)
+    fs.create_directories(WORKDIR / 'build' / util.plat)
 
     local ninja = require "ninja_syntax"
     local ninja_script = util.script():string()
@@ -352,10 +349,19 @@ function lm:finish()
     ninja.DEFAULT_LINE_WIDTH = 100
 
     w:variable("makedir", MAKEDIR:string())
-    w:variable("builddir", builddir:string())
+    w:variable("builddir", ('build/%s'):format(util.plat))
     w:variable("luamake", isWindows() and '$makedir/luamake.exe' or '$makedir/luamake')
-    w:variable("bin", bindir)
-    w:variable("obj", objdir)
+
+    if globals.bindir then
+        w:variable("bin", globals.bindir)
+    else
+        w:variable("bin", "$builddir/bin")
+    end
+    if globals.objdir then
+        w:variable("obj", globals.objdir)
+    else
+        w:variable("obj", "$builddir/obj")
+    end
 
     self.writer = w
 

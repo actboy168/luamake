@@ -383,7 +383,7 @@ function lm:finish()
     if cc.name == "cl" then
         self.arch = globals.arch or "x86"
         self.winsdk = globals.winsdk
-        local msvc = require "msvc_helper"
+        local msvc = require "msvc"
         msvc:init(self.arch, self.winsdk)
         w:subninja('$builddir/msvc_deps_prefix.ninja')
 

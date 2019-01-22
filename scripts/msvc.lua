@@ -28,6 +28,7 @@ local function get_path()
     local result = strtrim(process.stdout:read 'a')
     process.stdout:close()
     process:wait()
+    assert(result ~= "", "can't find msvc.")
     return fs.path(result)
 end
 
@@ -94,6 +95,7 @@ local function get_prefix(env)
     process.stderr:close()
     process:wait()
     fs.remove_all(testdir)
+    assert(prefix, "can't find msvc.")
     return prefix
 end
 

@@ -15,6 +15,10 @@ if lm.plat == 'msvc' then
         "cmd.exe", "/C", "copy", "/Y", "3rd\\bee.lua\\bin\\msvc_x86_release\\bee.dll", "bee.dll",
         deps = "bee"
     }
+    lm:build "copy_bee_3" {
+        "cmd.exe", "/C", "copy", "/Y", "3rd\\bee.lua\\bin\\msvc_x86_release\\lua54.dll", "lua54.dll",
+        deps = "bee"
+    }
 else
     local ninja = "ninja"
     lm:build "bee" {
@@ -32,4 +36,10 @@ else
         "cp", "3rd/bee.lua/bin/"..lm.plat.."_release/bee"..dll, "bee"..dll,
         deps = "bee"
     }
+    if lm.plat == 'mingw' then
+        lm:build "copy_bee_3" {
+            "cp", "3rd/bee.lua/bin/"..lm.plat.."_release/lua54"..dll, "lua54"..dll,
+            deps = "bee"
+        }
+    end
 end

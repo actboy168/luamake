@@ -11,3 +11,5 @@ build $builddir/_/copy_bee_1: command | $builddir/_/bee
   COMMAND = cp 3rd/bee.lua/bin/mingw_release/bootstrap.exe luamake.exe
 build $builddir/_/copy_bee_2: command | $builddir/_/bee
   COMMAND = cp 3rd/bee.lua/bin/mingw_release/bee.dll bee.dll
+build $builddir/_/copy_bee_3: command | $builddir/_/bee
+  COMMAND = cp 3rd/bee.lua/bin/mingw_release/lua54.dll lua54.dll

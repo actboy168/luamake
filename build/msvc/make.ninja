@@ -15,3 +15,6 @@ build $builddir/_/copy_bee_1: command | $builddir/_/bee
 build $builddir/_/copy_bee_2: command | $builddir/_/bee
   COMMAND = cmd.exe /C copy /Y 3rd\bee.lua\bin\msvc_x86_release\bee.dll $
       bee.dll
+build $builddir/_/copy_bee_3: command | $builddir/_/bee
+  COMMAND = cmd.exe /C copy /Y 3rd\bee.lua\bin\msvc_x86_release\lua54.dll $
+      lua54.dll

@@ -1,20 +1,16 @@
 # luamake
 
-## Test
+## Build
 
-windows
+msvc
 ```
-cd test
-..\luamake.exe
+tools\ninja.exe -f ninja\msvc.ninja
 ```
 
-macOS / linux
+mingw / macos / linux
 
-1. install ninja
-2. compile bee.lua
-3. rename bee to luamake
+* install ninja
+* ninja -f ninja\mingw.ninja
+* ninja -f ninja\macos.ninja
+* ninja -f ninja\linux.ninja
 
-```
-cd test
-luamake
-```

@@ -28,6 +28,7 @@ local fs = require 'bee.filesystem'
 
 MAKEDIR = fs.exe_path():parent_path()
 WORKDIR = ARGUMENTS.C and fs.absolute(fs.path(ARGUMENTS.C)) or fs.current_path()
+fs.current_path(WORKDIR)
 
 package.path = (MAKEDIR / "scripts" / "?.lua"):string()
 

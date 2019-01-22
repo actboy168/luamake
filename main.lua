@@ -1,11 +1,3 @@
-require 'bee'
-local fs = require 'bee.filesystem'
-
-MAKEDIR = fs.exe_path():parent_path()
-WORKDIR = fs.current_path()
-
-package.path = (MAKEDIR / "scripts" / "?.lua"):string()
-
 ARGUMENTS = {}
 
 local what = arg[1]
@@ -30,6 +22,14 @@ else
         i = i + 1
     end
 end
+
+require 'bee'
+local fs = require 'bee.filesystem'
+
+MAKEDIR = fs.exe_path():parent_path()
+WORKDIR = ARGUMENTS.C and fs.absolute(fs.path(ARGUMENTS.C)) or fs.current_path()
+
+package.path = (MAKEDIR / "scripts" / "?.lua"):string()
 
 local util = require 'util'
 util.command(what)

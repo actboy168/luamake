@@ -33,10 +33,9 @@ local function init(lm)
     end
 end
 
-local function windowsDeps(lm, name, attribute, luaversion)
+local function windowsDeps(lm, name, attribute, include, luaversion)
     local w = lm.writer
     local cc = lm.cc
-    local include = fs.path('build') / luaversion
     local windeps = include / "windeps"
     fs.create_directories(WORKDIR / 'build' / luaversion / "windeps")
     fs.copy_file(MAKEDIR / "scripts" / "lua_def.lua", WORKDIR / 'build' / "lua_def.lua", true)
@@ -62,11 +61,12 @@ return function (lm, name, attribute)
     init(lm)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
-    flags[#flags+1] = lm.cc.includedir(fs.path('build') / luaversion)
+    local include = WORKDIR / 'build' / luaversion
+    flags[#flags+1] = lm.cc.includedir(include)
     attribute.flags = flags
     copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
     if lm.plat == "msvc" or lm.plat == "mingw" then
-        windowsDeps(lm, name, attribute, luaversion)
+        windowsDeps(lm, name, attribute, include, luaversion)
     end
     return lm, 'shared_library', name, attribute
 end

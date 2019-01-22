@@ -135,7 +135,7 @@ local function generate(self, rule, name, attribute)
     end
 
     local w = self.writer
-    local rootdir = fs.path(init('rootdir', '.')[1])
+    local rootdir = fs.absolute(fs.path(init('rootdir', '.')[1]), WORKDIR)
     local sources = get_sources(rootdir, name, init('sources'))
     local mode = init('mode', 'release')[1]
     local optimize = init('optimize', (mode == "debug" and "off" or "speed"))[1]

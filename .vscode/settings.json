@@ -1,0 +1,6 @@
+{
+    "Lua.workspace.ignoreDir": [
+        "3rd",
+        "test"
+    ]
+}

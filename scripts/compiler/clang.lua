@@ -7,7 +7,7 @@ function clang.mode(_, mode, flags, _)
     end
 end
 
-function clang.rule_dll(w, name, links, ldflags, mode, attribute)
+function clang.rule_dll(w, name, links, ldflags, mode, _)
     local STRIP = (mode == 'release') and [[ && strip -u -r -x $out]] or ''
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[gcc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s %s%s]]):format(ldflags, links, STRIP),
     {
@@ -15,7 +15,7 @@ function clang.rule_dll(w, name, links, ldflags, mode, attribute)
     })
 end
 
-function clang.rule_exe(w, name, links, ldflags, mode, attribute)
+function clang.rule_exe(w, name, links, ldflags, mode, _)
     local STRIP = (mode == 'release') and [[ && strip -u -r -x $out]] or ''
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[gcc $in -o $out %s %s%s]]):format(ldflags, links, STRIP),
     {

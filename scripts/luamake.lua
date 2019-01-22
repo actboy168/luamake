@@ -360,12 +360,9 @@ local function msvc_init(self, globals)
     self.winsdk = globals.winsdk
     local msvc = require "msvc"
     msvc:init(self.arch, self.winsdk)
-    self.writer:subninja('$builddir/msvc_deps_prefix.ninja')
-
-    local ninja = require "ninja_syntax"
-    local subw = ninja.Writer((WORKDIR / 'build' / util.plat / 'msvc_deps_prefix.ninja'):string())
-    subw:variable("deps_prefix", msvc.prefix)
-    subw:close()
+    if ARGUMENTS.rebuilt ~= 'no' then
+        self.writer:variable("msvc_deps_prefix", msvc.prefix)
+    end
 end
 
 function lm:finish()

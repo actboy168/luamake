@@ -13,7 +13,7 @@ if lm.plat == 'msvc' then
         "cmd.exe", "/C",
         "cd", "3rd/bee.lua", "&&",
         "make\\lua.exe", "make\\msvc.lua",
-        ninja, "-f", "ninja/"..lm.plat..".ninja",
+        ninja, "-f", "build\\msvc\\msvc-init.ninja",
         deps = "msvc"
     }
     lm:build "copy_bee_1" {

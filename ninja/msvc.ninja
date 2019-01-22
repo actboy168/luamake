@@ -9,7 +9,7 @@ build $builddir/_/msvc: command
   COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe make\msvc-init.lua
 build $builddir/_/bee: command | $builddir/_/msvc
   COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe make\msvc.lua $
-      ..\..\tools\ninja.exe -f ninja/msvc.ninja
+      ..\..\tools\ninja.exe -f build\msvc\msvc-init.ninja
 build $builddir/_/copy_bee_1: command | $builddir/_/bee
   COMMAND = cmd.exe /C copy /Y $
       3rd\bee.lua\bin\msvc_x86_release\bootstrap.exe luamake.exe

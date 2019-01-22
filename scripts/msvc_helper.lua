@@ -40,7 +40,7 @@ local function parse_env(str)
     return strtrim(str:sub(1, pos - 1)), strtrim(str:sub(pos + 1))
 end
 
-local function get_env(self, path, arch, winsdk)
+local function get_env(path, arch, winsdk)
     local env = {}
     local vsvars32 = path / 'Common7' / 'Tools' / 'VsDevCmd.bat'
     local args = { vsvars32:string() }

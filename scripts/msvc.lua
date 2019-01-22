@@ -4,7 +4,7 @@ local m = {}
 
 function m:init(arch, winsdk)
     local path = msvc.get_path()
-    self.env = msvc.get_env(self, path, arch, winsdk)
+    self.env = msvc.get_env(path, arch, winsdk)
 
     local env = {}
     env[#env+1] = "return {"
@@ -27,7 +27,7 @@ local function init_from_cache(self)
     f:close()
 
     local path = msvc.get_path()
-    self.env = msvc.get_env(self, path, env.arch, env.winsdk)
+    self.env = msvc.get_env(path, env.arch, env.winsdk)
 end
 
 return setmetatable(m, { __index = function(self, k)

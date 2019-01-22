@@ -4,3 +4,6 @@
 [submodule "test/lua"]
 	path = test/lua
 	url = https://github.com/lua/lua
+[submodule "3rd/bee.lua"]
+	path = 3rd/bee.lua
+	url = https://github.com/actboy168/bee.lua

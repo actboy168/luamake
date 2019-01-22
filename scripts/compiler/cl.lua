@@ -65,7 +65,6 @@ function cl.rule_c(w, name, flags, cflags, _)
     {
         description = 'Compile C $out',
         deps = 'msvc',
-        msvc_deps_prefix = '$deps_prefix',
     })
 end
 
@@ -74,7 +73,6 @@ function cl.rule_cxx(w, name, flags, cxxflags, _)
     {
         description = 'Compile CXX $out',
         deps = 'msvc',
-        msvc_deps_prefix = '$deps_prefix',
     })
 end
 

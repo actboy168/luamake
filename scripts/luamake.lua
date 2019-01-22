@@ -348,7 +348,11 @@ local function getexe()
     while arg[i] ~= nil do
         i = i - 1
     end
-    return arg[i + 1]
+    local ret = arg[i + 1]
+    if util.plat == 'msvc' then
+        ret = 'cmd.exe /c ' .. ret
+    end
+    return ret
 end
 
 function lm:finish()
@@ -381,7 +385,11 @@ function lm:finish()
         self.winsdk = globals.winsdk
         local msvc = require "msvc_helper"
         msvc:init(self.arch, self.winsdk)
-        w:variable("deps_prefix", msvc.prefix)
+        w:subninja('$builddir/msvc_deps_prefix.ninja')
+
+        local subw = ninja.Writer((WORKDIR / 'build' / util.plat / 'msvc_deps_prefix.ninja'):string())
+        subw:variable("deps_prefix", msvc.prefix)
+        subw:close()
     end
 
     for _, target in ipairs(self._export_targets) do

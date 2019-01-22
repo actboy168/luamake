@@ -379,7 +379,7 @@ function lm:finish()
     if cc.name == "cl" then
         self.arch = globals.arch or "x86"
         self.winsdk = globals.winsdk
-        local msvc = require "msvc"
+        local msvc = require "msvc_helper"
         msvc:init(self.arch, self.winsdk)
         w:variable("deps_prefix", msvc.prefix)
     end

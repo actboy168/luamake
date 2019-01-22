@@ -4,8 +4,17 @@ lm.rootdir = 'lua'
 
 if lm.plat == 'msvc' then
     local ninja = "..\\..\\tools\\ninja.exe"
+    lm:build "msvc" {
+        "cmd.exe", "/C",
+        "cd", "3rd/bee.lua", "&&",
+        "make\\lua.exe", "make\\msvc-init.lua"
+    }
     lm:build "bee" {
-        "cmd.exe", "/C", "cd", "3rd/bee.lua", "&&", ninja, "-f", "build/"..lm.plat.."/make.ninja",
+        "cmd.exe", "/C",
+        "cd", "3rd/bee.lua", "&&",
+        "make\\lua.exe", "make\\msvc.lua",
+        ninja, "-f", "ninja/"..lm.plat..".ninja",
+        deps = "msvc"
     }
     lm:build "copy_bee_1" {
         "cmd.exe", "/C", "copy", "/Y", "3rd\\bee.lua\\bin\\msvc_x86_release\\bootstrap.exe", "luamake.exe",
@@ -22,7 +31,7 @@ if lm.plat == 'msvc' then
 else
     local ninja = "ninja"
     lm:build "bee" {
-        "cd", "3rd/bee.lua", "&&", ninja, "-f", "build/"..lm.plat.."/make.ninja",
+        "cd", "3rd/bee.lua", "&&", ninja, "-f", "ninja/"..lm.plat..".ninja",
     }
 
     local exe = (lm.plat == 'mingw') and ".exe" or ""

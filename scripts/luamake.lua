@@ -355,6 +355,19 @@ local function getexe()
     return ret
 end
 
+local function msvc_init(self, globals)
+    self.arch = globals.arch or "x86"
+    self.winsdk = globals.winsdk
+    local msvc = require "msvc"
+    msvc:init(self.arch, self.winsdk)
+    self.writer:subninja('$builddir/msvc_deps_prefix.ninja')
+
+    local ninja = require "ninja_syntax"
+    local subw = ninja.Writer((WORKDIR / 'build' / util.plat / 'msvc_deps_prefix.ninja'):string())
+    subw:variable("deps_prefix", msvc.prefix)
+    subw:close()
+end
+
 function lm:finish()
     local globals = self._export_globals
     fs.create_directories(WORKDIR / 'build' / util.plat)
@@ -381,15 +394,12 @@ function lm:finish()
     self.writer = w
 
     if cc.name == "cl" then
-        self.arch = globals.arch or "x86"
-        self.winsdk = globals.winsdk
-        local msvc = require "msvc"
-        msvc:init(self.arch, self.winsdk)
-        w:subninja('$builddir/msvc_deps_prefix.ninja')
-
-        local subw = ninja.Writer((WORKDIR / 'build' / util.plat / 'msvc_deps_prefix.ninja'):string())
-        subw:variable("deps_prefix", msvc.prefix)
-        subw:close()
+        for _, target in ipairs(self._export_targets) do
+            if target[1] ~= 'build' then
+                msvc_init(self, globals)
+                break
+            end
+        end
     end
 
     for _, target in ipairs(self._export_targets) do

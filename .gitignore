@@ -1,7 +1,6 @@
 /tools/*/windeps/
 /test/build/
-.ninja_log
-.ninja_deps
+/build/
 /luamake
 /luamake.exe
 /bee.dll

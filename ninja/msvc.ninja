@@ -1,14 +1,15 @@
 builddir = build/msvc
-luamake = luamake
+luamake = cmd.exe /c luamake
 bin = $builddir/bin
 obj = $builddir/obj
-deps_prefix = 注意: 包含文件:
 rule command
   command = $COMMAND
   description = $DESC
-build $builddir/_/bee: command
-  COMMAND = cmd.exe /C cd 3rd/bee.lua && ..\..\tools\ninja.exe -f $
-      build/msvc/make.ninja
+build $builddir/_/msvc: command
+  COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe make\msvc-init.lua
+build $builddir/_/bee: command | $builddir/_/msvc
+  COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe make\msvc.lua $
+      ..\..\tools\ninja.exe -f ninja/msvc.ninja
 build $builddir/_/copy_bee_1: command | $builddir/_/bee
   COMMAND = cmd.exe /C copy /Y $
       3rd\bee.lua\bin\msvc_x86_release\bootstrap.exe luamake.exe

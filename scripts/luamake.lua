@@ -254,7 +254,9 @@ local function generate(self, rule, name, attribute)
         rule = rule,
     }
 
-    implicit[#implicit+1] = util.script(true)
+    if ARGUMENTS.rebuilt ~= 'no' then
+        implicit[#implicit+1] = util.script(true)
+    end
 
     if rule == "shared_library" then
         cc.rule_dll(w, name, fin_links, fin_ldflags, mode, attribute)
@@ -302,7 +304,9 @@ function GEN.build(self, name, attribute)
         })
     end
     local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
-    implicit[#implicit+1] = util.script(true)
+    if ARGUMENTS.rebuilt ~= 'no' then
+        implicit[#implicit+1] = util.script(true)
+    end
     w:build(outname, 'command', nil, implicit, nil, {
         COMMAND = attribute
     })
@@ -387,10 +391,12 @@ function lm:finish()
             generate(self, target[1], target[2], target[3])
         end
     end
-    local build_lua = ARGUMENTS.f or 'make.lua'
-    local build_ninja = util.script(true)
-    w:rule('configure', '$luamake init -f $in', { generator = 1 })
-    w:build(build_ninja, 'configure', build_lua, self._scripts)
+    if ARGUMENTS.rebuilt ~= 'no' then
+        local build_lua = ARGUMENTS.f or 'make.lua'
+        local build_ninja = util.script(true)
+        w:rule('configure', '$luamake init -f $in', { generator = 1 })
+        w:build(build_ninja, 'configure', build_lua, self._scripts)
+    end
     w:close()
 end
 

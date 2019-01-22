@@ -42,6 +42,7 @@ local function init_version(lm, luaversion)
     local w = lm.writer
     local include = fs.path('build') / luaversion
     local windeps = include / "windeps"
+    w:build(windeps / "lua.def", "luadef", include)
     if lm.cc.name == 'cl' then
         w:build(windeps / "lua.lib", "luadeps", windeps / "lua.def")
     elseif lm.cc.name == 'gcc' then
@@ -58,8 +59,6 @@ local function windowsDeps(lm, name, attribute, include, luaversion)
 
     local ldflags = attribute.ldflags or {}
     local input = attribute.input or {}
-
-    w:build(windeps / "lua.def", "luadef", include)
 
     if cc.name == "cl" then
         ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name

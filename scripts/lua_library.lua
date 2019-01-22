@@ -1,5 +1,6 @@
 local fs = require "bee.filesystem"
-local inited = false
+local inited_rule = false
+local inited_version = {}
 
 local function copy_dir(from, to)
     fs.create_directories(to)
@@ -10,11 +11,11 @@ local function copy_dir(from, to)
     end
 end
 
-local function init(lm)
-    if inited then
+local function init_rule(lm)
+    if inited_rule then
         return
     end
-    inited = true
+    inited_rule = true
     local w = lm.writer
     w:rule("luadef", [[$luamake lua build/lua_def.lua -in $in -out $out]],
     {
@@ -33,6 +34,21 @@ local function init(lm)
     end
 end
 
+local function init_version(lm, luaversion)
+    if inited_version[luaversion] then
+        return
+    end
+    inited_version[luaversion] = true
+    local w = lm.writer
+    local include = fs.path('build') / luaversion
+    local windeps = include / "windeps"
+    if lm.cc.name == 'cl' then
+        w:build(windeps / "lua.lib", "luadeps", windeps / "lua.def")
+    elseif lm.cc.name == 'gcc' then
+        w:build(windeps / "liblua.a", "luadeps", windeps / "lua.def")
+    end
+end
+
 local function windowsDeps(lm, name, attribute, include, luaversion)
     local w = lm.writer
     local cc = lm.cc
@@ -47,10 +63,8 @@ local function windowsDeps(lm, name, attribute, include, luaversion)
 
     if cc.name == "cl" then
         ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
-        w:build(windeps / "lua.lib", "luadeps", windeps / "lua.def")
         input[#input+1] = windeps / "lua.lib"
     else
-        w:build(windeps / "liblua.a", "luadeps", windeps / "lua.def")
         input[#input+1] = windeps / "liblua.a"
     end
     attribute.ldflags = ldflags
@@ -58,10 +72,13 @@ local function windowsDeps(lm, name, attribute, include, luaversion)
 end
 
 return function (lm, name, attribute)
-    init(lm)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
     local include = fs.path('build') / luaversion
+
+    init_rule(lm)
+    init_version(lm, luaversion)
+
     flags[#flags+1] = lm.cc.includedir(include)
     attribute.flags = flags
     copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)

@@ -283,6 +283,11 @@ local GEN = {}
 
 local ruleCommand = false
 
+function GEN.phony(self, _, attribute)
+    local w = self.writer
+    w:build(attribute.output, 'phony', attribute.input)
+end
+
 function GEN.build(self, name, attribute)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
     local function init(attr_name, default)
@@ -384,7 +389,6 @@ function lm:finish()
     end
 
     self.writer = w
-    
 
     if cc.name == "cl" then
         self.arch = globals.arch or "x86"
@@ -459,6 +463,9 @@ function lm:export()
         return function (attribute)
             accept('build', name, attribute)
         end
+    end
+    function m:phony(attribute)
+        accept('phony', nil, attribute)
     end
     m.plat = util.plat
     self._export = m

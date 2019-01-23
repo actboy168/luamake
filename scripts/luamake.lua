@@ -289,6 +289,7 @@ function GEN.build(self, name, attribute)
 
     local w = self.writer
     local deps =  init('deps')
+    local output =  init('output')
     local implicit = {}
 
     for _, dep in ipairs(deps) do
@@ -309,7 +310,7 @@ function GEN.build(self, name, attribute)
     end
     w:build(outname, 'command', nil, implicit, nil, {
         COMMAND = attribute
-    })
+    }, output)
     self._targets[name] = {
         outname = outname,
         rule = 'build',

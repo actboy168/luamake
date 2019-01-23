@@ -147,6 +147,7 @@ local function generate(self, rule, name, attribute)
     local flags =  init('flags')
     local ldflags =  init('ldflags')
     local deps =  init('deps')
+    local pool =  init('pool')
     local implicit = {}
     local input = {}
 
@@ -258,21 +259,22 @@ local function generate(self, rule, name, attribute)
         implicit[#implicit+1] = util.script(true)
     end
 
+    local vars = pool and {pool=pool} or nil
     if rule == "shared_library" then
         cc.rule_dll(w, name, fin_links, fin_ldflags, mode, attribute)
         if cc.name == 'cl' then
             local lib = (fs.path('$bin') / name):replace_extension(".lib")
             t.output = lib
-            w:build(outname, "LINK_"..fmtname, input, implicit, nil, nil, lib)
+            w:build(outname, "LINK_"..fmtname, input, implicit, nil, vars, lib)
         else
             if isWindows() then
                 t.output = outname
             end
-            w:build(outname, "LINK_"..fmtname, input, implicit)
+            w:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
         end
     else
         cc.rule_exe(w, name, fin_links, fin_ldflags, mode, attribute)
-        w:build(outname, "LINK_"..fmtname, input, implicit)
+        w:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     end
     self._targets[name] = t
 end
@@ -290,6 +292,7 @@ function GEN.build(self, name, attribute)
     local w = self.writer
     local deps =  init('deps')
     local output =  init('output')
+    local pool =  init('pool')
     local implicit = {}
 
     for _, dep in ipairs(deps) do
@@ -309,7 +312,8 @@ function GEN.build(self, name, attribute)
         implicit[#implicit+1] = util.script(true)
     end
     w:build(outname, 'command', nil, implicit, nil, {
-        COMMAND = attribute
+        COMMAND = attribute,
+        pool = pool,
     }, output)
     self._targets[name] = {
         outname = outname,
@@ -380,7 +384,7 @@ function lm:finish()
     end
 
     self.writer = w
-
+    
 
     if cc.name == "cl" then
         self.arch = globals.arch or "x86"

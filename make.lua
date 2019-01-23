@@ -7,14 +7,16 @@ if lm.plat == 'msvc' then
     lm:build "msvc" {
         "cmd.exe", "/C",
         "cd", "3rd/bee.lua", "&&",
-        "make\\lua.exe", "make\\msvc-init.lua"
+        "make\\lua.exe", "make\\msvc-init.lua",
+        pool = "console",
     }
     lm:build "bee" {
         "cmd.exe", "/C",
         "cd", "3rd/bee.lua", "&&",
         "make\\lua.exe", "make\\msvc.lua",
         ninja, "-f", "build\\msvc\\msvc-init.ninja",
-        deps = "msvc"
+        deps = "msvc",
+        pool = "console",
     }
     lm:build "copy_bee_1" {
         "cmd.exe", "/C", "copy", "/Y", "3rd\\bee.lua\\bin\\msvc_x86_release\\bootstrap.exe", "luamake.exe",
@@ -32,6 +34,7 @@ else
     local ninja = "ninja"
     lm:build "bee" {
         "cd", "3rd/bee.lua", "&&", ninja, "-f", "ninja/"..lm.plat..".ninja",
+        pool = "console",
     }
 
     local exe = (lm.plat == 'mingw') and ".exe" or ""

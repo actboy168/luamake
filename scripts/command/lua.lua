@@ -5,4 +5,5 @@ end
 arg[n] = nil
 arg[n-1] = nil
 
-assert(loadfile(arg[0]))(table.unpack(arg))
+local sandbox = require "sandbox"
+assert(sandbox(WORKDIR:string(), arg[0], io.open))(table.unpack(arg))

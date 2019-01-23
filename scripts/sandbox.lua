@@ -60,6 +60,9 @@ local function sandbox_env(loadlua, openfile, preload)
         if p ~= nil then
             return p
         end
+        if name == 'bee' or name:sub(1,4) == 'bee.' then
+            return require(name)
+        end
         local init, extra = require_load(name)
         debug.setupvalue(init, 1, env)
         local res = init(name, extra)

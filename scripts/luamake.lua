@@ -356,16 +356,6 @@ local function getexe()
     return ret
 end
 
-local function msvc_init(self, globals)
-    self.arch = globals.arch or "x86"
-    self.winsdk = globals.winsdk
-    local msvc = require "msvc"
-    msvc:init(self.arch, self.winsdk)
-    if ARGUMENTS.rebuilt ~= 'no' then
-        self.writer:variable("msvc_deps_prefix", msvc.prefix)
-    end
-end
-
 function lm:finish()
     local globals = self._export_globals
     fs.create_directories(WORKDIR / 'build' / util.plat)
@@ -391,10 +381,19 @@ function lm:finish()
 
     self.writer = w
 
+
     if cc.name == "cl" then
+        self.arch = globals.arch or "x86"
+        self.winsdk = globals.winsdk
+        local msvc = require "msvc"
+        msvc:create_config(self.arch, self.winsdk)
+
         for _, target in ipairs(self._export_targets) do
             if target[1] ~= 'build' then
-                msvc_init(self, globals)
+                msvc:init(self.arch, self.winsdk)
+                if ARGUMENTS.rebuilt ~= 'no' then
+                    self.writer:variable("msvc_deps_prefix", msvc.prefix)
+                end
                 break
             end
         end

@@ -2,10 +2,7 @@ local msvc = require 'msvc_helper'
 
 local m = {}
 
-function m:init(arch, winsdk)
-    local path = msvc.get_path()
-    self.env = msvc.get_env(path, arch, winsdk)
-
+function m:create_config(arch, winsdk)
     local env = {}
     env[#env+1] = "return {"
     env[#env+1] = ("arch=%q,"):format(arch)
@@ -19,6 +16,11 @@ function m:init(arch, winsdk)
             io.open((WORKDIR / 'build' / 'msvc' / 'env.luamake'):string(), 'w')
         ):write(table.concat(env, '\n'))
     ):close()
+end
+
+function m:init(arch, winsdk)
+    local path = msvc.get_path()
+    self.env = msvc.get_env(path, arch, winsdk)
 end
 
 local function init_from_cache(self)

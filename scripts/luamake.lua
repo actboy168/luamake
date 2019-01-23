@@ -16,6 +16,8 @@ end)()
 
 local cc = require("compiler." .. compiler)
 
+local function f_nil() end
+
 local function isWindows()
     return util.plat == "msvc" or util.plat == "mingw"
 end
@@ -108,8 +110,13 @@ local function get_warnings(warnings)
 end
 
 local function init_attribute(attribute, attr_name, default)
-    local result = attribute[attr_name] or default or {}
-    if type(result) == 'string' then
+    local result
+    if type(default) == 'function' then
+        result = attribute[attr_name] or default()
+    else
+        result = attribute[attr_name] or default or {}
+    end
+    if type(result) ~= 'table' then
         return {result}
     end
     local j = 1
@@ -147,7 +154,7 @@ local function generate(self, rule, name, attribute)
     local flags =  init('flags')
     local ldflags =  init('ldflags')
     local deps =  init('deps')
-    local pool =  init('pool')
+    local pool =  init('pool', f_nil)[1]
     local implicit = {}
     local input = {}
 
@@ -297,7 +304,7 @@ function GEN.build(self, name, attribute)
     local w = self.writer
     local deps =  init('deps')
     local output =  init('output')
-    local pool =  init('pool')
+    local pool =  init('pool', f_nil)[1]
     local implicit = {}
 
     for _, dep in ipairs(deps) do

@@ -157,6 +157,7 @@ local function generate(self, rule, name, attribute)
     local pool =  init('pool', f_nil)[1]
     local implicit = {}
     local input = {}
+    assert(#sources > 0, ("`%s`: no source files found."):format(name))
 
     tbl_append(flags, cc.flags)
     tbl_append(ldflags, cc.ldflags)

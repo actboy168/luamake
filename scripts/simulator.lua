@@ -1,54 +1,74 @@
 local util = require 'util'
 local lm = require 'luamake'
+local sandbox = require "sandbox"
 
-local function create()
-    local t = {}
-    local globals = {}
-    local function setter(_, k, v)
-        globals[k] = v
-    end
-    local function getter(_, k)
-        return globals[k]
-    end
-    local function accept(type, name, attribute)
-        for k, v in pairs(globals) do
-            if not attribute[k] then
-                attribute[k] = v
-            end
-        end
-        t[#t+1] = {type, name, attribute}
-    end
-    local m = setmetatable({}, {__index = getter, __newindex = setter})
-    function m:shared_library(name)
-        return function (attribute)
-            accept('shared_library', name, attribute)
+local targets = {}
+local globals = {}
+local function accept(type, name, attribute)
+    for k, v in pairs(globals) do
+        if not attribute[k] then
+            attribute[k] = v
         end
     end
-    function m:executable(name)
-        return function (attribute)
-            accept('executable', name, attribute)
-        end
-    end
-    function m:lua_library(name)
-        return function (attribute)
-            accept('lua_library', name, attribute)
-        end
-    end
-    function m:build(name)
-        return function (attribute)
-            accept('build', name, attribute)
-        end
-    end
-    function m:phony(attribute)
-        accept('phony', nil, attribute)
-    end
-    m.plat = util.plat
-    return m, t, globals
+    targets[#targets+1] = {type, name, attribute}
 end
 
-return function()
-    if not lm._export then
-        lm._export, lm._export_targets, lm._export_globals = create()
+local simulator = {
+    plat = util.plat
+}
+
+function simulator:shared_library(name)
+    return function (attribute)
+        accept('shared_library', name, attribute)
     end
-    return lm._export
 end
+function simulator:executable(name)
+    return function (attribute)
+        accept('executable', name, attribute)
+    end
+end
+function simulator:lua_library(name)
+    return function (attribute)
+        accept('lua_library', name, attribute)
+    end
+end
+function simulator:build(name)
+    return function (attribute)
+        accept('build', name, attribute)
+    end
+end
+function simulator:phony(attribute)
+    accept('phony', nil, attribute)
+end
+
+local function setter(_, k, v)
+    globals[k] = v
+end
+local function getter(_, k)
+    return globals[k]
+end
+simulator = setmetatable(simulator, {__index = getter, __newindex = setter})
+
+lm._export_targets = targets
+lm._export_globals = globals
+
+local function filehook(name, mode)
+    local f, err = io.open(name, mode)
+    if f then
+        lm:add_script(name)
+    end
+    return f, err
+end
+
+local function dofile(_, dir, file)
+    assert(sandbox(dir, file, filehook, { luamake = simulator }))(table.unpack(arg))
+end
+
+local function finish()
+    lm:finish()
+end
+
+return  {
+    dofile = dofile,
+    finish = finish,
+}

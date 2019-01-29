@@ -1,6 +1,9 @@
 local util = require 'util'
 local lm = require 'luamake'
 local sandbox = require "sandbox"
+local fs = require 'bee.filesystem'
+
+local dofile
 
 local targets = {}
 local globals = {}
@@ -40,6 +43,10 @@ end
 function simulator:phony(attribute)
     accept('phony', nil, attribute)
 end
+function simulator:import(path)
+    local filepath = fs.path(path)
+    dofile(_, filepath:parent_path():string(), filepath:filename():string())
+end
 
 local function setter(_, k, v)
     globals[k] = v
@@ -60,8 +67,11 @@ local function filehook(name, mode)
     return f, err
 end
 
-local function dofile(_, dir, file)
+function dofile(_, dir, file)
+    local last = globals.workdir
+    globals.workdir = dir
     assert(sandbox(dir, file, filehook, { luamake = simulator }))(table.unpack(arg))
+    globals.workdir = last
 end
 
 local function finish()

@@ -22,6 +22,15 @@ local function isWindows()
     return util.plat == "msvc" or util.plat == "mingw"
 end
 
+local function fmtpath(workdir, path)
+    local res = fs.relative(fs.absolute(fs.path(path), workdir), WORKDIR):string()
+    if isWindows() then
+        return res:gsub('/', '\\')
+    else
+        return res:gsub('\\', '/')
+    end
+end
+
 -- TODO 在某些平台上忽略大小写？
 local function glob_compile(pattern)
     return ("^%s$"):format(pattern:gsub("[%^%$%(%)%%%.%[%]%+%-%?]", "%%%0"):gsub("%*", ".*"))
@@ -31,11 +40,12 @@ local function glob_match(pattern, target)
 end
 
 local function accept_path(t, path)
-    if t[path:string()] then
+    local repath = fs.relative(path, WORKDIR):string()
+    if t[repath] then
         return
     end
-    t[#t+1] = path:string()
-    t[path:string()] = #t
+    t[#t+1] = repath
+    t[repath] = #t
 end
 local function expand_dir(t, pattern, dir)
     if not fs.exists(dir) then
@@ -142,7 +152,8 @@ local function generate(self, rule, name, attribute)
     end
 
     local w = self.writer
-    local rootdir = fs.path(init('rootdir', '.')[1])
+    local workdir = fs.path(init('workdir', '.')[1])
+    local rootdir = fs.absolute(fs.path(init('rootdir', '.')[1]), workdir)
     local sources = get_sources(rootdir, name, init('sources'))
     local mode = init('mode', 'release')[1]
     local optimize = init('optimize', (mode == "debug" and "off" or "speed"))[1]
@@ -289,6 +300,12 @@ local ruleCommand = false
 
 function GEN.phony(self, _, attribute)
     local w = self.writer
+    local function init(attr_name, default)
+        return init_attribute(attribute, attr_name, default)
+    end
+    local workdir = fs.path(init('workdir', '.')[1])
+    attribute.input  = fmtpath(workdir, attribute.input)
+    attribute.output = fmtpath(workdir, attribute.output)
     w:build(attribute.output, 'phony', attribute.input)
 end
 
@@ -299,10 +316,23 @@ function GEN.build(self, name, attribute)
     end
 
     local w = self.writer
+    local workdir = fs.path(init('workdir', '.')[1])
     local deps =  init('deps')
     local output =  init('output')
     local pool =  init('pool', f_nil)[1]
     local implicit = {}
+
+    for i = 1, #output do
+        output[i] = fmtpath(workdir, output[i])
+    end
+
+    for i = 1, #attribute do
+        if type(attribute[i]) ~= 'string' then
+            attribute[i] = fmtpath(workdir, attribute[i])
+        elseif attribute[i]:sub(1,1) == '@' then
+            attribute[i] = fmtpath(workdir, attribute[i]:sub(2))
+        end
+    end
 
     for _, dep in ipairs(deps) do
         local depsTarget = self._targets[dep]

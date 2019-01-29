@@ -22,8 +22,12 @@ local function isWindows()
     return util.plat == "msvc" or util.plat == "mingw"
 end
 
+local function fmtpath_u(workdir, path)
+    return fs.relative(fs.absolute(fs.path(path), workdir), WORKDIR)
+end
+
 local function fmtpath(workdir, path)
-    local res = fs.relative(fs.absolute(fs.path(path), workdir), WORKDIR):string()
+    local res = fmtpath_u(workdir, path):string()
     if isWindows() then
         return res:gsub('/', '\\')
     else
@@ -186,7 +190,7 @@ local function generate(self, rule, name, attribute)
     cc.mode(name, mode, flags, ldflags)
 
     for _, inc in ipairs(includes) do
-        flags[#flags+1] = cc.includedir(rootdir / inc)
+        flags[#flags+1] = cc.includedir(fmtpath_u(workdir, rootdir / inc))
     end
 
     for _, macro in ipairs(defines) do
@@ -195,6 +199,14 @@ local function generate(self, rule, name, attribute)
 
     if rule == "shared_library" and not isWindows() then
         flags[#flags+1] = "-fPIC"
+    end
+
+    for _, dep in ipairs(deps) do
+        local depsTarget = self._targets[dep]
+        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+        if depsTarget.includedir then
+            flags[#flags+1] = cc.includedir(fmtpath_u(workdir, depsTarget.includedir))
+        end
     end
 
     local fin_flags = table.concat(flags, " ")
@@ -229,11 +241,6 @@ local function generate(self, rule, name, attribute)
 
     for _, dep in ipairs(deps) do
         local depsTarget = self._targets[dep]
-        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-
-        if depsTarget.includedir then
-            flags[#flags+1] = cc.includedir(depsTarget.includedir)
-        end
         if depsTarget.output then
             input[#input+1] = depsTarget.output
         else

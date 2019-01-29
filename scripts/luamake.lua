@@ -337,7 +337,6 @@ local lm = {}
 lm._scripts = {}
 lm._targets = {}
 lm.cc = cc
-lm.plat = util.plat
 
 function lm:add_script(filename)
     if fs.path(filename:sub(1, #(MAKEDIR:string()))) == MAKEDIR then
@@ -423,57 +422,6 @@ function lm:finish()
         end
     end
     w:close()
-end
-
-function lm:export()
-    if self._export then
-        return self._export
-    end
-    local t = {}
-    local globals = {}
-    local function setter(_, k, v)
-        globals[k] = v
-    end
-    local function getter(_, k)
-        return globals[k]
-    end
-    local function accept(type, name, attribute)
-        for k, v in pairs(globals) do
-            if not attribute[k] then
-                attribute[k] = v
-            end
-        end
-        t[#t+1] = {type, name, attribute}
-    end
-    local m = setmetatable({}, {__index = getter, __newindex = setter})
-    function m:shared_library(name)
-        return function (attribute)
-            accept('shared_library', name, attribute)
-        end
-    end
-    function m:executable(name)
-        return function (attribute)
-            accept('executable', name, attribute)
-        end
-    end
-    function m:lua_library(name)
-        return function (attribute)
-            accept('lua_library', name, attribute)
-        end
-    end
-    function m:build(name)
-        return function (attribute)
-            accept('build', name, attribute)
-        end
-    end
-    function m:phony(attribute)
-        accept('phony', nil, attribute)
-    end
-    m.plat = util.plat
-    self._export = m
-    self._export_targets = t
-    self._export_globals = globals
-    return m
 end
 
 return lm

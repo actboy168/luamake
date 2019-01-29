@@ -317,7 +317,7 @@ function GEN.build(self, name, attribute)
         })
     end
     local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
-    w:build(outname, 'command', nil, nil, nil, {
+    w:build(outname, 'command', nil, implicit, nil, {
         COMMAND = attribute,
         pool = pool,
     }, output)

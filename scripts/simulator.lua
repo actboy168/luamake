@@ -45,7 +45,7 @@ function simulator:phony(attribute)
 end
 function simulator:import(path)
     local filepath = fs.path(path)
-    dofile(_, filepath:parent_path():string(), filepath:filename():string())
+    dofile(nil, filepath:parent_path():string(), filepath:filename():string())
 end
 
 local function setter(_, k, v)

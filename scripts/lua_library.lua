@@ -52,7 +52,6 @@ local function init_version(lm, luaversion)
 end
 
 local function windowsDeps(lm, name, attribute, include, luaversion)
-    local w = lm.writer
     local cc = lm.cc
     local windeps = include / "windeps"
     fs.create_directories(WORKDIR / 'build' / luaversion / "windeps")

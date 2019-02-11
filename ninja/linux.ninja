@@ -9,6 +9,6 @@ build $builddir/_/bee: command
   pool = console
   COMMAND = cd 3rd/bee.lua && ninja -f ninja/linux.ninja
 build $builddir/_/copy_bee_1: command | $builddir/_/bee
-  COMMAND = cp 3rd/bee.lua/bin/linux_release/bootstrap luamake
+  COMMAND = cp 3rd/bee.lua/build/linux/bin/bootstrap luamake
 build $builddir/_/copy_bee_2: command | $builddir/_/bee
-  COMMAND = cp 3rd/bee.lua/bin/linux_release/bee.so bee.so
+  COMMAND = cp 3rd/bee.lua/build/linux/bin/bee.so bee.so

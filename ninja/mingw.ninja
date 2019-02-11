@@ -9,8 +9,8 @@ build $builddir/_/bee: command
   pool = console
   COMMAND = cd 3rd/bee.lua && ninja -f ninja/mingw.ninja
 build $builddir/_/copy_bee_1: command | $builddir/_/bee
-  COMMAND = cp 3rd/bee.lua/bin/mingw_release/bootstrap.exe luamake.exe
+  COMMAND = cp 3rd/bee.lua/build/mingw/bin/bootstrap.exe luamake.exe
 build $builddir/_/copy_bee_2: command | $builddir/_/bee
-  COMMAND = cp 3rd/bee.lua/bin/mingw_release/bee.dll bee.dll
+  COMMAND = cp 3rd/bee.lua/build/mingw/bin/bee.dll bee.dll
 build $builddir/_/copy_bee_3: command | $builddir/_/bee
-  COMMAND = cp 3rd/bee.lua/bin/mingw_release/lua54.dll lua54.dll
+  COMMAND = cp 3rd/bee.lua/build/mingw/bin/lua54.dll lua54.dll

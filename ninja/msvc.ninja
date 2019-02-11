@@ -13,11 +13,9 @@ build $builddir/_/bee: command | $builddir/_/msvc
   COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe make\msvc.lua $
       ..\..\tools\ninja.exe -f build\msvc\msvc-init.ninja
 build $builddir/_/copy_bee_1: command | $builddir/_/bee
-  COMMAND = cmd.exe /C copy /Y $
-      3rd\bee.lua\bin\msvc_x86_release\bootstrap.exe luamake.exe
+  COMMAND = cmd.exe /C copy /Y 3rd\bee.lua\build\msvc\bin\bootstrap.exe $
+      luamake.exe
 build $builddir/_/copy_bee_2: command | $builddir/_/bee
-  COMMAND = cmd.exe /C copy /Y 3rd\bee.lua\bin\msvc_x86_release\bee.dll $
-      bee.dll
+  COMMAND = cmd.exe /C copy /Y 3rd\bee.lua\build\msvc\bin\bee.dll bee.dll
 build $builddir/_/copy_bee_3: command | $builddir/_/bee
-  COMMAND = cmd.exe /C copy /Y 3rd\bee.lua\bin\msvc_x86_release\lua54.dll $
-      lua54.dll
+  COMMAND = cmd.exe /C copy /Y 3rd\bee.lua\build\msvc\bin\lua54.dll lua54.dll

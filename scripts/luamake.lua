@@ -28,7 +28,7 @@ end
 
 local function fmtpath(workdir, path)
     local res = fmtpath_u(workdir, path):string()
-    if isWindows() then
+    if util.plat == "msvc" then
         return res:gsub('/', '\\')
     else
         return res:gsub('\\', '/')

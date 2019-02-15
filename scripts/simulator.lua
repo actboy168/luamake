@@ -40,6 +40,9 @@ function simulator:build(name)
         accept('build', name, attribute)
     end
 end
+function simulator:default(attribute)
+    accept('default', nil, attribute)
+end
 function simulator:phony(attribute)
     accept('phony', nil, attribute)
 end

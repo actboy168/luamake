@@ -305,6 +305,16 @@ local GEN = {}
 
 local ruleCommand = false
 
+function GEN.default(self, _, attribute)
+    local w = self.writer
+    local targets = {}
+    for _, name in ipairs(attribute) do
+        assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
+        targets[#targets+1] = self._targets[name].outname
+    end
+    w:default(targets)
+end
+
 function GEN.phony(self, _, attribute)
     local w = self.writer
     local function init(attr_name, default)

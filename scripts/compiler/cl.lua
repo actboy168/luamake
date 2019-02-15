@@ -48,13 +48,13 @@ local cl = {
     end
 }
 
-function cl.mode(name, mode, flags, ldflags)
+function cl.mode(name, mode, crt, flags, ldflags)
     if mode == 'debug' then
-        flags[#flags+1] = '/MDd'
+        flags[#flags+1] = crt == 'dynamic' and '/MDd' or '/MTd'
         flags[#flags+1] = ('/Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")
         ldflags[#ldflags+1] = '/DEBUG:FASTLINK'
     else
-        flags[#flags+1] = '/MD'
+        flags[#flags+1] = crt == 'dynamic' and '/MD' or '/MT'
         ldflags[#ldflags+1] = '/DEBUG:NONE'
         ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
     end

@@ -41,7 +41,10 @@ local gcc = {
     end
 }
 
-function gcc.mode(_, mode, flags, ldflags)
+function gcc.mode(_, mode, crt, flags, ldflags)
+    if crt ~= 'dynamic' then
+        ldflags[#ldflags+1] = "-static"
+    end
     if mode == 'debug' then
         flags[#flags+1] = '-g'
     else

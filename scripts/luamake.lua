@@ -160,6 +160,7 @@ local function generate(self, rule, name, attribute)
     local rootdir = fs.absolute(fs.path(init('rootdir', '.')[1]), workdir)
     local sources = get_sources(rootdir, name, init('sources'))
     local mode = init('mode', 'release')[1]
+    local crt = init('crt', 'dynamic')[1]
     local optimize = init('optimize', (mode == "debug" and "off" or "speed"))[1]
     local warnings = get_warnings(init('warnings'))
     local defines = init('defines')
@@ -187,7 +188,7 @@ local function generate(self, rule, name, attribute)
         ldflags[#ldflags+1] = "/MACHINE:" .. self.arch
     end
 
-    cc.mode(name, mode, flags, ldflags)
+    cc.mode(name, mode, crt, flags, ldflags)
 
     for _, inc in ipairs(includes) do
         flags[#flags+1] = cc.includedir(fmtpath_u(workdir, rootdir / inc))

@@ -186,6 +186,9 @@ local function generate(self, rule, name, attribute)
 
     if cc.name == 'cl' then
         ldflags[#ldflags+1] = "/MACHINE:" .. self.arch
+        if not attribute.permissive then
+            flags[#flags+1] = '/permissive-'
+        end
     end
 
     cc.mode(name, mode, crt, flags, ldflags)

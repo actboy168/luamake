@@ -3,7 +3,7 @@ local fs = require "bee.filesystem"
 local cl = {
     name = "cl",
     flags = {
-        "/EHsc /permissive-",
+        "/EHsc",
     },
     ldflags = {
         "/SAFESEH",

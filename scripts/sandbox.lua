@@ -28,15 +28,49 @@ local function sandbox_env(loadlua, openfile, preload)
 
     local function searcher_lua(name)
         assert(type(env.package.path) == "string", "'package.path' must be a string")
-        local filename, err1 = searchpath(name, env.package.path)
-        if not filename then
+        local path, err1 = searchpath(name, env.package.path)
+        if not path then
             return err1
         end
-        local f, err2 = loadlua(filename)
+        local f, err2 = loadlua(path)
         if not f then
-            error(("error loading module '%s' from file '%s':\n\t%s"):format(name, filename, err2))
+            error(("error loading module '%s' from file '%s':\n\t%s"):format(name, path, err2))
         end
-        return f, filename
+        return f, path
+    end
+
+    local function searcher_c(name)
+        assert(type(env.package.cpath) == "string", "'package.cpath' must be a string")
+        local path, err1 = searchpath(name, env.package.cpath)
+        if not path then
+            return err1
+        end
+        name = name:gsub("%.", "_")
+        name = name:gsub("[^%-]+%-", "")
+        local res, err2 =  package.loadlib(path, "luaopen_" .. name)
+        if not res then
+            error(("error loading module '%s' from file '%s':\n\t%s"):format(name, path, err2))
+        end
+        return res, path
+    end
+
+    local function searcher_croot(name)
+        assert(type(env.package.cpath) == "string", "'package.cpath' must be a string")
+        if not name:find('.', 1, true) then
+            return
+        end
+        local prefix = name:match "^[^%.]+"
+        local path, err = searchpath(prefix, env.package.cpath)
+        if not path then
+            return err
+        end
+        name = name:gsub("%.", "_")
+        name = name:gsub("[^%-]+%-", "")
+        local res, err2 =  package.loadlib(path, "luaopen_" .. name)
+        if not res then
+            error(("error loading module '%s' from file '%s':\n\t%s"):format(name, path, err2))
+        end
+        return res, path
     end
 
     local function require_load(name)
@@ -80,14 +114,16 @@ local function sandbox_env(loadlua, openfile, preload)
         loaded = _LOADED,
         preload = _PRELOAD,
         path = '?.lua',
+        cpath = package.cpath,
         searchpath = searchpath,
+        loadlib = package.loadlib,
         searchers = {}
     }
-    for i, searcher in ipairs(package.searchers) do
-        env.package.searchers[i] = searcher
-    end
+
     env.package.searchers[1] = searcher_preload
     env.package.searchers[2] = searcher_lua
+    env.package.searchers[3] = searcher_c
+    env.package.searchers[4] = searcher_croot
 
     function env.loadfile(filename)
         return loadlua(filename)

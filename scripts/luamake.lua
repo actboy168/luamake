@@ -240,10 +240,41 @@ local function generate(self, rule, name, attribute)
         end
     end
 
+    local outname
+    if rule == "executable" then
+        if isWindows() then
+            outname = fs.path("$bin") / (name .. ".exe")
+        else
+            outname = fs.path("$bin") / name
+        end
+    elseif rule == "shared_library" then
+        if isWindows() then
+            outname = fs.path("$bin") / (name .. ".dll")
+        else
+            outname = fs.path("$bin") / (name .. ".so")
+        end
+    end
+
+    local t = {
+        includedir = rootdir,
+        outname = outname,
+        rule = rule,
+    }
+    self._targets[name] = t
+
+    if rule == 'source_set' then
+        t.output = input
+        return
+    end
+
     for _, dep in ipairs(deps) do
         local depsTarget = self._targets[dep]
         if depsTarget.output then
-            input[#input+1] = depsTarget.output
+            if type(depsTarget.output) == 'table' then
+                tbl_append(input, depsTarget.output)
+            else
+                input[#input+1] = depsTarget.output
+            end
         else
             implicit[#implicit+1] = depsTarget.outname
         end
@@ -259,28 +290,9 @@ local function generate(self, rule, name, attribute)
     local fin_links = table.concat(tbl_links, " ")
     local fin_ldflags = table.concat(ldflags, " ")
 
-    local outname = fs.path("$bin") /name
-    if rule == "executable" then
-        if isWindows() then
-            outname = fs.path("$bin") / (name .. ".exe")
-        end
-    elseif rule == "shared_library" then
-        if isWindows() then
-            outname = fs.path("$bin") / (name .. ".dll")
-        else
-            outname = fs.path("$bin") / (name .. ".so")
-        end
-    end
-
     if attribute.input or self.input then
         tbl_append(input, attribute.input or self.input)
     end
-
-    local t = {
-        includedir = rootdir,
-        outname = outname,
-        rule = rule,
-    }
 
     local vars = pool and {pool=pool} or nil
     if rule == "shared_library" then
@@ -299,7 +311,6 @@ local function generate(self, rule, name, attribute)
         cc.rule_exe(w, name, fin_links, fin_ldflags, mode, attribute)
         w:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     end
-    self._targets[name] = t
 end
 
 local GEN = {}

@@ -20,6 +20,11 @@ local simulator = {
     plat = util.plat
 }
 
+function simulator:source_set(name)
+    return function (attribute)
+        accept('source_set', name, attribute)
+    end
+end
 function simulator:shared_library(name)
     return function (attribute)
         accept('shared_library', name, attribute)

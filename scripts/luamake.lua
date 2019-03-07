@@ -94,6 +94,7 @@ local function get_sources(root, name, sources)
             result[#result] = nil
         end
     end
+    table.sort(result)
     return result
 end
 

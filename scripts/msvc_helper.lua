@@ -118,8 +118,31 @@ end
 local function ucrtpath(platform)
     local registry = require 'bee.registry'
     local reg = registry.open [[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots]]
-    local path = fs.path(reg.KitsRoot10)
-    return path / 'Redist' / 'ucrt' / 'DLLs' / platform
+    local path = fs.path(reg.KitsRoot10) / 'Redist'
+    local res, ver
+    local function accept(p)
+        if not fs.is_directory(p) then
+            return
+        end
+        local ucrt = p / 'ucrt' / 'DLLs' / platform
+        if fs.exists(ucrt) then
+            local version = 0
+            if p ~= path then
+                version = p:filename():string():gsub('10%.0%.([0-9]+)%.0', '%1')
+                version = tonumber(version)
+            end
+            if not ver or ver < version then
+                res, ver = ucrt, version
+            end
+        end
+    end
+    accept(path)
+    for p in path:list_directory() do
+        accept(p)
+    end
+    if res then
+        return res
+    end
 end
 
 return {

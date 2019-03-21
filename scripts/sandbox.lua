@@ -117,13 +117,13 @@ local function sandbox_env(loadlua, openfile, preload)
         cpath = package.cpath,
         searchpath = searchpath,
         loadlib = package.loadlib,
-        searchers = {}
+        searchers = {
+            searcher_preload,
+            searcher_lua,
+            searcher_c,
+            searcher_croot,
+        }
     }
-
-    env.package.searchers[1] = searcher_preload
-    env.package.searchers[2] = searcher_lua
-    env.package.searchers[3] = searcher_c
-    env.package.searchers[4] = searcher_croot
 
     function env.loadfile(filename)
         return loadlua(filename)

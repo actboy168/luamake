@@ -19,17 +19,14 @@ function m:create_config(arch, winsdk)
 end
 
 function m:init(arch, winsdk)
-    local path = msvc.get_path()
-    self.env = msvc.get_env(path, arch, winsdk)
+    self.env = msvc.environment(arch, winsdk)
 end
 
 local function init_from_cache(self)
     local f = assert(io.open((WORKDIR / 'build' / 'msvc' / 'env.luamake'):string(), 'r'))
     local env = assert(load(assert(f:read 'a')))()
     f:close()
-
-    local path = msvc.get_path()
-    self.env = msvc.get_env(path, env.arch, env.winsdk)
+    self.env = msvc.environment(env.arch, env.winsdk)
 end
 
 return setmetatable(m, { __index = function(self, k)
@@ -37,7 +34,7 @@ return setmetatable(m, { __index = function(self, k)
         init_from_cache(self)
         return self.env
     elseif k == 'prefix' then
-        self.prefix = msvc.get_prefix(self.env)
+        self.prefix = msvc.prefix(self.env)
         return self.prefix
     end
 end})

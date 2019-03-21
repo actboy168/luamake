@@ -16,7 +16,11 @@ local function strtrim(str)
     return str:gsub("^%s*(.-)%s*$", "%1")
 end
 
-local function get_path()
+local InstallDir
+local function installpath()
+    if InstallDir then
+        return InstallDir
+    end
     local process = assert(sp.spawn {
         vswhere,
         '-latest',
@@ -29,7 +33,8 @@ local function get_path()
     process.stdout:close()
     process:wait()
     assert(result ~= "", "can't find msvc.")
-    return fs.path(result)
+    InstallDir = fs.path(result)
+    return InstallDir
 end
 
 local function parse_env(str)
@@ -40,9 +45,9 @@ local function parse_env(str)
     return strtrim(str:sub(1, pos - 1)), strtrim(str:sub(pos + 1))
 end
 
-local function get_env(path, arch, winsdk)
+local function environment(arch, winsdk)
     local env = {}
-    local vsvars32 = path / 'Common7' / 'Tools' / 'VsDevCmd.bat'
+    local vsvars32 = installpath() / 'Common7' / 'Tools' / 'VsDevCmd.bat'
     local args = { vsvars32:string() }
     if arch then
         args[#args+1] = ('-arch=%s'):format(arch)
@@ -71,7 +76,7 @@ local function get_env(path, arch, winsdk)
     return env
 end
 
-local function get_prefix(env)
+local function prefix(env)
     local testdir = MAKEDIR / 'luamake-temp'
     fs.create_directories(testdir)
     createfile(testdir / 'test.h')
@@ -99,8 +104,28 @@ local function get_prefix(env)
     return prefix
 end
 
+local function crtpath(platform)
+    local RedistVersion = (function ()
+        local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCRedistVersion.default.txt'
+        local f = assert(io.open(verfile:string(), 'r'))
+        local r = f:read 'a'
+        f:close()
+        return strtrim(r)
+    end)()
+    return installpath() / 'VC' / 'Redist' / 'MSVC' / RedistVersion / platform / 'Microsoft.VC141.CRT'
+end
+
+local function ucrtpath(platform)
+    local registry = require 'bee.registry'
+    local reg = registry.open [[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots]]
+    local path = fs.path(reg.KitsRoot10)
+    return path / 'Redist' / 'ucrt' / 'DLLs' / platform
+end
+
 return {
-    get_path = get_path,
-    get_env = get_env,
-    get_prefix = get_prefix,
+    installpath = installpath,
+    environment = environment,
+    prefix = prefix,
+    crtpath = crtpath,
+    ucrtpath = ucrtpath,
 }

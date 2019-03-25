@@ -6,4 +6,6 @@ arg[n] = nil
 arg[n-1] = nil
 
 local sandbox = require "sandbox"
-assert(sandbox(WORKDIR:string(), arg[0], io.open))(table.unpack(arg))
+assert(sandbox(WORKDIR:string(), arg[0], io.open, {
+    msvc = require "msvc_helper",
+}))(table.unpack(arg))

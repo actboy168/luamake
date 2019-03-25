@@ -1,5 +1,6 @@
-local function sandbox_env(loadlua, openfile, preload)
-    local env = setmetatable({}, {__index=_G})
+local function sandbox_env(env, loadlua, openfile, preload)
+    setmetatable(env, {__index=_G})
+
     local _PRELOAD = {}
     local _LOADED = preload or {}
 
@@ -144,12 +145,13 @@ return function(root, main, io_open, preload)
     local function openfile(name, mode)
         return io_open(root .. '/' .. name, mode)
     end
+    local env = {}
     local function loadlua(name)
         local f, err = openfile(name, 'r')
         if f then
             local str = f:read 'a'
             f:close()
-            return load(str, '@' .. root .. '/' .. name)
+            return load(str, '@' .. root .. '/' .. name, 't', env)
         end
         return nil, err
     end
@@ -157,6 +159,6 @@ return function(root, main, io_open, preload)
     if not init then
         return nil, err
     end
-    debug.setupvalue(init, 1, sandbox_env(loadlua, openfile, preload))
+    debug.setupvalue(init, 1, sandbox_env(env, loadlua, openfile, preload))
     return init
 end

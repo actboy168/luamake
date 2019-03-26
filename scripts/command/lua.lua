@@ -5,7 +5,9 @@ end
 arg[n] = nil
 arg[n-1] = nil
 
+local util = require "util"
 local sandbox = require "sandbox"
-assert(sandbox(WORKDIR:string(), arg[0], io.open, {
+local env = util.plat == 'msvc' and {
     msvc = require "msvc_helper",
-}))(table.unpack(arg))
+}
+assert(sandbox(WORKDIR:string(), arg[0], io.open, env))(table.unpack(arg))

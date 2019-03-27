@@ -6,7 +6,6 @@ local cl = {
         "/EHsc",
     },
     ldflags = {
-        "/SAFESEH",
     },
     optimize = {
         off      = '/Od',

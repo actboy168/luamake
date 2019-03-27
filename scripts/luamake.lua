@@ -190,6 +190,9 @@ local function generate(self, rule, name, attribute)
         if not attribute.permissive then
             flags[#flags+1] = '/permissive-'
         end
+        if self.arch == 'x86' then
+            ldflags[#ldflags+1] = "/SAFESEH"
+        end
     end
 
     cc.mode(name, mode, crt, flags, ldflags)

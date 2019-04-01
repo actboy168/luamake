@@ -433,7 +433,9 @@ function lm:finish()
     ninja.DEFAULT_LINE_WIDTH = 100
 
     w:variable("builddir", ('build/%s'):format(util.plat))
-    w:variable("luamake", getexe())
+    if ARGUMENTS.rebuilt ~= 'no' then
+        w:variable("luamake", getexe())
+    end
 
     if globals.bindir then
         w:variable("bin", globals.bindir)

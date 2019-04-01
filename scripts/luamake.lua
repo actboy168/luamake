@@ -420,15 +420,7 @@ function lm:add_script(filename)
 end
 
 local function getexe()
-    local i = 0
-    while arg[i] ~= nil do
-        i = i - 1
-    end
-    local ret = arg[i + 1]
-    if util.plat == 'msvc' then
-        ret = 'cmd.exe /c ' .. ret
-    end
-    return ret
+    return fs.exe_path():string()
 end
 
 function lm:finish()

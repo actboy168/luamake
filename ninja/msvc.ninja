@@ -1,5 +1,4 @@
 builddir = build/msvc
-luamake = cmd.exe /c luamake
 bin = $builddir/bin
 obj = $builddir/obj
 rule command

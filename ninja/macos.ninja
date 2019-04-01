@@ -1,5 +1,4 @@
 builddir = build/macos
-luamake = luamake
 bin = $builddir/bin
 obj = $builddir/obj
 rule command

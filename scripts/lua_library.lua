@@ -12,7 +12,7 @@ local function copy_dir(from, to)
     end
 end
 
-local function init_rule(lm)
+local function init_rule(lm, arch)
     if inited_rule then
         return
     end
@@ -23,7 +23,7 @@ local function init_rule(lm)
         description = 'Lua def $out',
     })
     if lm.cc.name == 'cl' then
-        w:rule("luadeps", [[lib /nologo /machine:i386 /def:$in /out:$out]],
+        w:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(arch),
         {
             description = 'Lua import lib $out'
         })
@@ -35,7 +35,7 @@ local function init_rule(lm)
     end
 end
 
-local function init_version(lm, luaversion)
+local function init_version(lm, luaversion, arch)
     if inited_version[luaversion] then
         return
     end
@@ -45,13 +45,13 @@ local function init_version(lm, luaversion)
     local windeps = include / "windeps"
     w:build(windeps / "lua.def", "luadef", include)
     if lm.cc.name == 'cl' then
-        w:build(windeps / "lua.lib", "luadeps", windeps / "lua.def")
+        w:build(windeps / ("lua_"..arch..".lib"), "luadeps", windeps / "lua.def")
     elseif lm.cc.name == 'gcc' then
         w:build(windeps / "liblua.a", "luadeps", windeps / "lua.def")
     end
 end
 
-local function windowsDeps(lm, name, attribute, include, luaversion)
+local function windowsDeps(lm, name, attribute, include, luaversion, arch)
     local cc = lm.cc
     local windeps = include / "windeps"
     fs.create_directories(WORKDIR / 'build' / luaversion / "windeps")
@@ -62,7 +62,7 @@ local function windowsDeps(lm, name, attribute, include, luaversion)
 
     if cc.name == "cl" then
         ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
-        input[#input+1] = windeps / "lua.lib"
+        input[#input+1] = windeps / ("lua_"..arch..".lib")
     else
         input[#input+1] = windeps / "liblua.a"
     end
@@ -74,15 +74,16 @@ return function (lm, name, attribute)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
     local include = fs.path('build') / luaversion
+    local arch = lm.arch or "x86"
 
-    init_rule(lm)
-    init_version(lm, luaversion)
+    init_rule(lm, arch)
+    init_version(lm, luaversion, arch)
 
     flags[#flags+1] = lm.cc.includedir(include)
     attribute.flags = flags
     copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
     if util.plat == "msvc" or util.plat == "mingw" then
-        windowsDeps(lm, name, attribute, include, luaversion)
+        windowsDeps(lm, name, attribute, include, luaversion, arch)
     end
     return lm, 'shared_library', name, attribute
 end

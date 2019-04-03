@@ -76,8 +76,10 @@ return function (lm, name, attribute)
     local include = fs.path('build') / luaversion
     local arch = lm.arch or "x86"
 
-    init_rule(lm, arch)
-    init_version(lm, luaversion, arch)
+    if util.plat == "msvc" or util.plat == "mingw" then
+        init_rule(lm, arch)
+        init_version(lm, luaversion, arch)
+    end
 
     flags[#flags+1] = lm.cc.includedir(include)
     attribute.flags = flags

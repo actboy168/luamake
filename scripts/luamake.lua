@@ -79,12 +79,10 @@ local function get_sources(root, name, sources)
     local result = {}
     local ignore = {}
     for _, source in ipairs(sources) do
-        if type(source) == "string" then
-            if source:sub(1,1) ~= "!" then
-                expand_path(result, root / source)
-            else
-                expand_path(ignore, root / source:sub(2))
-            end
+        if source:sub(1,1) ~= "!" then
+            expand_path(result, root / source)
+        else
+            expand_path(ignore, root / source:sub(2))
         end
     end
     for _, path in ipairs(ignore) do
@@ -140,7 +138,7 @@ local function init_attribute(attribute, attr_name, default)
     for i = 1, #result do
         if type(result[i]) == 'string' then
             if i ~= j then
-                result[i] = result[j]
+                result[j] = result[i]
             end
             j = j + 1
         end

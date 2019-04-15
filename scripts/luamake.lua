@@ -79,11 +79,12 @@ local function get_sources(root, name, sources)
     local result = {}
     local ignore = {}
     for _, source in ipairs(sources) do
-        assert(type(source) == 'string', name)
-        if source:sub(1,1) ~= "!" then
-            expand_path(result, root / source)
-        else
-            expand_path(ignore, root / source:sub(2))
+        if type(source) == "string" then
+            if source:sub(1,1) ~= "!" then
+                expand_path(result, root / source)
+            else
+                expand_path(ignore, root / source:sub(2))
+            end
         end
     end
     for _, path in ipairs(ignore) do

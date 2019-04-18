@@ -305,7 +305,7 @@ local function generate(self, rule, name, attribute)
     if rule == "shared_library" then
         cc.rule_dll(w, name, fin_links, fin_ldflags, mode, attribute)
         if cc.name == 'cl' then
-            local lib = (fs.path('$bin') / name):replace_extension(".lib")
+            local lib = (fs.path('$bin') / name)..".lib"
             t.output = lib
             w:build(outname, "LINK_"..fmtname, input, implicit, nil, vars, lib)
         else

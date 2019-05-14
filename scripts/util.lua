@@ -65,7 +65,10 @@ local function ninja(args)
         print(line)
     end
     io.write(process.stderr:read 'a')
-    process:wait()
+    local code = process:wait()
+    if code ~= 0 then
+        os.exit(code, true)
+    end
 end
 
 local function command(what, ...)

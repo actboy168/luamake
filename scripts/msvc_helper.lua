@@ -31,7 +31,10 @@ local function installpath()
     })
     local result = strtrim(process.stdout:read 'a')
     process.stdout:close()
-    process:wait()
+    local code = process:wait()
+    if code ~= 0 then
+        os.exit(code, true)
+    end
     assert(result ~= "", "can't find msvc.")
     InstallDir = fs.path(result)
     return InstallDir
@@ -72,7 +75,10 @@ local function environment(arch, winsdk)
     end
     process.stdout:close()
     process.stderr:close()
-    process:wait()
+    local code = process:wait()
+    if code ~= 0 then
+        os.exit(code, true)
+    end
     return env
 end
 

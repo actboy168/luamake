@@ -59,6 +59,8 @@ local function windowsDeps(lm, name, attribute, include, luaversion, arch)
 
     local ldflags = attribute.ldflags or {}
     local input = attribute.input or {}
+    ldflags = type(ldflags) == "string" and {ldflags} or ldflags
+    input = type(input) == "string" and {input} or input
 
     if cc.name == "cl" then
         ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name

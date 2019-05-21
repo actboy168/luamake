@@ -205,6 +205,10 @@ local function generate(self, rule, name, attribute)
         flags[#flags+1] = cc.define(macro)
     end
 
+    if mode == "release" then
+        flags[#flags+1] = cc.define("NDEBUG")
+    end
+
     if rule == "shared_library" and not isWindows() then
         flags[#flags+1] = "-fPIC"
     end

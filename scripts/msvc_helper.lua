@@ -118,7 +118,14 @@ local function crtpath(platform)
         f:close()
         return strtrim(r)
     end)()
-    return installpath() / 'VC' / 'Redist' / 'MSVC' / RedistVersion / platform / 'Microsoft.VC141.CRT'
+    local ToolsetVersion = (function ()
+        local verfile = installpath() / 'VC' / 'Tools' / 'MSVC' / RedistVersion / 'include' / 'yvals_core.h'
+        local f = assert(io.open(verfile:string(), 'r'))
+        local r = f:read 'a'
+        f:close()
+        return r:match '#define%s+_MSVC_STL_VERSION%s+(%d+)'
+    end)()
+    return installpath() / 'VC' / 'Redist' / 'MSVC' / RedistVersion / platform / ('Microsoft.VC'..ToolsetVersion..'.CRT')
 end
 
 local function ucrtpath(platform)

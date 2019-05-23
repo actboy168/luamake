@@ -118,8 +118,15 @@ local function crtpath(platform)
         f:close()
         return strtrim(r)
     end)()
+    local ToolVersion = (function ()
+        local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCToolVersion.default.txt'
+        local f = assert(io.open(verfile:string(), 'r'))
+        local r = f:read 'a'
+        f:close()
+        return strtrim(r)
+    end)()
     local ToolsetVersion = (function ()
-        local verfile = installpath() / 'VC' / 'Tools' / 'MSVC' / RedistVersion / 'include' / 'yvals_core.h'
+        local verfile = installpath() / 'VC' / 'Tools' / 'MSVC' / ToolVersion / 'include' / 'yvals_core.h'
         local f = assert(io.open(verfile:string(), 'r'))
         local r = f:read 'a'
         f:close()

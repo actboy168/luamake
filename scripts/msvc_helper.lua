@@ -159,14 +159,13 @@ local function ucrtpath(platform)
 end
 
 local function copy_crtdll(platform, target)
-    local msvc = require 'msvc'
     fs.create_directories(target)
-    for dll in msvc.crtpath(platform):list_directory() do
+    for dll in crtpath(platform):list_directory() do
         if dll:filename() ~= fs.path "vccorlib140.dll" then
             fs.copy_file(dll, target / dll:filename(), true)
         end
     end
-    for dll in msvc.ucrtpath(platform):list_directory() do
+    for dll in ucrtpath(platform):list_directory() do
         fs.copy_file(dll, target / dll:filename(), true)
     end
 end

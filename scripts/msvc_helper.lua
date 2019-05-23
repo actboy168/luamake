@@ -119,7 +119,7 @@ local function crtpath(platform)
         return strtrim(r)
     end)()
     local ToolVersion = (function ()
-        local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCToolVersion.default.txt'
+        local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCToolsVersion.default.txt'
         local f = assert(io.open(verfile:string(), 'r'))
         local r = f:read 'a'
         f:close()

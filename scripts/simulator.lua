@@ -21,26 +21,31 @@ local simulator = {
 }
 
 function simulator:source_set(name)
+    assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         accept('source_set', name, attribute)
     end
 end
 function simulator:shared_library(name)
+    assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         accept('shared_library', name, attribute)
     end
 end
 function simulator:executable(name)
+    assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         accept('executable', name, attribute)
     end
 end
 function simulator:lua_library(name)
+    assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         accept('lua_library', name, attribute)
     end
 end
 function simulator:build(name)
+    assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         accept('build', name, attribute)
     end

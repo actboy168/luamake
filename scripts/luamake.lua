@@ -180,7 +180,7 @@ local function generate(self, rule, name, attribute)
     local links = init('links')
     local linkdirs = init('linkdirs')
     local ud_flags = init('flags')
-    local ud_ldflags = init('proj_ldflags')
+    local ud_ldflags = init('ldflags')
     local deps =  init('deps')
     local pool =  init('pool', f_nil)[1]
     local implicit = {}

@@ -168,13 +168,16 @@ local function generate(self, rule, name, attribute)
     local includes = init('includes')
     local links = init('links')
     local linkdirs = init('linkdirs')
-    local flags =  init('flags')
-    local ldflags =  init('ldflags')
+    local ud_flags = init('flags')
+    local ud_ldflags = init('proj_ldflags')
     local deps =  init('deps')
     local pool =  init('pool', f_nil)[1]
     local implicit = {}
     local input = {}
     assert(#sources > 0, ("`%s`: no source files found."):format(name))
+
+    local flags =  {}
+    local ldflags =  {}
 
     tbl_append(flags, cc.flags)
     tbl_append(ldflags, cc.ldflags)
@@ -220,6 +223,9 @@ local function generate(self, rule, name, attribute)
             flags[#flags+1] = cc.includedir(fmtpath_u(workdir, depsTarget.includedir))
         end
     end
+
+    tbl_append(flags, ud_flags)
+    tbl_append(ldflags, ud_ldflags)
 
     local fin_flags = table.concat(flags, " ")
     local fmtname = name:gsub("[^%w_]", "_")

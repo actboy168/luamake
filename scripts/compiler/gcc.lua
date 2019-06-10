@@ -30,6 +30,9 @@ local gcc = {
     define = function (macro)
         return "-D" .. macro
     end,
+    undef = function (macro)
+        return "-U" .. macro
+    end,
     includedir = function (dir)
         return "-I" .. dir:string()
     end,

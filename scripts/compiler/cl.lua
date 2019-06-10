@@ -31,10 +31,13 @@ local cl = {
         ['c11'] = '/TP',
     },
     define = function (macro)
-        return "-D" .. macro
+        return "/D" .. macro
+    end,
+    undef = function (macro)
+        return "/U" .. macro
     end,
     includedir = function (dir)
-        return "-I" .. dir:string()
+        return "/I" .. dir:string()
     end,
     link = function (lib)
         if lib == "stdc++fs" or lib == "stdc++" then

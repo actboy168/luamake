@@ -149,6 +149,16 @@ local function init_attribute(attribute, attr_name, default)
     return result
 end
 
+local function array_remove(t, k)
+    for pos, m in ipairs(t) do
+        if m == k then
+            table.remove(t, pos)
+            return true
+        end
+    end
+    return false
+end
+
 local function generate(self, rule, name, attribute)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
@@ -165,6 +175,7 @@ local function generate(self, rule, name, attribute)
     local optimize = init('optimize', (mode == "debug" and "off" or "speed"))[1]
     local warnings = get_warnings(init('warnings'))
     local defines = init('defines')
+    local undefs = init('undefs')
     local includes = init('includes')
     local links = init('links')
     local linkdirs = init('linkdirs')
@@ -204,12 +215,26 @@ local function generate(self, rule, name, attribute)
         flags[#flags+1] = cc.includedir(fmtpath_u(workdir, rootdir / inc))
     end
 
+    if mode == "release" then
+        defines[#defines+1] = "NDEBUG"
+    end
+
+    local pos = 1
+    while pos <= #undefs do
+        local macro = undefs[pos]
+        if array_remove(defines, macro) then
+            table.remove(undefs, pos)
+        else
+            pos = pos + 1
+        end
+    end
+
     for _, macro in ipairs(defines) do
         flags[#flags+1] = cc.define(macro)
     end
 
-    if mode == "release" then
-        flags[#flags+1] = cc.define("NDEBUG")
+    for _, macro in ipairs(undefs) do
+        flags[#flags+1] = cc.undef(macro)
     end
 
     if rule == "shared_library" and not isWindows() then

@@ -207,6 +207,8 @@ local function generate(self, rule, name, attribute)
         if self.arch == 'x86' then
             ldflags[#ldflags+1] = "/SAFESEH"
         end
+    else
+        flags[#flags+1] = ('-fvisibility=%s'):format(attribute.visibility or 'hidden')
     end
 
     cc.mode(name, mode, crt, flags, ldflags)

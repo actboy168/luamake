@@ -7,7 +7,7 @@ if lm.plat == 'msvc' then
     lm:build "msvc" {
         "cmd.exe", "/C",
         "cd", "3rd/bee.lua", "&&",
-        "make\\lua.exe", "make\\msvc-init.lua",
+        "make\\lua.exe", "-e", "package.path=[[..\\..\\scripts\\?.lua]]", "..\\..\\scripts\\msvc-init.lua",
         pool = "console",
     }
     lm:build "bee" {

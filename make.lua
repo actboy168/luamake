@@ -6,8 +6,8 @@ if lm.plat == 'msvc' then
     local ninja = "..\\..\\tools\\ninja.exe"
     lm:build "msvc" {
         "cmd.exe", "/C",
-        "cd", "3rd/bee.lua", "&&",
-        "make\\lua.exe", "-e", "package.path=[[..\\..\\scripts\\?.lua]]", "..\\..\\scripts\\msvc-init.lua",
+        "cd", "tools\\msvc", "&&",
+        "lua.exe", "init.lua", "..\\..\\3rd\\bee.lua\\build\\msvc\\msvc-init.ninja",
         pool = "console",
     }
     lm:build "bee" {

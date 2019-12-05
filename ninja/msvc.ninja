@@ -6,8 +6,8 @@ rule command
   description = $DESC
 build $builddir/_/msvc: command
   pool = console
-  COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe -e $
-      package.path=[[..\..\scripts\?.lua]] ..\..\scripts\msvc-init.lua
+  COMMAND = cmd.exe /C cd tools\msvc && lua.exe init.lua $
+      ..\..\3rd\bee.lua\build\msvc\msvc-init.ninja
 build $builddir/_/bee: command | $builddir/_/msvc
   pool = console
   COMMAND = cmd.exe /C cd 3rd/bee.lua && ..\..\tools\ninja.exe -f $

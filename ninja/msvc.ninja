@@ -6,11 +6,12 @@ rule command
   description = $DESC
 build $builddir/_/msvc: command
   pool = console
-  COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe make\msvc-init.lua
+  COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe -e $
+      package.path=[[..\..\scripts\?.lua]] ..\..\scripts\msvc-init.lua
 build $builddir/_/bee: command | $builddir/_/msvc
   pool = console
-  COMMAND = cmd.exe /C cd 3rd/bee.lua && make\lua.exe make\msvc.lua $
-      ..\..\tools\ninja.exe -f build\msvc\msvc-init.ninja
+  COMMAND = cmd.exe /C cd 3rd/bee.lua && ..\..\tools\ninja.exe -f $
+      build\msvc\msvc-init.ninja
 build $builddir/_/copy_bee_1: command | $builddir/_/bee
   COMMAND = cmd.exe /C copy /Y 3rd\bee.lua\build\msvc\bin\bootstrap.exe $
       luamake.exe

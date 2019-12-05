@@ -3,7 +3,7 @@
 ## Build
 
 msvc
-* tools\ninja.exe -f ninja\msvc.ninja
+* msvc_build.bat
 
 mingw / macos / linux
 

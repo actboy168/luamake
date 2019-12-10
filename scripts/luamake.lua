@@ -124,29 +124,28 @@ local function get_warnings(warnings)
     return {error = error, level = level}
 end
 
-local function init_attribute(attribute, attr_name, default)
-    local result
-    if type(default) == 'function' then
-        result = attribute[attr_name] or default()
-    else
-        result = attribute[attr_name] or default or {}
-    end
-    if type(result) ~= 'table' then
-        return {result}
-    end
-    local j = 1
-    for i = 1, #result do
-        if type(result[i]) == 'string' then
-            if i ~= j then
-                result[j] = result[i]
-            end
-            j = j + 1
+local function merge_attribute(from, to)
+    for _, e in ipairs(from) do
+        if type(e) == 'string' then
+            to[#to+1] = e
+        elseif type(e) == 'table' then
+            merge_attribute(e, to)
         end
     end
-    for i = j, #result do
-        result[i] = nil
+    return to
+end
+
+local function init_attribute(attribute, attr_name, default)
+    if type(default) == 'function' then
+        attribute = attribute[attr_name] or default()
+    else
+        attribute = attribute[attr_name] or default or {}
     end
-    return result
+    if type(attribute) ~= 'table' then
+        return {attribute}
+    end
+    local res = {}
+    return merge_attribute(attribute, res)
 end
 
 local function array_remove(t, k)

@@ -1,10 +1,10 @@
-local ARGUMENTS = {}
+local arguments = {}
 local i = 1
 while i <= #arg do
     if arg[i]:sub(1, 1) == '-' then
         local k = arg[i]:sub(2)
         i = i + 1
-        ARGUMENTS[k] = arg[i]
+        arguments[k] = arg[i]
     else
         error(('unknown option: %s'):format(arg[i]))
     end
@@ -13,8 +13,8 @@ end
 
 local fs = require "bee.filesystem"
 
-local input = fs.path(ARGUMENTS["in"])
-local output = fs.path(ARGUMENTS["out"])
+local input = fs.path(arguments["in"])
+local output = fs.path(arguments["out"])
 local export = {}
 
 local name = input:filename():string() .. ".dll"

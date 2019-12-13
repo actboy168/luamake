@@ -4,7 +4,11 @@ local fs = require 'bee.filesystem'
 
 local plat = (function ()
     if ARGUMENTS.p then
+        sp.setenv("LuaMakePlatform", ARGUMENTS.p)
         return ARGUMENTS.p
+    end
+    if os.getenv "LuaMakePlatform" then
+        return os.getenv "LuaMakePlatform"
     end
     if platform.OS == "Windows" then
         if os.getenv "MSYSTEM" then

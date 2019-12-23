@@ -78,7 +78,7 @@ return function (lm, name, attribute)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
     local include = fs.path('build') / luaversion
-    local arch = lm.arch or "x86"
+    local arch = lm.arch or (string.packsize "T" == 8 and "x64" or "x86")
 
     if util.plat == "msvc" or util.plat == "mingw" then
         init_rule(lm, arch)

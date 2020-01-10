@@ -5,8 +5,9 @@ local fs = require 'bee.filesystem'
 
 local dofile
 
+local arch = string.packsize "T" == 8 and "x64" or "x86"
 local targets = {}
-local globals = {}
+local globals = {arch=arch}
 local function accept(type, name, attribute)
     for k, v in pairs(globals) do
         if not attribute[k] then
@@ -17,7 +18,8 @@ local function accept(type, name, attribute)
 end
 
 local simulator = {
-    plat = util.plat
+    plat = util.plat,
+    arch = arch,
 }
 
 function simulator:source_set(name)

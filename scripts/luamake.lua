@@ -487,7 +487,7 @@ function lm:finish()
     self.writer = w
 
     if cc.name == "cl" then
-        self.arch = globals.arch or "x86"
+        self.arch = globals.arch
         self.winsdk = globals.winsdk
         local msvc = require "msvc"
         msvc:create_config(self.arch, self.winsdk)

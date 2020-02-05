@@ -19,7 +19,6 @@ end
 
 local simulator = {
     plat = util.plat,
-    arch = arch,
 }
 
 function simulator:source_set(name)

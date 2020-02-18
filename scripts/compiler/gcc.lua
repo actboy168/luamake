@@ -79,7 +79,7 @@ function gcc.rule_dll(w, name, links, ldflags, _, attribute)
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[%s --shared $in -o $out %s %s]])
     :format(attribute.gcc and attribute.gcc or 'gcc', ldflags, links),
     {
-        description = 'Link SharedLibrary $out'
+        description = 'Link    Dll $out'
     })
 end
 
@@ -87,7 +87,7 @@ function gcc.rule_exe(w, name, links, ldflags, _, attribute)
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[%s $in -o $out %s %s]])
     :format(attribute.gcc and attribute.gcc or 'gcc', ldflags, links),
     {
-        description = 'Link Executable $out'
+        description = 'Link    Exe $out'
     })
 end
 

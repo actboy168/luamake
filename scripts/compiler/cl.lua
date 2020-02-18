@@ -82,14 +82,14 @@ function cl.rule_dll(w, name, links, ldflags, _)
     local lib = (fs.path('$bin') / name)..".lib"
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out /DLL /IMPLIB:%s]]):format(links, ldflags, lib),
     {
-        description = 'Link SharedLibrary $out'
+        description = 'Link    Dll $out'
     })
 end
 
 function cl.rule_exe(w, name, links, ldflags, _)
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out]]):format(links, ldflags),
     {
-        description = 'Link Executable $out'
+        description = 'Link    Exe $out'
     })
 end
 

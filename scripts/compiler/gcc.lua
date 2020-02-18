@@ -59,7 +59,7 @@ function gcc.rule_c(w, name, flags, cflags, attribute)
     w:rule('C_'..name:gsub('[^%w_]', '_'), ([[%s -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(attribute.gcc and attribute.gcc or 'gcc', cflags, flags),
     {
-        description = 'Compile C $out',
+        description = 'Compile C   $out',
         deps = 'gcc',
         depfile = '$out.d'
     })
@@ -69,7 +69,7 @@ function gcc.rule_cxx(w, name, flags, cxxflags, attribute)
     w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[%s -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(attribute.gxx and attribute.gxx or 'g++', cxxflags, flags),
     {
-        description = 'Compile CXX $out',
+        description = 'Compile C++ $out',
         deps = 'gcc',
         depfile = '$out.d'
     })

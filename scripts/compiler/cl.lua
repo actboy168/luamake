@@ -65,7 +65,7 @@ end
 function cl.rule_c(w, name, flags, cflags, _)
     w:rule('C_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
     {
-        description = 'Compile C $out',
+        description = 'Compile C   $out',
         deps = 'msvc',
     })
 end
@@ -73,7 +73,7 @@ end
 function cl.rule_cxx(w, name, flags, cxxflags, _)
     w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
     {
-        description = 'Compile CXX $out',
+        description = 'Compile C++ $out',
         deps = 'msvc',
     })
 end

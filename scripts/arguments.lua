@@ -34,7 +34,7 @@ assert(arguments.arch == "x64"
 
 if arguments.plat then
     local sp = require 'bee.subprocess'
-    sp.setenv("LuaMakePlatform", arguments.p)
+    sp.setenv("LuaMakePlatform", arguments.plat)
 else
     arguments.plat = (function ()
         if os.getenv "LuaMakePlatform" then

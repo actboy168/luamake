@@ -1,15 +1,16 @@
 local fs = require "bee.filesystem"
 local memfile = require "memfile"
 local util = require 'util'
+local arguments = require "arguments"
 
 local compiler = (function ()
-    if util.plat == 'mingw' then
+    if arguments.plat == 'mingw' then
         return "gcc"
-    elseif util.plat == "msvc" then
+    elseif arguments.plat == "msvc" then
         return "cl"
-    elseif util.plat == "linux" then
+    elseif arguments.plat == "linux" then
         return "gcc"
-    elseif util.plat == "macos" then
+    elseif arguments.plat == "macos" then
         return "clang"
     end
 end)()
@@ -19,7 +20,7 @@ local cc = require("compiler." .. compiler)
 local function f_nil() end
 
 local function isWindows()
-    return util.plat == "msvc" or util.plat == "mingw"
+    return arguments.plat == "msvc" or arguments.plat == "mingw"
 end
 
 local function fmtpath_u(workdir, path)
@@ -28,7 +29,7 @@ end
 
 local function fmtpath(workdir, path)
     local res = fmtpath_u(workdir, path):string()
-    if util.plat == "msvc" then
+    if arguments.plat == "msvc" then
         return res:gsub('/', '\\')
     else
         return res:gsub('\\', '/')
@@ -204,7 +205,7 @@ local function generate(self, rule, name, attribute)
         end
     end
 
-    if util.plat == "linux" or util.plat == "macos" then
+    if arguments.plat == "linux" or arguments.plat == "macos" then
         if attribute.visibility ~= "default" then
             flags[#flags+1] = ('-fvisibility=%s'):format(attribute.visibility or 'hidden')
         end
@@ -445,7 +446,7 @@ function lm:add_script(filename)
         return
     end
     filename = fs.relative(fs.path(filename), WORKDIR):string()
-    if filename == (ARGUMENTS.f or 'make.lua') then
+    if filename == (arguments.f or 'make.lua') then
         return
     end
     if self._scripts[filename] then
@@ -461,15 +462,15 @@ end
 
 function lm:finish()
     local globals = self._export_globals
-    fs.create_directories(WORKDIR / 'build' / util.plat)
+    fs.create_directories(WORKDIR / 'build' / arguments.plat)
 
     local ninja = require "ninja_syntax"
     local ninja_script = util.script():string()
     local w = ninja.Writer(assert(memfile(ninja_script)))
     ninja.DEFAULT_LINE_WIDTH = 100
 
-    w:variable("builddir", ('build/%s'):format(util.plat))
-    if ARGUMENTS.rebuilt ~= 'no' then
+    w:variable("builddir", ('build/%s'):format(arguments.plat))
+    if arguments.rebuilt ~= 'no' then
         w:variable("luamake", getexe())
     end
 
@@ -495,7 +496,7 @@ function lm:finish()
         for _, target in ipairs(self._export_targets) do
             if target[1] ~= 'build' then
                 msvc:init(self.arch, self.winsdk)
-                if ARGUMENTS.rebuilt ~= 'no' then
+                if arguments.rebuilt ~= 'no' then
                     self.writer:variable("msvc_deps_prefix", msvc.prefix)
                 end
                 break
@@ -503,8 +504,8 @@ function lm:finish()
         end
     end
 
-    if ARGUMENTS.rebuilt ~= 'no' then
-        local build_lua = ARGUMENTS.f or 'make.lua'
+    if arguments.rebuilt ~= 'no' then
+        local build_lua = arguments.f or 'make.lua'
         local build_ninja = util.script(true)
         w:rule('configure', '$luamake init -f $in', { generator = 1, restat = 1 })
         w:build(build_ninja, 'configure', build_lua, self._scripts)

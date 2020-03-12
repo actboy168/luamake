@@ -1,41 +1,15 @@
+local arguments = require "arguments"
 local sp = require 'bee.subprocess'
-local platform = require 'bee.platform'
 local fs = require 'bee.filesystem'
 
-local plat = (function ()
-    if ARGUMENTS.p then
-        sp.setenv("LuaMakePlatform", ARGUMENTS.p)
-        return ARGUMENTS.p
-    end
-    if os.getenv "LuaMakePlatform" then
-        return os.getenv "LuaMakePlatform"
-    end
-    if platform.OS == "Windows" then
-        if os.getenv "MSYSTEM" then
-            return "mingw"
-        end
-        return "msvc"
-    elseif platform.OS == "Linux" then
-        return "linux"
-    elseif platform.OS == "macOS" then
-        return "macos"
-    end
-end)()
-
-assert(plat == "msvc" 
-    or plat == "mingw"
-    or plat == "linux"
-    or plat == "macos"
-)
-
 local function script(v)
-    local builddir = v and fs.path('$builddir') or (WORKDIR / 'build' / plat)
-    local filename = builddir / (ARGUMENTS.f or 'make.lua')
+    local builddir = v and fs.path('$builddir') or (WORKDIR / 'build' / arguments.plat)
+    local filename = builddir / (arguments.f or 'make.lua')
     return filename:replace_extension(".ninja")
 end
 
 local function ninja(args)
-    if plat == 'msvc' then
+    if arguments.plat == 'msvc' then
         if #args == 0 then
             local msvc = require "msvc"
             if args.env then
@@ -84,5 +58,4 @@ return {
     ninja = ninja,
     command = command,
     script = script,
-    plat = plat,
 }

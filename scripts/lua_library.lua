@@ -1,5 +1,5 @@
 local fs = require "bee.filesystem"
-local util = require 'util'
+local arguments = require "arguments"
 local inited_rule = false
 local inited_version = {}
 
@@ -80,7 +80,7 @@ return function (lm, name, attribute)
     local include = fs.path('build') / luaversion
     local arch = lm.arch
 
-    if util.plat == "msvc" or util.plat == "mingw" then
+    if arguments.plat == "msvc" or arguments.plat == "mingw" then
         init_rule(lm, arch)
         init_version(lm, luaversion, arch)
     end
@@ -88,7 +88,7 @@ return function (lm, name, attribute)
     flags[#flags+1] = lm.cc.includedir(include)
     attribute.flags = flags
     copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
-    if util.plat == "msvc" or util.plat == "mingw" then
+    if arguments.plat == "msvc" or arguments.plat == "mingw" then
         windowsDeps(lm, name, attribute, include, luaversion, arch)
     end
     return lm, 'shared_library', name, attribute

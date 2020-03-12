@@ -1,13 +1,11 @@
-local util = require 'util'
 local lm = require 'luamake'
 local sandbox = require "sandbox"
 local fs = require 'bee.filesystem'
+local globals = require "arguments"
 
 local dofile
 
-local arch = string.packsize "T" == 8 and "x64" or "x86"
 local targets = {}
-local globals = {arch=arch}
 local function accept(type, name, attribute)
     for k, v in pairs(globals) do
         if not attribute[k] then
@@ -17,9 +15,7 @@ local function accept(type, name, attribute)
     targets[#targets+1] = {type, name, attribute}
 end
 
-local simulator = {
-    plat = util.plat,
-}
+local simulator = {}
 
 function simulator:source_set(name)
     assert(type(name) == "string", "Name is not a string.")

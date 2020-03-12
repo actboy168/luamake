@@ -1,8 +1,8 @@
 chcp 65001
-luamake init -rebuilt no -p msvc
-luamake init -rebuilt no -p mingw
-luamake init -rebuilt no -p linux
-luamake init -rebuilt no -p macos
+luamake init -rebuilt no -plat msvc
+luamake init -rebuilt no -plat mingw
+luamake init -rebuilt no -plat linux
+luamake init -rebuilt no -plat macos
 
 if not exist ninja (
 	md ninja

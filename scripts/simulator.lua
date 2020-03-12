@@ -1,9 +1,14 @@
 local lm = require 'luamake'
 local sandbox = require "sandbox"
 local fs = require 'bee.filesystem'
-local globals = require "arguments"
+local arguments = require "arguments"
 
 local dofile
+
+local globals = {}
+for k, v in pairs(arguments) do
+    globals[k] = v
+end
 
 local targets = {}
 local function accept(type, name, attribute)
@@ -59,6 +64,9 @@ function simulator:import(path)
 end
 
 local function setter(_, k, v)
+    if arguments[k] ~= nil then
+        return
+    end
     globals[k] = v
 end
 local function getter(_, k)

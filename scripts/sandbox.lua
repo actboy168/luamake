@@ -149,6 +149,11 @@ return function(root, main, io_open, preload)
     local function loadlua(name)
         local f, err = openfile(name, 'r')
         if f then
+            if '#' == f:read(1) then
+                f:read "l"
+            else
+                f:seek "set"
+            end
             local str = f:read 'a'
             f:close()
             return load(str, '@' .. root .. '/' .. name, 't', env)

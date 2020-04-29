@@ -64,7 +64,7 @@ function simulator:import(path)
 end
 
 local function setter(_, k, v)
-    if arguments[k] ~= nil then
+    if arguments._force[k] ~= nil then
         return
     end
     globals[k] = v

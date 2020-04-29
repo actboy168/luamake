@@ -1,4 +1,4 @@
-local arguments = {}
+local arguments = {_force={}}
 
 local what = arg[1]
 if what == nil then
@@ -16,6 +16,7 @@ else
             local k = arg[i]:sub(2)
             i = i + 1
             arguments[k] = arg[i]
+            arguments._force[k] = true
         else
             error(('unknown option: %s'):format(arg[i]))
         end

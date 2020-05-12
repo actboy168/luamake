@@ -20,7 +20,8 @@ local gcc = {
         ['c++11'] = '-std=c++11',
         ['c++14'] = '-std=c++14',
         ['c++17'] = '-std=c++17',
-        ['c++latest'] = '-std=c++latest',
+        ['c++2a'] = '-std=c++2a',
+        ['c++latest'] = '-std=c++2a',
     },
     c = {
         ['c89'] = '',

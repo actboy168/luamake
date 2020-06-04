@@ -12,12 +12,7 @@ end
 
 local targets = {}
 local function accept(type, name, attribute)
-    for k, v in pairs(globals) do
-        if not attribute[k] then
-            attribute[k] = v
-        end
-    end
-    targets[#targets+1] = {type, name, attribute}
+    targets[#targets+1] = {type, name, attribute, globals}
 end
 
 local simulator = {}

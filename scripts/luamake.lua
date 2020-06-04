@@ -147,6 +147,46 @@ local function init_attribute(attribute, attr_name, default)
     return merge_attribute(attribute, res)
 end
 
+local multiattr = {
+    'sources',
+    'warnings',
+    'defines',
+    'undefs',
+    'includes',
+    'links',
+    'linkdirs',
+    'flags',
+    'ldflags',
+    'deps',
+}
+
+local function init_multi_attribute(attribute, globals)
+    for _, name in ipairs(multiattr) do
+        if not attribute[name] and not globals[name] then
+            attribute[name] = {}
+            goto contienue
+        end
+        if not attribute[name] then
+            if type(globals[name]) ~= 'table' then
+                attribute[name] = {globals[name]}
+                goto contienue
+            end
+            local res = {}
+            attribute[name] = merge_attribute(globals[name], res)
+            goto contienue
+        end
+        if type(attribute[name]) ~= 'table' then
+            attribute[name] = {attribute[name]}
+        end
+        if globals[name] then
+            table.insert(attribute[name], 1, globals[name])
+        end
+        local res = {}
+        attribute[name] = merge_attribute(attribute[name], res)
+        ::contienue::
+    end
+end
+
 local function array_remove(t, k)
     for pos, m in ipairs(t) do
         if m == k then
@@ -157,43 +197,43 @@ local function array_remove(t, k)
     return false
 end
 
-local function generate(self, rule, name, attribute)
+local function generate(self, rule, name, attribute, globals)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
+    init_multi_attribute(attribute, globals)
+
     local function init_single(attr_name, default)
-        local attr = attribute[attr_name] or default
+        local attr = attribute[attr_name] or globals[attr_name] or default
         assert(type(attr) ~= 'table')
+        attribute[attr_name] = attr
         return attr
-    end
-    local function init_multi(attr_name)
-        local attr = attribute[attr_name] or {}
-        if type(attr) ~= 'table' then
-            return {attr}
-        end
-        local res = {}
-        return merge_attribute(attr, res)
     end
 
     local w = self.writer
     local workdir = fs.path(init_single('workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
-    local sources = get_sources(rootdir, name, init_multi('sources'))
+    local sources = get_sources(rootdir, name, attribute.sources)
     local mode = init_single('mode', 'release')
     local crt = init_single('crt', 'dynamic')
     local optimize = init_single('optimize', (mode == "debug" and "off" or "speed"))
-    local warnings = get_warnings(init_multi('warnings'))
-    local defines = init_multi('defines')
-    local undefs = init_multi('undefs')
-    local includes = init_multi('includes')
-    local links = init_multi('links')
-    local linkdirs = init_multi('linkdirs')
-    local ud_flags = init_multi('flags')
-    local ud_ldflags = init_multi('ldflags')
-    local deps =  init_multi('deps')
-    local pool =  init_single('pool', nil)
+    local warnings = get_warnings(attribute.warnings)
+    local defines = attribute.defines
+    local undefs = attribute.undefs
+    local includes = attribute.includes
+    local links = attribute.links
+    local linkdirs = attribute.linkdirs
+    local ud_flags = attribute.flags
+    local ud_ldflags = attribute.ldflags
+    local deps = attribute.deps
+    local pool = init_single('pool')
     local implicit = {}
     local input = {}
     assert(#sources > 0, ("`%s`: no source files found."):format(name))
+
+    init_single('c')
+    init_single('cxx')
+    init_single('permissive')
+    init_single('visibility')
 
     local flags =  {}
     local ldflags =  {}
@@ -520,10 +560,18 @@ function lm:finish()
     end
 
     for _, target in ipairs(self._export_targets) do
-        if GEN[target[1]] then
-            GEN[target[1]](self, target[2], target[3])
+        local rule, name, locals, globals = target[1], target[2], target[3], target[4]
+        if GEN[rule] then
+            --TODO
+            local attribute = locals
+            for k, v in pairs(globals) do
+                if not attribute[k] then
+                    attribute[k] = v
+                end
+            end
+            GEN[rule](self, name, attribute)
         else
-            generate(self, target[1], target[2], target[3])
+            generate(self, rule, name, locals, globals)
         end
     end
     w:close()

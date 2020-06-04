@@ -17,8 +17,6 @@ end)()
 
 local cc = require("compiler." .. compiler)
 
-local function f_nil() end
-
 local function isWindows()
     return arguments.plat == "msvc" or arguments.plat == "mingw"
 end
@@ -162,27 +160,37 @@ end
 local function generate(self, rule, name, attribute)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
-    local function init(attr_name, default)
-        return init_attribute(attribute, attr_name, default)
+    local function init_single(attr_name, default)
+        local attr = attribute[attr_name] or default
+        assert(type(attr) ~= 'table')
+        return attr
+    end
+    local function init_multi(attr_name)
+        local attr = attribute[attr_name] or {}
+        if type(attr) ~= 'table' then
+            return {attr}
+        end
+        local res = {}
+        return merge_attribute(attr, res)
     end
 
     local w = self.writer
-    local workdir = fs.path(init('workdir', '.')[1])
-    local rootdir = fs.absolute(fs.path(init('rootdir', '.')[1]), workdir)
-    local sources = get_sources(rootdir, name, init('sources'))
-    local mode = init('mode', 'release')[1]
-    local crt = init('crt', 'dynamic')[1]
-    local optimize = init('optimize', (mode == "debug" and "off" or "speed"))[1]
-    local warnings = get_warnings(init('warnings'))
-    local defines = init('defines')
-    local undefs = init('undefs')
-    local includes = init('includes')
-    local links = init('links')
-    local linkdirs = init('linkdirs')
-    local ud_flags = init('flags')
-    local ud_ldflags = init('ldflags')
-    local deps =  init('deps')
-    local pool =  init('pool', f_nil)[1]
+    local workdir = fs.path(init_single('workdir', '.'))
+    local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
+    local sources = get_sources(rootdir, name, init_multi('sources'))
+    local mode = init_single('mode', 'release')
+    local crt = init_single('crt', 'dynamic')
+    local optimize = init_single('optimize', (mode == "debug" and "off" or "speed"))
+    local warnings = get_warnings(init_multi('warnings'))
+    local defines = init_multi('defines')
+    local undefs = init_multi('undefs')
+    local includes = init_multi('includes')
+    local links = init_multi('links')
+    local linkdirs = init_multi('linkdirs')
+    local ud_flags = init_multi('flags')
+    local ud_ldflags = init_multi('ldflags')
+    local deps =  init_multi('deps')
+    local pool =  init_single('pool', nil)
     local implicit = {}
     local input = {}
     assert(#sources > 0, ("`%s`: no source files found."):format(name))

@@ -12,6 +12,8 @@ end
 
 local targets = {}
 local function accept(type, name, attribute)
+    attribute.workdir = attribute.workdir or globals.workdir or "."
+    attribute.rootdir = attribute.rootdir or globals.rootdir or "."
     targets[#targets+1] = {type, name, attribute, globals}
 end
 

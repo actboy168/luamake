@@ -134,19 +134,6 @@ local function merge_attribute(from, to)
     return to
 end
 
-local function init_attribute(attribute, attr_name, default)
-    if type(default) == 'function' then
-        attribute = attribute[attr_name] or default()
-    else
-        attribute = attribute[attr_name] or default or {}
-    end
-    if type(attribute) ~= 'table' then
-        return {attribute}
-    end
-    local res = {}
-    return merge_attribute(attribute, res)
-end
-
 local multiattr = {
     'sources',
     'warnings',
@@ -160,7 +147,7 @@ local multiattr = {
     'deps',
 }
 
-local function init_multi_attribute(attribute, globals)
+local function init_multi_attribute(attribute, globals, multiattr)
     for _, name in ipairs(multiattr) do
         if not attribute[name] and not globals[name] then
             attribute[name] = {}
@@ -200,7 +187,7 @@ end
 local function generate(self, rule, name, attribute, globals)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
-    init_multi_attribute(attribute, globals)
+    init_multi_attribute(attribute, globals, multiattr)
 
     local function init_single(attr_name, default)
         local attr = attribute[attr_name] or globals[attr_name] or default
@@ -409,7 +396,7 @@ local GEN = {}
 
 local ruleCommand = false
 
-function GEN.default(self, _, attribute)
+function GEN.default(self, _, attribute, globals)
     local w = self.writer
     local targets = {}
     for _, name in ipairs(attribute) do
@@ -419,28 +406,36 @@ function GEN.default(self, _, attribute)
     w:default(targets)
 end
 
-function GEN.phony(self, _, attribute)
+function GEN.phony(self, _, attribute, globals)
     local w = self.writer
-    local function init(attr_name, default)
-        return init_attribute(attribute, attr_name, default)
+    local function init_single(attr_name, default)
+        local attr = attribute[attr_name] or globals[attr_name] or default
+        assert(type(attr) ~= 'table')
+        attribute[attr_name] = attr
+        return attr
     end
-    local workdir = fs.path(init('workdir', '.')[1])
+    local workdir = fs.path(init_single('workdir', '.'))
     attribute.input  = fmtpath(workdir, attribute.input)
     attribute.output = fmtpath(workdir, attribute.output)
     w:build(attribute.output, 'phony', attribute.input)
 end
 
-function GEN.build(self, name, attribute)
+function GEN.build(self, name, attribute, globals)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
-    local function init(attr_name, default)
-        return init_attribute(attribute, attr_name, default)
+    init_multi_attribute(attribute, globals, {"deps","output"})
+
+    local function init_single(attr_name, default)
+        local attr = attribute[attr_name] or globals[attr_name] or default
+        assert(type(attr) ~= 'table')
+        attribute[attr_name] = attr
+        return attr
     end
 
     local w = self.writer
-    local workdir = fs.path(init('workdir', '.')[1])
-    local deps =  init('deps')
-    local output =  init('output')
-    local pool =  init('pool', f_nil)[1]
+    local workdir = fs.path(init_single('workdir', '.'))
+    local deps = attribute.deps
+    local output = attribute.output
+    local pool =  init_single('pool')
     local implicit = {}
 
     for i = 1, #output do
@@ -478,9 +473,9 @@ function GEN.build(self, name, attribute)
     }
 end
 
-function GEN.lua_library(self, name, attribute)
+function GEN.lua_library(self, name, locals, globals)
     local lua_library = require "lua_library"
-    generate(lua_library(self, name, attribute))
+    generate(lua_library(self, name, locals, globals))
 end
 
 local lm = {}
@@ -562,14 +557,7 @@ function lm:finish()
     for _, target in ipairs(self._export_targets) do
         local rule, name, locals, globals = target[1], target[2], target[3], target[4]
         if GEN[rule] then
-            --TODO
-            local attribute = locals
-            for k, v in pairs(globals) do
-                if not attribute[k] then
-                    attribute[k] = v
-                end
-            end
-            GEN[rule](self, name, attribute)
+            GEN[rule](self, name, locals, globals)
         else
             generate(self, rule, name, locals, globals)
         end

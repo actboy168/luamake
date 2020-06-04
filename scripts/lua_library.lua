@@ -74,7 +74,7 @@ local function windowsDeps(lm, name, attribute, include, luaversion, arch)
     attribute.input = input
 end
 
-return function (lm, name, attribute)
+return function (lm, name, attribute, globals)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
     local include = fs.path('build') / luaversion
@@ -91,5 +91,5 @@ return function (lm, name, attribute)
     if arguments.plat == "msvc" or arguments.plat == "mingw" then
         windowsDeps(lm, name, attribute, include, luaversion, arch)
     end
-    return lm, 'shared_library', name, attribute
+    return lm, 'shared_library', name, attribute, globals
 end

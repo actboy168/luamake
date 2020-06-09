@@ -219,6 +219,8 @@ local function generate(self, rule, name, attribute, globals)
 
     init_single('c')
     init_single('cxx')
+    init_single('gcc')
+    init_single('gxx')
     init_single('permissive')
     init_single('visibility')
 

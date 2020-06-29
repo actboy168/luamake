@@ -111,7 +111,7 @@ local function sandbox_env(env, loadlua, openfile, preload)
     end
 
     env.package = {
-        config = table.concat({"/",";","?","!","-"}, "\n"),
+        config = package.config,
         loaded = _LOADED,
         preload = _PRELOAD,
         path = '?.lua',

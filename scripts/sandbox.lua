@@ -4,6 +4,21 @@ local function sandbox_env(env, loadlua, openfile, preload)
     local _PRELOAD = {}
     local _LOADED = preload or {}
 
+    for _, name in ipairs {
+        "_G",
+        "package",
+        "coroutine",
+        "table",
+        "io",
+        "os",
+        "string",
+        "math",
+        "utf8",
+        "debug",
+    } do
+        _LOADED[name] = package.loaded[name]
+    end
+
     local function searchpath(name, path)
         local err = ''
         name = string.gsub(name, '%.', '/')
@@ -141,7 +156,7 @@ local function sandbox_env(env, loadlua, openfile, preload)
     return env
 end
 
-return function(root, main, io_open, preload)
+return function (root, main, io_open, preload)
     local function openfile(name, mode)
         return io_open(root .. '/' .. name, mode)
     end

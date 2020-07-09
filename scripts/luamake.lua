@@ -196,7 +196,7 @@ local function generate(self, rule, name, attribute, globals)
         return attr
     end
 
-    local w = self.writer
+    local ninja = self.ninja
     local workdir = fs.path(init_single('workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
     local sources = get_sources(rootdir, name, attribute.sources)
@@ -305,17 +305,17 @@ local function generate(self, rule, name, attribute, globals)
                 has_c = true
                 local c = attribute.c or self.c or "c89"
                 local cflags = assert(cc.c[c], ("`%s`: unknown std c: `%s`"):format(name, c))
-                cc.rule_c(w, name, fin_flags, cflags, attribute)
+                cc.rule_c(ninja, name, fin_flags, cflags, attribute)
             end
-            w:build(objname, "C_"..fmtname, source)
+            ninja:build(objname, "C_"..fmtname, source)
         elseif type == "cxx" then
             if not has_cxx then
                 has_cxx = true
                 local cxx = attribute.cxx or self.cxx or "c++17"
                 local cxxflags = assert(cc.cxx[cxx], ("`%s`: unknown std c++: `%s`"):format(name, cxx))
-                cc.rule_cxx(w, name, fin_flags, cxxflags, attribute)
+                cc.rule_cxx(ninja, name, fin_flags, cxxflags, attribute)
             end
-            w:build(objname, "CXX_"..fmtname, source)
+            ninja:build(objname, "CXX_"..fmtname, source)
         else
             error(("`%s`: unknown file extension: `%s`"):format(name, ext))
         end
@@ -377,20 +377,20 @@ local function generate(self, rule, name, attribute, globals)
 
     local vars = pool and {pool=pool} or nil
     if rule == "shared_library" then
-        cc.rule_dll(w, name, fin_links, fin_ldflags, mode, attribute)
+        cc.rule_dll(ninja, name, fin_links, fin_ldflags, mode, attribute)
         if cc.name == 'cl' then
             local lib = (fs.path('$bin') / name)..".lib"
             t.output = lib
-            w:build(outname, "LINK_"..fmtname, input, implicit, nil, vars, lib)
+            ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars, lib)
         else
             if isWindows() then
                 t.output = outname
             end
-            w:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
+            ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
         end
     else
-        cc.rule_exe(w, name, fin_links, fin_ldflags, mode, attribute)
-        w:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
+        cc.rule_exe(ninja, name, fin_links, fin_ldflags, mode, attribute)
+        ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     end
 end
 
@@ -399,17 +399,17 @@ local GEN = {}
 local ruleCommand = false
 
 function GEN.default(self, _, attribute, globals)
-    local w = self.writer
+    local ninja = self.ninja
     local targets = {}
     for _, name in ipairs(attribute) do
         assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
         targets[#targets+1] = self._targets[name].outname
     end
-    w:default(targets)
+    ninja:default(targets)
 end
 
 function GEN.phony(self, _, attribute, globals)
-    local w = self.writer
+    local ninja = self.ninja
     local function init_single(attr_name, default)
         local attr = attribute[attr_name] or globals[attr_name] or default
         assert(type(attr) ~= 'table')
@@ -419,7 +419,7 @@ function GEN.phony(self, _, attribute, globals)
     local workdir = fs.path(init_single('workdir', '.'))
     attribute.input  = fmtpath(workdir, attribute.input)
     attribute.output = fmtpath(workdir, attribute.output)
-    w:build(attribute.output, 'phony', attribute.input)
+    ninja:build(attribute.output, 'phony', attribute.input)
 end
 
 function GEN.build(self, name, attribute, globals)
@@ -433,7 +433,7 @@ function GEN.build(self, name, attribute, globals)
         return attr
     end
 
-    local w = self.writer
+    local ninja = self.ninja
     local workdir = fs.path(init_single('workdir', '.'))
     local deps = attribute.deps
     local output = attribute.output
@@ -460,12 +460,12 @@ function GEN.build(self, name, attribute, globals)
 
     if not ruleCommand then
         ruleCommand = true
-        w:rule('command', '$COMMAND', {
+        ninja:rule('command', '$COMMAND', {
             description = '$DESC'
         })
     end
     local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
-    w:build(outname, 'command', nil, implicit, nil, {
+    ninja:build(outname, 'command', nil, implicit, nil, {
         COMMAND = attribute,
         pool = pool,
     }, output)
@@ -509,28 +509,27 @@ function lm:finish()
     local globals = self._export_globals
     fs.create_directories(WORKDIR / 'build' / arguments.plat)
 
-    local ninja = require "ninja_syntax"
+    local ninja_syntax = require "ninja_syntax"
     local ninja_script = util.script():string()
-    local w = ninja.Writer(assert(memfile(ninja_script)))
-    ninja.DEFAULT_LINE_WIDTH = 100
+    local ninja = ninja_syntax.Writer(assert(memfile(ninja_script)))
 
-    w:variable("builddir", ('build/%s'):format(arguments.plat))
+    ninja:variable("builddir", ('build/%s'):format(arguments.plat))
     if arguments.rebuilt ~= 'no' then
-        w:variable("luamake", getexe())
+        ninja:variable("luamake", getexe())
     end
 
     if globals.bindir then
-        w:variable("bin", globals.bindir)
+        ninja:variable("bin", globals.bindir)
     else
-        w:variable("bin", "$builddir/bin")
+        ninja:variable("bin", "$builddir/bin")
     end
     if globals.objdir then
-        w:variable("obj", globals.objdir)
+        ninja:variable("obj", globals.objdir)
     else
-        w:variable("obj", "$builddir/obj")
+        ninja:variable("obj", "$builddir/obj")
     end
 
-    self.writer = w
+    self.ninja = ninja
 
     if cc.name == "cl" then
         self.arch = globals.arch
@@ -542,7 +541,7 @@ function lm:finish()
             if target[1] ~= 'build' then
                 msvc:init(self.arch, self.winsdk)
                 if arguments.rebuilt ~= 'no' then
-                    self.writer:variable("msvc_deps_prefix", msvc.prefix)
+                    ninja:variable("msvc_deps_prefix", msvc.prefix)
                 end
                 break
             end
@@ -552,8 +551,8 @@ function lm:finish()
     if arguments.rebuilt ~= 'no' then
         local build_lua = arguments.f or 'make.lua'
         local build_ninja = util.script(true)
-        w:rule('configure', '$luamake init -f $in', { generator = 1, restat = 1 })
-        w:build(build_ninja, 'configure', build_lua, self._scripts)
+        ninja:rule('configure', '$luamake init -f $in', { generator = 1, restat = 1 })
+        ninja:build(build_ninja, 'configure', build_lua, self._scripts)
     end
 
     for _, target in ipairs(self._export_targets) do
@@ -564,7 +563,7 @@ function lm:finish()
             generate(self, rule, name, locals, globals)
         end
     end
-    w:close()
+    ninja:close()
 end
 
 return lm

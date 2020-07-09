@@ -17,18 +17,18 @@ local function init_rule(lm, arch)
         return
     end
     inited_rule = true
-    local w = lm.writer
-    w:rule("luadef", [[$luamake lua build/lua_def.lua -in $in -out $out]],
+    local ninja = lm.ninja
+    ninja:rule("luadef", [[$luamake lua build/lua_def.lua -in $in -out $out]],
     {
         description = 'Lua def $out',
     })
     if lm.cc.name == 'cl' then
-        w:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(arch),
+        ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(arch),
         {
             description = 'Lua import lib $out'
         })
     elseif lm.cc.name == 'gcc' then
-        w:rule("luadeps", [[dlltool -d $in -l $out]],
+        ninja:rule("luadeps", [[dlltool -d $in -l $out]],
         {
             description = 'Lua import lib $out'
         })
@@ -40,14 +40,14 @@ local function init_version(lm, luaversion, arch)
         return
     end
     inited_version[luaversion] = true
-    local w = lm.writer
+    local ninja = lm.ninja
     local include = fs.path('build') / luaversion
     local windeps = include / "windeps"
-    w:build(windeps / "lua.def", "luadef", include)
+    ninja:build(windeps / "lua.def", "luadef", include)
     if lm.cc.name == 'cl' then
-        w:build(windeps / ("lua_"..arch..".lib"), "luadeps", windeps / "lua.def")
+        ninja:build(windeps / ("lua_"..arch..".lib"), "luadeps", windeps / "lua.def")
     elseif lm.cc.name == 'gcc' then
-        w:build(windeps / "liblua.a", "luadeps", windeps / "lua.def")
+        ninja:build(windeps / "liblua.a", "luadeps", windeps / "lua.def")
     end
 end
 

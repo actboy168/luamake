@@ -18,6 +18,8 @@ function m.create_config(arch, winsdk)
             io.open((WORKDIR / 'build' / 'msvc' / 'env.luamake'):string(), 'w')
         ):write(table.concat(s, '\n'))
     ):close()
+    env = nil
+    prefix = nil
 end
 
 function m.init(arch, winsdk)

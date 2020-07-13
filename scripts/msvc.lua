@@ -1,40 +1,44 @@
 local msvc = require 'msvc_helper'
 
 local m = {}
+local env
+local prefix
 
-function m:create_config(arch, winsdk)
-    local env = {}
-    env[#env+1] = "return {"
-    env[#env+1] = ("arch=%q,"):format(arch)
+function m.create_config(arch, winsdk)
+    local s = {}
+    s[#s+1] = "return {"
+    s[#s+1] = ("arch=%q,"):format(arch)
     if winsdk then
-        env[#env+1] = ("winsdk=%q,"):format(winsdk)
+        s[#s+1] = ("winsdk=%q,"):format(winsdk)
     end
-    env[#env+1] = "}"
-    env[#env+1] = ""
+    s[#s+1] = "}"
+    s[#s+1] = ""
     assert(
         assert(
             io.open((WORKDIR / 'build' / 'msvc' / 'env.luamake'):string(), 'w')
-        ):write(table.concat(env, '\n'))
+        ):write(table.concat(s, '\n'))
     ):close()
 end
 
-function m:init(arch, winsdk)
-    self.env = msvc.environment(arch, winsdk)
+function m.init(arch, winsdk)
+    env = msvc.environment(arch, winsdk)
 end
 
-local function init_from_cache(self)
-    local f = assert(io.open((WORKDIR / 'build' / 'msvc' / 'env.luamake'):string(), 'r'))
-    local env = assert(load(assert(f:read 'a')))()
-    f:close()
-    self.env = msvc.environment(env.arch, env.winsdk)
-end
-
-return setmetatable(m, { __index = function(self, k)
-    if k == 'env' then
-        init_from_cache(self)
-        return self.env
-    elseif k == 'prefix' then
-        self.prefix = msvc.prefix(self.env)
-        return self.prefix
+function m.getenv()
+    if not env then
+        local f = assert(io.open((WORKDIR / 'build' / 'msvc' / 'env.luamake'):string(), 'r'))
+        local cache = assert(load(assert(f:read 'a')))()
+        f:close()
+        env = msvc.environment(cache.arch, cache.winsdk)
     end
-end})
+    return env
+end
+
+function m.getprefix()
+    if not prefix then
+        prefix = msvc.prefix(m.getenv())
+    end
+    return prefix
+end
+
+return m

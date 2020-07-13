@@ -13,11 +13,11 @@ local function ninja(args)
         if #args == 0 then
             local msvc = require "msvc"
             if args.env then
-                for k, v in pairs(msvc.env) do
+                for k, v in pairs(msvc.getenv()) do
                     args.env[k] = v
                 end
             else
-                args.env = msvc.env
+                args.env = msvc.getenv()
             end
         end
         if args.env then

@@ -535,13 +535,13 @@ function lm:finish()
         self.arch = globals.arch
         self.winsdk = globals.winsdk
         local msvc = require "msvc"
-        msvc:create_config(self.arch, self.winsdk)
+        msvc.create_config(self.arch, self.winsdk)
 
         for _, target in ipairs(self._export_targets) do
             if target[1] ~= 'build' then
-                msvc:init(self.arch, self.winsdk)
+                msvc.init(self.arch, self.winsdk)
                 if arguments.rebuilt ~= 'no' then
-                    ninja:variable("msvc_deps_prefix", msvc.prefix)
+                    ninja:variable("msvc_deps_prefix", msvc.getprefix())
                 end
                 break
             end

@@ -417,8 +417,13 @@ function GEN.phony(self, _, attribute, globals)
         return attr
     end
     local workdir = fs.path(init_single('workdir', '.'))
-    attribute.input  = fmtpath(workdir, attribute.input)
-    attribute.output = fmtpath(workdir, attribute.output)
+    init_multi_attribute(attribute, globals, {"input","output"})
+    for i = 1, #attribute.input do
+        attribute.input[i] = fmtpath(workdir, attribute.input[i])
+    end
+    for i = 1, #attribute.output do
+        attribute.output[i] = fmtpath(workdir, attribute.output[i])
+    end
     ninja:build(attribute.output, 'phony', attribute.input)
 end
 

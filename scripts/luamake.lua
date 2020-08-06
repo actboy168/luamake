@@ -449,13 +449,24 @@ function GEN.build(self, name, attribute, globals)
         output[i] = fmtpath(workdir, output[i])
     end
 
-    for i = 1, #attribute do
-        if type(attribute[i]) ~= 'string' then
-            attribute[i] = fmtpath(workdir, attribute[i])
-        elseif attribute[i]:sub(1,1) == '@' then
-            attribute[i] = fmtpath(workdir, attribute[i]:sub(2))
+    local command = {}
+    local function push_command(t)
+        for _, v in ipairs(t) do
+            if type(v) == 'nil' then
+            elseif type(v) == 'table' then
+                push_command(v)
+            elseif type(v) == 'userdata' then
+                command[#command+1] = fmtpath(workdir, v)
+            elseif type(v) == 'string' then
+                if v:sub(1,1) == '@' then
+                    command[#command+1] = fmtpath(workdir, v:sub(2))
+                else
+                    command[#command+1] = v
+                end
+            end
         end
     end
+    push_command(attribute)
 
     for _, dep in ipairs(deps) do
         local depsTarget = self._targets[dep]
@@ -471,7 +482,7 @@ function GEN.build(self, name, attribute, globals)
     end
     local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
     ninja:build(outname, 'command', nil, implicit, nil, {
-        COMMAND = attribute,
+        COMMAND = command,
         pool = pool,
     }, output)
     self._targets[name] = {

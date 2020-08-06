@@ -1,3 +1,5 @@
+local fs = require "bee.filesystem"
+
 local function sandbox_env(env, loadlua, openfile, preload)
     setmetatable(env, {__index=_G})
 
@@ -157,8 +159,11 @@ local function sandbox_env(env, loadlua, openfile, preload)
 end
 
 return function (root, main, io_open, preload)
+    local function absolute(name)
+        return fs.absolute(fs.path(name), fs.path(root)):string()
+    end
     local function openfile(name, mode)
-        return io_open(root .. '/' .. name, mode)
+        return io_open(absolute(name), mode)
     end
     local env = {}
     local function loadlua(name)
@@ -171,7 +176,7 @@ return function (root, main, io_open, preload)
             end
             local str = f:read 'a'
             f:close()
-            return load(str, '@' .. root .. '/' .. name, 't', env)
+            return load(str, '@' .. absolute(name), 't', env)
         end
         return nil, err
     end

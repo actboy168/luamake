@@ -55,10 +55,15 @@ else
     end)()
 end
 
-assert(arguments.plat == "msvc" 
+assert(arguments.plat == "msvc"
     or arguments.plat == "mingw"
     or arguments.plat == "linux"
     or arguments.plat == "macos"
 )
+
+if not arguments.f then
+    arguments.f = "make.lua"
+end
+assert(arguments.f)
 
 return arguments

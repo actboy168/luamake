@@ -507,7 +507,7 @@ function lm:add_script(filename)
         return
     end
     filename = fs.relative(fs.path(filename), WORKDIR):string()
-    if filename == (arguments.f or 'make.lua') then
+    if filename == arguments.f then
         return
     end
     if self._scripts[filename] then
@@ -565,10 +565,9 @@ function lm:finish()
     end
 
     if arguments.rebuilt ~= 'no' then
-        local build_lua = arguments.f or 'make.lua'
-        local build_ninja = util.script(true)
+        local build_ninja = (fs.path '$builddir' / arguments.f):replace_extension ".ninja"
         ninja:rule('configure', '$luamake init -f $in', { generator = 1, restat = 1 })
-        ninja:build(build_ninja, 'configure', build_lua, self._scripts)
+        ninja:build(build_ninja, 'configure', arguments.f, self._scripts)
     end
 
     for _, target in ipairs(self._export_targets) do

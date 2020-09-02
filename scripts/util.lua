@@ -1,11 +1,8 @@
 local arguments = require "arguments"
 local sp = require 'bee.subprocess'
-local fs = require 'bee.filesystem'
 
-local function script(v)
-    local builddir = v and fs.path('$builddir') or (WORKDIR / 'build' / arguments.plat)
-    local filename = builddir / (arguments.f or 'make.lua')
-    return filename:replace_extension(".ninja")
+local function script()
+    return (WORKDIR / 'build' / arguments.plat / arguments.f):replace_extension ".ninja"
 end
 
 local function ninja(args)

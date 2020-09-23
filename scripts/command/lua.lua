@@ -41,6 +41,9 @@ local function find_exe()
 end
 
 local function update_arg()
+    if arg[2] == nil then
+        error "Not found lua file."
+    end
     arg[0] = arg[2]
     table.remove(arg, 1)
     table.remove(arg, 1)

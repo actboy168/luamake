@@ -54,9 +54,5 @@ end
 
 update_arg()
 
-local sandbox = require "sandbox"
-local arguments = require "arguments"
-local env = arguments.plat == 'msvc' and {
-    msvc = require "msvc_helper",
-}
-assert(sandbox(WORKDIR:string(), arg[0], io.open, env))(table.unpack(arg))
+local sandbox = require "util".sandbox
+sandbox(arg[0], table.unpack(arg))

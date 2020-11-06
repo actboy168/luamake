@@ -60,6 +60,16 @@ function simulator:import(path)
     dofile(nil, filepath:parent_path():string(), filepath:filename():string())
 end
 
+local alias = {
+    exe = "executable",
+    dll = "shared_library",
+    lib = "source_set",
+    lua_dll = "lua_library",
+}
+for to, from in pairs(alias) do
+    simulator[to] = simulator[from]
+end
+
 local function setter(_, k, v)
     if arguments._force[k] ~= nil then
         return

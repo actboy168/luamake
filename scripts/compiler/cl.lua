@@ -28,9 +28,9 @@ local cl = {
     },
     c = {
         ['c89'] = '',
-        ['c99'] = '/TP',
-        ['c11'] = '/TP',
-        ['c17'] = '/TP',
+        ['c99'] = '',
+        ['c11'] = '/std:c11',
+        ['c17'] = '/std:c17',
     },
     define = function (macro)
         return "/D" .. macro

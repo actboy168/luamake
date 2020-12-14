@@ -334,6 +334,12 @@ local function generate(self, rule, name, attribute, globals)
         else
             outname = fs.path("$bin") / (name .. ".so")
         end
+    elseif rule == "static_library" then
+        if isWindows() then
+            outname = fs.path("$bin") / (name .. ".lib")
+        else
+            outname = fs.path("$bin") / ("lib"..name .. ".a")
+        end
     end
 
     local t = {
@@ -388,8 +394,14 @@ local function generate(self, rule, name, attribute, globals)
             end
             ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
         end
-    else
+    elseif rule == "executable" then
         cc.rule_exe(ninja, name, fin_links, fin_ldflags, mode, attribute)
+        ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
+    elseif rule == "static_library" then
+        if cc.name ~= 'cl' then
+            error "TODO"
+        end
+        cc.rule_lib(ninja, name, self.arch)
         ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     end
 end

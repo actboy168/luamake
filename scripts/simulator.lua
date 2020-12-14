@@ -31,6 +31,12 @@ function simulator:shared_library(name)
         accept('shared_library', name, attribute)
     end
 end
+function simulator:static_library(name)
+    assert(type(name) == "string", "Name is not a string.")
+    return function (attribute)
+        accept('static_library', name, attribute)
+    end
+end
 function simulator:executable(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
@@ -63,7 +69,8 @@ end
 local alias = {
     exe = "executable",
     dll = "shared_library",
-    lib = "source_set",
+    lib = "static_library",
+    src = "source_set",
     lua_dll = "lua_library",
 }
 for to, from in pairs(alias) do

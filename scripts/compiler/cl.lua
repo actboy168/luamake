@@ -95,4 +95,11 @@ function cl.rule_exe(w, name, links, ldflags, _)
     })
 end
 
+function cl.rule_lib(w, name, arch)
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[lib /nologo /machine:%s $in /out:$out]]):format(arch),
+    {
+        description = 'Link    Lib $out'
+    })
+end
+
 return cl

@@ -16,8 +16,10 @@
 
 
 /* global table */
-#define	LUA_GNAME	"_G"
+#define LUA_GNAME	"_G"
 
+
+typedef struct luaL_Buffer luaL_Buffer;
 
 
 /* extra error code for 'luaL_loadfilex' */
@@ -99,8 +101,10 @@ LUALIB_API lua_State *(luaL_newstate) (void);
 
 LUALIB_API lua_Integer (luaL_len) (lua_State *L, int idx);
 
-LUALIB_API const char *(luaL_gsub) (lua_State *L, const char *s, const char *p,
-                                                  const char *r);
+LUALIB_API void luaL_addgsub (luaL_Buffer *b, const char *s,
+                                     const char *p, const char *r);
+LUALIB_API const char *(luaL_gsub) (lua_State *L, const char *s,
+                                    const char *p, const char *r);
 
 LUALIB_API void (luaL_setfuncs) (lua_State *L, const luaL_Reg *l, int nup);
 
@@ -149,13 +153,33 @@ LUALIB_API void (luaL_requiref) (lua_State *L, const char *modname,
 #define luaL_loadbuffer(L,s,sz,n)	luaL_loadbufferx(L,s,sz,n,NULL)
 
 
+/* push the value used to represent failure/error */
+#define luaL_pushfail(L)	lua_pushnil(L)
+
+
+/*
+** Internal assertions for in-house debugging
+*/
+#if !defined(lua_assert)
+
+#if defined LUAI_ASSERT
+  #include <assert.h>
+  #define lua_assert(c)		assert(c)
+#else
+  #define lua_assert(c)		((void)0)
+#endif
+
+#endif
+
+
+
 /*
 ** {======================================================
 ** Generic Buffer manipulation
 ** =======================================================
 */
 
-typedef struct luaL_Buffer {
+struct luaL_Buffer {
   char *b;  /* buffer address */
   size_t size;  /* buffer size */
   size_t n;  /* number of characters in buffer */
@@ -164,7 +188,11 @@ typedef struct luaL_Buffer {
     LUAI_MAXALIGN;  /* ensure maximum alignment for buffer */
     char b[LUAL_BUFFERSIZE];  /* initial buffer */
   } init;
-} luaL_Buffer;
+};
+
+
+#define luaL_bufflen(bf)	((bf)->n)
+#define luaL_buffaddr(bf)	((bf)->b)
 
 
 #define luaL_addchar(B,c) \
@@ -172,6 +200,8 @@ typedef struct luaL_Buffer {
    ((B)->b[(B)->n++] = (c)))
 
 #define luaL_addsize(B,s)	((B)->n += (s))
+
+#define luaL_buffsub(B,s)	((B)->n -= (s))
 
 LUALIB_API void (luaL_buffinit) (lua_State *L, luaL_Buffer *B);
 LUALIB_API char *(luaL_prepbuffsize) (luaL_Buffer *B, size_t sz);

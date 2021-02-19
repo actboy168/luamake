@@ -5,34 +5,22 @@
 ----
 
 -- Store used packages in locals
-local io, bit = io, bit
+local io = io
 
 -- Cached globals
-local _s, _t = string, table
-local _len = function(o) return #o end
-local strmatch, strfind = _s.match, _s.find
-local tinsert, tconcat, tlen = _t.insert, _t.concat, _t.maxn or _len
-local strlen, substr, strrep = _s.len or _len, _s.sub, _s.rep
-local unpack, pack = _G.unpack or _t.unpack, function(...)
+local tinsert, tconcat = table.insert, table.concat
+local strlen = function(o) return #o end
+local strmatch, strfind = string.match, string.find
+local substr, strrep = string.sub, string.rep
+local unpack, pack = table.unpack, function(...)
 	return {...}
 end
 
 --- Module table
 local ninja = {}
 
--- LuaJIT's minilua does not include the math module, while
--- standard Lua does not include the bit module. As a result,
--- we end up with a few different implementations of iseven.
-local iseven
-if bit and bit.band then
-	-- Use the bit module if available.
-	iseven = function(num)
-		return bit.band(num, 1) ~= 1
-	end
-else
-	iseven = function(num)
-		return num % 2 == 0
-	end
+local function iseven(num)
+	return num % 2 == 0
 end
 
 --- Check for null and empty/whitespace string values
@@ -59,8 +47,8 @@ end
 --- String escaping.
 -- Escape a string such that it can be embedded into a Ninja file without
 -- further interpretation.
--- @string str input string
--- @treturn string The escaped string
+-- @param str string input string
+-- @return string #The escaped string
 function ninja.escape(str)
 	assert(str, 'str cannot be nil!')
 	assert(not strfind(str, '\n', 1, true),
@@ -71,10 +59,10 @@ end
 --- Expand Expand a string containing `vars` as Ninja would.
 -- Doesn't handle the full Ninja variable syntax, but it's enough to make
 -- configure.lua's use of it work.
--- @string str String to expand.
--- @tparam[opt={}] table vars "global" variables - searched if var is not found in locals
--- @tparam[opt={}] table locals "local" variables - first place searched for variables
--- @treturn string expanded string
+-- @param str string String to expand.
+-- @param vars table "global" variables - searched if var is not found in locals
+-- @param locals table "local" variables - first place searched for variables
+-- @return string #expanded string
 function ninja.expand(str, vars, locals)
 	vars = vars or {}
 	locals = locals or {}
@@ -88,8 +76,8 @@ end
 -- If input is a blank string or nil, an empty table will be returned. If input
 -- is a single scalar value, it will be converted to a string and inserted into
 -- a table. Used internally
--- @param input input value
--- @treturn table input converted to a table of strings
+-- @param input any input value
+-- @return table #input converted to a table of strings
 function ninja.as_list(input)
 	if isblank(input) then
 		return {}
@@ -201,6 +189,11 @@ do
 		return obj.write ~= nil and obj.flush ~= nil and obj.close ~= nil
 	end
 	
+	-- @class Writer
+	-- @field _P any
+	-- @field output file*
+	-- @field width integer
+	-- @field blanklines integer
 	--- Writer Implementation
 	local Writer = {}
 	setmetatable(Writer, {
@@ -212,10 +205,10 @@ do
 	Writer.__index = Writer
 
 	--- Writer constructor
-	-- @alias Writer
-	-- @tparam string|file output filepath or file handle for output .ninja file
-	-- @int[opt=78] width maximum line width for wrapping
-	-- @int[opt=1] blanklines maximum consecutive blank lines
+	-- @param output string|file*  ilepath or file handle for output .ninja file
+	-- @param width integer maximum line width for wrapping
+	-- @param blanklines integer maximum consecutive blank lines
+	-- @return Writer
 	function Writer.new(output, width, blanklines)
 		local self = setmetatable({}, Writer)
 
@@ -246,7 +239,7 @@ do
 	--- Outputs a newline.
 	-- Blank lines are limited to the writer's blanklines field if said
 	-- field is non-zero.
-	-- @treturn Writer returns self
+	-- @return Writer
 	function Writer:newline()
 		if self.blanklines > 0 then
 			if self._P.lineblank then
@@ -264,9 +257,9 @@ do
 
 	--- Outputs a comment.
 	-- Comment text is automatically wrapped according to the writer's width.
-	-- @string text Comment text
-	-- @bool[opt=false] has_path Unused - exists to maintain consistency.
-	-- @treturn Writer returns self
+	-- @param text string Comment text
+	-- @param has_path boolean Unused - exists to maintain consistency.
+	-- @return Writer
 	function Writer:comment(text, has_path)
 		-- has_path doesn't appear to be used
 		-- has_path = has_path or false
@@ -284,10 +277,10 @@ do
 
 	--- Define a variable to its value
 	-- Blank/nil values are ignored. (and filtered from collections)
-	-- @string key variable name
-	-- @tparam string|number|boolean|table value variable value
-	-- @int[opt=0] indent indent level
-	-- @treturn Writer returns self
+	-- @param key string  variable name
+	-- @param value string|number|boolean|table variable value
+	-- @param indent integer  indent level
+	-- @return Writer
 	function Writer:variable(key, value, indent)
 		-- Handle nil values and empty strings
 		if isblank(value) then return end
@@ -305,9 +298,9 @@ do
 	-- Pools allow you to allocate one or more rules or edges a finite number of
 	-- concurrent jobs which is more tightly restricted than the default
 	-- parallelism.
-	-- @string name pool name
-	-- @int depth pool depth
-	-- @treturn Writer returns self
+	-- @param name string pool name
+	-- @param depth integer pool depth
+	-- @return Writer returns self
 	function Writer:pool(name, depth)
 		return self:_line('pool ' .. name):variable('depth', depth, 1)
 	end
@@ -315,10 +308,10 @@ do
 	--- Rule declaration
 	-- Possible kwargs keys include: description, deps, depfile, pool, rspfile,
 	-- rspfile_content, generator, and restat.
-	-- @string name rule name
-	-- @string command rule command line
-	-- @tparam[opt={}] table kwargs additional optional rule configuration
-	-- @treturn Writer returns self
+	-- @param name string rule name
+	-- @param command string rule command line
+	-- @param kwargs table additional optional rule configuration
+	-- @return Writer
 	function Writer:rule(name, command, kwargs)
 		-- Simple keyed parameters that can be passed directly to our variable
 		-- method
@@ -356,14 +349,14 @@ do
 
 	--- Build statement
 	-- Build statements declare a relationship between input and output files.
-	-- @tparam string|table outputs output file(s)/target(s)
-	-- @string rule declared rule to use
-	-- @tparam string|table inputs input file(s)/target(s)
-	-- @tparam ?string|table implicit implicit dependencies
-	-- @tparam ?string|table order_only force build to occur after target(s)
-	-- @tparam[opt] table variables any shadowed variables for this particular build
-	-- @tparam[opt] table implicit_outputs no clue
-	-- @treturn Writer returns self
+	-- @param outputs string|table output file(s)/target(s)
+	-- @param rule string declared rule to use
+	-- @param inputs string|table input file(s)/target(s)
+	-- @param implicit string|table implicit dependencies
+	-- @param order_only string|table force build to occur after target(s)
+	-- @param variables table any shadowed variables for this particular build
+	-- @param implicit_outputs table no clue
+	-- @return Writer
 	function Writer:build(outputs, rule, inputs, implicit, order_only,
 	                      variables, implicit_outputs)
 		outputs = ninja.as_list(outputs)
@@ -424,9 +417,9 @@ do
 
 	--- Include statement
 	-- Used to include another .ninja file into the current scope.
-	-- @string path .ninja file to include in the current scope
-	-- @bool[opt=false] raw controls whether to escape path or leave it raw
-	-- @treturn Writer returns self
+	-- @param path string .ninja file to include in the current scope
+	-- @param raw boolean controls whether to escape path or leave it raw
+	-- @return Writer
 	function Writer:include(path, raw)
 		if not raw then path = ninja.escape_path(path) end
 		return self:_line('include ' .. path)
@@ -434,17 +427,17 @@ do
 
 	--- Subninja statement
 	-- Used to include another .ninja file, introducing a new scope.
-	-- @string path .ninja file to use for the new scope
-	-- @bool[opt=false] raw controls whether to escape path or leave it raw
-	-- @treturn Writer returns self
+	-- @param path string .ninja file to use for the new scope
+	-- @param raw boolean controls whether to escape path or leave it raw
+	-- @return Writer
 	function Writer:subninja(path, raw)
 		if not raw then path = ninja.escape_path(path) end
 		return self:_line('subninja ' .. path)
 	end
 
 	--- Default target(s) statement.
-	-- @tparam ?string|{string,...} targets default build target(s)
-	-- @treturn Writer returns self
+	-- @param targets string|{string,...} default build target(s)
+	-- @return Writer
 	function Writer:default(targets)
 		return self:_line('default ' .. join(ninja.as_list(targets)))
 	end
@@ -459,8 +452,8 @@ do
 	-- @section writer_private
 
 	--- Refactored to a separate method in order to patch during tests.
-	-- @param output The object we're testing 
-	-- @treturn boolean
+	-- @param output any The object we're testing 
+	-- @return boolean
 	function Writer:_isfile(output)
 		return (type(output) == 'userdata' and io.type(output) == 'file') or
 		       (type(output) == 'table' and isfileimpl(output))
@@ -468,9 +461,9 @@ do
 
 	--- Write 'text' to output with tracking for blank lines.
 	-- Wasn't in the original ninja_syntax, but whatever.
-	-- @string text output text
-	-- @bool[opt=false] lineblank Whether or not text is a blank line.
-	-- @treturn Writer returns self
+	-- @param text string output text
+	-- @param lineblank boolean Whether or not text is a blank line.
+	-- @return Writer returns self
 	function Writer:_write(text, lineblank)
 		self.output:write(text)
 		self._P.lineblank = lineblank or false
@@ -478,9 +471,9 @@ do
 	end
 
 	--- Write 'text' word-wrapped at self.width characters.
-	-- @string text Text to word-wrap
-	-- @int[opt=0] indent Indent level
-	-- @treturn Writer returns self
+	-- @param text string Text to word-wrap
+	-- @param indent integer Indent level
+	-- @return Writer
 	function Writer:_line(text, indent)
 		-- indent is at 0 by default
 		indent = indent or 0
@@ -517,9 +510,9 @@ do
 	end
 
 	--- Counts the '$' characters preceding str[index].
-	-- @string str subject string
-	-- @int index the target index
-	-- @treturn int the count of '$' characters
+	-- @param str string subject string
+	-- @param index integer the target index
+	-- @return integer #the count of '$' characters
 	function Writer:_count_dollars_before_index(str, index)
 		-- Exposing this solely to maintain an identical interface with
 		-- ninja_syntax.py's Writer class.

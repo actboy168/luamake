@@ -47,8 +47,11 @@ local gcc = {
 }
 
 function gcc.mode(_, mode, crt, flags, ldflags)
-    if crt ~= 'dynamic' then
-        ldflags[#ldflags+1] = "-static"
+    if crt == 'dynamic' then
+        ldflags[#ldflags+1] = "-lstdc++"
+    else
+        ldflags[#ldflags+1] = "-static-libgcc"
+        ldflags[#ldflags+1] = "-static-libstdc++"
     end
     if mode == 'debug' then
         flags[#flags+1] = '-g'

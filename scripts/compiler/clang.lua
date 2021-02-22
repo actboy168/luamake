@@ -2,8 +2,8 @@ local clang = require 'compiler.gcc'
 clang.name = "clang"
 
 function clang.mode(_, mode, crt, flags, ldflags)
-    if crt ~= 'dynamic' then
-        ldflags[#ldflags+1] = "-static"
+    if crt == 'dynamic' then
+        --TODO
     end
     if mode == 'debug' then
         flags[#flags+1] = '-g'

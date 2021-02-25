@@ -102,4 +102,11 @@ function cl.rule_lib(w, name, arch)
     })
 end
 
+function cl.rule_rc(w, name)
+    w:rule('RC_'..name:gsub('[^%w_]', '_'), [[rc /nologo /fo $out $in]],
+    {
+        description = 'Compile Res $out',
+    })
+end
+
 return cl

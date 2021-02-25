@@ -96,4 +96,12 @@ function gcc.rule_exe(w, name, links, ldflags, _, attribute)
     })
 end
 
+-- mingw only
+function gcc.rule_rc(w, name)
+    w:rule('RC_'..name:gsub('[^%w_]', '_'), [[windres -i $in -o $out]],
+    {
+        description = 'Compile Res $out',
+    })
+end
+
 return gcc

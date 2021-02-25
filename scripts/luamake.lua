@@ -104,6 +104,7 @@ local file_type = {
     mm = "cxx",
     c = "c",
     m = "c",
+    rc = "rc",
 }
 
 local function tbl_append(t, a)
@@ -295,6 +296,7 @@ local function generate(self, rule, name, attribute, globals)
     local fmtname = name:gsub("[^%w_]", "_")
     local has_c = false
     local has_cxx = false
+    local has_rc = false
     for _, source in ipairs(sources) do
         local objname = fs.path("$obj") / name / fs.path(source):filename():replace_extension(".obj")
         input[#input+1] = objname
@@ -316,6 +318,11 @@ local function generate(self, rule, name, attribute, globals)
                 cc.rule_cxx(ninja, name, fin_flags, cxxflags, attribute)
             end
             ninja:build(objname, "CXX_"..fmtname, source)
+        elseif isWindows() and type == "rc" then
+            if not has_rc then
+                cc.rule_rc(ninja, name)
+            end
+            ninja:build(objname, "RC_"..fmtname, source)
         else
             error(("`%s`: unknown file extension: `%s`"):format(name, ext))
         end

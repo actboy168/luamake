@@ -61,9 +61,9 @@ end
 function simulator:phony(attribute)
     accept('phony', nil, attribute)
 end
-function simulator:import(path)
+function simulator:import(path, env)
     local filepath = fs.path(path)
-    dofile(nil, filepath:parent_path():string(), filepath:filename():string())
+    dofile(nil, filepath:parent_path():string(), filepath:filename():string(), env)
 end
 
 local alias = {
@@ -99,10 +99,10 @@ local function filehook(name, mode)
     return f, err
 end
 
-function dofile(_, dir, file)
+function dofile(_, dir, file, env)
     local last = globals.workdir
     globals.workdir = dir
-    assert(sandbox(dir, file, filehook, { luamake = simulator }))(table.unpack(arg))
+    assert(sandbox(dir, file, filehook, { luamake = simulator }, env))(table.unpack(arg))
     globals.workdir = last
 end
 

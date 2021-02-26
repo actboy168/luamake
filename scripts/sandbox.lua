@@ -158,14 +158,14 @@ local function sandbox_env(env, loadlua, openfile, preload)
     return env
 end
 
-return function (root, main, io_open, preload)
+return function (root, main, io_open, preload, env)
     local function absolute(name)
         return fs.absolute(fs.path(name), fs.path(root)):string()
     end
     local function openfile(name, mode)
         return io_open(absolute(name), mode)
     end
-    local env = {}
+    env = env or {}
     local function loadlua(name)
         local f, err = openfile(name, 'r')
         if f then

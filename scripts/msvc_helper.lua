@@ -59,7 +59,7 @@ local function environment(arch, winsdk)
         args[#args+1] = ('-winsdk=%s'):format(winsdk)
     end
     local process = assert(sp.spawn {
-        'cmd', '/c', args, '&', 'set',
+        'cmd', '/k', args, '&', 'set',
         stderr = true,
         stdout = true,
         searchPath = true,
@@ -70,6 +70,7 @@ local function environment(arch, winsdk)
             name = name:upper()
             if need[name] then
                 env[name] = value
+                print(name, value)
             end
         end
     end

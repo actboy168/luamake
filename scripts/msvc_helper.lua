@@ -73,10 +73,13 @@ local function environment(arch, winsdk)
             end
         end
     end
+    local err = process.stderr:read "a"
     process.stdout:close()
     process.stderr:close()
     local code = process:wait()
     if code ~= 0 then
+        io.stderr:write("Call `VsDevCmd.bat` error:\n")
+        io.stderr:write(err)
         os.exit(code, true)
     end
     return env

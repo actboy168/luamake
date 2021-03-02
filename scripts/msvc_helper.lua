@@ -70,7 +70,6 @@ local function environment(arch, winsdk)
             name = name:upper()
             if need[name] then
                 env[name] = value
-                print(name, value)
             end
         end
     end

@@ -113,7 +113,7 @@ local function prefix(env)
     return prefix
 end
 
-local function crtpath(platform)
+local function vcrtpath(platform)
     local RedistVersion = (function ()
         local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCRedistVersion.default.txt'
         local f = assert(io.open(verfile:string(), 'r'))
@@ -168,13 +168,17 @@ local function ucrtpath(platform)
     end
 end
 
-local function copy_crtdll(platform, target)
+local function copy_vcrt(platform, target)
     fs.create_directories(target)
-    for dll in crtpath(platform):list_directory() do
+    for dll in vcrtpath(platform):list_directory() do
         if dll:filename() ~= fs.path "vccorlib140.dll" then
             fs.copy_file(dll, target / dll:filename(), true)
         end
     end
+end
+
+local function copy_ucrt(platform, target)
+    fs.create_directories(target)
     for dll in ucrtpath(platform):list_directory() do
         fs.copy_file(dll, target / dll:filename(), true)
     end
@@ -184,7 +188,8 @@ return {
     installpath = installpath,
     environment = environment,
     prefix = prefix,
-    crtpath = crtpath,
+    vcrtpath = vcrtpath,
     ucrtpath = ucrtpath,
-    copy_crtdll = copy_crtdll,
+    copy_vcrt = copy_vcrt,
+    copy_ucrt = copy_ucrt,
 }

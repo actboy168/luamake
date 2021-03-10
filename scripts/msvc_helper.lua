@@ -1,7 +1,14 @@
 require 'bee'
 local sp = require 'bee.subprocess'
 local fs = require 'bee.filesystem'
-local vswhere = fs.path(os.getenv('ProgramFiles(x86)')) / 'Microsoft Visual Studio' / 'Installer' / 'vswhere.exe'
+
+local function Is64BitWindows()
+    -- https://docs.microsoft.com/en-us/archive/blogs/david.wang/howto-detect-process-bitness
+    return os.getenv "PROCESSOR_ARCHITECTURE" == "AMD64" or os.getenv "PROCESSOR_ARCHITEW6432" == "AMD64"
+end
+
+local ProgramFiles = Is64BitWindows() and 'ProgramFiles(x86)' or 'ProgramFiles'
+local vswhere = fs.path(os.getenv(ProgramFiles)) / 'Microsoft Visual Studio' / 'Installer' / 'vswhere.exe'
 local need = { LIB = true, LIBPATH = true, PATH = true, INCLUDE = true }
 
 local function createfile(filename, content)
@@ -24,6 +31,7 @@ local function installpath()
     local process = assert(sp.spawn {
         vswhere,
         '-latest',
+        '-utf8',
         '-products', '*',
         '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
         '-property', 'installationPath',

@@ -143,8 +143,8 @@ local function sandbox_env(env, loadlua, openfile, preload)
         }
     }
 
-    function env.loadfile(filename)
-        return loadlua(filename)
+    function env.loadfile(filename, mode, ENV)
+        return loadlua(filename, mode, ENV)
     end
 
     function env.dofile(filename)
@@ -166,7 +166,8 @@ return function (root, main, io_open, preload, env)
         return io_open(absolute(name), mode)
     end
     env = env or {}
-    local function loadlua(name)
+    local function loadlua(name, mode, ENV)
+        assert (mode == nil or mode == "t")
         local f, err = openfile(name, 'r')
         if f then
             if '#' == f:read(1) then
@@ -176,7 +177,7 @@ return function (root, main, io_open, preload, env)
             end
             local str = f:read 'a'
             f:close()
-            return load(str, '@' .. absolute(name), 't', env)
+            return load(str, '@' .. absolute(name), 't', ENV or env)
         end
         return nil, err
     end

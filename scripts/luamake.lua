@@ -26,12 +26,17 @@ local function fmtpath_u(workdir, path)
 end
 
 local function fmtpath(workdir, path)
-    local res = fmtpath_u(workdir, path):string()
-    if arguments.plat == "msvc" then
-        return res:gsub('/', '\\')
+    if path then
+        path = fmtpath_u(workdir, path):string()
     else
-        return res:gsub('\\', '/')
+        path = workdir
     end
+    if arguments.plat == "msvc" then
+        path = path:gsub('/', '\\') 
+    else
+        path = path:gsub('\\', '/')
+    end
+    return path
 end
 
 -- TODO 在某些平台上忽略大小写？
@@ -416,6 +421,7 @@ end
 local GEN = {}
 
 local ruleCommand = false
+local ruleCopy = false
 
 function GEN.default(self, _, attribute, globals)
     local ninja = self.ninja
@@ -493,17 +499,34 @@ function GEN.build(self, name, attribute, globals)
         implicit[#implicit+1] = depsTarget.outname
     end
 
-    if not ruleCommand then
-        ruleCommand = true
-        ninja:rule('command', '$COMMAND', {
-            description = '$DESC'
-        })
-    end
     local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
-    ninja:build(outname, 'command', nil, implicit, nil, {
-        COMMAND = command,
-        pool = pool,
-    }, output)
+    if command[1] == "{COPY}" then
+        if not ruleCopy then
+            ruleCopy = true
+            if arguments.plat == "msvc" then
+                ninja:rule('copy', 'cmd.exe /c copy 2>NUL /y $FROM $TO', {
+                    description = '$DESC'
+                })
+            else
+                ninja:rule('copy', 'cp -afv $FROM $TO', {
+                    description = '$DESC'
+                })
+            end
+        end
+        ninja:build(outname, 'copy', nil, implicit, nil, {
+            FROM = fmtpath(workdir, command[2]),
+            TO = fmtpath(workdir, command[3]),
+            pool = pool,
+        }, output)
+    else
+        if not ruleCommand then
+            ruleCommand = true
+        end
+        ninja:build(outname, 'command', nil, implicit, nil, {
+            COMMAND = command,
+            pool = pool,
+        }, output)
+    end
     self._targets[name] = {
         outname = outname,
         rule = 'build',
@@ -548,20 +571,19 @@ function lm:finish()
     local ninja_script = util.script():string()
     local ninja = ninja_syntax.Writer(assert(memfile(ninja_script)))
 
-    ninja:variable("builddir", ('build/%s'):format(arguments.plat))
+    ninja:variable("builddir", fmtpath(('build/%s'):format(arguments.plat)))
     if arguments.rebuilt ~= 'no' then
-        ninja:variable("luamake", getexe())
+        ninja:variable("luamake", fmtpath(getexe()))
     end
-
     if globals.bindir then
-        ninja:variable("bin", globals.bindir)
+        ninja:variable("bin", fmtpath(globals.bindir))
     else
-        ninja:variable("bin", "$builddir/bin")
+        ninja:variable("bin", fmtpath("$builddir/bin"))
     end
     if globals.objdir then
-        ninja:variable("obj", globals.objdir)
+        ninja:variable("obj", fmtpath(globals.objdir))
     else
-        ninja:variable("obj", "$builddir/obj")
+        ninja:variable("obj", fmtpath("$builddir/obj"))
     end
 
     self.ninja = ninja

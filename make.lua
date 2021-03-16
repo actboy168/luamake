@@ -2,6 +2,10 @@ local lm = require 'luamake'
 
 lm.rootdir = 'lua'
 
+local isWindows = lm.plat == 'mingw' or lm.plat == 'msvc'
+local exe = isWindows and ".exe" or ""
+local dll = isWindows and ".dll" or ".so"
+
 if lm.plat == 'msvc' then
     local ninja = "..\\..\\tools\\ninja.exe"
     lm:build "msvc" {
@@ -17,40 +21,25 @@ if lm.plat == 'msvc' then
         deps = "msvc",
         pool = "console",
     }
-    lm:build "copy_bee_1" {
-        "cmd.exe", "/C", "copy", "/Y", "3rd\\bee.lua\\build\\msvc\\bin\\bootstrap.exe", "luamake.exe",
-        deps = "bee"
-    }
-    lm:build "copy_bee_2" {
-        "cmd.exe", "/C", "copy", "/Y", "3rd\\bee.lua\\build\\msvc\\bin\\bee.dll", "bee.dll",
-        deps = "bee"
-    }
-    lm:build "copy_bee_3" {
-        "cmd.exe", "/C", "copy", "/Y", "3rd\\bee.lua\\build\\msvc\\bin\\lua54.dll", "lua54.dll",
-        deps = "bee"
-    }
 else
     local ninja = "ninja"
     lm:build "bee" {
         "cd", "3rd/bee.lua", "&&", ninja, "-f", "ninja/"..lm.plat..".ninja",
         pool = "console",
     }
+end
 
-    local exe = (lm.plat == 'mingw') and ".exe" or ""
-    local dll = (lm.plat == 'mingw') and ".dll" or ".so"
-
-    lm:build "copy_bee_1" {
-       "cp", "3rd/bee.lua/build/"..lm.plat.."/bin/bootstrap"..exe, "luamake"..exe,
+lm:build "copy_bee_1" {
+    "{COPY}", "3rd/bee.lua/$bin/bootstrap"..exe, "luamake"..exe,
+     deps = "bee"
+}
+lm:build "copy_bee_2" {
+    "{COPY}", "3rd/bee.lua/$bin/bee"..dll, "bee"..dll,
+    deps = "bee"
+}
+if isWindows then
+    lm:build "copy_bee_3" {
+        "{COPY}", "3rd/bee.lua/$bin/lua54"..dll, "lua54"..dll,
         deps = "bee"
     }
-    lm:build "copy_bee_2" {
-        "cp", "3rd/bee.lua/build/"..lm.plat.."/bin/bee"..dll, "bee"..dll,
-        deps = "bee"
-    }
-    if lm.plat == 'mingw' then
-        lm:build "copy_bee_3" {
-            "cp", "3rd/bee.lua/build/"..lm.plat.."/bin/lua54"..dll, "lua54"..dll,
-            deps = "bee"
-        }
-    end
 end

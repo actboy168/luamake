@@ -7,7 +7,12 @@ rule command
 build $builddir/_/bee: command
   pool = console
   COMMAND = cd 3rd/bee.lua && ninja -f ninja/macos.ninja
-build $builddir/_/copy_bee_1: command | $builddir/_/bee
-  COMMAND = cp 3rd/bee.lua/build/macos/bin/bootstrap luamake
-build $builddir/_/copy_bee_2: command | $builddir/_/bee
-  COMMAND = cp 3rd/bee.lua/build/macos/bin/bee.so bee.so
+rule copy
+  command = cp -afv $FROM $TO
+  description = $DESC
+build $builddir/_/copy_bee_1: copy | $builddir/_/bee
+  FROM = 3rd/bee.lua/$bin/bootstrap
+  TO = luamake
+build $builddir/_/copy_bee_2: copy | $builddir/_/bee
+  FROM = 3rd/bee.lua/$bin/bee.so
+  TO = bee.so

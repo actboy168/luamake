@@ -1,0 +1,24 @@
+name: build
+on: push
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules : recursive
+    - run: .\msvc_x64.bat
+  liunx:
+    runs-on: ubuntu-16.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules : recursive
+    - run: ninja -f ninja/linux.ninja
+  macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules : recursive
+    - run: ninja -f ninja/macos.ninja

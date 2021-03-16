@@ -521,6 +521,9 @@ function GEN.build(self, name, attribute, globals)
     else
         if not ruleCommand then
             ruleCommand = true
+            ninja:rule('command', '$COMMAND', {
+                description = '$DESC'
+            })
         end
         ninja:build(outname, 'command', nil, implicit, nil, {
             COMMAND = command,

@@ -52,10 +52,15 @@ local function command(what, ...)
 end
 
 local function sandbox(filename, ...)
-    local env = arguments.plat == 'msvc' and {
-        msvc = require "msvc_helper",
-    }
-    assert(require "sandbox"(WORKDIR:string(), filename, io.open, env))(...)
+    assert(require "sandbox"{
+        root = WORKDIR:string(),
+        main = filename,
+        io_open = io.open,
+        preload = arguments.plat == 'msvc' and {
+            msvc = require "msvc_helper",
+        },
+        plat = arguments.plat,
+    })(...)
 end
 
 

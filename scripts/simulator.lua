@@ -102,7 +102,14 @@ end
 function dofile(_, dir, file, env)
     local last = globals.workdir
     globals.workdir = dir
-    assert(sandbox(dir, file, filehook, { luamake = simulator }, env))(table.unpack(arg))
+    assert(sandbox {
+        root = dir,
+        main = file,
+        io_open = filehook,
+        preload =  { luamake = simulator },
+        env = env,
+        plat = arguments.plat,
+    })(table.unpack(arg))
     globals.workdir = last
 end
 

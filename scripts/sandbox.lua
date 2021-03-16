@@ -1,6 +1,6 @@
 local fs = require "bee.filesystem"
 
-local function sandbox_env(env, loadlua, openfile, preload)
+local function sandbox_env(env, loadlua, openfile, preload, plat)
     setmetatable(env, {__index=_G})
 
     local _PRELOAD = {}
@@ -127,12 +127,13 @@ local function sandbox_env(env, loadlua, openfile, preload)
         return _LOADED[name]
     end
 
+    local ext = package.cpath:match '%.([a-z]+)$'
     env.package = {
         config = package.config,
         loaded = _LOADED,
         preload = _PRELOAD,
         path = '?.lua',
-        cpath = package.cpath,
+        cpath = '?.'..ext..';build/'..plat..'/bin/?.'..ext,
         searchpath = searchpath,
         loadlib = package.loadlib,
         searchers = {
@@ -158,14 +159,14 @@ local function sandbox_env(env, loadlua, openfile, preload)
     return env
 end
 
-return function (root, main, io_open, preload, env)
+return function (c)
     local function absolute(name)
-        return fs.absolute(fs.path(name), fs.path(root)):string()
+        return fs.absolute(fs.path(name), fs.path(c.root)):string()
     end
     local function openfile(name, mode)
-        return io_open(absolute(name), mode)
+        return c.io_open(absolute(name), mode)
     end
-    env = env or {}
+    local env = c.env or {}
     local function loadlua(name, mode, ENV)
         assert (mode == nil or mode == "t")
         local f, err = openfile(name, 'r')
@@ -181,10 +182,10 @@ return function (root, main, io_open, preload, env)
         end
         return nil, err
     end
-    local init, err = loadlua(main)
+    local init, err = loadlua(c.main)
     if not init then
         return nil, err
     end
-    debug.setupvalue(init, 1, sandbox_env(env, loadlua, openfile, preload))
+    debug.setupvalue(init, 1, sandbox_env(env, loadlua, openfile, c.preload, c.plat))
     return init
 end

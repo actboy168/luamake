@@ -37,7 +37,8 @@ local function ninja(args)
     args.cwd = WORKDIR
     local process = assert(sp.spawn(args))
     for line in process.stdout:lines() do
-        print(line)
+        io.write(line)
+        io.write "\n"
     end
     io.write(process.stderr:read 'a')
     local code = process:wait()

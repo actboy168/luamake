@@ -427,8 +427,10 @@ function GEN.default(self, _, attribute, globals)
     local ninja = self.ninja
     local targets = {}
     for _, name in ipairs(attribute) do
-        assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
-        targets[#targets+1] = self._targets[name].outname
+        if name then
+            assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
+            targets[#targets+1] = self._targets[name].outname
+        end
     end
     ninja:default(targets)
 end

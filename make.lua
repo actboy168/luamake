@@ -32,5 +32,8 @@ lm:build "test_bee" {
 }
 
 lm:default {
-    "test_bee"
+    "test_bee",
+    "copy_bee_1",
+    "copy_bee_2",
+    isWindows and "copy_bee_3",
 }

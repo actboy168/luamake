@@ -181,4 +181,4 @@ build $builddir/_/test_bee: command | $bin/bootstrap $
     $builddir/_/copy_bootstrap_script $bin/bee.so
   pool = console
   COMMAND = $bin/bootstrap 3rd/bee.lua/test/test.lua
-default $builddir/_/test_bee
+default $builddir/_/test_bee $builddir/_/copy_bee_1 $builddir/_/copy_bee_2

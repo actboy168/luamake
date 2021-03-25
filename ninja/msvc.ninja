@@ -184,7 +184,7 @@ build $builddir/_/copy_bee_2: copy | $bin/bee.dll
 build $builddir/_/copy_bee_3: copy | $bin/bee.dll
   FROM = $bin\lua54.dll
   TO = lua54.dll
-build $builddir/_/copy_bootstrap_script: copy
+build $builddir/_/copy_bootstrap_script: copy | $bin/bootstrap.exe
   FROM = 3rd\bee.lua\bootstrap\main.lua
   TO = $bin\main.lua
 build $builddir/_/test_bee: command | $bin/bootstrap.exe $

@@ -174,7 +174,7 @@ build $builddir/_/copy_bee_1: copy | $bin/bee.so
 build $builddir/_/copy_bee_2: copy | $bin/bee.so
   FROM = $bin/bee.so
   TO = bee.so
-build $builddir/_/copy_bootstrap_script: copy
+build $builddir/_/copy_bootstrap_script: copy | $bin/bootstrap
   FROM = 3rd/bee.lua/bootstrap/main.lua
   TO = $bin/main.lua
 build $builddir/_/test_bee: command | $bin/bootstrap $

@@ -22,7 +22,8 @@ if isWindows then
 end
 
 lm:build "copy_bootstrap_script" {
-    "{COPY}", "@3rd/bee.lua/bootstrap/main.lua", "$bin/main.lua"
+    "{COPY}", "@3rd/bee.lua/bootstrap/main.lua", "$bin/main.lua",
+    deps = { "bootstrap" },
 }
 
 lm:build "test_bee" {

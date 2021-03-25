@@ -6,4 +6,5 @@ for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio
 call "%InstallDir%\Common7\Tools\vsdevcmd.bat" -arch=x64 -host_arch=x64
 @echo on
 
-tools\ninja.exe -f ninja\msvc.ninja
+call tools\msvc_init.bat
+tools\ninja.exe -f build\msvc\init.ninja

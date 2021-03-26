@@ -7,4 +7,4 @@ call "%InstallDir%\Common7\Tools\vsdevcmd.bat" -arch=x64 -host_arch=x64
 @echo on
 
 call tools\msvc_init.bat
-tools\ninja.exe -f build\msvc\init.ninja
+ninja -f build\msvc\init.ninja

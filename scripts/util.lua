@@ -24,7 +24,8 @@ local function ninja(args)
                 VS_UNICODE_OUTPUT = false
             }
         end
-        table.insert(args, 1, MAKEDIR / "tools" / 'ninja.exe')
+        args.searchPath = true
+        table.insert(args, 1, {'cmd', '/c', 'ninja'})
     else
         args.searchPath = true
         table.insert(args, 1, 'ninja')

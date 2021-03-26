@@ -3,7 +3,7 @@
 ## Build
 
 msvc
-* msvc_x86.bat / msvc_x64.bat
+* compile/msvc_x86.bat or compile/msvc_x64.bat
 
 mingw / macos / linux
 

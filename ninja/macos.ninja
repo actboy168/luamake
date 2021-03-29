@@ -162,7 +162,7 @@ build $bin/bootstrap: LINK_bootstrap $obj/bootstrap/main.obj $
 rule copy
   command = cp -afv $FROM $TO
   description = $DESC
-build $builddir/_/copy_script: copy
+build $builddir/_/copy_script: copy | $bin/bootstrap
   FROM = 3rd/bee.lua/bootstrap/main.lua
   TO = $bin/main.lua
 rule command
@@ -170,6 +170,7 @@ rule command
   description = $DESC
 build $builddir/_/test: command | $bin/bootstrap $builddir/_/copy_script $
     $bin/bee.so
+  pool = console
   COMMAND = $bin/bootstrap 3rd/bee.lua/test/test.lua
 build $builddir/_/copy_bee_1: copy | $bin/bee.so
   FROM = $bin/bootstrap

@@ -165,7 +165,7 @@ build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
 rule copy
   command = cmd.exe /c copy 2>NUL /y $FROM $TO
   description = $DESC
-build $builddir/_/copy_script: copy
+build $builddir/_/copy_script: copy | $bin/bootstrap.exe
   FROM = 3rd\bee.lua\bootstrap\main.lua
   TO = $bin\main.lua
 rule command

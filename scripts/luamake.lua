@@ -32,7 +32,7 @@ local function fmtpath(workdir, path)
         path = workdir
     end
     if arguments.plat == "msvc" then
-        path = path:gsub('/', '\\') 
+        path = path:gsub('/', '\\')
     else
         path = path:gsub('\\', '/')
     end
@@ -488,7 +488,7 @@ function GEN.build(self, name, attribute, globals)
                 if v:sub(1,1) == '@' then
                     command[#command+1] = fmtpath(workdir, v:sub(2))
                 else
-                    command[#command+1] = v
+                    command[#command+1] = fmtpath(v)
                 end
             end
         end
@@ -516,8 +516,8 @@ function GEN.build(self, name, attribute, globals)
             end
         end
         ninja:build(outname, 'copy', nil, implicit, nil, {
-            FROM = fmtpath(workdir, command[2]),
-            TO = fmtpath(workdir, command[3]),
+            FROM = command[2],
+            TO = command[3],
             pool = pool,
         }, output)
     else

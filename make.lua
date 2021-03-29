@@ -21,19 +21,8 @@ if isWindows then
     }
 end
 
-lm:build "copy_bootstrap_script" {
-    "{COPY}", "@3rd/bee.lua/bootstrap/main.lua", "$bin/main.lua",
-    deps = { "bootstrap" },
-}
-
-lm:build "test_bee" {
-    "$bin/bootstrap" .. exe, "@3rd/bee.lua/test/test.lua",
-    deps = { "bootstrap", "copy_bootstrap_script", "bee" },
-    pool = "console"
-}
-
 lm:default {
-    "test_bee",
+    "test",
     "copy_bee_1",
     "copy_bee_2",
     isWindows and "copy_bee_3",

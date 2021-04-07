@@ -18,6 +18,7 @@ jobs:
     - run: sudo apt-get install -y libreadline-dev ninja-build
     - run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
     - run: sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
+    - run: chmod +x ./compile/install.sh
     - run: ./compile/install.sh
   macos:
     runs-on: macos-latest
@@ -26,4 +27,5 @@ jobs:
       with:
         submodules : recursive
     - run: brew install ninja
+    - run: chmod +x ./compile/install.sh
     - run: ./compile/install.sh

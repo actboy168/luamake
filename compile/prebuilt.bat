@@ -7,7 +7,7 @@ luamake init -rebuilt no -plat macos
 if not exist ninja (
 	md ninja
 )
-copy /Y build\msvc\make.ninja  ninja\msvc.ninja
-copy /Y build\mingw\make.ninja ninja\mingw.ninja
-copy /Y build\linux\make.ninja ninja\linux.ninja
-copy /Y build\macos\make.ninja ninja\macos.ninja
+copy /Y build\msvc\make.ninja  compile\ninja\msvc.ninja
+copy /Y build\mingw\make.ninja compile\ninja\mingw.ninja
+copy /Y build\linux\make.ninja compile\ninja\linux.ninja
+copy /Y build\macos\make.ninja compile\ninja\macos.ninja

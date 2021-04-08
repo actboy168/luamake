@@ -14,6 +14,6 @@ cd ..
 rmdir /q /s temp
 
 echo msvc_deps_prefix = %MsvcDepsPrefix% > compile.ninja
-echo subninja ninja/msvc.ninja >> compile.ninja
+echo subninja compile/ninja/msvc.ninja >> compile.ninja
 
 cd ../..

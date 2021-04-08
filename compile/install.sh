@@ -2,13 +2,13 @@
 
 case "`uname`" in
   MSYS_NT*)
-    ninja -f ninja/mingw.ninja
+    ninja -f compile/ninja/mingw.ninja
     ;;
   Linux)
-    ninja -f ninja/linux.ninja
+    ninja -f compile/ninja/linux.ninja
     ;;
   Darwin)
-    ninja -f ninja/macos.ninja
+    ninja -f compile/ninja/macos.ninja
     ;;
   *)
     echo "Unknown OS $OS"

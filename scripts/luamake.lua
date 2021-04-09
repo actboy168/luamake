@@ -413,6 +413,7 @@ local function generate(self, rule, name, attribute, globals)
         if cc.name ~= 'cl' then
             error "TODO"
         end
+        t.output = outname
         cc.rule_lib(ninja, name, self.arch)
         ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     end

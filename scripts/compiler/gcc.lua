@@ -60,6 +60,16 @@ function gcc.mode(_, mode, crt, flags, ldflags)
     end
 end
 
+function gcc.rule_asm(w, name, flags, attribute)
+    w:rule('ASM_'..name:gsub('[^%w_]', '_'), ([[%s -MMD -MT $out -MF $out.d %s -o $out -c $in]])
+    :format(attribute.gcc and attribute.gcc or 'gcc', flags),
+    {
+        description = 'Compile ASM $out',
+        deps = 'gcc',
+        depfile = '$out.d'
+    })
+end
+
 function gcc.rule_c(w, name, flags, cflags, attribute)
     w:rule('C_'..name:gsub('[^%w_]', '_'), ([[%s -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(attribute.gcc and attribute.gcc or 'gcc', cflags, flags),

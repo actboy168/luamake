@@ -110,6 +110,7 @@ local file_type = {
     c = "c",
     m = "c",
     rc = "rc",
+    s = "asm",
 }
 
 local function tbl_append(t, a)
@@ -302,6 +303,7 @@ local function generate(self, rule, name, attribute, globals)
     local has_c = false
     local has_cxx = false
     local has_rc = false
+    local has_asm = false
     for _, source in ipairs(sources) do
         local objname = fs.path("$obj") / name / fs.path(source):filename():replace_extension(".obj")
         input[#input+1] = objname
@@ -328,6 +330,15 @@ local function generate(self, rule, name, attribute, globals)
                 cc.rule_rc(ninja, name)
             end
             ninja:build(objname, "RC_"..fmtname, source)
+        elseif type == "asm" then
+            if cc.name == "cl" then
+                error "TODO"
+            end
+            if not has_asm then
+                has_asm = true
+                cc.rule_asm(ninja, name, fin_flags, attribute)
+            end
+            ninja:build(objname, "ASM_"..fmtname, source)
         else
             error(("`%s`: unknown file extension: `%s`"):format(name, ext))
         end

@@ -410,9 +410,6 @@ local function generate(self, rule, name, attribute, globals)
         cc.rule_exe(ninja, name, fin_links, fin_ldflags, mode, attribute)
         ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     elseif rule == "static_library" then
-        if cc.name ~= 'cl' then
-            error "TODO"
-        end
         t.output = outname
         cc.rule_lib(ninja, name, self.arch)
         ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)

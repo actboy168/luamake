@@ -384,7 +384,7 @@ local function generate(self, rule, name, attribute, globals)
         tbl_links[#tbl_links+1] = cc.link(link)
     end
     for _, linkdir in ipairs(linkdirs) do
-        ldflags[#ldflags+1] = cc.linkdir(linkdir)
+        ldflags[#ldflags+1] = cc.linkdir(fmtpath_u(workdir, rootdir / linkdir))
     end
     local fin_links = table.concat(tbl_links, " ")
     local fin_ldflags = table.concat(ldflags, " ")

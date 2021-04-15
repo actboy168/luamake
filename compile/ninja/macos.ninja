@@ -172,10 +172,10 @@ build $builddir/_/test: command | $bin/bootstrap $builddir/_/copy_script $
     $bin/bee.so
   pool = console
   COMMAND = $bin/bootstrap 3rd/bee.lua/test/test.lua
-build $builddir/_/copy_bee_1: copy | $bin/bee.so
+build $builddir/_/copy_bootstrap: copy | $bin/bootstrap
   FROM = $bin/bootstrap
   TO = luamake
-build $builddir/_/copy_bee_2: copy | $bin/bee.so
+build $builddir/_/copy_bee: copy | $bin/bee.so
   FROM = $bin/bee.so
   TO = bee.so
-default $builddir/_/test $builddir/_/copy_bee_1 $builddir/_/copy_bee_2
+default $builddir/_/test $builddir/_/copy_bootstrap $builddir/_/copy_bee

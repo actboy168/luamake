@@ -175,14 +175,14 @@ build $builddir/_/test: command | $bin/bootstrap.exe $
     $builddir/_/copy_script $bin/bee.dll
   pool = console
   COMMAND = $bin\bootstrap.exe 3rd\bee.lua\test\test.lua
-build $builddir/_/copy_bee_1: copy | $bin/bee.dll
+build $builddir/_/copy_bootstrap: copy | $bin/bootstrap.exe
   FROM = $bin\bootstrap.exe
   TO = luamake.exe
-build $builddir/_/copy_bee_2: copy | $bin/bee.dll
+build $builddir/_/copy_bee: copy | $bin/bee.dll
   FROM = $bin\bee.dll
   TO = bee.dll
-build $builddir/_/copy_bee_3: copy | $bin/bee.dll
+build $builddir/_/copy_lua54: copy | $bin/lua54.dll
   FROM = $bin\lua54.dll
   TO = lua54.dll
-default $builddir/_/test $builddir/_/copy_bee_1 $builddir/_/copy_bee_2 $
-    $builddir/_/copy_bee_3
+default $builddir/_/test $builddir/_/copy_bootstrap $builddir/_/copy_bee $
+    $builddir/_/copy_lua54

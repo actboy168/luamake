@@ -7,23 +7,15 @@ end
 
 local function ninja(args)
     if arguments.plat == 'msvc' then
-        if #args == 0 then
-            local msvc = require "msvc"
-            if args.env then
-                for k, v in pairs(msvc.getenv()) do
-                    args.env[k] = v
-                end
-            else
-                args.env = msvc.getenv()
-            end
-        end
+        local msvc = require "msvc"
         if args.env then
-            args.env.VS_UNICODE_OUTPUT = false
+            for k, v in pairs(msvc.getenv()) do
+                args.env[k] = v
+            end
         else
-            args.env = {
-                VS_UNICODE_OUTPUT = false
-            }
+            args.env = msvc.getenv()
         end
+        args.env.VS_UNICODE_OUTPUT = false
         args.searchPath = true
         table.insert(args, 1, {'cmd', '/c', 'ninja'})
     else

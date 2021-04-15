@@ -287,6 +287,13 @@ local function generate(self, rule, name, attribute, globals)
         flags[#flags+1] = "-fPIC"
     end
 
+    if cc.name == "clang" and self.target then
+        flags[#flags+1] = "-target"
+        flags[#flags+1] = self.target
+        ldflags[#ldflags+1] = "-target"
+        ldflags[#ldflags+1] = self.target
+    end
+
     for _, dep in ipairs(deps) do
         local depsTarget = self._targets[dep]
         assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))

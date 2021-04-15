@@ -78,17 +78,14 @@ return function (lm, name, attribute, globals)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
     local include = fs.path('build') / luaversion
-    local arch = lm.arch
-
-    if arguments.plat == "msvc" or arguments.plat == "mingw" then
-        init_rule(lm, arch)
-        init_version(lm, luaversion, arch)
-    end
-
     flags[#flags+1] = lm.cc.includedir(include)
     attribute.flags = flags
     copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
+
     if arguments.plat == "msvc" or arguments.plat == "mingw" then
+        local arch = lm.arch
+        init_rule(lm, arch)
+        init_version(lm, luaversion, arch)
         windowsDeps(lm, name, attribute, include, luaversion, arch)
     end
     return lm, 'shared_library', name, attribute, globals

@@ -106,7 +106,7 @@ function gcc.rule_exe(w, name, links, ldflags, _, attribute)
     })
 end
 
-function gcc.rule_lib(w, name, _)
+function gcc.rule_lib(w, name)
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), [[ar rcs $out $in]],
     {
         description = 'Link    Lib $out'

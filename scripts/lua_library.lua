@@ -83,7 +83,7 @@ return function (lm, name, attribute, globals)
     copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
 
     if arguments.plat == "msvc" or arguments.plat == "mingw" then
-        local arch = lm.arch
+        local arch = lm.target
         init_rule(lm, arch)
         init_version(lm, luaversion, arch)
         windowsDeps(lm, name, attribute, include, luaversion, arch)

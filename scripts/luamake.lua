@@ -422,7 +422,7 @@ local function generate(self, rule, name, attribute, globals)
         ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     elseif rule == "static_library" then
         t.output = outname
-        cc.rule_lib(ninja, name, self.arch)
+        cc.rule_lib(ninja, name)
         ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     end
 end
@@ -603,14 +603,14 @@ function lm:finish()
     self.ninja = ninja
 
     if cc.name == "cl" then
-        self.arch = globals.arch
+        self.target = globals.target
         self.winsdk = globals.winsdk
         local msvc = require "msvc"
-        msvc.create_config(self.arch, self.winsdk)
+        msvc.create_config(self.target, self.winsdk)
 
         for _, target in ipairs(self._export_targets) do
             if target[1] ~= 'build' then
-                msvc.init(self.arch, self.winsdk)
+                msvc.init(self.target, self.winsdk)
                 if arguments.rebuilt ~= 'no' then
                     ninja:variable("msvc_deps_prefix", msvc.getprefix())
                 end

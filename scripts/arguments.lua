@@ -25,14 +25,6 @@ else
 end
 arguments.what = what
 
-if not arguments.arch then
-    arguments.arch = string.packsize "T" == 8 and "x64" or "x86"
-end
-
-assert(arguments.arch == "x64"
-    or arguments.arch == "x86"
-)
-
 if arguments.plat then
     local sp = require 'bee.subprocess'
     sp.setenv("LuaMakePlatform", arguments.plat)
@@ -60,6 +52,15 @@ assert(arguments.plat == "msvc"
     or arguments.plat == "linux"
     or arguments.plat == "macos"
 )
+
+do
+    if arguments.plat == "msvc" or arguments.plat == "mingw" then
+        if not arguments.target then
+            arguments.target = string.packsize "T" == 8 and "x64" or "x86"
+        end
+        assert(arguments.target == "x64" or arguments.target == "x86")
+    end
+end
 
 if not arguments.f then
     arguments.f = "make.lua"

@@ -4,8 +4,8 @@ luamake init -rebuilt no -plat mingw
 luamake init -rebuilt no -plat linux
 luamake init -rebuilt no -plat macos
 
-if not exist ninja (
-	md ninja
+if not exist compile\ninja (
+	md compile\ninja
 )
 copy /Y build\msvc\make.ninja  compile\ninja\msvc.ninja
 copy /Y build\mingw\make.ninja compile\ninja\mingw.ninja

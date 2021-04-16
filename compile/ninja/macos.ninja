@@ -3,7 +3,8 @@ bin = $builddir/bin
 obj = $builddir/obj
 rule C_source_lua
   command = gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -DLUA_USE_MACOSX -DNDEBUG -mmacosx-version-min=10.13 -o $out -c $in
+      -DLUA_USE_MACOSX -DNDEBUG -mmacosx-version-min=10.12 $
+      -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
@@ -47,7 +48,7 @@ build $obj/source_lua/lzio.obj: C_source_lua 3rd/bee.lua/3rd/lua/lzio.c
 rule C_lua
   command = gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -fvisibility=hidden -DLUA_USE_MACOSX -DNDEBUG -I3rd/bee.lua $
-      -mmacosx-version-min=10.13 -o $out -c $in
+      -mmacosx-version-min=10.12 -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
@@ -76,7 +77,7 @@ rule C_bee
   command = gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG -fPIC $
-      -mmacosx-version-min=10.13 -o $out -c $in
+      -mmacosx-version-min=10.12 -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
@@ -85,7 +86,7 @@ rule CXX_bee
   command = g++ -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG -fPIC $
-      -mmacosx-version-min=10.13 -o $out -c $in
+      -mmacosx-version-min=10.12 -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
   depfile = $out.d
   deps = gcc
@@ -131,7 +132,8 @@ build $bin/bee.so: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
 rule CXX_bootstrap
   command = g++ -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -DLUA_USE_MACOSX -DNDEBUG $
-      -I3rd/bee.lua -mmacosx-version-min=10.13 -o $out -c $in
+      -I3rd/bee.lua -mmacosx-version-min=10.12 -Wunguarded-availability -o $
+      $out -c $in
   description = Compile C++ $out
   depfile = $out.d
   deps = gcc

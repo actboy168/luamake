@@ -608,9 +608,9 @@ function lm:finish()
     end
 
     self.ninja = ninja
+    self.target = globals.target
 
     if cc.name == "cl" then
-        self.target = globals.target
         self.winsdk = globals.winsdk
         local msvc = require "msvc"
         msvc.create_config(self.target, self.winsdk)

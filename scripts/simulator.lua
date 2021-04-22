@@ -106,7 +106,10 @@ function dofile(_, dir, file, env)
         root = dir,
         main = file,
         io_open = filehook,
-        preload =  { luamake = simulator },
+        preload =  {
+            luamake = simulator,
+            msvc = arguments.plat == 'msvc' and require "msvc" or nil
+        },
         env = env,
         plat = arguments.plat,
     })(table.unpack(arg))

@@ -1,3 +1,11 @@
+local function format_path(path)
+    path = path:string()
+    if path:match " " then
+        return '"'..path..'"'
+    end
+    return path
+end
+
 local gcc = {
     name = "gcc",
     flags = {
@@ -36,13 +44,13 @@ local gcc = {
         return "-U" .. macro
     end,
     includedir = function (dir)
-        return "-I" .. dir:string()
+        return "-I" .. format_path(dir)
     end,
     link = function (lib)
         return "-l" .. lib
     end,
     linkdir = function (dir)
-        return "-L" .. dir:string()
+        return "-L" .. format_path(dir)
     end
 }
 

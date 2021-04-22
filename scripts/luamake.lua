@@ -21,6 +21,14 @@ local function isWindows()
     return arguments.plat == "msvc" or arguments.plat == "mingw"
 end
 
+local function fmtpath_v3(workdir, rootdir, path)
+    path = fs.path(path)
+    if path:is_absolute() then
+        return path
+    end
+    return fs.relative(fs.absolute(rootdir / path, workdir), WORKDIR)
+end
+
 local function fmtpath_u(workdir, path)
     return fs.relative(fs.absolute(fs.path(path), workdir), WORKDIR)
 end
@@ -133,6 +141,8 @@ end
 local function merge_attribute(from, to)
     for _, e in ipairs(from) do
         if type(e) == 'string' then
+            to[#to+1] = e
+        elseif type(e) == 'userdata' then
             to[#to+1] = e
         elseif type(e) == 'table' then
             merge_attribute(e, to)
@@ -258,7 +268,7 @@ local function generate(self, rule, name, attribute, globals)
     cc.mode(name, mode, crt, flags, ldflags)
 
     for _, inc in ipairs(includes) do
-        flags[#flags+1] = cc.includedir(fmtpath_u(workdir, rootdir / inc))
+        flags[#flags+1] = cc.includedir(fmtpath_v3(workdir, rootdir, inc))
     end
 
     if mode == "release" then
@@ -402,7 +412,7 @@ local function generate(self, rule, name, attribute, globals)
         tbl_links[#tbl_links+1] = cc.link(link)
     end
     for _, linkdir in ipairs(linkdirs) do
-        ldflags[#ldflags+1] = cc.linkdir(fmtpath_u(workdir, rootdir / linkdir))
+        ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(workdir, rootdir, linkdir))
     end
     local fin_links = table.concat(tbl_links, " ")
     local fin_ldflags = table.concat(ldflags, " ")

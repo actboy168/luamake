@@ -1,5 +1,13 @@
 local fs = require "bee.filesystem"
 
+local function format_path(path)
+    path = path:string()
+    if path:match " " then
+        return '"'..path..'"'
+    end
+    return path
+end
+
 local cl = {
     name = "cl",
     flags = {
@@ -39,7 +47,7 @@ local cl = {
         return "/U" .. macro
     end,
     includedir = function (dir)
-        return "/I" .. dir:string()
+        return "/I" .. format_path(dir)
     end,
     link = function (lib)
         if lib == "stdc++fs" or lib == "stdc++" then
@@ -48,7 +56,7 @@ local cl = {
         return lib .. ".lib"
     end,
     linkdir = function (dir)
-        return "/libpath:" .. dir:string()
+        return "/libpath:" .. format_path(dir)
     end
 }
 

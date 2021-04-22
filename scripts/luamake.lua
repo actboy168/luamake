@@ -29,16 +29,7 @@ local function fmtpath_v3(workdir, rootdir, path)
     return fs.relative(fs.absolute(rootdir / path, workdir), WORKDIR)
 end
 
-local function fmtpath_u(workdir, path)
-    return fs.relative(fs.absolute(fs.path(path), workdir), WORKDIR)
-end
-
-local function fmtpath(workdir, path)
-    if path then
-        path = fmtpath_u(workdir, path):string()
-    else
-        path = workdir
-    end
+local function fmtpath(path)
     if arguments.plat == "msvc" then
         path = path:gsub('/', '\\')
     else
@@ -308,7 +299,7 @@ local function generate(self, rule, name, attribute, globals)
         local depsTarget = self._targets[dep]
         assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
         if depsTarget.includedir then
-            flags[#flags+1] = cc.includedir(fmtpath_u(workdir, depsTarget.includedir))
+            flags[#flags+1] = cc.includedir(fmtpath_v3(workdir, depsTarget.rootdir, depsTarget.includedir))
         end
     end
 
@@ -470,12 +461,13 @@ function GEN.phony(self, _, attribute, globals)
         return attr
     end
     local workdir = fs.path(init_single('workdir', '.'))
+    local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
     init_multi_attribute(attribute, globals, {"input","output"})
     for i = 1, #attribute.input do
-        attribute.input[i] = fmtpath(workdir, attribute.input[i])
+        attribute.input[i] = fmtpath_v3(workdir, rootdir, attribute.input[i])
     end
     for i = 1, #attribute.output do
-        attribute.output[i] = fmtpath(workdir, attribute.output[i])
+        attribute.output[i] = fmtpath_v3(workdir, rootdir, attribute.output[i])
     end
     ninja:build(attribute.output, 'phony', attribute.input)
 end
@@ -493,13 +485,14 @@ function GEN.build(self, name, attribute, globals)
 
     local ninja = self.ninja
     local workdir = fs.path(init_single('workdir', '.'))
+    local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
     local deps = attribute.deps
     local output = attribute.output
     local pool =  init_single('pool')
     local implicit = {}
 
     for i = 1, #output do
-        output[i] = fmtpath(workdir, output[i])
+        output[i] = fmtpath_v3(workdir, rootdir, output[i])
     end
 
     local command = {}
@@ -509,10 +502,10 @@ function GEN.build(self, name, attribute, globals)
             elseif type(v) == 'table' then
                 push_command(v)
             elseif type(v) == 'userdata' then
-                command[#command+1] = fmtpath(workdir, v)
+                command[#command+1] = fmtpath_v3(workdir, rootdir, v)
             elseif type(v) == 'string' then
                 if v:sub(1,1) == '@' then
-                    command[#command+1] = fmtpath(workdir, v:sub(2))
+                    command[#command+1] = fmtpath_v3(workdir, rootdir, v:sub(2))
                 else
                     command[#command+1] = fmtpath(v)
                 end

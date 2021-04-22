@@ -612,7 +612,7 @@ function lm:finish()
 
     if cc.name == "cl" then
         self.winsdk = globals.winsdk
-        local msvc = require "msvc"
+        local msvc = require "msvc_util"
         msvc.create_config(self.target, self.winsdk)
 
         for _, target in ipairs(self._export_targets) do

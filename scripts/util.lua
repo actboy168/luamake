@@ -7,7 +7,7 @@ end
 
 local function ninja(args)
     if arguments.plat == 'msvc' then
-        local msvc = require "msvc"
+        local msvc = require "msvc_util"
         if args.env then
             for k, v in pairs(msvc.getenv()) do
                 args.env[k] = v
@@ -51,7 +51,7 @@ local function sandbox(filename, ...)
         main = filename,
         io_open = io.open,
         preload = arguments.plat == 'msvc' and {
-            msvc = require "msvc_helper",
+            msvc = require "msvc",
         },
         plat = arguments.plat,
     })(...)

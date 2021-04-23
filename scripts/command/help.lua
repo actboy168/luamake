@@ -1,5 +1,3 @@
-local fs = require "bee.filesystem"
-
 local lst = {}
 for path in (MAKEDIR / 'scripts' / 'command'):list_directory() do
     if path:equal_extension(".lua") then

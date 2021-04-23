@@ -440,7 +440,7 @@ local GEN = {}
 local ruleCommand = false
 local ruleCopy = false
 
-function GEN.default(self, _, attribute, globals)
+function GEN.default(self, _, attribute, _)
     local ninja = self.ninja
     local targets = {}
     for _, name in ipairs(attribute) do

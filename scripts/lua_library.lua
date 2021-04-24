@@ -78,7 +78,7 @@ return function (lm, name, attribute, globals)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
     local include = fs.path('build') / luaversion
-    flags[#flags+1] = lm.cc.includedir(include)
+    flags[#flags+1] = lm.cc.includedir(include:string())
     attribute.flags = flags
     copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
 

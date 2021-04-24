@@ -21,14 +21,6 @@ local function isWindows()
     return arguments.plat == "msvc" or arguments.plat == "mingw"
 end
 
-local function fmtpath_v3(workdir, rootdir, path)
-    path = fs.path(path)
-    if path:is_absolute() then
-        return path
-    end
-    return fs.relative(fs.absolute(rootdir / path, workdir), WORKDIR)
-end
-
 local function fmtpath(path)
     if arguments.plat == "msvc" then
         path = path:gsub('/', '\\')
@@ -36,6 +28,14 @@ local function fmtpath(path)
         path = path:gsub('\\', '/')
     end
     return path
+end
+
+local function fmtpath_v3(workdir, rootdir, path)
+    path = fs.path(path)
+    if not path:is_absolute() then
+        path = fs.relative(fs.absolute(rootdir / path, workdir), WORKDIR)
+    end
+    return fmtpath(path:string())
 end
 
 -- TODO 在某些平台上忽略大小写？
@@ -507,7 +507,7 @@ function GEN.build(self, name, attribute, globals)
                 if v:sub(1,1) == '@' then
                     command[#command+1] = fmtpath_v3(workdir, rootdir, v:sub(2))
                 else
-                    command[#command+1] = fmtpath(v)
+                    command[#command+1] = v
                 end
             end
         end

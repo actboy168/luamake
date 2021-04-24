@@ -1,5 +1,4 @@
 local function format_path(path)
-    path = path:string()
     if path:match " " then
         return '"'..path..'"'
     end

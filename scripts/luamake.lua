@@ -535,8 +535,8 @@ function GEN.build(self, name, attribute, globals)
             end
         end
         ninja:build(outname, 'copy', nil, implicit, nil, {
-            FROM = command[2],
-            TO = command[3],
+            FROM = fmtpath(command[2]),
+            TO = fmtpath(command[3]),
             pool = pool,
         }, output)
     else

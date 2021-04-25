@@ -62,7 +62,7 @@ function simulator:phony(attribute)
     accept('phony', nil, attribute)
 end
 function simulator:import(path, env)
-    local filepath = fs.path(path)
+    local filepath = fs.absolute(fs.path(path))
     dofile(nil, filepath:parent_path():string(), filepath:filename():string(), env)
 end
 

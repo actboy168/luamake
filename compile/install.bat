@@ -6,5 +6,5 @@ call compile\msvc\generate_msvc_deps_prefix.bat
 ninja -f build\msvc\compile.ninja
 
 @ECHO OFF
-call compile\msvc\setpath.bat %cd%
+call compile\msvc\setpath.bat
 @ECHO ON

@@ -4,6 +4,9 @@ case "`uname`" in
   MSYS_NT*)
     ninja -f compile/ninja/mingw.ninja
     ;;
+  Windows_NT*)
+    ninja -f compile/ninja/mingw.ninja
+    ;;
   Linux)
     ninja -f compile/ninja/linux.ninja
     ;;

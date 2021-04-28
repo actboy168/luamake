@@ -5,9 +5,7 @@ if what == nil then
     what = 'make'
 else
     local i = 2
-    if what == 'lua' then
-        i = #arg + 1
-    elseif what:sub(1, 1) == '-' then
+    if what:sub(1, 1) == '-' then
         what = 'make'
         i = 1
     end

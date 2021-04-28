@@ -53,7 +53,9 @@ function m.createEnvConfig(arch, winsdk)
 end
 
 function m.cleanEnvConfig()
-    fs.remove(EnvConfig)
+    if fs.exists(EnvConfig) then
+        fs.remove(EnvConfig)
+    end
 end
 
 function m.getenv()

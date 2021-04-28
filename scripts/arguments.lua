@@ -2,11 +2,11 @@ local arguments = {_force={}}
 
 local what = arg[1]
 if what == nil then
-    what = 'make'
+    what = 'remake'
 else
     local i = 2
     if what:sub(1, 1) == '-' then
-        what = 'make'
+        what = 'remake'
         i = 1
     end
     while i <= #arg do

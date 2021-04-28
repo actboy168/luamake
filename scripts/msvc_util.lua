@@ -51,11 +51,13 @@ function m.createEnvConfig(arch, winsdk)
         ):write(table.concat(s, '\n'))
     ):close()
 end
+ 
+function m.hasEnvConfig()
+    return fs.exists(EnvConfig)
+end
 
 function m.cleanEnvConfig()
-    if fs.exists(EnvConfig) then
-        fs.remove(EnvConfig)
-    end
+    fs.remove(EnvConfig)
 end
 
 function m.getenv()

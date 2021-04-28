@@ -47,6 +47,7 @@ local function glob_match(pattern, target)
 end
 
 local function accept_path(t, path)
+    assert(fs.exists(path), ("source `%s` is not exists."):format(path:string()))
     local repath = fs.relative(path, WORKDIR):string()
     if t[repath] then
         return
@@ -55,9 +56,7 @@ local function accept_path(t, path)
     t[repath] = #t
 end
 local function expand_dir(t, pattern, dir)
-    if not fs.exists(dir) then
-        return
-    end
+    assert(fs.exists(dir), ("source dir `%s` is not exists."):format(dir:string()))
     for file in dir:list_directory() do
         if fs.is_directory(file) then
             expand_dir(t, pattern, file)
@@ -77,8 +76,10 @@ local function expand_path(t, path)
     local pattern = glob_compile(filename)
     expand_dir(t, pattern, path:parent_path())
 end
-local function get_sources(root, name, sources)
-    assert(type(sources) == "table" and #sources > 0, ("`%s`: sources cannot be empty."):format(name))
+local function get_sources(root, sources)
+    if type(sources) ~= "table" then
+        return {}
+    end
     local result = {}
     local ignore = {}
     for _, source in ipairs(sources) do
@@ -201,7 +202,7 @@ local function generate(self, rule, name, attribute, globals)
     local ninja = self.ninja
     local workdir = fs.path(init_single('workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
-    local sources = get_sources(rootdir, name, attribute.sources)
+    local sources = get_sources(rootdir, attribute.sources)
     local mode = init_single('mode', 'release')
     local crt = init_single('crt', 'dynamic')
     local optimize = init_single('optimize', (mode == "debug" and "off" or "speed"))
@@ -217,7 +218,6 @@ local function generate(self, rule, name, attribute, globals)
     local pool = init_single('pool')
     local implicit = {}
     local input = {}
-    assert(#sources > 0, ("`%s`: no source files found."):format(name))
 
     init_single('c')
     init_single('cxx')
@@ -376,6 +376,7 @@ local function generate(self, rule, name, attribute, globals)
     self._targets[name] = t
 
     if rule == 'source_set' then
+        assert(#input > 0, ("`%s`: no source files found."):format(name))
         t.output = input
         return
     end
@@ -392,6 +393,7 @@ local function generate(self, rule, name, attribute, globals)
             implicit[#implicit+1] = depsTarget.outname
         end
     end
+    assert(#input > 0, ("`%s`: no source files found."):format(name))
 
     local tbl_links = {}
     for _, link in ipairs(links) do

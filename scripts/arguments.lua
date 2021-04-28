@@ -62,6 +62,9 @@ do
     end
 end
 
+arguments.mode = arguments.mode or "release"
+arguments.crt = arguments.crt or "dynamic"
+
 if not arguments.f then
     arguments.f = "make.lua"
 end

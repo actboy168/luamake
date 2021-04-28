@@ -73,8 +73,7 @@ function simulator:phony(attribute)
     accept('phony', nil, attribute)
 end
 function simulator:import(path, env)
-    local filepath = fs.absolute(fs.path(path))
-    dofile(nil, filepath:parent_path():string(), filepath:filename():string(), env)
+    dofile(nil, fs.path(path), env)
 end
 
 local alias = {
@@ -110,7 +109,21 @@ local function filehook(name, mode)
     return f, err
 end
 
-function dofile(_, dir, file, env)
+local visited = {}
+local function isVisited(path)
+    path = path:string()
+    if visited[path] then
+        return true
+    end
+    visited[path] = true
+end
+function dofile(_, path, env)
+    path = fs.absolute(path, fs.path(globals.workdir or "."))
+    if isVisited(path) then
+        return
+    end
+    local dir = path:parent_path():string()
+    local file = path:filename():string()
     local last = globals.workdir
     globals.workdir = dir
     assert(sandbox {

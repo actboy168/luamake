@@ -159,10 +159,16 @@ local function init_multi_attribute(attribute, globals, multiattr)
     for _, name in ipairs(multiattr) do
         local res = {}
         merge_attribute(globals[name], res)
+        if isWindows() and globals.windows then
+            merge_attribute(globals.windows[name], res)
+        end
         if globals[arguments.plat] then
             merge_attribute(globals[arguments.plat][name], res)
         end
         merge_attribute(attribute[name], res)
+        if isWindows() and attribute.windows then
+            merge_attribute(attribute.windows[name], res)
+        end
         if attribute[arguments.plat] then
             merge_attribute(attribute[arguments.plat][name], res)
         end
@@ -336,7 +342,7 @@ local function generate(self, rule, name, attribute, globals)
             end
             ninja:build(objname, "ASM_"..fmtname, source)
         else
-            error(("`%s`: unknown file extension: `%s`"):format(name, ext))
+            error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))
         end
     end
 

@@ -613,16 +613,9 @@ function lm:finish()
     if cc.name == "cl" then
         self.winsdk = globals.winsdk
         local msvc = require "msvc_util"
-        msvc.create_config(self.target, self.winsdk)
-
-        for _, target in ipairs(self._export_targets) do
-            if target[1] ~= 'build' then
-                msvc.init(self.target, self.winsdk)
-                if arguments.rebuilt ~= 'no' then
-                    ninja:variable("msvc_deps_prefix", msvc.getprefix())
-                end
-                break
-            end
+        msvc.createEnvConfig(self.target, self.winsdk)
+        if arguments.rebuilt ~= 'no' then
+            ninja:variable("msvc_deps_prefix", msvc.getprefix())
         end
     end
 

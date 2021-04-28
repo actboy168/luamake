@@ -7,4 +7,4 @@ if fs.exists(build_ninja) then
     util.command 'clean'
 end
 util.command 'init'
-util.ninja {}
+util.command 'make'

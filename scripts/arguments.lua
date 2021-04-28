@@ -1,11 +1,17 @@
 local arguments = {_force={}}
-
+local targets = {}
 local what = arg[1]
+
+local function has_command(what)
+    local path = package.searchpath(what, (MAKEDIR / "scripts" / "command" / "?.lua"):string())
+    return path ~= nil
+end
+
 if what == nil then
     what = 'remake'
 else
     local i = 2
-    if what:sub(1, 1) == '-' then
+    if not has_command(what) then
         what = 'remake'
         i = 1
     end
@@ -16,7 +22,7 @@ else
             arguments[k] = arg[i]
             arguments._force[k] = true
         else
-            error(('unknown option: %s'):format(arg[i]))
+            targets[#targets+1] = arg[i]
         end
         i = i + 1
     end
@@ -67,5 +73,7 @@ if not arguments.f then
     arguments.f = "make.lua"
 end
 assert(arguments.f)
+
+arguments.targets = targets
 
 return arguments

@@ -63,7 +63,7 @@ local function windowsDeps(lm, name, attribute, include, luaversion, arch)
     input = type(input) == "string" and {input} or input
 
     if cc.name == "cl" then
-        if attribute.export_luaopen ~= false then
+        if attribute.export_luaopen ~= false and (not attribute.msvc or attribute.msvc.export_luaopen ~= false) then
             ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
         end
         input[#input+1] = windeps / ("lua_"..arch..".lib")

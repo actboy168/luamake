@@ -130,12 +130,12 @@ local function get_warnings(warnings)
 end
 
 local function merge_attribute(from, to)
-    for _, e in ipairs(from) do
-        if type(e) == 'string' then
-            to[#to+1] = e
-        elseif type(e) == 'userdata' then
-            to[#to+1] = e
-        elseif type(e) == 'table' then
+    if type(from) == 'string' then
+        to[#to+1] = from
+    elseif type(from) == 'userdata' then
+        to[#to+1] = from
+    elseif type(from) == 'table' then
+        for _, e in ipairs(from) do
             merge_attribute(e, to)
         end
     end
@@ -157,28 +157,16 @@ local multiattr = {
 
 local function init_multi_attribute(attribute, globals, multiattr)
     for _, name in ipairs(multiattr) do
-        if not attribute[name] and not globals[name] then
-            attribute[name] = {}
-            goto contienue
-        end
-        if not attribute[name] then
-            if type(globals[name]) ~= 'table' then
-                attribute[name] = {globals[name]}
-                goto contienue
-            end
-            local res = {}
-            attribute[name] = merge_attribute(globals[name], res)
-            goto contienue
-        end
-        if type(attribute[name]) ~= 'table' then
-            attribute[name] = {attribute[name]}
-        end
-        if globals[name] then
-            table.insert(attribute[name], 1, globals[name])
-        end
         local res = {}
-        attribute[name] = merge_attribute(attribute[name], res)
-        ::contienue::
+        merge_attribute(globals[name], res)
+        if globals[arguments.plat] then
+            merge_attribute(globals[arguments.plat][name], res)
+        end
+        merge_attribute(attribute[name], res)
+        if attribute[arguments.plat] then
+            merge_attribute(attribute[arguments.plat][name], res)
+        end
+        attribute[name] = res
     end
 end
 

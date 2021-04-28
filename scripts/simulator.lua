@@ -17,6 +17,12 @@ local function accept(type, name, attribute)
     targets[#targets+1] = {type, name, attribute, globals}
 end
 
+local NAMEIDX = 0
+local function generateName()
+    NAMEIDX = NAMEIDX + 1
+    return ("_target_0x%08x_"):format(NAMEIDX)
+end
+
 local simulator = {}
 
 function simulator:source_set(name)
@@ -50,6 +56,11 @@ function simulator:lua_library(name)
     end
 end
 function simulator:build(name)
+    if type(name) == "table" then
+        local name, attribute = generateName(), name
+        accept('build', name, attribute)
+        return
+    end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         accept('build', name, attribute)

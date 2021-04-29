@@ -439,6 +439,12 @@ local GEN = {}
 local ruleCommand = false
 local ruleCopy = false
 
+local NAMEIDX = 0
+local function generateTargetName()
+    NAMEIDX = NAMEIDX + 1
+    return ("_target_0x%08x_"):format(NAMEIDX)
+end
+
 function GEN.default(self, _, attribute, _)
     local ninja = self.ninja
     local targets = {}
@@ -451,7 +457,7 @@ function GEN.default(self, _, attribute, _)
     ninja:default(targets)
 end
 
-function GEN.phony(self, _, attribute, globals)
+function GEN.phony(self, name, attribute, globals)
     local ninja = self.ninja
     local function init_single(attr_name, default)
         local attr = attribute[attr_name] or globals[attr_name] or default
@@ -461,17 +467,41 @@ function GEN.phony(self, _, attribute, globals)
     end
     local workdir = fs.path(init_single('workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
-    init_multi_attribute(attribute, globals, {"input","output"})
-    for i = 1, #attribute.input do
-        attribute.input[i] = fmtpath_v3(workdir, rootdir, attribute.input[i])
+    init_multi_attribute(attribute, globals, {"input","output","deps"})
+    local input = attribute.input
+    local output = attribute.output
+    local deps = attribute.deps
+    local implicit = {}
+    for i = 1, #input do
+        input[i] = fmtpath_v3(workdir, rootdir, input[i])
     end
-    for i = 1, #attribute.output do
-        attribute.output[i] = fmtpath_v3(workdir, rootdir, attribute.output[i])
+    for i = 1, #output do
+        output[i] = fmtpath_v3(workdir, rootdir, output[i])
     end
-    ninja:build(attribute.output, 'phony', attribute.input)
+    for _, dep in ipairs(deps) do
+        local depsTarget = self._targets[dep]
+        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+        implicit[#implicit+1] = depsTarget.outname
+    end
+    if name then
+        if #output == 0 then
+            ninja:build(name, 'phony', input, implicit)
+        else
+            ninja:build(name, 'phony', output)
+            ninja:build(output, 'phony', input, implicit)
+        end
+    else
+        if #output == 0 then
+            error(("`%s`: no output."):format(name))
+        else
+            ninja:build(output, 'phony', input, implicit)
+        end
+    end
 end
 
 function GEN.build(self, name, attribute, globals)
+    local tmpName = not name
+    name = name or generateTargetName()
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
     init_multi_attribute(attribute, globals, {"deps","output"})
 
@@ -523,7 +553,9 @@ function GEN.build(self, name, attribute, globals)
     end
 
     local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
-    ninja:build(name, 'phony', outname)
+    if not tmpName then
+        ninja:build(name, 'phony', outname)
+    end
     if command[1] == "{COPY}" then
         if not ruleCopy then
             ruleCopy = true
@@ -561,7 +593,7 @@ function GEN.build(self, name, attribute, globals)
 end
 
 function GEN.shell(self, name, attribute, globals)
-    if arguments.plat == "msvc" and name ~= "{COPY}" then
+    if arguments.plat == "msvc" and attribute[1] ~= "{COPY}" then
         table.insert(attribute, 1, "cmd")
         table.insert(attribute, 2, "/c")
     end

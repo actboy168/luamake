@@ -17,12 +17,6 @@ local function accept(type, name, attribute)
     targets[#targets+1] = {type, name, attribute, globals}
 end
 
-local NAMEIDX = 0
-local function generateName()
-    NAMEIDX = NAMEIDX + 1
-    return ("_target_0x%08x_"):format(NAMEIDX)
-end
-
 local simulator = {}
 
 function simulator:source_set(name)
@@ -57,8 +51,7 @@ function simulator:lua_library(name)
 end
 function simulator:build(name)
     if type(name) == "table" then
-        local name, attribute = generateName(), name
-        accept('build', name, attribute)
+        accept('build', nil, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
@@ -68,8 +61,7 @@ function simulator:build(name)
 end
 function simulator:shell(name)
     if type(name) == "table" then
-        local name, attribute = generateName(), name
-        accept('shell', name, attribute)
+        accept('shell', nil, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
@@ -80,8 +72,15 @@ end
 function simulator:default(attribute)
     accept('default', nil, attribute)
 end
-function simulator:phony(attribute)
-    accept('phony', nil, attribute)
+function simulator:phony(name)
+    if type(name) == "table" then
+        accept('phony', nil, name)
+        return
+    end
+    assert(type(name) == "string", "Name is not a string.")
+    return function (attribute)
+        accept('phony', name, attribute)
+    end
 end
 function simulator:import(path, env)
     dofile(nil, fs.path(path), env)

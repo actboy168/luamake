@@ -33,7 +33,7 @@ end
 
 local function fmtpath_v3(workdir, rootdir, path)
     path = fs.path(path)
-    if not path:is_absolute() and path:string():sub(1, 1) ~= "$" then
+    if not path:is_absolute() then
         path = fs.relative(fs.absolute(rootdir / path, workdir), WORKDIR)
     end
     return fmtpath(path:string())

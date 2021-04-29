@@ -1,4 +1,5 @@
 local fs = require "bee.filesystem"
+local sp = require "bee.subprocess"
 local memfile = require "memfile"
 local util = require 'util'
 local arguments = require "arguments"
@@ -366,6 +367,7 @@ local function generate(self, rule, name, attribute, globals)
             outname = fs.path("$bin") / ("lib"..name .. ".a")
         end
     end
+    ninja:build(name, 'phony', outname)
 
     local t = {
         rootdir = rootdir,
@@ -493,18 +495,21 @@ function GEN.build(self, name, attribute, globals)
     end
 
     local command = {}
+    local function push(v)
+        command[#command+1] = sp.quotearg(v)
+    end
     local function push_command(t)
         for _, v in ipairs(t) do
             if type(v) == 'nil' then
             elseif type(v) == 'table' then
                 push_command(v)
             elseif type(v) == 'userdata' then
-                command[#command+1] = fmtpath_v3(workdir, rootdir, v)
+                push(fmtpath_v3(workdir, rootdir, v))
             elseif type(v) == 'string' then
                 if v:sub(1,1) == '@' then
-                    command[#command+1] = fmtpath_v3(workdir, rootdir, v:sub(2))
+                    push(fmtpath_v3(workdir, rootdir, v:sub(2)))
                 else
-                    command[#command+1] = v
+                    push(v)
                 end
             end
         end
@@ -518,6 +523,7 @@ function GEN.build(self, name, attribute, globals)
     end
 
     local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
+    ninja:build(name, 'phony', outname)
     if command[1] == "{COPY}" then
         if not ruleCopy then
             ruleCopy = true
@@ -552,6 +558,14 @@ function GEN.build(self, name, attribute, globals)
         outname = outname,
         rule = 'build',
     }
+end
+
+function GEN.shell(self, name, attribute, globals)
+    if arguments.plat == "msvc" then
+        table.insert(attribute, 1, "cmd")
+        table.insert(attribute, 2, "/c")
+    end
+    GEN.build(self, name, attribute, globals)
 end
 
 function GEN.lua_library(self, name, locals, globals)

@@ -40,6 +40,7 @@ build $obj/lua54/lutf8lib.obj: C_lua54 3rd/bee.lua/3rd/lua/lutf8lib.c
 build $obj/lua54/lvm.obj: C_lua54 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/lua54/lzio.obj: C_lua54 3rd/bee.lua/3rd/lua/lzio.c
 build $obj/lua54/utf8_crt.obj: C_lua54 3rd/bee.lua/3rd/lua/utf8_crt.c
+build lua54: phony $bin/lua54.dll
 rule LINK_lua54
   command = g++ --shared $in -o $out -lstdc++ -s 
   description = Link    Dll $out
@@ -63,6 +64,7 @@ rule C_lua
   deps = gcc
 build $obj/lua/utf8_crt.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_crt.c
 build $obj/lua/utf8_lua.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_lua.c
+build lua: phony $bin/lua.exe
 rule LINK_lua
   command = g++ $in -o $out -lstdc++ -s 
   description = Link    Exe $out
@@ -124,6 +126,7 @@ build $obj/bee/lua_thread.obj: CXX_bee 3rd/bee.lua/binding/lua_thread.cpp
 build $obj/bee/lua_time.obj: CXX_bee 3rd/bee.lua/binding/lua_time.cpp
 build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
+build bee: phony $bin/bee.dll
 rule LINK_bee
   command = g++ --shared $in -o $out -lstdc++ -s -ladvapi32 -lws2_32 $
       -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++
@@ -158,17 +161,20 @@ rule CXX_bootstrap
 build $obj/bootstrap/main.obj: CXX_bootstrap 3rd/bee.lua/bootstrap/main.cpp
 build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
+build bootstrap: phony $bin/bootstrap.exe
 rule LINK_bootstrap
   command = g++ $in -o $out -lstdc++ -s 
   description = Link    Exe $out
 build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.dll
+build copy_script: phony $builddir/_/copy_script
 rule copy
   command = cp -afv $FROM $TO
   description = $DESC
 build $builddir/_/copy_script: copy | $bin/bootstrap.exe
   FROM = 3rd/bee.lua/bootstrap/main.lua
   TO = $bin/main.lua
+build test: phony $builddir/_/test
 rule command
   command = $COMMAND
   description = $DESC
@@ -176,12 +182,15 @@ build $builddir/_/test: command | $bin/bootstrap.exe $
     $builddir/_/copy_script $bin/bee.dll
   pool = console
   COMMAND = $bin/bootstrap.exe 3rd/bee.lua/test/test.lua
+build copy_bootstrap: phony $builddir/_/copy_bootstrap
 build $builddir/_/copy_bootstrap: copy | $bin/bootstrap.exe
   FROM = $bin/bootstrap.exe
   TO = luamake.exe
+build copy_bee: phony $builddir/_/copy_bee
 build $builddir/_/copy_bee: copy | $bin/bee.dll
   FROM = $bin/bee.dll
   TO = bee.dll
+build copy_lua54: phony $builddir/_/copy_lua54
 build $builddir/_/copy_lua54: copy | $bin/lua54.dll
   FROM = $bin/lua54.dll
   TO = lua54.dll

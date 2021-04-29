@@ -66,6 +66,17 @@ function simulator:build(name)
         accept('build', name, attribute)
     end
 end
+function simulator:shell(name)
+    if type(name) == "table" then
+        local name, attribute = generateName(), name
+        accept('shell', name, attribute)
+        return
+    end
+    assert(type(name) == "string", "Name is not a string.")
+    return function (attribute)
+        accept('shell', name, attribute)
+    end
+end
 function simulator:default(attribute)
     accept('default', nil, attribute)
 end

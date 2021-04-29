@@ -45,6 +45,7 @@ build $obj/source_lua/lutf8lib.obj: C_source_lua $
     3rd/bee.lua/3rd/lua/lutf8lib.c
 build $obj/source_lua/lvm.obj: C_source_lua 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/source_lua/lzio.obj: C_source_lua 3rd/bee.lua/3rd/lua/lzio.c
+build source_lua: phony
 rule C_lua
   command = gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -fvisibility=hidden -DLUA_USE_MACOSX -DNDEBUG -I3rd/bee.lua $
@@ -53,6 +54,7 @@ rule C_lua
   depfile = $out.d
   deps = gcc
 build $obj/lua/lua.obj: C_lua 3rd/bee.lua/3rd/lua/lua.c
+build lua: phony $bin/lua
 rule LINK_lua
   command = gcc $in -o $out  -lm -ldl && strip -u -r -x $out
   description = Link    Exe $out
@@ -116,6 +118,7 @@ build $obj/bee/lua_subprocess.obj: CXX_bee $
     3rd/bee.lua/binding/lua_subprocess.cpp
 build $obj/bee/lua_thread.obj: CXX_bee 3rd/bee.lua/binding/lua_thread.cpp
 build $obj/bee/lua_time.obj: CXX_bee 3rd/bee.lua/binding/lua_time.cpp
+build bee: phony $bin/bee.so
 rule LINK_bee
   command = gcc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out $
       -framework CoreFoundation -framework CoreServices  && strip -u -r -x $
@@ -140,6 +143,7 @@ rule CXX_bootstrap
 build $obj/bootstrap/main.obj: CXX_bootstrap 3rd/bee.lua/bootstrap/main.cpp
 build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
+build bootstrap: phony $bin/bootstrap
 rule LINK_bootstrap
   command = gcc $in -o $out  -lm -ldl && strip -u -r -x $out
   description = Link    Exe $out
@@ -161,12 +165,14 @@ build $bin/bootstrap: LINK_bootstrap $obj/bootstrap/main.obj $
     $obj/source_lua/ltm.obj $obj/source_lua/lundump.obj $
     $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
     $obj/source_lua/lzio.obj
+build copy_script: phony $builddir/_/copy_script
 rule copy
   command = cp -afv $FROM $TO
   description = $DESC
 build $builddir/_/copy_script: copy | $bin/bootstrap
   FROM = 3rd/bee.lua/bootstrap/main.lua
   TO = $bin/main.lua
+build test: phony $builddir/_/test
 rule command
   command = $COMMAND
   description = $DESC
@@ -174,9 +180,11 @@ build $builddir/_/test: command | $bin/bootstrap $builddir/_/copy_script $
     $bin/bee.so
   pool = console
   COMMAND = $bin/bootstrap 3rd/bee.lua/test/test.lua
+build copy_bootstrap: phony $builddir/_/copy_bootstrap
 build $builddir/_/copy_bootstrap: copy | $bin/bootstrap
   FROM = $bin/bootstrap
   TO = luamake
+build copy_bee: phony $builddir/_/copy_bee
 build $builddir/_/copy_bee: copy | $bin/bee.so
   FROM = $bin/bee.so
   TO = bee.so

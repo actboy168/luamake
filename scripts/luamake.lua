@@ -503,7 +503,7 @@ function GEN.phony(self, name, attribute, globals)
     end
 end
 
-function GEN.build(self, name, attribute, globals)
+function GEN.build(self, name, attribute, globals, shell)
     local tmpName = not name
     name = name or generateTargetName()
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
@@ -585,6 +585,22 @@ function GEN.build(self, name, attribute, globals)
                 description = '$DESC'
             })
         end
+        if shell then
+            if arguments.plat == "msvc" then
+                table.insert(command, 1, "cmd")
+                table.insert(command, 2, "/c")
+            else
+                local s = {}
+                for _, opt in ipairs(command) do
+                    s[#s+1] = sp.quotearg(opt)
+                end
+                command = {
+                    "/bin/bash",
+                    "-e",
+                    "-c", sp.quotearg(table.concat(s, " "))
+                }
+            end
+        end
         ninja:build(outname, 'command', nil, implicit, nil, {
             COMMAND = command,
             pool = pool,
@@ -597,11 +613,7 @@ function GEN.build(self, name, attribute, globals)
 end
 
 function GEN.shell(self, name, attribute, globals)
-    if arguments.plat == "msvc" and attribute[1] ~= "{COPY}" then
-        table.insert(attribute, 1, "cmd")
-        table.insert(attribute, 2, "/c")
-    end
-    GEN.build(self, name, attribute, globals)
+    GEN.build(self, name, attribute, globals, true)
 end
 
 function GEN.lua_library(self, name, locals, globals)

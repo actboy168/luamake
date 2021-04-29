@@ -528,7 +528,7 @@ function GEN.build(self, name, attribute, globals)
         if not ruleCopy then
             ruleCopy = true
             if arguments.plat == "msvc" then
-                ninja:rule('copy', 'cmd.exe /c copy 2>NUL /y $FROM $TO', {
+                ninja:rule('copy', 'cmd /c copy 2>NUL /y $FROM $TO', {
                     description = '$DESC'
                 })
             else
@@ -561,7 +561,7 @@ function GEN.build(self, name, attribute, globals)
 end
 
 function GEN.shell(self, name, attribute, globals)
-    if arguments.plat == "msvc" then
+    if arguments.plat == "msvc" and name ~= "{COPY}" then
         table.insert(attribute, 1, "cmd")
         table.insert(attribute, 2, "/c")
     end

@@ -490,6 +490,10 @@ function GEN.phony(self, name, attribute, globals)
             ninja:build(name, 'phony', output)
             ninja:build(output, 'phony', input, implicit)
         end
+        self._targets[name] = {
+            outname = name,
+            rule = 'phony',
+        }
     else
         if #output == 0 then
             error(("`%s`: no output."):format(name))

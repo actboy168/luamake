@@ -291,10 +291,16 @@ local function generate(self, rule, name, attribute, globals)
     end
 
     for _, dep in ipairs(deps) do
-        local depsTarget = self._targets[dep]
-        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-        if depsTarget.includedir then
-            flags[#flags+1] = cc.includedir(fmtpath_v3(workdir, depsTarget.rootdir, depsTarget.includedir))
+        local target = self._targets[dep]
+        assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+        if target.includedir then
+            flags[#flags+1] = cc.includedir(fmtpath_v3(workdir, target.rootdir, target.includedir))
+        end
+        if target.links then
+            tbl_append(links, target.links)
+        end
+        if target.linkdirs then
+            tbl_append(linkdirs, target.linkdirs)
         end
     end
 
@@ -380,6 +386,8 @@ local function generate(self, rule, name, attribute, globals)
     if rule == 'source_set' then
         assert(#input > 0, ("`%s`: no source files found."):format(name))
         t.output = input
+        t.links = links
+        t.linkdirs = linkdirs
         return
     end
 

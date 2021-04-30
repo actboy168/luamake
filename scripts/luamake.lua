@@ -656,11 +656,13 @@ function GEN.copy(self, name, attribute, globals)
         ruleCopy = true
         if arguments.plat == "msvc" then
             ninja:rule('copy', 'cmd /c copy 2>NUL /y $in $out', {
-                description = '$DESC'
+                description = '$DESC',
+                restat = 1,
             })
         else
             ninja:rule('copy', 'cp -afv $in $out', {
-                description = '$DESC'
+                description = '$DESC',
+                restat = 1,
             })
         end
     end
@@ -747,7 +749,7 @@ function lm:finish()
 
     if arguments.rebuilt ~= 'no' then
         local build_ninja = (fs.path '$builddir' / arguments.f):replace_extension ".ninja"
-        ninja:rule('configure', '$luamake init -f $in', { generator = 1, restat = 1 })
+        ninja:rule('configure', '$luamake init -f $in', { generator = 1 })
         ninja:build(build_ninja, 'configure', arguments.f, self._scripts)
     end
 

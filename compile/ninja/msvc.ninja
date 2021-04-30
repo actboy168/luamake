@@ -44,6 +44,7 @@ build lua54: phony $bin\lua54.dll
 rule LINK_lua54
   command = cl /nologo $in  /link /DEBUG:NONE /LTCG /out:$out /DLL $
       /IMPLIB:$bin\lua54.lib
+  restat = 1
   description = Link    Dll $out
 build $bin\lua54.dll | $bin\lua54.lib: LINK_lua54 $obj\lua54\lapi.obj $
     $obj\lua54\lauxlib.obj $obj\lua54\lbaselib.obj $obj\lua54\lcode.obj $
@@ -130,6 +131,7 @@ rule LINK_bee
   command = cl /nologo $in advapi32.lib ws2_32.lib ole32.lib user32.lib $
       version.lib wbemuuid.lib oleAut32.lib /link /DEBUG:NONE /LTCG $
       /out:$out /DLL /IMPLIB:$bin\bee.lib
+  restat = 1
   description = Link    Dll $out
 build $bin\bee.dll | $bin\bee.lib: LINK_bee $obj\bee\lua-seri.obj $
     $obj\bee\error.obj $obj\bee\fsevent_win.obj $obj\bee\endpoint.obj $
@@ -168,6 +170,7 @@ build $bin\bootstrap.exe: LINK_bootstrap $obj\bootstrap\utf8_crt.obj $
     $obj\bootstrap\main.obj $obj\bootstrap\progdir.obj $bin\lua54.lib
 rule copy
   command = cmd /c copy 2>NUL /y $in $out
+  restat = 1
   description = $DESC
 build $bin\main.lua: copy 3rd\bee.lua\bootstrap\main.lua | $bin\bootstrap.exe
 build copy_script: phony $bin\main.lua

@@ -162,6 +162,7 @@ build $bin/bootstrap: LINK_bootstrap $obj/bootstrap/main.obj $
     $obj/source_lua/lzio.obj
 rule copy
   command = cp -afv $in $out
+  restat = 1
   description = $DESC
 build $bin/main.lua: copy 3rd/bee.lua/bootstrap/main.lua | $bin/bootstrap
 build copy_script: phony $bin/main.lua

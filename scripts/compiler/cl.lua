@@ -91,7 +91,8 @@ function cl.rule_dll(w, name, links, ldflags, _)
     local lib = (fs.path('$bin') / name)..".lib"
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out /DLL /IMPLIB:%s]]):format(links, ldflags, lib),
     {
-        description = 'Link    Dll $out'
+        description = 'Link    Dll $out',
+        restat = 1,
     })
 end
 

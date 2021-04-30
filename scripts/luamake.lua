@@ -592,7 +592,7 @@ function GEN.build(self, name, attribute, globals, shell)
             else
                 local s = {}
                 for _, opt in ipairs(command) do
-                    s[#s+1] = sp.quotearg(opt)
+                    s[#s+1] = opt
                 end
                 command = {
                     "/bin/bash",

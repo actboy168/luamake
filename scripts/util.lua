@@ -1,5 +1,6 @@
 local arguments = require "arguments"
 local sp = require 'bee.subprocess'
+local thread = require 'bee.thread'
 
 local function script()
     return (WORKDIR / 'build' / arguments.plat / arguments.f):replace_extension ".ninja"
@@ -29,11 +30,32 @@ local function ninja(args)
     args.stdout = true
     args.cwd = WORKDIR
     local process = assert(sp.spawn(args))
-    for line in process.stdout:lines() do
-        io.write(line)
-        io.write "\n"
+
+    local errmsg = {}
+    while true do
+        local outn = sp.peek(process.stdout)
+        if outn == nil then
+            errmsg[#errmsg+1] = process.stderr:read "a"
+            break
+        elseif outn ~= 0 then
+            io.write(process.stdout:read(outn))
+        end
+        local errn = sp.peek(process.stderr)
+        if errn == nil then
+            io.write(process.stdout:read "a")
+            break
+        elseif errn ~= 0 then
+            errmsg[#errmsg+1] = process.stderr:read(errn)
+        end
+        if outn == 0 and errn == 0 then
+            thread.sleep(0.01)
+        end
     end
-    io.write(process.stderr:read 'a')
+
+    if #errmsg > 0 then
+        io.write(table.concat(errmsg))
+    end
+
     local code = process:wait()
     if code ~= 0 then
         os.exit(code, true)

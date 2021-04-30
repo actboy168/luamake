@@ -12,5 +12,16 @@ else
     local arguments = require "arguments"
     WORKDIR = arguments.C and fs.absolute(fs.path(arguments.C)) or fs.current_path()
     fs.current_path(WORKDIR)
+    local mt = debug.getmetatable(fs.path())
+    local rawtostring = mt.__tostring
+    function mt:__tostring()
+        local path = rawtostring(self)
+        if arguments.plat == "msvc" then
+            path = path:gsub('/', '\\')
+        else
+            path = path:gsub('\\', '/')
+        end
+        return path
+    end
     util.command(arguments.what)
 end

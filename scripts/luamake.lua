@@ -300,7 +300,9 @@ local function generate(self, rule, name, attribute, globals)
             tbl_append(links, target.links)
         end
         if target.linkdirs then
-            tbl_append(linkdirs, target.linkdirs)
+            for _, linkdir in ipairs(target.linkdirs) do
+                ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(workdir, target.rootdir, linkdir))
+            end
         end
     end
 
@@ -383,6 +385,21 @@ local function generate(self, rule, name, attribute, globals)
     }
     self._targets[name] = t
 
+
+    for _, dep in ipairs(deps) do
+        local target = self._targets[dep]
+        if target.output then
+            if type(target.output) == 'table' then
+                tbl_append(input, target.output)
+            else
+                input[#input+1] = target.output
+            end
+        else
+            implicit[#implicit+1] = target.outname
+        end
+    end
+    assert(#input > 0, ("`%s`: no source files found."):format(name))
+
     if rule == 'source_set' then
         assert(#input > 0, ("`%s`: no source files found."):format(name))
         t.output = input
@@ -390,20 +407,6 @@ local function generate(self, rule, name, attribute, globals)
         t.linkdirs = linkdirs
         return
     end
-
-    for _, dep in ipairs(deps) do
-        local depsTarget = self._targets[dep]
-        if depsTarget.output then
-            if type(depsTarget.output) == 'table' then
-                tbl_append(input, depsTarget.output)
-            else
-                input[#input+1] = depsTarget.output
-            end
-        else
-            implicit[#implicit+1] = depsTarget.outname
-        end
-    end
-    assert(#input > 0, ("`%s`: no source files found."):format(name))
 
     local tbl_links = {}
     for _, link in ipairs(links) do

@@ -18,6 +18,7 @@ local function accept(type, name, attribute)
 end
 
 local simulator = {}
+local mainscript = true
 
 function simulator:source_set(name)
     assert(type(name) == "string", "Name is not a string.")
@@ -70,7 +71,9 @@ function simulator:shell(name)
     end
 end
 function simulator:default(attribute)
-    targets[#targets+1] = {'default', attribute}
+    if mainscript then
+        targets[#targets+1] = {'default', attribute}
+    end
 end
 function simulator:phony(name)
     if type(name) == "table" then
@@ -83,7 +86,10 @@ function simulator:phony(name)
     end
 end
 function simulator:import(path, env)
+    local v = mainscript
+    mainscript = false
     dofile(nil, fs.path(path), env)
+    mainscript = v
 end
 
 local alias = {

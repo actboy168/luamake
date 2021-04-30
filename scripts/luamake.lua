@@ -385,7 +385,6 @@ local function generate(self, rule, name, attribute, globals)
     }
     self._targets[name] = t
 
-
     for _, dep in ipairs(deps) do
         local target = self._targets[dep]
         if target.output then

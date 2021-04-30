@@ -70,7 +70,7 @@ function simulator:shell(name)
     end
 end
 function simulator:default(attribute)
-    accept('default', nil, attribute)
+    targets[#targets+1] = {'default', attribute}
 end
 function simulator:phony(name)
     if type(name) == "table" then

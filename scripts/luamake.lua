@@ -453,16 +453,24 @@ local function generateTargetName()
     return ("_target_0x%08x_"):format(NAMEIDX)
 end
 
-function GEN.default(self, _, attribute, _)
+function GEN.default(self, attribute)
     local ninja = self.ninja
-    local targets = {}
-    for _, name in ipairs(attribute) do
-        if name then
-            assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
-            targets[#targets+1] = self._targets[name].outname
+    if type(attribute) == "table" then
+        local targets = {}
+        for _, name in ipairs(attribute) do
+            if name then
+                assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
+                targets[#targets+1] = self._targets[name].outname
+            end
         end
+        ninja:default(targets)
+    elseif type(attribute) == "string" then
+        local name = attribute
+        assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
+        ninja:default {
+            self._targets[name].outname
+        }
     end
-    ninja:default(targets)
 end
 
 function GEN.phony(self, name, attribute, globals)
@@ -696,11 +704,11 @@ function lm:finish()
     end
 
     for _, target in ipairs(self._export_targets) do
-        local rule, name, locals, globals = target[1], target[2], target[3], target[4]
+        local rule = target[1]
         if GEN[rule] then
-            GEN[rule](self, name, locals, globals)
+            GEN[rule](self, target[2], target[3], target[4])
         else
-            generate(self, rule, name, locals, globals)
+            generate(self, rule, target[2], target[3], target[4])
         end
     end
     ninja:close()

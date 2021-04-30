@@ -70,6 +70,16 @@ function simulator:shell(name)
         accept('shell', name, attribute)
     end
 end
+function simulator:copy(name)
+    if type(name) == "table" then
+        accept('copy', nil, name)
+        return
+    end
+    assert(type(name) == "string", "Name is not a string.")
+    return function (attribute)
+        accept('copy', name, attribute)
+    end
+end
 function simulator:default(attribute)
     if mainscript then
         targets[#targets+1] = {'default', attribute}

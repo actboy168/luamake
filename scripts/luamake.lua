@@ -525,7 +525,7 @@ function GEN.build(self, name, attribute, globals, shell)
     local tmpName = not name
     name = name or generateTargetName()
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
-    init_multi_attribute(attribute, globals, {"deps","output"})
+    init_multi_attribute(attribute, globals, {"deps","input","output"})
 
     local function init_single(attr_name, default)
         local attr = attribute[attr_name] or globals[attr_name] or default
@@ -538,10 +538,14 @@ function GEN.build(self, name, attribute, globals, shell)
     local workdir = fs.path(init_single('workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
     local deps = attribute.deps
+    local input = attribute.input
     local output = attribute.output
     local pool =  init_single('pool')
     local implicit = {}
 
+    for i = 1, #input do
+        input[i] = fmtpath_v3(workdir, rootdir, input[i])
+    end
     for i = 1, #output do
         output[i] = fmtpath_v3(workdir, rootdir, output[i])
     end
@@ -574,60 +578,102 @@ function GEN.build(self, name, attribute, globals, shell)
         implicit[#implicit+1] = depsTarget.outname
     end
 
-    local outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
+    if not ruleCommand then
+        ruleCommand = true
+        ninja:rule('command', '$COMMAND', {
+            description = '$DESC'
+        })
+    end
+    if shell then
+        if arguments.plat == "msvc" then
+            table.insert(command, 1, "cmd")
+            table.insert(command, 2, "/c")
+        else
+            local s = {}
+            for _, opt in ipairs(command) do
+                s[#s+1] = opt
+            end
+            command = {
+                "/bin/bash",
+                "-e",
+                "-c", sp.quotearg(table.concat(s, " "))
+            }
+        end
+    end
+    local outname
+    if #output == 0 then
+        outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
+    end
+    ninja:build(outname, 'command', input, implicit, nil, {
+        COMMAND = command,
+        pool = pool,
+    })
     if not tmpName then
         ninja:build(name, 'phony', outname)
+        self._targets[name] = {
+            outname = name,
+            rule = 'build',
+        }
     end
-    if command[1] == "{COPY}" then
-        if not ruleCopy then
-            ruleCopy = true
-            if arguments.plat == "msvc" then
-                ninja:rule('copy', 'cmd /c copy 2>NUL /y $FROM $TO', {
-                    description = '$DESC'
-                })
-            else
-                ninja:rule('copy', 'cp -afv $FROM $TO', {
-                    description = '$DESC'
-                })
-            end
-        end
-        ninja:build(outname, 'copy', nil, implicit, nil, {
-            FROM = fmtpath(command[2]),
-            TO = fmtpath(command[3]),
-            pool = pool,
-        }, output)
-    else
-        if not ruleCommand then
-            ruleCommand = true
-            ninja:rule('command', '$COMMAND', {
+end
+
+function GEN.copy(self, name, attribute, globals)
+    local tmpName = not name
+    name = name or generateTargetName()
+    assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
+    init_multi_attribute(attribute, globals, {"deps","input","output"})
+
+    local function init_single(attr_name, default)
+        local attr = attribute[attr_name] or globals[attr_name] or default
+        assert(type(attr) ~= 'table')
+        attribute[attr_name] = attr
+        return attr
+    end
+
+    local ninja = self.ninja
+    local workdir = fs.path(init_single('workdir', '.'))
+    local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
+    local deps = attribute.deps
+    local input = attribute.input
+    local output = attribute.output
+    local pool =  init_single('pool')
+    local implicit = {}
+
+    for i = 1, #input do
+        input[i] = fmtpath_v3(workdir, rootdir, input[i])
+    end
+    for i = 1, #output do
+        output[i] = fmtpath_v3(workdir, rootdir, output[i])
+    end
+
+    for _, dep in ipairs(deps) do
+        local depsTarget = self._targets[dep]
+        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+        implicit[#implicit+1] = depsTarget.outname
+    end
+
+    if not ruleCopy then
+        ruleCopy = true
+        if arguments.plat == "msvc" then
+            ninja:rule('copy', 'cmd /c copy 2>NUL /y $in $out', {
+                description = '$DESC'
+            })
+        else
+            ninja:rule('copy', 'cp -afv $in $out', {
                 description = '$DESC'
             })
         end
-        if shell then
-            if arguments.plat == "msvc" then
-                table.insert(command, 1, "cmd")
-                table.insert(command, 2, "/c")
-            else
-                local s = {}
-                for _, opt in ipairs(command) do
-                    s[#s+1] = opt
-                end
-                command = {
-                    "/bin/bash",
-                    "-e",
-                    "-c", sp.quotearg(table.concat(s, " "))
-                }
-            end
-        end
-        ninja:build(outname, 'command', nil, implicit, nil, {
-            COMMAND = command,
-            pool = pool,
-        }, output)
     end
-    self._targets[name] = {
-        outname = outname,
-        rule = 'build',
-    }
+    ninja:build(output, 'copy', input, implicit, nil, {
+        pool = pool,
+    })
+    if not tmpName then
+        ninja:build(name, 'phony', output)
+        self._targets[name] = {
+            outname = name,
+            rule = 'build',
+        }
+    end
 end
 
 function GEN.shell(self, name, attribute, globals)

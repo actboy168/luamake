@@ -165,27 +165,20 @@ build $bin/bootstrap: LINK_bootstrap $obj/bootstrap/main.obj $
     $obj/source_lua/ltm.obj $obj/source_lua/lundump.obj $
     $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
     $obj/source_lua/lzio.obj
-build copy_script: phony $builddir/_/copy_script
 rule copy
-  command = cp -afv $FROM $TO
+  command = cp -afv $in $out
   description = $DESC
-build $builddir/_/copy_script: copy | $bin/bootstrap
-  FROM = 3rd/bee.lua/bootstrap/main.lua
-  TO = $bin/main.lua
-build test: phony $builddir/_/test
+build $bin/main.lua: copy 3rd/bee.lua/bootstrap/main.lua | $bin/bootstrap
+build copy_script: phony $bin/main.lua
 rule command
   command = $COMMAND
   description = $DESC
-build $builddir/_/test: command | $bin/bootstrap $builddir/_/copy_script $
-    $bin/bee.so
+build $builddir/_/test: command | $bin/bootstrap copy_script $bin/bee.so
   pool = console
   COMMAND = $bin/bootstrap 3rd/bee.lua/test/test.lua
-build copy_bootstrap: phony $builddir/_/copy_bootstrap
-build $builddir/_/copy_bootstrap: copy | $bin/bootstrap
-  FROM = $bin/bootstrap
-  TO = luamake
-build copy_bee: phony $builddir/_/copy_bee
-build $builddir/_/copy_bee: copy | $bin/bee.so
-  FROM = $bin/bee.so
-  TO = bee.so
-default $builddir/_/test $builddir/_/copy_bootstrap $builddir/_/copy_bee
+build test: phony $builddir/_/test
+build luamake: copy $bin/bootstrap | $bin/bootstrap
+build copy_bootstrap: phony luamake
+build bee.so: copy $bin/bee.so | $bin/bee.so
+build copy_bee: phony bee.so
+default test copy_bootstrap copy_bee

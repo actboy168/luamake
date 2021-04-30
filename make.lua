@@ -6,17 +6,20 @@ local dll = isWindows and ".dll" or ".so"
 
 lm:import "3rd/bee.lua/make.lua"
 
-lm:build "copy_bootstrap" {
-    "{COPY}", "$bin/bootstrap"..exe, "luamake"..exe,
-     deps = "bootstrap"
+lm:copy "copy_bootstrap" {
+    input = "$bin/bootstrap"..exe,
+    output = "luamake"..exe,
+    deps = "bootstrap",
 }
-lm:build "copy_bee" {
-    "{COPY}", "$bin/bee"..dll, "bee"..dll,
+lm:copy "copy_bee" {
+    input = "$bin/bee"..dll,
+    output = "bee"..dll,
     deps = "bee"
 }
 if isWindows then
-    lm:build "copy_lua54" {
-        "{COPY}", "$bin/lua54"..dll, "lua54"..dll,
+    lm:copy "copy_lua54" {
+        input = "$bin/lua54"..dll,
+        output = "lua54"..dll,
         deps = "lua54"
     }
 end

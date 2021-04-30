@@ -166,32 +166,22 @@ rule LINK_bootstrap
   description = Link    Exe $out
 build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.lib
-build copy_script: phony $builddir/_/copy_script
 rule copy
-  command = cmd.exe /c copy 2>NUL /y $FROM $TO
+  command = cmd /c copy 2>NUL /y $in $out
   description = $DESC
-build $builddir/_/copy_script: copy | $bin/bootstrap.exe
-  FROM = 3rd\bee.lua\bootstrap\main.lua
-  TO = $bin\main.lua
-build test: phony $builddir/_/test
+build $bin\main.lua: copy 3rd\bee.lua\bootstrap\main.lua | $bin/bootstrap.exe
+build copy_script: phony $bin\main.lua
 rule command
   command = $COMMAND
   description = $DESC
-build $builddir/_/test: command | $bin/bootstrap.exe $
-    $builddir/_/copy_script $bin/bee.dll
+build $builddir/_/test: command | $bin/bootstrap.exe copy_script $bin/bee.dll
   pool = console
   COMMAND = $bin/bootstrap.exe 3rd\bee.lua\test\test.lua
-build copy_bootstrap: phony $builddir/_/copy_bootstrap
-build $builddir/_/copy_bootstrap: copy | $bin/bootstrap.exe
-  FROM = $bin\bootstrap.exe
-  TO = luamake.exe
-build copy_bee: phony $builddir/_/copy_bee
-build $builddir/_/copy_bee: copy | $bin/bee.dll
-  FROM = $bin\bee.dll
-  TO = bee.dll
-build copy_lua54: phony $builddir/_/copy_lua54
-build $builddir/_/copy_lua54: copy | $bin/lua54.dll
-  FROM = $bin\lua54.dll
-  TO = lua54.dll
-default $builddir/_/test $builddir/_/copy_bootstrap $builddir/_/copy_bee $
-    $builddir/_/copy_lua54
+build test: phony $builddir/_/test
+build luamake.exe: copy $bin\bootstrap.exe | $bin/bootstrap.exe
+build copy_bootstrap: phony luamake.exe
+build bee.dll: copy $bin\bee.dll | $bin/bee.dll
+build copy_bee: phony bee.dll
+build lua54.dll: copy $bin\lua54.dll | $bin/lua54.dll
+build copy_lua54: phony lua54.dll
+default test copy_bootstrap copy_bee copy_lua54

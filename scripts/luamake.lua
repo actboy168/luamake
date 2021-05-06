@@ -678,9 +678,16 @@ function GEN.copy(self, name, attribute, globals)
             })
         end
     end
-    ninja:build(output, 'copy', input, implicit, nil, {
-        pool = pool,
-    })
+    if #implicit == 0 then
+        ninja:build(output, 'copy', input, nil, nil, {
+            pool = pool,
+        })
+    else
+        ninja:build(output, 'copy', nil, implicit, nil, {
+            ['in'] = input,
+            pool = pool,
+        })
+    end
     if not tmpName then
         ninja:build(name, 'phony', output)
         self._targets[name] = {

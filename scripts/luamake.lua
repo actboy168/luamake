@@ -613,6 +613,8 @@ function GEN.build(self, name, attribute, globals, shell)
     local outname
     if #output == 0 then
         outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
+    else
+        outname = output
     end
     ninja:build(outname, 'command', input, implicit, nil, {
         COMMAND = command,

@@ -652,10 +652,18 @@ function GEN.copy(self, name, attribute, globals)
     local implicit = {}
 
     for i = 1, #input do
-        input[i] = fmtpath_v3(workdir, rootdir, input[i])
+        local v = input[i]
+        if type(v) == 'string' and v:sub(1,1) == '@' then
+            v =  v:sub(2)
+        end
+        input[i] = fmtpath_v3(workdir, rootdir, v)
     end
     for i = 1, #output do
-        output[i] = fmtpath_v3(workdir, rootdir, output[i])
+        local v = output[i]
+        if type(v) == 'string' and v:sub(1,1) == '@' then
+            v =  v:sub(2)
+        end
+        output[i] = fmtpath_v3(workdir, rootdir, v)
     end
 
     for _, dep in ipairs(deps) do

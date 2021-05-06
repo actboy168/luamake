@@ -55,6 +55,7 @@ local function ninja(args)
     if #errmsg > 0 then
         io.write(table.concat(errmsg))
     end
+    io.flush()
 
     local code = process:wait()
     if code ~= 0 then

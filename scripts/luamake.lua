@@ -588,13 +588,23 @@ function GEN.build(self, name, attribute, globals, shell)
         if arguments.plat == "msvc" then
             table.insert(command, 1, "cmd")
             table.insert(command, 2, "/c")
+        elseif arguments.plat == "mingw" then
+            local s = {}
+            for _, opt in ipairs(command) do
+                s[#s+1] = opt
+            end
+            command = {
+                "sh",
+                "-e",
+                "-c", sp.quotearg(table.concat(s, " "))
+            }
         else
             local s = {}
             for _, opt in ipairs(command) do
                 s[#s+1] = opt
             end
             command = {
-                "/bin/bash",
+                "/bin/sh",
                 "-e",
                 "-c", sp.quotearg(table.concat(s, " "))
             }

@@ -10,13 +10,13 @@ end
 function mt:close()
     assert(
         assert(
-            io.open(self._filename, 'w')
+            io.open(self._filename, 'wb')
         ):write(table.concat(self._buf))
     ):close()
 end
 
 return function (filename)
-    local f, err = io.open(filename, 'w')
+    local f, err = io.open(filename, 'wb')
     if not f then
         return nil, err
     end

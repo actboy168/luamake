@@ -168,10 +168,11 @@ rule LINK_bootstrap
 build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.dll
 rule copy
-  command = cp -afv $in $out
+  command = cp -afv $in $input $out
   restat = 1
   description = $DESC
-build $bin/main.lua: copy 3rd/bee.lua/bootstrap/main.lua | $bin/bootstrap.exe
+build $bin/main.lua: copy | $bin/bootstrap.exe
+  input = 3rd/bee.lua/bootstrap/main.lua
 build copy_script: phony $bin/main.lua
 rule command
   command = $COMMAND
@@ -180,10 +181,13 @@ build $builddir/_/test: command | $bin/bootstrap.exe copy_script $bin/bee.dll
   pool = console
   COMMAND = $bin/bootstrap.exe 3rd/bee.lua/test/test.lua
 build test: phony $builddir/_/test
-build luamake.exe: copy $bin/bootstrap.exe | $bin/bootstrap.exe
+build luamake.exe: copy | $bin/bootstrap.exe
+  input = $bin/bootstrap.exe
 build copy_bootstrap: phony luamake.exe
-build bee.dll: copy $bin/bee.dll | $bin/bee.dll
+build bee.dll: copy | $bin/bee.dll
+  input = $bin/bee.dll
 build copy_bee: phony bee.dll
-build lua54.dll: copy $bin/lua54.dll | $bin/lua54.dll
+build lua54.dll: copy | $bin/lua54.dll
+  input = $bin/lua54.dll
 build copy_lua54: phony lua54.dll
 default test copy_bootstrap copy_bee copy_lua54

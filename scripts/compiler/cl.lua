@@ -62,7 +62,7 @@ local cl = {
 function cl.mode(name, mode, crt, flags, ldflags)
     if mode == 'debug' then
         flags[#flags+1] = crt == 'dynamic' and '/MDd' or '/MTd'
-        flags[#flags+1] = ('/Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")
+        flags[#flags+1] = ('/RTC1 /Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")
         ldflags[#ldflags+1] = '/DEBUG:FASTLINK'
     else
         flags[#flags+1] = crt == 'dynamic' and '/MD' or '/MT'

@@ -38,34 +38,28 @@ local function init_version(lm, luaversion, arch)
     end
     inited_version[luaversion] = true
     local ninja = lm.ninja
-    local include = fs.path('build') / luaversion
-    local windeps = include / "windeps"
+    local luadir = fs.path('build') / luaversion
     lua_def(MAKEDIR / "tools" / luaversion)
     if lm.cc.name == 'cl' then
-        ninja:build(windeps / ("lua_"..arch..".lib"), "luadeps", windeps / "lua.def")
+        ninja:build(luadir / ("lua_"..arch..".lib"), "luadeps", luadir / "lua.def")
     elseif lm.cc.name == 'gcc' then
-        ninja:build(windeps / "liblua.a", "luadeps", windeps / "lua.def")
+        ninja:build(luadir / "liblua.a", "luadeps", luadir / "lua.def")
     end
 end
 
-local function windowsDeps(lm, name, attribute, include, luaversion, arch)
+local function windows_deps(lm, name, attribute, luadir, arch)
     local cc = lm.cc
-    local windeps = include / "windeps"
-    fs.create_directories(WORKDIR / 'build' / luaversion / "windeps")
-    fs.copy_file(MAKEDIR / "tools" / luaversion / "lua.def", WORKDIR / 'build' / luaversion / "lua.def", true)
-
     local ldflags = attribute.ldflags or {}
     local input = attribute.input or {}
     ldflags = type(ldflags) == "string" and {ldflags} or ldflags
     input = type(input) == "string" and {input} or input
-
     if cc.name == "cl" then
         if attribute.export_luaopen ~= false and (not attribute.msvc or attribute.msvc.export_luaopen ~= false) then
             ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
         end
-        input[#input+1] = windeps / ("lua_"..arch..".lib")
+        input[#input+1] = luadir / ("lua_"..arch..".lib")
     else
-        input[#input+1] = windeps / "liblua.a"
+        input[#input+1] = luadir / "liblua.a"
     end
     attribute.ldflags = ldflags
     attribute.input = input
@@ -74,16 +68,16 @@ end
 return function (lm, name, attribute, globals)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
-    local include = fs.path('build') / luaversion
-    flags[#flags+1] = lm.cc.includedir(include:string())
+    local luadir = fs.path('build') / luaversion
+    flags[#flags+1] = lm.cc.includedir(luadir:string())
     attribute.flags = flags
-    copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
 
     if arguments.plat == "msvc" or arguments.plat == "mingw" then
         local arch = lm.target
         init_rule(lm, arch)
         init_version(lm, luaversion, arch)
-        windowsDeps(lm, name, attribute, include, luaversion, arch)
+        windows_deps(lm, name, attribute, luadir, arch)
     end
+    copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
     return lm, 'shared_library', name, attribute, globals
 end

@@ -7,3 +7,4 @@
 /lua54.dll
 /.ninja_log
 /.ninja_deps
+/tools/*/lua.def

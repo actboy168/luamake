@@ -1,5 +1,6 @@
 local fs = require "bee.filesystem"
 local arguments = require "arguments"
+local lua_def = require "lua_def"
 local inited_rule = false
 local inited_version = {}
 
@@ -18,10 +19,6 @@ local function init_rule(lm, arch)
     end
     inited_rule = true
     local ninja = lm.ninja
-    ninja:rule("luadef", [[$luamake lua build/lua_def.lua -in $in -out $out]],
-    {
-        description = 'Lua def $out',
-    })
     if lm.cc.name == 'cl' then
         ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(arch),
         {
@@ -43,7 +40,7 @@ local function init_version(lm, luaversion, arch)
     local ninja = lm.ninja
     local include = fs.path('build') / luaversion
     local windeps = include / "windeps"
-    ninja:build(windeps / "lua.def", "luadef", include)
+    lua_def(MAKEDIR / "tools" / luaversion)
     if lm.cc.name == 'cl' then
         ninja:build(windeps / ("lua_"..arch..".lib"), "luadeps", windeps / "lua.def")
     elseif lm.cc.name == 'gcc' then
@@ -55,7 +52,7 @@ local function windowsDeps(lm, name, attribute, include, luaversion, arch)
     local cc = lm.cc
     local windeps = include / "windeps"
     fs.create_directories(WORKDIR / 'build' / luaversion / "windeps")
-    fs.copy_file(MAKEDIR / "scripts" / "lua_def.lua", WORKDIR / 'build' / "lua_def.lua", true)
+    fs.copy_file(MAKEDIR / "tools" / luaversion / "lua.def", WORKDIR / 'build' / luaversion / "lua.def", true)
 
     local ldflags = attribute.ldflags or {}
     local input = attribute.input or {}

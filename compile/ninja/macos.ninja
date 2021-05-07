@@ -1,8 +1,8 @@
 builddir = build/macos
 bin = $builddir/bin
 obj = $builddir/obj
-gcc = gcc
-gxx = g++
+gcc = clang
+gxx = clang++
 rule C_source_lua
   command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -DLUA_USE_MACOSX -DNDEBUG -Wunguarded-availability $

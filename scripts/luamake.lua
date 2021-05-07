@@ -770,9 +770,12 @@ function lm:finish()
         if arguments.rebuilt ~= 'no' then
             ninja:variable("msvc_deps_prefix", msvc.getprefix())
         end
-    elseif cc.name == "gcc" or cc.name == "clang" then
+    elseif cc.name == "gcc"  then
         ninja:variable("gcc", globals.gcc or "gcc")
         ninja:variable("gxx", globals.gxx or "g++")
+    elseif cc.name == "clang" then
+        ninja:variable("gcc", globals.gcc or "clang")
+        ninja:variable("gxx", globals.gxx or "clang++")
     end
 
     if arguments.rebuilt ~= 'no' then

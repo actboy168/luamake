@@ -673,13 +673,13 @@ function GEN.copy(self, name, attribute, globals)
     if not ruleCopy then
         ruleCopy = true
         if arguments.plat == "msvc" then
-            ninja:rule('copy', 'cmd /c copy 2>NUL /y $in $input $out', {
-                description = '$DESC',
+            ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
+                description = 'Copy $in$input $out',
                 restat = 1,
             })
         else
-            ninja:rule('copy', 'cp -afv $in $input $out', {
-                description = '$DESC',
+            ninja:rule('copy', 'cp -afv $in$input $out 1>/dev/null', {
+                description = 'Copy $in$input $out',
                 restat = 1,
             })
         end

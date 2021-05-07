@@ -170,9 +170,9 @@ rule LINK_bootstrap
 build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.dll
 rule copy
-  command = cp -afv $in $input $out
+  command = cp -afv $in$input $out 1>/dev/null
   restat = 1
-  description = $DESC
+  description = Copy $in$input $out
 build $bin/main.lua: copy | $bin/bootstrap.exe
   input = 3rd/bee.lua/bootstrap/main.lua
 build copy_script: phony $bin/main.lua

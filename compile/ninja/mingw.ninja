@@ -1,8 +1,10 @@
 builddir = build/mingw
 bin = $builddir/bin
 obj = $builddir/obj
+gcc = gcc
+gxx = g++
 rule C_lua54
-  command = gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -D_WIN32_WINNT=0x0601 -DLUA_BUILD_AS_DLL -DNDEBUG -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
@@ -42,7 +44,7 @@ build $obj/lua54/lzio.obj: C_lua54 3rd/bee.lua/3rd/lua/lzio.c
 build $obj/lua54/utf8_crt.obj: C_lua54 3rd/bee.lua/3rd/lua/utf8_crt.c
 build lua54: phony $bin/lua54.dll
 rule LINK_lua54
-  command = g++ --shared $in -o $out -lstdc++ -s 
+  command = $gxx --shared $in -o $out -lstdc++ -s 
   description = Link    Dll $out
 build $bin/lua54.dll: LINK_lua54 $obj/lua54/lapi.obj $obj/lua54/lauxlib.obj $
     $obj/lua54/lbaselib.obj $obj/lua54/lcode.obj $obj/lua54/lcorolib.obj $
@@ -57,7 +59,7 @@ build $bin/lua54.dll: LINK_lua54 $obj/lua54/lapi.obj $obj/lua54/lauxlib.obj $
     $obj/lua54/lutf8lib.obj $obj/lua54/lvm.obj $obj/lua54/lzio.obj $
     $obj/lua54/utf8_crt.obj
 rule C_lua
-  command = gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -D_WIN32_WINNT=0x0601 -DNDEBUG -I3rd/bee.lua -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
@@ -66,12 +68,12 @@ build $obj/lua/utf8_crt.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_crt.c
 build $obj/lua/utf8_lua.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_lua.c
 build lua: phony $bin/lua.exe
 rule LINK_lua
-  command = g++ $in -o $out -lstdc++ -s 
+  command = $gxx $in -o $out -lstdc++ -s 
   description = Link    Exe $out
 build $bin/lua.exe: LINK_lua $obj/lua/utf8_crt.obj $obj/lua/utf8_lua.obj $
     $bin/lua54.dll
 rule C_bee
-  command = gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
       -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -I3rd/bee.lua -o $out $
@@ -81,7 +83,7 @@ rule C_bee
   deps = gcc
 build $obj/bee/lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule CXX_bee
-  command = g++ -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+  command = $gxx -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
       -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -I3rd/bee.lua -o $out $
@@ -128,7 +130,7 @@ build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
 build bee: phony $bin/bee.dll
 rule LINK_bee
-  command = g++ --shared $in -o $out -lstdc++ -s -ladvapi32 -lws2_32 $
+  command = $gxx --shared $in -o $out -lstdc++ -s -ladvapi32 -lws2_32 $
       -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++
   description = Link    Dll $out
 build $bin/bee.dll: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
@@ -144,7 +146,7 @@ build $bin/bee.dll: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
     $obj/bee/lua_thread.obj $obj/bee/lua_time.obj $obj/bee/lua_unicode.obj $
     $obj/bee/lua_wmi.obj $bin/lua54.dll
 rule C_bootstrap
-  command = gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -I3rd/bee.lua -o $
       $out -c $in
   description = Compile C   $out
@@ -152,7 +154,7 @@ rule C_bootstrap
   deps = gcc
 build $obj/bootstrap/utf8_crt.obj: C_bootstrap 3rd/bee.lua/3rd/lua/utf8_crt.c
 rule CXX_bootstrap
-  command = g++ -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+  command = $gxx -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -I3rd/bee.lua -o $
       $out -c $in
   description = Compile C++ $out
@@ -163,7 +165,7 @@ build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
 build bootstrap: phony $bin/bootstrap.exe
 rule LINK_bootstrap
-  command = g++ $in -o $out -lstdc++ -s 
+  command = $gxx $in -o $out -lstdc++ -s 
   description = Link    Exe $out
 build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.dll

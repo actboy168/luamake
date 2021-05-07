@@ -222,8 +222,6 @@ local function generate(self, rule, name, attribute, globals)
 
     init_single('c')
     init_single('cxx')
-    init_single('gcc')
-    init_single('gxx')
     init_single('permissive')
     init_single('visibility')
 
@@ -772,6 +770,9 @@ function lm:finish()
         if arguments.rebuilt ~= 'no' then
             ninja:variable("msvc_deps_prefix", msvc.getprefix())
         end
+    elseif cc.name == "gcc" or cc.name == "clang" then
+        ninja:variable("gcc", globals.gcc or "gcc")
+        ninja:variable("gxx", globals.gxx or "g++")
     end
 
     if arguments.rebuilt ~= 'no' then

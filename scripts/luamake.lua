@@ -188,6 +188,39 @@ local function array_remove(t, k)
     return false
 end
 
+local function update_target(self, flags, ldflags)
+    local target = self.target
+    if not target then
+        assert(arguments.plat ~= "msvc" and arguments.plat ~= "mingw")
+        local function shell(command)
+            local f = assert(io.popen(command, 'r'))
+            local r = f:read 'l'
+            f:close()
+            return r:lower()
+        end
+        local arch = self.arch
+        local vendor = self.vendor
+        local sys = self.sys
+        if not arch and not vendor and not sys then
+            return
+        end
+        if arguments.plat == "macos" then
+            arch = arch or shell "uname -m"
+            vendor = vendor or "apple"
+            sys = sys or "darwin"
+        else
+            arch = arch or shell "uname -m"
+            vendor = vendor or "pc"
+            sys = sys or "linux-gnu"
+        end
+        target = ("%s-%s-%s"):format(arch, vendor, sys)
+    end
+    flags[#flags+1] = "-target"
+    flags[#flags+1] = target
+    ldflags[#ldflags+1] = "-target"
+    ldflags[#ldflags+1] = target
+end
+
 local function generate(self, rule, name, attribute, globals)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
@@ -282,33 +315,7 @@ local function generate(self, rule, name, attribute, globals)
     end
 
     if cc.name == "clang" then
-        local target = self.target
-        if not target then
-            assert(arguments.plat ~= "msvc" and arguments.plat ~= "mingw")
-            local function shell(command)
-                local f = assert(io.popen(command, 'r'))
-                local r = f:read 'l'
-                f:close()
-                return r:lower()
-            end
-            local arch = self.arch
-            local vendor = self.vendor
-            local sys = self.sys
-            if arguments.plat == "macos" then
-                arch = arch or shell "uname -m"
-                vendor = vendor or "apple"
-                sys = sys or "darwin"
-            else
-                arch = arch or shell "uname -m"
-                vendor = vendor or "pc"
-                sys = sys or "linux-gnu"
-            end
-            target = ("%s-%s-%s"):format(arch, vendor, sys)
-        end
-        flags[#flags+1] = "-target"
-        flags[#flags+1] = target
-        ldflags[#ldflags+1] = "-target"
-        ldflags[#ldflags+1] = target
+        update_target(self, flags, ldflags)
     end
 
     for _, dep in ipairs(deps) do

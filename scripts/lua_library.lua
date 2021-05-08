@@ -73,7 +73,7 @@ return function (lm, name, attribute, globals)
     attribute.flags = flags
 
     if arguments.plat == "msvc" or arguments.plat == "mingw" then
-        local arch = attribute.target or globals.target
+        local arch = globals.target
         init_rule(lm, arch)
         init_version(lm, luaversion, arch)
         windows_deps(lm, name, attribute, luadir, arch)

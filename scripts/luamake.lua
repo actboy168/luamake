@@ -831,9 +831,8 @@ function lm:finish()
     self.ninja = ninja
 
     if cc.name == "cl" then
-        self.winsdk = globals.winsdk
         local msvc = require "msvc_util"
-        msvc.createEnvConfig(self.target, self.winsdk)
+        msvc.createEnvConfig(globals.target, globals.winsdk)
         if arguments.rebuilt ~= 'no' then
             ninja:variable("msvc_deps_prefix", msvc.getprefix())
         end

@@ -1,13 +1,14 @@
 local arguments = require "arguments"
+local globals = require "globals"
 local sp = require 'bee.subprocess'
 local thread = require 'bee.thread'
 
 local function script()
-    return (WORKDIR / 'build' / arguments.args.plat / arguments.f):replace_extension ".ninja"
+    return (WORKDIR / 'build' / globals.plat / arguments.f):replace_extension ".ninja"
 end
 
 local function ninja(args)
-    if arguments.args.plat == 'msvc' then
+    if globals.plat == 'msvc' then
         local msvc = require "msvc_util"
         if args.env then
             for k, v in pairs(msvc.getenv()) do
@@ -74,10 +75,10 @@ local function sandbox(filename, ...)
         root = WORKDIR:string(),
         main = filename,
         io_open = io.open,
-        preload = arguments.args.plat == 'msvc' and {
+        preload = globals.plat == 'msvc' and {
             msvc = require "msvc",
         },
-        plat = arguments.args.plat,
+        plat = globals.plat,
     })(...)
 end
 

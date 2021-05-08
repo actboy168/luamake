@@ -2,19 +2,13 @@ local lm = require 'luamake'
 local sandbox = require "sandbox"
 local fs = require 'bee.filesystem'
 local arguments = require "arguments"
+local globals = require "globals"
 
 local dofile
 
-local globals = {}
-local force = {}
 local targets = {}
 local simulator = {}
 local mainscript = true
-
-for k, v in pairs(arguments.args) do
-    globals[k] = v
-    force[k] = true
-end
 
 local function accept(type, name, attribute)
     attribute.workdir = attribute.workdir or globals.workdir or "."
@@ -116,7 +110,7 @@ for to, from in pairs(alias) do
 end
 
 local function setter(_, k, v)
-    if force[k] ~= nil then
+    if arguments.args[k] ~= nil then
         return
     end
     globals[k] = v
@@ -160,10 +154,10 @@ function dofile(_, path, env)
         io_open = filehook,
         preload =  {
             luamake = simulator,
-            msvc = arguments.args.plat == 'msvc' and require "msvc" or nil
+            msvc = globals.plat == 'msvc' and require "msvc" or nil
         },
         env = env,
-        plat = arguments.args.plat,
+        plat = globals.plat,
     })(table.unpack(arg))
     globals.workdir = last
 end

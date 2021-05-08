@@ -3,7 +3,8 @@ local sp = require "bee.subprocess"
 local memfile = require "memfile"
 local util = require 'util'
 local arguments = require "arguments"
-local plat = arguments.args.plat
+local globals = require "globals"
+local plat = globals.plat
 
 local compiler = (function ()
     if plat == 'mingw' then
@@ -808,13 +809,13 @@ end
 
 function lm:finish()
     local globals = self._export_globals
-    fs.create_directories(WORKDIR / 'build' / arguments.args.plat)
+    fs.create_directories(WORKDIR / 'build' / plat)
 
     local ninja_syntax = require "ninja_syntax"
     local ninja_script = util.script():string()
     local ninja = ninja_syntax.Writer(assert(memfile(ninja_script)))
 
-    ninja:variable("builddir", fmtpath(('build/%s'):format(arguments.args.plat)))
+    ninja:variable("builddir", fmtpath(('build/%s'):format(plat)))
     if arguments.args.rebuilt ~= 'no' then
         ninja:variable("luamake", fmtpath(getexe()))
     end
@@ -834,7 +835,7 @@ function lm:finish()
     if cc.name == "cl" then
         local msvc = require "msvc_util"
         msvc.createEnvConfig(globals.target, globals.winsdk)
-        if arguments.rebuilt ~= 'no' then
+        if arguments.args.rebuilt ~= 'no' then
             ninja:variable("msvc_deps_prefix", msvc.getprefix())
         end
     elseif cc.name == "gcc"  then
@@ -845,7 +846,7 @@ function lm:finish()
         ninja:variable("gxx", globals.gxx or "clang++")
     end
 
-    if arguments.rebuilt ~= 'no' then
+    if arguments.args.rebuilt ~= 'no' then
         local build_ninja = (fs.path '$builddir' / arguments.f):replace_extension ".ninja"
         ninja:rule('configure', '$luamake init -f $in', { generator = 1 })
         ninja:build(build_ninja, 'configure', arguments.f, self._scripts)

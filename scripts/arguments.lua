@@ -34,34 +34,4 @@ t.C = arguments.C               ; arguments.C = nil
 t.f = arguments.f or "make.lua" ; arguments.f = nil
 t.args = arguments
 
-if arguments.plat then
-    local sp = require 'bee.subprocess'
-    sp.setenv("LuaMakePlatform", arguments.plat)
-else
-    arguments.plat = (function ()
-        if os.getenv "LuaMakePlatform" then
-            return os.getenv "LuaMakePlatform"
-        end
-        return require "plat"
-    end)()
-end
-
-assert(arguments.plat == "msvc"
-    or arguments.plat == "mingw"
-    or arguments.plat == "linux"
-    or arguments.plat == "macos"
-)
-
-do
-    if arguments.plat == "msvc" or arguments.plat == "mingw" then
-        if not arguments.target then
-            arguments.target = string.packsize "T" == 8 and "x64" or "x86"
-        end
-        assert(arguments.target == "x64" or arguments.target == "x86")
-    end
-end
-
-arguments.mode = arguments.mode or "release"
-arguments.crt = arguments.crt or "dynamic"
-
 return t

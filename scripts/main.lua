@@ -10,13 +10,14 @@ if RawCommand[arg[1]] then
     util.command(arg[1])
 else
     local arguments = require "arguments"
+    local globals = require "globals"
     WORKDIR = arguments.C and fs.absolute(fs.path(arguments.C)) or fs.current_path()
     fs.current_path(WORKDIR)
     local mt = debug.getmetatable(fs.path())
     local rawtostring = mt.__tostring
     function mt:__tostring()
         local path = rawtostring(self)
-        if arguments.args.plat == "msvc" then
+        if globals.plat == "msvc" then
             path = path:gsub('/', '\\')
         else
             path = path:gsub('\\', '/')

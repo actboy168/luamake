@@ -188,8 +188,8 @@ local function array_remove(t, k)
     return false
 end
 
-local function update_target(self, flags, ldflags)
-    local target = self.target
+local function update_target(attribute, flags, ldflags)
+    local target = attribute.target
     if not target then
         assert(arguments.plat ~= "msvc" and arguments.plat ~= "mingw")
         local function shell(command)
@@ -198,9 +198,9 @@ local function update_target(self, flags, ldflags)
             f:close()
             return r:lower()
         end
-        local arch = self.arch
-        local vendor = self.vendor
-        local sys = self.sys
+        local arch = attribute.arch
+        local vendor = attribute.vendor
+        local sys = attribute.sys
         if not arch and not vendor and not sys then
             return
         end
@@ -257,6 +257,10 @@ local function generate(self, rule, name, attribute, globals)
     init_single('cxx')
     init_single('permissive')
     init_single('visibility')
+    init_single('target')
+    init_single('arch')
+    init_single('vendor')
+    init_single('sys')
 
     local flags =  {}
     local ldflags =  {}
@@ -315,7 +319,7 @@ local function generate(self, rule, name, attribute, globals)
     end
 
     if cc.name == "clang" then
-        update_target(self, flags, ldflags)
+        update_target(attribute, flags, ldflags)
     end
 
     for _, dep in ipairs(deps) do
@@ -796,7 +800,6 @@ function lm:finish()
     end
 
     self.ninja = ninja
-    self.target = globals.target
 
     if cc.name == "cl" then
         self.winsdk = globals.winsdk

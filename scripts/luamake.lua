@@ -31,7 +31,7 @@ local function fmtpath(path)
     return path
 end
 
-local function fmtpath_v3(workdir, rootdir, path)
+local function fmtpath_v3(rootdir, path)
     path = fs.path(path)
     if not path:is_absolute() and path:string():sub(1, 1) ~= "$" then
         path = fs.relative(fs.absolute(path, rootdir), WORKDIR)
@@ -252,7 +252,7 @@ local function generate(self, rule, name, attribute, globals)
     cc.mode(name, mode, crt, flags, ldflags)
 
     for _, inc in ipairs(includes) do
-        flags[#flags+1] = cc.includedir(fmtpath_v3(workdir, rootdir, inc))
+        flags[#flags+1] = cc.includedir(fmtpath_v3(rootdir, inc))
     end
 
     if mode == "release" then
@@ -292,14 +292,14 @@ local function generate(self, rule, name, attribute, globals)
         local target = self._targets[dep]
         assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
         if target.includedir then
-            flags[#flags+1] = cc.includedir(fmtpath_v3(workdir, target.rootdir, target.includedir))
+            flags[#flags+1] = cc.includedir(fmtpath_v3(target.rootdir, target.includedir))
         end
         if target.links then
             tbl_append(links, target.links)
         end
         if target.linkdirs then
             for _, linkdir in ipairs(target.linkdirs) do
-                ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(workdir, target.rootdir, linkdir))
+                ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(target.rootdir, linkdir))
             end
         end
     end
@@ -410,7 +410,7 @@ local function generate(self, rule, name, attribute, globals)
         tbl_links[#tbl_links+1] = cc.link(link)
     end
     for _, linkdir in ipairs(linkdirs) do
-        ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(workdir, rootdir, linkdir))
+        ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
     end
     local fin_links = table.concat(tbl_links, " ")
     local fin_ldflags = table.concat(ldflags, " ")
@@ -489,10 +489,10 @@ function GEN.phony(self, name, attribute, globals)
     local deps = attribute.deps
     local implicit = {}
     for i = 1, #input do
-        input[i] = fmtpath_v3(workdir, rootdir, input[i])
+        input[i] = fmtpath_v3(rootdir, input[i])
     end
     for i = 1, #output do
-        output[i] = fmtpath_v3(workdir, rootdir, output[i])
+        output[i] = fmtpath_v3(rootdir, output[i])
     end
     for _, dep in ipairs(deps) do
         local depsTarget = self._targets[dep]
@@ -542,10 +542,10 @@ function GEN.build(self, name, attribute, globals, shell)
     local implicit = {}
 
     for i = 1, #input do
-        input[i] = fmtpath_v3(workdir, rootdir, input[i])
+        input[i] = fmtpath_v3(rootdir, input[i])
     end
     for i = 1, #output do
-        output[i] = fmtpath_v3(workdir, rootdir, output[i])
+        output[i] = fmtpath_v3(rootdir, output[i])
     end
 
     local command = {}
@@ -558,10 +558,10 @@ function GEN.build(self, name, attribute, globals, shell)
             elseif type(v) == 'table' then
                 push_command(v)
             elseif type(v) == 'userdata' then
-                push(fmtpath_v3(workdir, rootdir, v))
+                push(fmtpath_v3(rootdir, v))
             elseif type(v) == 'string' then
                 if v:sub(1,1) == '@' then
-                    push(fmtpath_v3(workdir, rootdir, v:sub(2)))
+                    push(fmtpath_v3(rootdir, v:sub(2)))
                 else
                     push(v)
                 end
@@ -654,14 +654,14 @@ function GEN.copy(self, name, attribute, globals)
         if type(v) == 'string' and v:sub(1,1) == '@' then
             v =  v:sub(2)
         end
-        input[i] = fmtpath_v3(workdir, rootdir, v)
+        input[i] = fmtpath_v3(rootdir, v)
     end
     for i = 1, #output do
         local v = output[i]
         if type(v) == 'string' and v:sub(1,1) == '@' then
             v =  v:sub(2)
         end
-        output[i] = fmtpath_v3(workdir, rootdir, v)
+        output[i] = fmtpath_v3(rootdir, v)
     end
 
     for _, dep in ipairs(deps) do

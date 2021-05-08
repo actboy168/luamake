@@ -1,5 +1,4 @@
 local fs = require "bee.filesystem"
-local arguments = require "arguments"
 local lua_def = require "lua_def"
 local inited_rule = false
 local inited_version = {}
@@ -72,7 +71,7 @@ return function (lm, name, attribute, globals)
     flags[#flags+1] = lm.cc.includedir(luadir:string())
     attribute.flags = flags
 
-    if arguments.plat == "msvc" or arguments.plat == "mingw" then
+    if globals.plat == "msvc" or globals.plat == "mingw" then
         local arch = globals.target
         init_rule(lm, arch)
         init_version(lm, luaversion, arch)

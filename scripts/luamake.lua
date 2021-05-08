@@ -204,6 +204,23 @@ local function update_target(attribute, flags, ldflags)
         if not arch and not vendor and not sys then
             return
         end
+        if not vendor and not sys then
+            flags[#flags+1] = "-arch"
+            flags[#flags+1] = arch
+            ldflags[#ldflags+1] = "-arch"
+            ldflags[#ldflags+1] = arch
+            return
+        end
+        if not arch and not vendor then
+            if sys:match "^macos" then
+                flags[#flags+1] = sys:gsub("^macos(.*)$", "-mmacosx-version-min=%1")
+                return
+            end
+            if sys:match "^ios" then
+                flags[#flags+1] = sys:gsub("^macos(.*)$", "-miphoneos-version-min=%1")
+                return
+            end
+        end
         if arguments.plat == "macos" then
             arch = arch or shell "uname -m"
             vendor = vendor or "apple"

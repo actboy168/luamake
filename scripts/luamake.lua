@@ -3,15 +3,16 @@ local sp = require "bee.subprocess"
 local memfile = require "memfile"
 local util = require 'util'
 local arguments = require "arguments"
+local plat = arguments.args.plat
 
 local compiler = (function ()
-    if arguments.plat == 'mingw' then
+    if plat == 'mingw' then
         return "gcc"
-    elseif arguments.plat == "msvc" then
+    elseif plat == "msvc" then
         return "cl"
-    elseif arguments.plat == "linux" then
+    elseif plat == "linux" then
         return "gcc"
-    elseif arguments.plat == "macos" then
+    elseif plat == "macos" then
         return "clang"
     end
 end)()
@@ -19,11 +20,11 @@ end)()
 local cc = require("compiler." .. compiler)
 
 local function isWindows()
-    return arguments.plat == "msvc" or arguments.plat == "mingw"
+    return plat == "msvc" or plat == "mingw"
 end
 
 local function fmtpath(path)
-    if arguments.plat == "msvc" then
+    if plat == "msvc" then
         path = path:gsub('/', '\\')
     else
         path = path:gsub('\\', '/')
@@ -164,15 +165,15 @@ local function init_multi_attribute(attribute, globals, multiattr)
         if isWindows() and globals.windows then
             merge_attribute(globals.windows[name], res)
         end
-        if globals[arguments.plat] then
-            merge_attribute(globals[arguments.plat][name], res)
+        if globals[plat] then
+            merge_attribute(globals[plat][name], res)
         end
         merge_attribute(attribute[name], res)
         if isWindows() and attribute.windows then
             merge_attribute(attribute.windows[name], res)
         end
-        if attribute[arguments.plat] then
-            merge_attribute(attribute[arguments.plat][name], res)
+        if attribute[plat] then
+            merge_attribute(attribute[plat][name], res)
         end
         attribute[name] = res
     end
@@ -191,7 +192,7 @@ end
 local function update_target(attribute, flags, ldflags)
     local target = attribute.target
     if not target then
-        assert(arguments.plat ~= "msvc" and arguments.plat ~= "mingw")
+        assert(not isWindows())
         local function shell(command)
             local f = assert(io.popen(command, 'r'))
             local r = f:read 'l'
@@ -233,7 +234,7 @@ local function update_target(attribute, flags, ldflags)
                 return
             end
         end
-        if arguments.plat == "macos" then
+        if plat == "macos" then
             arch = arch or shell "uname -m"
             vendor = vendor or "apple"
             sys = sys or "darwin"
@@ -309,7 +310,7 @@ local function generate(self, rule, name, attribute, globals)
         end
     end
 
-    if arguments.plat == "linux" or arguments.plat == "macos" then
+    if not isWindows() then
         if attribute.visibility ~= "default" then
             flags[#flags+1] = ('-fvisibility=%s'):format(attribute.visibility or 'hidden')
         end
@@ -646,10 +647,10 @@ function GEN.build(self, name, attribute, globals, shell)
         })
     end
     if shell then
-        if arguments.plat == "msvc" then
+        if plat == "msvc" then
             table.insert(command, 1, "cmd")
             table.insert(command, 2, "/c")
-        elseif arguments.plat == "mingw" then
+        elseif plat == "mingw" then
             local s = {}
             for _, opt in ipairs(command) do
                 s[#s+1] = opt
@@ -735,12 +736,12 @@ function GEN.copy(self, name, attribute, globals)
 
     if not ruleCopy then
         ruleCopy = true
-        if arguments.plat == "msvc" then
+        if plat == "msvc" then
             ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
                 description = 'Copy $in$input $out',
                 restat = 1,
             })
-        elseif arguments.plat == "mingw" then
+        elseif plat == "mingw" then
             ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
                 description = 'Copy $in$input $out',
                 restat = 1,
@@ -807,14 +808,14 @@ end
 
 function lm:finish()
     local globals = self._export_globals
-    fs.create_directories(WORKDIR / 'build' / arguments.plat)
+    fs.create_directories(WORKDIR / 'build' / arguments.args.plat)
 
     local ninja_syntax = require "ninja_syntax"
     local ninja_script = util.script():string()
     local ninja = ninja_syntax.Writer(assert(memfile(ninja_script)))
 
-    ninja:variable("builddir", fmtpath(('build/%s'):format(arguments.plat)))
-    if arguments.rebuilt ~= 'no' then
+    ninja:variable("builddir", fmtpath(('build/%s'):format(arguments.args.plat)))
+    if arguments.args.rebuilt ~= 'no' then
         ninja:variable("luamake", fmtpath(getexe()))
     end
     if globals.bindir then

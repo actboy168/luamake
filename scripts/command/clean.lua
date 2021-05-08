@@ -1,7 +1,7 @@
 local util = require "util"
 local arguments = require "arguments"
 
-if arguments.plat == "msvc" then
+if arguments.args.plat == "msvc" then
     local msvc = require "msvc_util"
     if msvc.hasEnvConfig() then
         util.ninja { "-t", "clean" }

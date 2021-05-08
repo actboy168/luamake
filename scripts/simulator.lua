@@ -6,19 +6,21 @@ local arguments = require "arguments"
 local dofile
 
 local globals = {}
-for k, v in pairs(arguments) do
+local force = {}
+local targets = {}
+local simulator = {}
+local mainscript = true
+
+for k, v in pairs(arguments.args) do
     globals[k] = v
+    force[k] = true
 end
 
-local targets = {}
 local function accept(type, name, attribute)
     attribute.workdir = attribute.workdir or globals.workdir or "."
     attribute.rootdir = attribute.rootdir or globals.rootdir or "."
     targets[#targets+1] = {type, name, attribute, globals}
 end
-
-local simulator = {}
-local mainscript = true
 
 function simulator:source_set(name)
     assert(type(name) == "string", "Name is not a string.")
@@ -114,7 +116,7 @@ for to, from in pairs(alias) do
 end
 
 local function setter(_, k, v)
-    if arguments._force[k] ~= nil then
+    if force[k] ~= nil then
         return
     end
     globals[k] = v
@@ -158,10 +160,10 @@ function dofile(_, path, env)
         io_open = filehook,
         preload =  {
             luamake = simulator,
-            msvc = arguments.plat == 'msvc' and require "msvc" or nil
+            msvc = arguments.args.plat == 'msvc' and require "msvc" or nil
         },
         env = env,
-        plat = arguments.plat,
+        plat = arguments.args.plat,
     })(table.unpack(arg))
     globals.workdir = last
 end

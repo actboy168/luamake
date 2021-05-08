@@ -1,4 +1,5 @@
-local arguments = {_force={}}
+local t = {}
+local arguments = {}
 local targets = {}
 local what = arg[1]
 
@@ -20,14 +21,18 @@ else
             local k = arg[i]:sub(2)
             i = i + 1
             arguments[k] = arg[i]
-            arguments._force[k] = true
         else
             targets[#targets+1] = arg[i]
         end
         i = i + 1
     end
 end
-arguments.what = what
+
+t.what = what
+t.targets = targets
+t.C = arguments.C               ; arguments.C = nil
+t.f = arguments.f or "make.lua" ; arguments.f = nil
+t.args = arguments
 
 if arguments.plat then
     local sp = require 'bee.subprocess'
@@ -59,11 +64,4 @@ end
 arguments.mode = arguments.mode or "release"
 arguments.crt = arguments.crt or "dynamic"
 
-if not arguments.f then
-    arguments.f = "make.lua"
-end
-assert(arguments.f)
-
-arguments.targets = targets
-
-return arguments
+return t

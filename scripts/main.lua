@@ -16,7 +16,7 @@ else
     local rawtostring = mt.__tostring
     function mt:__tostring()
         local path = rawtostring(self)
-        if arguments.plat == "msvc" then
+        if arguments.args.plat == "msvc" then
             path = path:gsub('/', '\\')
         else
             path = path:gsub('\\', '/')

@@ -8,7 +8,7 @@ local function copy_dir(from, to)
     fs.create_directories(to)
     for file in from:list_directory() do
         if not fs.is_directory(file) then
-            fs.copy_file(file, to / file:filename(), true)
+            fs.copy_file(file, to / file:filename(), fs.copy_options.update_existing)
         end
     end
 end

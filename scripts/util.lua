@@ -48,6 +48,7 @@ local function ninja(args)
             errmsg[#errmsg+1] = process.stderr:read(errn)
         end
         if outn == 0 and errn == 0 then
+            io.flush()
             thread.sleep(0.01)
         end
     end

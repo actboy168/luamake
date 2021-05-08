@@ -677,6 +677,11 @@ function GEN.copy(self, name, attribute, globals)
                 description = 'Copy $in$input $out',
                 restat = 1,
             })
+        elseif arguments.plat == "mingw" then
+            ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
+                description = 'Copy $in$input $out',
+                restat = 1,
+            })
         else
             ninja:rule('copy', 'cp -afv $in$input $out 1>/dev/null', {
                 description = 'Copy $in$input $out',

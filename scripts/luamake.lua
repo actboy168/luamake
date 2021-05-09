@@ -767,8 +767,6 @@ local lm = {}
 
 lm._scripts = {}
 lm._targets = {}
-lm.cc = cc
-
 function lm:add_script(filename)
     if fs.path(filename:sub(1, #(MAKEDIR:string()))) == MAKEDIR then
         return
@@ -791,6 +789,7 @@ end
 function lm:finish()
     local builddir = WORKDIR / globals.builddir
     cc = require("compiler." .. globals.compiler)
+    lm.cc = cc
     fs.create_directories(builddir)
 
     local ninja_syntax = require "ninja_syntax"

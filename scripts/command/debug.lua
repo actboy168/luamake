@@ -1,6 +1,6 @@
-local plat = require "plat"
+local globals = require "globals"
 local sp = require "bee.subprocess"
-if plat ~= "msvc" then
+if globals.compiler ~= "msvc" then
     error "unimplemented"
     return
 end

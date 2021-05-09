@@ -17,7 +17,7 @@ else
     local rawtostring = mt.__tostring
     function mt:__tostring()
         local path = rawtostring(self)
-        if globals.plat == "msvc" then
+        if globals.shell == "cmd" then
             path = path:gsub('/', '\\')
         else
             path = path:gsub('\\', '/')

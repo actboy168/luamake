@@ -71,7 +71,7 @@ return function (lm, name, attribute, globals)
     flags[#flags+1] = lm.cc.includedir(luadir:string())
     attribute.flags = flags
 
-    if globals.plat == "msvc" or globals.plat == "mingw" then
+    if globals.os == "windows" then
         local arch = globals.target
         init_rule(lm, arch)
         init_version(lm, luaversion, arch)

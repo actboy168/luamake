@@ -4,28 +4,15 @@ local memfile = require "memfile"
 local util = require 'util'
 local arguments = require "arguments"
 local globals = require "globals"
-local plat = globals.plat
 
-local compiler = (function ()
-    if plat == 'mingw' then
-        return "gcc"
-    elseif plat == "msvc" then
-        return "cl"
-    elseif plat == "linux" then
-        return "gcc"
-    elseif plat == "macos" then
-        return "clang"
-    end
-end)()
-
-local cc = require("compiler." .. compiler)
+local cc
 
 local function isWindows()
-    return plat == "msvc" or plat == "mingw"
+    return globals.os == "windows"
 end
 
 local function fmtpath(path)
-    if plat == "msvc" then
+    if globals.shell == "cmd" then
         path = path:gsub('/', '\\')
     else
         path = path:gsub('\\', '/')
@@ -163,18 +150,12 @@ local function init_multi_attribute(attribute, globals, multiattr)
     for _, name in ipairs(multiattr) do
         local res = {}
         merge_attribute(globals[name], res)
-        if isWindows() and globals.windows then
-            merge_attribute(globals.windows[name], res)
-        end
-        if globals[plat] then
-            merge_attribute(globals[plat][name], res)
+        if globals[globals.os] then
+            merge_attribute(globals[globals.os][name], res)
         end
         merge_attribute(attribute[name], res)
-        if isWindows() and attribute.windows then
-            merge_attribute(attribute.windows[name], res)
-        end
-        if attribute[plat] then
-            merge_attribute(attribute[plat][name], res)
+        if attribute[globals.os] then
+            merge_attribute(attribute[globals.os][name], res)
         end
         attribute[name] = res
     end
@@ -235,7 +216,7 @@ local function update_target(attribute, flags, ldflags)
                 return
             end
         end
-        if plat == "macos" then
+        if globals.os == "macos" then
             arch = arch or shell "uname -m"
             vendor = vendor or "apple"
             sys = sys or "darwin"
@@ -648,10 +629,10 @@ function GEN.build(self, name, attribute, globals, shell)
         })
     end
     if shell then
-        if plat == "msvc" then
+        if globals.shell == "cmd" then
             table.insert(command, 1, "cmd")
             table.insert(command, 2, "/c")
-        elseif plat == "mingw" then
+        elseif globals.os == "windows" then
             local s = {}
             for _, opt in ipairs(command) do
                 s[#s+1] = opt
@@ -737,12 +718,12 @@ function GEN.copy(self, name, attribute, globals)
 
     if not ruleCopy then
         ruleCopy = true
-        if plat == "msvc" then
+        if globals.shell == "cmd" then
             ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
                 description = 'Copy $in$input $out',
                 restat = 1,
             })
-        elseif plat == "mingw" then
+        elseif globals.os == "windows" then
             ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
                 description = 'Copy $in$input $out',
                 restat = 1,
@@ -808,14 +789,15 @@ local function getexe()
 end
 
 function lm:finish()
-    local globals = self._export_globals
-    fs.create_directories(WORKDIR / 'build' / plat)
+    local builddir = WORKDIR / globals.builddir
+    cc = require("compiler." .. globals.compiler)
+    fs.create_directories(builddir)
 
     local ninja_syntax = require "ninja_syntax"
-    local ninja_script = util.script():string()
+    local ninja_script = ((builddir / arguments.f):replace_extension ".ninja"):string()
     local ninja = ninja_syntax.Writer(assert(memfile(ninja_script)))
 
-    ninja:variable("builddir", fmtpath(('build/%s'):format(plat)))
+    ninja:variable("builddir", fmtpath(globals.builddir))
     if arguments.args.rebuilt ~= 'no' then
         ninja:variable("luamake", fmtpath(getexe()))
     end

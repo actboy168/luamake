@@ -1,6 +1,6 @@
 local fs = require "bee.filesystem"
 
-local function sandbox_env(env, loadlua, openfile, preload, plat)
+local function sandbox_env(env, loadlua, openfile, preload, builddir)
     setmetatable(env, {__index=_G})
 
     local _PRELOAD = {}
@@ -133,7 +133,7 @@ local function sandbox_env(env, loadlua, openfile, preload, plat)
         loaded = _LOADED,
         preload = _PRELOAD,
         path = '?.lua',
-        cpath = '?.'..ext..';build/'..plat..'/bin/?.'..ext,
+        cpath = '?.'..ext..';'..builddir..'/bin/?.'..ext,
         searchpath = searchpath,
         loadlib = package.loadlib,
         searchers = {
@@ -186,6 +186,6 @@ return function (c)
     if not init then
         return nil, err
     end
-    debug.setupvalue(init, 1, sandbox_env(env, loadlua, openfile, c.preload, c.plat))
+    debug.setupvalue(init, 1, sandbox_env(env, loadlua, openfile, c.preload, c.builddir))
     return init
 end

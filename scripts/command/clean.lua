@@ -1,7 +1,7 @@
 local util = require "util"
 local globals = require "globals"
 
-if globals.plat == "msvc" then
+if globals.compiler == "msvc" then
     local msvc = require "msvc_util"
     if msvc.hasEnvConfig() then
         util.ninja { "-t", "clean" }

@@ -3,12 +3,8 @@ local globals = require "globals"
 local sp = require 'bee.subprocess'
 local thread = require 'bee.thread'
 
-local function script()
-    return (WORKDIR / 'build' / globals.plat / arguments.f):replace_extension ".ninja"
-end
-
 local function ninja(args)
-    if globals.plat == 'msvc' then
+    if globals.compiler == 'msvc' then
         local msvc = require "msvc_util"
         if args.env then
             for k, v in pairs(msvc.getenv()) do
@@ -24,7 +20,7 @@ local function ninja(args)
         args.searchPath = true
         table.insert(args, 1, 'ninja')
     end
-    local build_ninja = script()
+    local build_ninja = (WORKDIR / globals.builddir / arguments.f):replace_extension ".ninja"
     table.insert(args, 2, "-f")
     table.insert(args, 3, build_ninja)
     args.stderr = true
@@ -75,10 +71,10 @@ local function sandbox(filename, ...)
         root = WORKDIR:string(),
         main = filename,
         io_open = io.open,
-        preload = globals.plat == 'msvc' and {
+        preload = globals.compiler == 'msvc' and {
             msvc = require "msvc",
         },
-        plat = globals.plat,
+        builddir = globals.builddir,
     })(...)
 end
 
@@ -86,6 +82,5 @@ end
 return {
     ninja = ninja,
     command = command,
-    script = script,
     sandbox = sandbox,
 }

@@ -1,7 +1,7 @@
 local util = require "util"
-local plat = require "plat"
-package.cpath = string.gsub([[./build/${platform}/bin/?.${extension}]], "%$%{([^}]*)%}", {
-    platform = plat,
+local globals = require "globals"
+package.cpath = string.gsub([[./${builddir}/bin/?.${extension}]], "%$%{([^}]*)%}", {
+    builddir = globals.builddir,
     extension = package.cpath:match '[/\\]%?%.([a-z]+)',
 })
 

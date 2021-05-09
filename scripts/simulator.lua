@@ -121,7 +121,6 @@ end
 simulator = setmetatable(simulator, {__index = getter, __newindex = setter})
 
 lm._export_targets = targets
-lm._export_globals = globals
 
 local function filehook(name, mode)
     local f, err = io.open(name, mode)
@@ -154,10 +153,10 @@ function dofile(_, path, env)
         io_open = filehook,
         preload =  {
             luamake = simulator,
-            msvc = globals.plat == 'msvc' and require "msvc" or nil
+            msvc = globals.compiler == 'msvc' and require "msvc" or nil
         },
         env = env,
-        plat = globals.plat,
+        builddir = globals.builddir,
     })(table.unpack(arg))
     globals.workdir = last
 end

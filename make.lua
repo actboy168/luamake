@@ -1,6 +1,6 @@
 local lm = require 'luamake'
 
-local isWindows = lm.plat == 'mingw' or lm.plat == 'msvc'
+local isWindows = lm.os == 'windows'
 local exe = isWindows and ".exe" or ""
 local dll = isWindows and ".dll" or ".so"
 

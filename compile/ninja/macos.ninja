@@ -5,8 +5,8 @@ gcc = clang
 gxx = clang++
 rule C_source_lua
   command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -DLUA_USE_MACOSX -DNDEBUG -Wunguarded-availability $
-      -mmacosx-version-min=10.12 -o $out -c $in
+      -DLUA_USE_MACOSX -DNDEBUG -mmacosx-version-min=10.12 $
+      -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
@@ -50,8 +50,9 @@ build $obj/source_lua/lzio.obj: C_source_lua 3rd/bee.lua/3rd/lua/lzio.c
 build source_lua: phony
 rule C_lua
   command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -fvisibility=hidden -DLUA_USE_MACOSX -DNDEBUG -I3rd/bee.lua $
-      -Wunguarded-availability -mmacosx-version-min=10.12 -o $out -c $in
+      -fvisibility=hidden -DLUA_USE_MACOSX -DNDEBUG $
+      -mmacosx-version-min=10.12 -I3rd/bee.lua -Wunguarded-availability -o $
+      $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
@@ -81,7 +82,7 @@ rule C_bee
   command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG -fPIC $
-      -Wunguarded-availability -mmacosx-version-min=10.12 -o $out -c $in
+      -mmacosx-version-min=10.12 -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
@@ -90,7 +91,7 @@ rule CXX_bee
   command = $gxx -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG -fPIC $
-      -Wunguarded-availability -mmacosx-version-min=10.12 -o $out -c $in
+      -mmacosx-version-min=10.12 -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
   depfile = $out.d
   deps = gcc
@@ -137,7 +138,7 @@ build $bin/bee.so: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
 rule CXX_bootstrap
   command = $gxx -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -DLUA_USE_MACOSX -DNDEBUG $
-      -I3rd/bee.lua -Wunguarded-availability -mmacosx-version-min=10.12 -o $
+      -mmacosx-version-min=10.12 -I3rd/bee.lua -Wunguarded-availability -o $
       $out -c $in
   description = Compile C++ $out
   depfile = $out.d

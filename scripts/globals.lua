@@ -10,12 +10,10 @@ end
 globals.mode = globals.mode or "release"
 globals.crt = globals.crt or "dynamic"
 
-local mingw = os.getenv "MSYSTEM"
 globals.os = globals.os or platform.OS:lower()
-
-local function defaultCompiler()
+globals.compiler = globals.compiler or (function()
     if globals.os == "windows" then
-        if mingw then
+        if os.getenv "MSYSTEM" then
             return "gcc"
         end
         return "msvc"
@@ -23,19 +21,14 @@ local function defaultCompiler()
         return "clang"
     end
     return "gcc"
-end
-local function defaultShell()
-    if globals.os == "windows" then
-        if mingw then
-            return "sh"
-        end
+end)()
+globals.shell = globals.shell or (function()
+    if globals.compiler == "msvc" then
         return "cmd"
     else
         return "sh"
     end
-end
-globals.compiler = globals.compiler or defaultCompiler()
-globals.shell = globals.shell or defaultShell()
+end)()
 globals.builddir = globals.builddir or "build"
 
 do

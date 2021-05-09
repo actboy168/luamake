@@ -1,8 +1,8 @@
 chcp 65001
-luamake init -rebuilt no -plat msvc
-luamake init -rebuilt no -plat mingw
-luamake init -rebuilt no -plat linux
-luamake init -rebuilt no -plat macos
+luamake init -rebuilt no -builddir build/msvc  -os windows
+luamake init -rebuilt no -builddir build/mingw -os windows -compiler gcc
+luamake init -rebuilt no -builddir build/linux -os linux
+luamake init -rebuilt no -builddir build/macos -os macos
 
 if not exist compile\ninja (
 	md compile\ninja

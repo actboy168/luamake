@@ -1,5 +1,4 @@
 local clang = require 'compiler.gcc'
-clang.name = "clang"
 
 function clang.mode(_, mode, crt, flags, ldflags)
     if crt == 'dynamic' then

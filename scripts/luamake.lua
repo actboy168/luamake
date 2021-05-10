@@ -291,7 +291,7 @@ local function generate(self, rule, name, attribute, globals)
         flags[#flags+1] = cc.warnings.error
     end
 
-    if cc.name == 'cl' then
+    if globals.compiler == 'msvc' then
         if not attribute.permissive then
             flags[#flags+1] = '/permissive-'
         end
@@ -335,7 +335,7 @@ local function generate(self, rule, name, attribute, globals)
         flags[#flags+1] = "-fPIC"
     end
 
-    if cc.name == "clang" then
+    if globals.compiler == "clang" then
         update_target(attribute, flags, ldflags)
     end
 
@@ -391,7 +391,7 @@ local function generate(self, rule, name, attribute, globals)
             end
             ninja:build(objname, "RC_"..fmtname, source)
         elseif type == "asm" then
-            if cc.name == "cl" then
+            if globals.compiler == "msvc" then
                 error "TODO"
             end
             if not has_asm then
@@ -473,7 +473,7 @@ local function generate(self, rule, name, attribute, globals)
     local vars = pool and {pool=pool} or nil
     if rule == "shared_library" then
         cc.rule_dll(ninja, name, fin_links, fin_ldflags, mode, attribute)
-        if cc.name == 'cl' then
+        if globals.compiler == 'msvc' then
             local lib = (fs.path('$bin') / name)..".lib"
             t.output = lib
             ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars, lib)
@@ -818,16 +818,16 @@ function lm:finish()
 
     self.ninja = ninja
 
-    if cc.name == "cl" then
+    if globals.compiler == "msvc" then
         local msvc = require "msvc_util"
         msvc.createEnvConfig(globals.target, globals.winsdk, arguments.what == "rebuild")
         if arguments.args.rebuilt ~= 'no' then
             ninja:variable("msvc_deps_prefix", msvc.getPrefix())
         end
-    elseif cc.name == "gcc"  then
+    elseif globals.compiler == "gcc"  then
         ninja:variable("gcc", globals.gcc or "gcc")
         ninja:variable("gxx", globals.gxx or "g++")
-    elseif cc.name == "clang" then
+    elseif globals.compiler == "clang" then
         ninja:variable("gcc", globals.gcc or "clang")
         ninja:variable("gxx", globals.gxx or "clang++")
     end

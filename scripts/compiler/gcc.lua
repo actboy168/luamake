@@ -6,7 +6,6 @@ local function format_path(path)
 end
 
 local gcc = {
-    name = "gcc",
     flags = {
     },
     ldflags = {

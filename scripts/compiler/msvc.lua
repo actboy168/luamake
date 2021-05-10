@@ -8,7 +8,6 @@ local function format_path(path)
 end
 
 local cl = {
-    name = "cl",
     flags = {
         "/EHsc /Zc:__cplusplus",
     },

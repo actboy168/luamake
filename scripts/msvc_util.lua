@@ -39,8 +39,8 @@ function m.cleanEnvConfig()
     fs.remove(EnvConfig)
 end
 
-function m.createEnvConfig(arch, winsdk)
-    if m.hasEnvConfig() then
+function m.createEnvConfig(arch, winsdk, rebuild)
+    if not rebuild and m.hasEnvConfig() then
         local config = readEnvConfig()
         if config.arch == arch and config.winsdk == winsdk then
             env = config.env

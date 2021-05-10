@@ -805,7 +805,7 @@ function lm:finish()
     local ninja = ninja_syntax.Writer(assert(memfile(ninja_script)))
 
     ninja:variable("builddir", fmtpath(globals.builddir))
-    if arguments.args.rebuilt ~= 'no' then
+    if not arguments.args.prebuilt then
         ninja:variable("luamake", fmtpath(getexe()))
     end
     if globals.bindir then
@@ -822,9 +822,9 @@ function lm:finish()
     self.ninja = ninja
 
     if globals.compiler == "msvc" then
-        local msvc = require "msvc_util"
-        msvc.createEnvConfig(globals.target, globals.winsdk, arguments.what == "rebuild")
-        if arguments.args.rebuilt ~= 'no' then
+        if not arguments.args.prebuilt then
+            local msvc = require "msvc_util"
+            msvc.createEnvConfig(globals.target, globals.winsdk, arguments.what == "rebuild")
             ninja:variable("msvc_deps_prefix", msvc.getPrefix())
         end
     elseif globals.compiler == "gcc"  then
@@ -835,7 +835,7 @@ function lm:finish()
         ninja:variable("gxx", globals.gxx or "clang++")
     end
 
-    if arguments.args.rebuilt ~= 'no' then
+    if not arguments.args.prebuilt then
         local build_ninja = (fs.path '$builddir' / arguments.f):replace_extension ".ninja"
         ninja:rule('configure', '$luamake init -f $in', { generator = 1 })
         ninja:build(build_ninja, 'configure', arguments.f, self._scripts)

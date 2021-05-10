@@ -153,7 +153,7 @@ function dofile(_, path, env)
         io_open = filehook,
         preload =  {
             luamake = simulator,
-            msvc = globals.compiler == 'msvc' and require "msvc" or nil
+            msvc = (not arguments.args.prebuilt and globals.compiler == 'msvc') and require "msvc" or nil
         },
         env = env,
         builddir = globals.builddir,

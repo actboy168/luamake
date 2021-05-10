@@ -98,8 +98,10 @@ local function prefix(env)
     fs.create_directories(testdir)
     createfile(testdir / 'test.h')
     createfile(testdir / 'test.c', '#include "test.h"')
-    local process = assert(sp.shell {
+    local process = assert(sp.spawn {
+        'cmd', '/c',
         'cl', '/showIncludes', '/nologo', '-c', 'test.c',
+        searchPath = true,
         env = env,
         cwd = testdir,
         stdout = true,

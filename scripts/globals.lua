@@ -31,13 +31,14 @@ globals.hostshell = globals.hostshell or (function()
 end)()
 globals.builddir = globals.builddir or "build"
 
-do
+globals.arch = globals.arch or (function ()
     if globals.os == "windows" then
-        if not globals.target then
-            globals.target = string.packsize "T" == 8 and "x64" or "x86"
+        if string.packsize "T" == 8 then
+            return "x86_64"
+        else
+            return "x86"
         end
-        assert(globals.target == "x64" or globals.target == "x86")
     end
-end
+end)()
 
 return globals

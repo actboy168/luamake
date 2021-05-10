@@ -12,14 +12,15 @@ local function copy_dir(from, to)
     end
 end
 
-local function init_rule(lm, globals, arch)
+local function init_rule(lm, globals)
     if inited_rule then
         return
     end
     inited_rule = true
     local ninja = lm.ninja
     if globals.compiler == 'msvc' then
-        ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(arch),
+        local msvc = require "msvc_util"
+        ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(globals.arch)),
         {
             description = 'Lua import lib $out'
         })
@@ -31,7 +32,7 @@ local function init_rule(lm, globals, arch)
     end
 end
 
-local function init_version(lm, globals, arch, luadir, luaversion)
+local function init_version(lm, globals, luadir, luaversion)
     if inited_version[luaversion] then
         return
     end
@@ -39,13 +40,13 @@ local function init_version(lm, globals, arch, luadir, luaversion)
     local ninja = lm.ninja
     lua_def(MAKEDIR / "tools" / luaversion)
     if globals.compiler == 'msvc' then
-        ninja:build(luadir / ("lua_"..arch..".lib"), "luadeps", luadir / "lua.def")
+        ninja:build(luadir / ("lua-"..globals.arch..".lib"), "luadeps", luadir / "lua.def")
     else
         ninja:build(luadir / "liblua.a", "luadeps", luadir / "lua.def")
     end
 end
 
-local function windows_deps(_, name, attribute, globals, arch, luadir)
+local function windows_deps(_, name, attribute, globals, luadir)
     local ldflags = attribute.ldflags or {}
     local input = attribute.input or {}
     ldflags = type(ldflags) == "string" and {ldflags} or ldflags
@@ -54,7 +55,7 @@ local function windows_deps(_, name, attribute, globals, arch, luadir)
         if attribute.export_luaopen ~= false and (not attribute.msvc or attribute.msvc.export_luaopen ~= false) then
             ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
         end
-        input[#input+1] = luadir / ("lua_"..arch..".lib")
+        input[#input+1] = luadir / ("lua-"..globals.arch..".lib")
     else
         input[#input+1] = luadir / "liblua.a"
     end
@@ -70,10 +71,9 @@ return function (lm, name, attribute, globals)
     attribute.flags = flags
 
     if globals.os == "windows" then
-        local arch = globals.target
-        init_rule(lm, globals, arch)
-        init_version(lm, globals, arch, luadir, luaversion)
-        windows_deps(lm, name, attribute, globals, arch, luadir)
+        init_rule(lm, globals)
+        init_version(lm, globals, luadir, luaversion)
+        windows_deps(lm, name, attribute, globals, luadir)
     end
     copy_dir(MAKEDIR / "tools" / luaversion, luadir)
     return lm, 'shared_library', name, attribute, globals

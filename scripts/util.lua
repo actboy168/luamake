@@ -7,7 +7,7 @@ local function ninja(args)
     if globals.compiler == 'msvc' then
         local msvc = require "msvc_util"
         if args.env then
-            for k, v in pairs(msvc.getEnv(globals.builddir)) do
+            for k, v in pairs(msvc.getEnv()) do
                 args.env[k] = v
             end
         else

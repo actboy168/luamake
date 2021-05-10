@@ -6,6 +6,11 @@ local m = {}
 local env
 local prefix
 
+local ArchAlias = {
+    x86_64 = "x64",
+    x86 = "x86",
+}
+
 local function readEnvConfig()
     local EnvConfig = fs.path(globals.builddir) / 'env.config'
     local f = assert(io.open(EnvConfig:string(), 'r'))
@@ -48,7 +53,7 @@ function m.createEnvConfig(arch, winsdk, rebuild)
             return
         end
     end
-    env = msvc.environment(arch, winsdk)
+    env = msvc.environment(ArchAlias[arch], winsdk)
     prefix = msvc.prefix(env)
 
     local s = {}
@@ -76,6 +81,10 @@ end
 function m.getPrefix()
     updateEnvConfig()
     return prefix
+end
+
+function m.archAlias(arch)
+    return ArchAlias[arch]
 end
 
 return m

@@ -152,9 +152,15 @@ local function init_multi_attribute(attribute, globals, multiattr)
         if globals[globals.os] then
             merge_attribute(globals[globals.os][name], res)
         end
+        if globals[globals.compiler] then
+            merge_attribute(globals[globals.compiler][name], res)
+        end
         merge_attribute(attribute[name], res)
         if attribute[globals.os] then
             merge_attribute(attribute[globals.os][name], res)
+        end
+        if attribute[globals.compiler] then
+            merge_attribute(attribute[globals.compiler][name], res)
         end
         attribute[name] = res
     end

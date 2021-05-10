@@ -22,7 +22,7 @@ globals.compiler = globals.compiler or (function()
     end
     return "gcc"
 end)()
-globals.shell = globals.shell or (function()
+globals.hostshell = globals.hostshell or (function()
     if globals.compiler == "msvc" then
         return "cmd"
     else

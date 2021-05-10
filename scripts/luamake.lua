@@ -1,7 +1,6 @@
 local fs = require "bee.filesystem"
 local sp = require "bee.subprocess"
 local memfile = require "memfile"
-local util = require 'util'
 local arguments = require "arguments"
 local globals = require "globals"
 
@@ -12,7 +11,7 @@ local function isWindows()
 end
 
 local function fmtpath(path)
-    if globals.shell == "cmd" then
+    if globals.hostshell == "cmd" then
         path = path:gsub('/', '\\')
     else
         path = path:gsub('\\', '/')
@@ -629,7 +628,7 @@ function GEN.build(self, name, attribute, globals, shell)
         })
     end
     if shell then
-        if globals.shell == "cmd" then
+        if globals.hostshell == "cmd" then
             table.insert(command, 1, "cmd")
             table.insert(command, 2, "/c")
         elseif globals.os == "windows" then
@@ -718,7 +717,7 @@ function GEN.copy(self, name, attribute, globals)
 
     if not ruleCopy then
         ruleCopy = true
-        if globals.shell == "cmd" then
+        if globals.hostshell == "cmd" then
             ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
                 description = 'Copy $in$input $out',
                 restat = 1,

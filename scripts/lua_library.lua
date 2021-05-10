@@ -31,13 +31,12 @@ local function init_rule(lm, arch)
     end
 end
 
-local function init_version(lm, luaversion, arch)
+local function init_version(lm, luaversion, luadir, arch)
     if inited_version[luaversion] then
         return
     end
     inited_version[luaversion] = true
     local ninja = lm.ninja
-    local luadir = fs.path('build') / luaversion
     lua_def(MAKEDIR / "tools" / luaversion)
     if lm.cc.name == 'cl' then
         ninja:build(luadir / ("lua_"..arch..".lib"), "luadeps", luadir / "lua.def")
@@ -67,16 +66,16 @@ end
 return function (lm, name, attribute, globals)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
-    local luadir = fs.path('build') / luaversion
+    local luadir = fs.path(globals.builddir) / luaversion
     flags[#flags+1] = lm.cc.includedir(luadir:string())
     attribute.flags = flags
 
     if globals.os == "windows" then
         local arch = globals.target
         init_rule(lm, arch)
-        init_version(lm, luaversion, arch)
+        init_version(lm, luaversion, luadir, arch)
         windows_deps(lm, name, attribute, luadir, arch)
     end
-    copy_dir(MAKEDIR / "tools" / luaversion, WORKDIR / 'build' / luaversion)
+    copy_dir(MAKEDIR / "tools" / luaversion, luadir)
     return lm, 'shared_library', name, attribute, globals
 end

@@ -1,16 +1,26 @@
 local msvc = require 'msvc'
 local fs = require "bee.filesystem"
+local globals = require "globals"
 
 local m = {}
 local env
 local prefix
-local EnvConfig = WORKDIR / 'build' / 'msvc' / 'env.config'
 
 local function readEnvConfig()
+    local EnvConfig = fs.path(globals.builddir) / 'env.config'
     local f = assert(io.open(EnvConfig:string(), 'r'))
     local config = assert(load(assert(f:read 'a')))()
     f:close()
     return config
+end
+
+local function writeEnvConfig(data)
+    local EnvConfig = fs.path(globals.builddir) / 'env.config'
+    assert(
+        assert(
+            io.open(EnvConfig:string(), 'w')
+        ):write(data)
+    ):close()
 end
 
 local function updateEnvConfig()
@@ -19,8 +29,18 @@ local function updateEnvConfig()
     prefix = config.prefix
 end
 
+function m.hasEnvConfig()
+    local EnvConfig = fs.path(globals.builddir) / 'env.config'
+    return fs.exists(EnvConfig)
+end
+
+function m.cleanEnvConfig()
+    local EnvConfig = fs.path(globals.builddir) / 'env.config'
+    fs.remove(EnvConfig)
+end
+
 function m.createEnvConfig(arch, winsdk)
-    if fs.exists(EnvConfig) then
+    if m.hasEnvConfig() then
         local config = readEnvConfig()
         if config.arch == arch and config.winsdk == winsdk then
             env = config.env
@@ -45,27 +65,15 @@ function m.createEnvConfig(arch, winsdk)
     s[#s+1] = ("},"):format(prefix)
     s[#s+1] = "}"
     s[#s+1] = ""
-    assert(
-        assert(
-            io.open(EnvConfig:string(), 'w')
-        ):write(table.concat(s, '\n'))
-    ):close()
-end
- 
-function m.hasEnvConfig()
-    return fs.exists(EnvConfig)
+    writeEnvConfig(table.concat(s, '\n'))
 end
 
-function m.cleanEnvConfig()
-    fs.remove(EnvConfig)
-end
-
-function m.getenv()
+function m.getEnv()
     updateEnvConfig()
     return env
 end
 
-function m.getprefix()
+function m.getPrefix()
     updateEnvConfig()
     return prefix
 end

@@ -822,7 +822,7 @@ function lm:finish()
         local msvc = require "msvc_util"
         msvc.createEnvConfig(globals.target, globals.winsdk)
         if arguments.args.rebuilt ~= 'no' then
-            ninja:variable("msvc_deps_prefix", msvc.getprefix())
+            ninja:variable("msvc_deps_prefix", msvc.getPrefix())
         end
     elseif cc.name == "gcc"  then
         ninja:variable("gcc", globals.gcc or "gcc")

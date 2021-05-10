@@ -38,7 +38,7 @@ local function init_version(lm, globals, arch, luadir, luaversion)
     inited_version[luaversion] = true
     local ninja = lm.ninja
     lua_def(MAKEDIR / "tools" / luaversion)
-    if globals == 'msvc' then
+    if globals.compiler == 'msvc' then
         ninja:build(luadir / ("lua_"..arch..".lib"), "luadeps", luadir / "lua.def")
     else
         ninja:build(luadir / "liblua.a", "luadeps", luadir / "lua.def")

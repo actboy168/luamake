@@ -614,6 +614,9 @@ function GEN.build(self, name, attribute, globals, shell)
                 if v:sub(1,1) == '@' then
                     push(fmtpath_v3(rootdir, v:sub(2)))
                 else
+                    v = v:gsub("@{([(^}]*)}", function (s)
+                        return fmtpath_v3(rootdir, s)
+                    end)
                     push(v)
                 end
             end

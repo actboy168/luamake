@@ -374,6 +374,9 @@ local function generate(self, rule, name, attribute, globals)
                 ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(target.rootdir, linkdir))
             end
         end
+        if target.ldflags then
+            tbl_append(ldflags, target.ldflags)
+        end
     end
 
     tbl_append(flags, ud_flags)
@@ -474,6 +477,7 @@ local function generate(self, rule, name, attribute, globals)
         t.output = input
         t.links = links
         t.linkdirs = linkdirs
+        t.ldflags = ud_ldflags
         return
     end
 

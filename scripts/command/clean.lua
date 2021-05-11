@@ -1,6 +1,8 @@
 local util = require "util"
 local globals = require "globals"
 
+util.command 'init'
+
 if globals.compiler == "msvc" then
     local msvc = require "msvc_util"
     if msvc.hasEnvConfig() then

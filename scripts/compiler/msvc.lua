@@ -86,7 +86,7 @@ function cl.rule_cxx(w, name, flags, cxxflags, _)
     })
 end
 
-function cl.rule_dll(w, name, links, ldflags, _)
+function cl.rule_dll(w, name, links, ldflags)
     local lib = (fs.path('$bin') / name)..".lib"
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out /DLL /IMPLIB:%s]]):format(links, ldflags, lib),
     {
@@ -95,7 +95,7 @@ function cl.rule_dll(w, name, links, ldflags, _)
     })
 end
 
-function cl.rule_exe(w, name, links, ldflags, _)
+function cl.rule_exe(w, name, links, ldflags)
     w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out]]):format(links, ldflags),
     {
         description = 'Link    Exe $out'

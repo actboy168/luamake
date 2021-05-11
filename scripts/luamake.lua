@@ -472,7 +472,7 @@ local function generate(self, rule, name, attribute, globals)
 
     local vars = pool and {pool=pool} or nil
     if rule == "shared_library" then
-        cc.rule_dll(ninja, name, fin_links, fin_ldflags, mode, attribute)
+        cc.rule_dll(ninja, name, fin_links, fin_ldflags)
         if globals.compiler == 'msvc' then
             local lib = (fs.path('$bin') / name)..".lib"
             t.output = lib
@@ -484,7 +484,7 @@ local function generate(self, rule, name, attribute, globals)
             ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
         end
     elseif rule == "executable" then
-        cc.rule_exe(ninja, name, fin_links, fin_ldflags, mode, attribute)
+        cc.rule_exe(ninja, name, fin_links, fin_ldflags)
         ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     elseif rule == "static_library" then
         t.output = outname

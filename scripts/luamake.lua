@@ -244,7 +244,28 @@ local function generate(self, rule, name, attribute, globals)
     init_multi_attribute(attribute, globals, multiattr)
 
     local function init_single(attr_name, default)
-        local attr = attribute[attr_name] or globals[attr_name] or default
+        local function find_attr()
+            if attribute[globals.compiler] and attribute[globals.compiler][attr_name] then
+                return attribute[globals.compiler][attr_name]
+            end
+            if attribute[globals.os] and attribute[globals.os][attr_name] then
+                return attribute[globals.os][attr_name]
+            end
+            if attribute[attr_name] then
+                return attribute[attr_name]
+            end
+            if globals[globals.compiler] and globals[globals.compiler][attr_name] then
+                return globals[globals.compiler][attr_name]
+            end
+            if globals[globals.os] and globals[globals.os][attr_name] then
+                return globals[globals.os][attr_name]
+            end
+            if globals[attr_name] then
+                return globals[attr_name]
+            end
+            return default
+        end
+        local attr = find_attr()
         assert(type(attr) ~= 'table')
         attribute[attr_name] = attr
         return attr

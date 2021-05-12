@@ -466,7 +466,6 @@ end
 
 local GEN = {}
 
-local ruleCommand = false
 local ruleCopy = false
 
 local NAMEIDX = 0
@@ -586,12 +585,6 @@ function GEN.build(self, name, attribute, shell)
         implicit[#implicit+1] = depsTarget.outname
     end
 
-    if not ruleCommand then
-        ruleCommand = true
-        ninja:rule('command', '$COMMAND', {
-            description = '$DESC'
-        })
-    end
     if shell then
         if globals.hostshell == "cmd" then
             table.insert(command, 1, "cmd")
@@ -618,14 +611,16 @@ function GEN.build(self, name, attribute, shell)
             }
         end
     end
+
+    local rule_name = name:gsub("[^%w_]", "_")
     local outname
     if #output == 0 then
-        outname = '$builddir/_/' .. name:gsub("[^%w_]", "_")
+        outname = '$builddir/_/' .. rule_name
     else
         outname = output
     end
-    ninja:build(outname, 'command', input, implicit, nil, {
-        COMMAND = command,
+    ninja:rule('build_'..rule_name,  table.concat(command, " "))
+    ninja:build(outname, 'build_'..rule_name, input, implicit, nil, {
         pool = pool,
     })
     if not tmpName then

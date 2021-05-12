@@ -176,12 +176,11 @@ rule copy
 build $bin/main.lua: copy | $bin/bootstrap.exe
   input = 3rd/bee.lua/bootstrap/main.lua
 build copy_script: phony $bin/main.lua
-rule command
-  command = $COMMAND
-  description = $DESC
-build $builddir/_/test: command | $bin/bootstrap.exe copy_script $bin/bee.dll
+rule build_test
+  command = $bin/bootstrap.exe 3rd/bee.lua/test/test.lua
+build $builddir/_/test: build_test | $bin/bootstrap.exe copy_script $
+    $bin/bee.dll
   pool = console
-  COMMAND = $bin/bootstrap.exe 3rd/bee.lua/test/test.lua
 build test: phony $builddir/_/test
 build luamake.exe: copy | $bin/bootstrap.exe
   input = $bin/bootstrap.exe

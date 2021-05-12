@@ -1,4 +1,5 @@
 local fs = require "bee.filesystem"
+local globals = require "globals"
 local lua_def = require "lua_def"
 local inited_rule = false
 local inited_version = {}
@@ -12,7 +13,17 @@ local function copy_dir(from, to)
     end
 end
 
-local function init_rule(lm, globals)
+local function init_single(attribute, attr_name, default)
+    local attr = attribute[attr_name]
+    if type(attr) == 'table' then
+        attribute[attr_name] = attr[#attr]
+    elseif attr == nil then
+        attribute[attr_name] = default
+    end
+    return attribute[attr_name]
+end
+
+local function init_rule(lm)
     if inited_rule then
         return
     end
@@ -32,7 +43,7 @@ local function init_rule(lm, globals)
     end
 end
 
-local function init_version(lm, globals, luadir, luaversion)
+local function init_version(lm, luadir, luaversion)
     if inited_version[luaversion] then
         return
     end
@@ -46,13 +57,12 @@ local function init_version(lm, globals, luadir, luaversion)
     end
 end
 
-local function windows_deps(_, name, attribute, globals, luadir)
+local function windows_deps(_, name, attribute, luadir)
     local ldflags = attribute.ldflags or {}
     local input = attribute.input or {}
-    ldflags = type(ldflags) == "string" and {ldflags} or ldflags
-    input = type(input) == "string" and {input} or input
     if globals.compiler == "msvc" then
-        if attribute.export_luaopen ~= false and (not attribute.msvc or attribute.msvc.export_luaopen ~= false) then
+        local export_luaopen = init_single(attribute, "export_luaopen", "on")
+        if export_luaopen ~= "off" then
             ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
         end
         input[#input+1] = luadir / ("lua-"..globals.arch..".lib")
@@ -63,7 +73,7 @@ local function windows_deps(_, name, attribute, globals, luadir)
     attribute.input = input
 end
 
-return function (lm, name, attribute, globals)
+return function (lm, name, attribute)
     local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
     local luadir = fs.path(globals.builddir) / luaversion
@@ -71,10 +81,10 @@ return function (lm, name, attribute, globals)
     attribute.flags = flags
 
     if globals.os == "windows" then
-        init_rule(lm, globals)
-        init_version(lm, globals, luadir, luaversion)
-        windows_deps(lm, name, attribute, globals, luadir)
+        init_rule(lm)
+        init_version(lm, luadir, luaversion)
+        windows_deps(lm, name, attribute, luadir)
     end
     copy_dir(MAKEDIR / "tools" / luaversion, luadir)
-    return lm, 'shared_library', name, attribute, globals
+    return lm, 'shared_library', name, attribute
 end

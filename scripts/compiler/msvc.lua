@@ -70,7 +70,7 @@ function cl.mode(name, mode, crt, flags, ldflags)
     end
 end
 
-function cl.rule_c(w, name, flags, cflags, _)
+function cl.rule_c(w, name, flags, cflags)
     w:rule('C_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
     {
         description = 'Compile C   $out',
@@ -78,7 +78,7 @@ function cl.rule_c(w, name, flags, cflags, _)
     })
 end
 
-function cl.rule_cxx(w, name, flags, cxxflags, _)
+function cl.rule_cxx(w, name, flags, cxxflags)
     w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
     {
         description = 'Compile C++ $out',

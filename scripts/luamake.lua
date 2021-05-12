@@ -132,38 +132,14 @@ local function merge_attribute(from, to)
     return to
 end
 
-local multiattr = {
-    'sources',
-    'warnings',
-    'defines',
-    'undefs',
-    'includes',
-    'links',
-    'linkdirs',
-    'flags',
-    'ldflags',
-    'deps',
-}
-
-local function init_multi_attribute(attribute, globals, multiattr)
-    for _, name in ipairs(multiattr) do
-        local res = {}
-        merge_attribute(globals[name], res)
-        if globals[globals.os] then
-            merge_attribute(globals[globals.os][name], res)
-        end
-        if globals[globals.compiler] then
-            merge_attribute(globals[globals.compiler][name], res)
-        end
-        merge_attribute(attribute[name], res)
-        if attribute[globals.os] then
-            merge_attribute(attribute[globals.os][name], res)
-        end
-        if attribute[globals.compiler] then
-            merge_attribute(attribute[globals.compiler][name], res)
-        end
-        attribute[name] = res
+local function init_single(attribute, attr_name, default)
+    local attr = attribute[attr_name]
+    if type(attr) == 'table' then
+        attribute[attr_name] = attr[#attr]
+    elseif attr == nil then
+        attribute[attr_name] = default
     end
+    return attribute[attr_name]
 end
 
 local function array_remove(t, k)
@@ -238,67 +214,37 @@ local function update_target(attribute, flags, ldflags)
     ldflags[#ldflags+1] = target
 end
 
-local function generate(self, rule, name, attribute, globals)
+local function generate(self, rule, name, attribute)
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
-    init_multi_attribute(attribute, globals, multiattr)
-
-    local function init_single(attr_name, default)
-        local function find_attr()
-            if attribute[globals.compiler] and attribute[globals.compiler][attr_name] then
-                return attribute[globals.compiler][attr_name]
-            end
-            if attribute[globals.os] and attribute[globals.os][attr_name] then
-                return attribute[globals.os][attr_name]
-            end
-            if attribute[attr_name] then
-                return attribute[attr_name]
-            end
-            if globals[globals.compiler] and globals[globals.compiler][attr_name] then
-                return globals[globals.compiler][attr_name]
-            end
-            if globals[globals.os] and globals[globals.os][attr_name] then
-                return globals[globals.os][attr_name]
-            end
-            if globals[attr_name] then
-                return globals[attr_name]
-            end
-            return default
-        end
-        local attr = find_attr()
-        assert(type(attr) ~= 'table')
-        attribute[attr_name] = attr
-        return attr
-    end
-
     local ninja = self.ninja
-    local workdir = fs.path(init_single('workdir', '.'))
-    local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
+    local workdir = fs.path(init_single(attribute, 'workdir', '.'))
+    local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local sources = get_sources(rootdir, attribute.sources)
-    local mode = init_single('mode', 'release')
-    local crt = init_single('crt', 'dynamic')
-    local optimize = init_single('optimize', (mode == "debug" and "off" or "speed"))
-    local warnings = get_warnings(attribute.warnings)
-    local defines = attribute.defines
-    local undefs = attribute.undefs
-    local includes = attribute.includes
-    local links = attribute.links
-    local linkdirs = attribute.linkdirs
-    local ud_flags = attribute.flags
-    local ud_ldflags = attribute.ldflags
-    local deps = attribute.deps
-    local pool = init_single('pool')
+    local mode = init_single(attribute, 'mode', 'release')
+    local crt = init_single(attribute, 'crt', 'dynamic')
+    local optimize = init_single(attribute, 'optimize', (mode == "debug" and "off" or "speed"))
+    local warnings = get_warnings(attribute.warnings or {})
+    local defines = attribute.defines or {}
+    local undefs = attribute.undefs or {}
+    local includes = attribute.includes or {}
+    local links = attribute.links or {}
+    local linkdirs = attribute.linkdirs or {}
+    local ud_flags = attribute.flags or {}
+    local ud_ldflags = attribute.ldflags or {}
+    local deps = attribute.deps or {}
+    local pool = init_single(attribute, 'pool')
     local implicit = {}
     local input = {}
 
-    init_single('c')
-    init_single('cxx')
-    init_single('permissive')
-    init_single('visibility')
-    init_single('target')
-    init_single('arch')
-    init_single('vendor')
-    init_single('sys')
+    init_single(attribute, 'c', "c89")
+    init_single(attribute, 'cxx', "c++17")
+    init_single(attribute, 'permissive')
+    init_single(attribute, 'visibility')
+    init_single(attribute, 'target')
+    init_single(attribute, 'arch')
+    init_single(attribute, 'vendor')
+    init_single(attribute, 'sys')
 
     local flags =  {}
     local ldflags =  {}
@@ -396,17 +342,17 @@ local function generate(self, rule, name, attribute, globals)
         if type == "c" then
             if not has_c then
                 has_c = true
-                local c = attribute.c or self.c or "c89"
+                local c = attribute.c
                 local cflags = assert(cc.c[c], ("`%s`: unknown std c: `%s`"):format(name, c))
-                cc.rule_c(ninja, name, fin_flags, cflags, attribute)
+                cc.rule_c(ninja, name, fin_flags, cflags)
             end
             ninja:build(objname, "C_"..fmtname, source)
         elseif type == "cxx" then
             if not has_cxx then
                 has_cxx = true
-                local cxx = attribute.cxx or self.cxx or "c++17"
+                local cxx = attribute.cxx
                 local cxxflags = assert(cc.cxx[cxx], ("`%s`: unknown std c++: `%s`"):format(name, cxx))
-                cc.rule_cxx(ninja, name, fin_flags, cxxflags, attribute)
+                cc.rule_cxx(ninja, name, fin_flags, cxxflags)
             end
             ninja:build(objname, "CXX_"..fmtname, source)
         elseif isWindows() and type == "rc" then
@@ -420,7 +366,7 @@ local function generate(self, rule, name, attribute, globals)
             end
             if not has_asm then
                 has_asm = true
-                cc.rule_asm(ninja, name, fin_flags, attribute)
+                cc.rule_asm(ninja, name, fin_flags)
             end
             ninja:build(objname, "ASM_"..fmtname, source)
         else
@@ -549,20 +495,13 @@ function GEN.default(self, attribute)
     end
 end
 
-function GEN.phony(self, name, attribute, globals)
+function GEN.phony(self, name, attribute)
     local ninja = self.ninja
-    local function init_single(attr_name, default)
-        local attr = attribute[attr_name] or globals[attr_name] or default
-        assert(type(attr) ~= 'table')
-        attribute[attr_name] = attr
-        return attr
-    end
-    local workdir = fs.path(init_single('workdir', '.'))
-    local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
-    init_multi_attribute(attribute, globals, {"input","output","deps"})
-    local input = attribute.input
-    local output = attribute.output
-    local deps = attribute.deps
+    local workdir = fs.path(init_single(attribute, 'workdir', '.'))
+    local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
+    local input = attribute.input or {}
+    local output = attribute.output or {}
+    local deps = attribute.deps or {}
     local implicit = {}
     for i = 1, #input do
         input[i] = fmtpath_v3(rootdir, input[i])
@@ -595,26 +534,18 @@ function GEN.phony(self, name, attribute, globals)
     end
 end
 
-function GEN.build(self, name, attribute, globals, shell)
+function GEN.build(self, name, attribute, shell)
     local tmpName = not name
     name = name or generateTargetName()
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
-    init_multi_attribute(attribute, globals, {"deps","input","output"})
-
-    local function init_single(attr_name, default)
-        local attr = attribute[attr_name] or globals[attr_name] or default
-        assert(type(attr) ~= 'table')
-        attribute[attr_name] = attr
-        return attr
-    end
 
     local ninja = self.ninja
-    local workdir = fs.path(init_single('workdir', '.'))
-    local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
-    local deps = attribute.deps
-    local input = attribute.input
-    local output = attribute.output
-    local pool =  init_single('pool')
+    local workdir = fs.path(init_single(attribute, 'workdir', '.'))
+    local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
+    local deps = attribute.deps or {}
+    local input = attribute.input or {}
+    local output = attribute.output or {}
+    local pool =  init_single(attribute, 'pool')
     local implicit = {}
 
     for i = 1, #input do
@@ -706,26 +637,18 @@ function GEN.build(self, name, attribute, globals, shell)
     end
 end
 
-function GEN.copy(self, name, attribute, globals)
+function GEN.copy(self, name, attribute)
     local tmpName = not name
     name = name or generateTargetName()
     assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
-    init_multi_attribute(attribute, globals, {"deps","input","output"})
-
-    local function init_single(attr_name, default)
-        local attr = attribute[attr_name] or globals[attr_name] or default
-        assert(type(attr) ~= 'table')
-        attribute[attr_name] = attr
-        return attr
-    end
 
     local ninja = self.ninja
-    local workdir = fs.path(init_single('workdir', '.'))
-    local rootdir = fs.absolute(fs.path(init_single('rootdir', '.')), workdir)
-    local deps = attribute.deps
-    local input = attribute.input
-    local output = attribute.output
-    local pool =  init_single('pool')
+    local workdir = fs.path(init_single(attribute, 'workdir', '.'))
+    local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
+    local deps = attribute.deps or {}
+    local input = attribute.input or {}
+    local output = attribute.output or {}
+    local pool = init_single(attribute, 'pool')
     local implicit = {}
 
     for i = 1, #input do
@@ -787,13 +710,13 @@ function GEN.copy(self, name, attribute, globals)
     end
 end
 
-function GEN.shell(self, name, attribute, globals)
-    GEN.build(self, name, attribute, globals, true)
+function GEN.shell(self, name, attribute)
+    GEN.build(self, name, attribute, true)
 end
 
-function GEN.lua_library(self, name, locals, globals)
+function GEN.lua_library(self, name, attribute)
     local lua_library = require "lua_library"
-    generate(lua_library(self, name, locals, globals))
+    generate(lua_library(self, name, attribute, globals))
 end
 
 local lm = {}
@@ -819,10 +742,51 @@ local function getexe()
     return fs.exe_path():string()
 end
 
+local function pushTable(t, b)
+    if type(b) == 'string' then
+        t[#t+1] = b
+    elseif type(b) == 'userdata' then
+        t[#t+1] = b
+    elseif type(b) == 'table' then
+        if b[1] == nil then
+            for k, e in pairs(b) do
+                if t[k] == nil then
+                    t[k] = {}
+                end
+                pushTable(t[k], e)
+            end
+        else
+            for _, e in ipairs(b) do
+                pushTable(t, e)
+            end
+        end
+    end
+    return t
+end
+
+local function mergeTable(a, b)
+    for k, v in pairs(b) do
+        local ov = a[k]
+        if type(ov) == "table" then
+            pushTable(ov, v)
+        elseif not ov then
+            local t = {}
+            pushTable(t, v)
+            a[k] = t
+        else
+            local t = {}
+            pushTable(t, ov)
+            pushTable(t, v)
+            a[k] = t
+        end
+    end
+    return a
+end
+
 function lm:finish()
     local builddir = WORKDIR / globals.builddir
     cc = require("compiler." .. globals.compiler)
-    lm.cc = cc
+    self.cc = cc
     fs.create_directories(builddir)
 
     local ninja_syntax = require "ninja_syntax"
@@ -867,13 +831,28 @@ function lm:finish()
     end
 
     for _, target in ipairs(self._export_targets) do
-        local rule = target[1]
-        if GEN[rule] then
-            GEN[rule](self, target[2], target[3], target[4])
-        else
-            generate(self, rule, target[2], target[3], target[4])
+        local rule, name, attribute = target[1], target[2], target[3]
+        if rule == "default" then
+            GEN.default(self, name)
+            goto continue
         end
+        local res = {}
+        mergeTable(res, globals)
+        mergeTable(res, attribute)
+        if res[globals.os] then
+            mergeTable(res, res[globals.os])
+        end
+        if res[globals.compiler] then
+            mergeTable(res, res[globals.compiler])
+        end
+        if GEN[rule] then
+            GEN[rule](self, name, res)
+        else
+            generate(self, rule, name, res)
+        end
+        ::continue::
     end
+
     ninja:close()
 end
 

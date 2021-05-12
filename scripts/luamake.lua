@@ -560,8 +560,7 @@ function GEN.build(self, name, attribute, shell)
     end
     local function push_command(t)
         for _, v in ipairs(t) do
-            if type(v) == 'nil' then
-            elseif type(v) == 'table' then
+            if type(v) == 'table' then
                 push_command(v)
             elseif type(v) == 'userdata' then
                 push(fmtpath_v3(rootdir, v))
@@ -619,7 +618,7 @@ function GEN.build(self, name, attribute, shell)
     else
         outname = output
     end
-    ninja:rule('build_'..rule_name,  table.concat(command, " "))
+    ninja:rule('build_'..rule_name, table.concat(command, " "))
     ninja:build(outname, 'build_'..rule_name, input, implicit, nil, {
         pool = pool,
     })

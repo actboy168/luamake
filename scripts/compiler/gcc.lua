@@ -9,6 +9,7 @@ local gcc = {
     flags = {
     },
     ldflags = {
+        "-lstdc++"
     },
     optimize = {
         off      = '',
@@ -54,10 +55,10 @@ local gcc = {
 
 function gcc.mode(_, mode, crt, flags, ldflags)
     if crt == 'dynamic' then
-        ldflags[#ldflags+1] = "-lstdc++"
+        ldflags[#ldflags+1] = "-shared-libgcc"
     else
-        ldflags[#ldflags+1] = "-static-libgcc"
         ldflags[#ldflags+1] = "-static-libstdc++"
+        ldflags[#ldflags+1] = "-static-libgcc"
     end
     if mode == 'debug' then
         flags[#flags+1] = '-g'
@@ -67,7 +68,7 @@ function gcc.mode(_, mode, crt, flags, ldflags)
 end
 
 function gcc.rule_asm(w, name, flags)
-    w:rule('ASM_'..name:gsub('[^%w_]', '_'), ([[$gcc -MMD -MT $out -MF $out.d %s -o $out -c $in]])
+    w:rule('ASM_'..name:gsub('[^%w_]', '_'), ([[$cc -MMD -MT $out -MF $out.d %s -o $out -c $in]])
     :format(flags),
     {
         description = 'Compile ASM $out',
@@ -77,7 +78,7 @@ function gcc.rule_asm(w, name, flags)
 end
 
 function gcc.rule_c(w, name, flags, cflags)
-    w:rule('C_'..name:gsub('[^%w_]', '_'), ([[$gcc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
+    w:rule('C_'..name:gsub('[^%w_]', '_'), ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(cflags, flags),
     {
         description = 'Compile C   $out',
@@ -87,7 +88,7 @@ function gcc.rule_c(w, name, flags, cflags)
 end
 
 function gcc.rule_cxx(w, name, flags, cxxflags)
-    w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[$gxx -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
+    w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(cxxflags, flags),
     {
         description = 'Compile C++ $out',
@@ -97,7 +98,7 @@ function gcc.rule_cxx(w, name, flags, cxxflags)
 end
 
 function gcc.rule_dll(w, name, links, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$gxx --shared $in -o $out %s %s]])
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc --shared $in -o $out %s %s]])
     :format(ldflags, links),
     {
         description = 'Link    Dll $out'
@@ -105,7 +106,7 @@ function gcc.rule_dll(w, name, links, ldflags)
 end
 
 function gcc.rule_exe(w, name, links, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$gxx $in -o $out %s %s]])
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc $in -o $out %s %s]])
     :format(ldflags, links),
     {
         description = 'Link    Exe $out'

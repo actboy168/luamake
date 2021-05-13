@@ -10,14 +10,15 @@ end
 globals.mode = globals.mode or "release"
 globals.crt = globals.crt or "dynamic"
 
-globals.os = globals.os or platform.OS:lower()
+globals.hostos = globals.hostos or platform.OS:lower()
+globals.os = globals.os or globals.hostos
 globals.compiler = globals.compiler or (function()
-    if globals.os == "windows" then
+    if globals.hostos == "windows" then
         if os.getenv "MSYSTEM" then
             return "gcc"
         end
         return "msvc"
-    elseif globals.os == "macos" then
+    elseif globals.hostos == "macos" then
         return "clang"
     end
     return "gcc"
@@ -32,7 +33,7 @@ end)()
 globals.builddir = globals.builddir or "build"
 
 globals.arch = globals.arch or (function ()
-    if globals.os == "windows" then
+    if globals.hostos == "windows" then
         if string.packsize "T" == 8 then
             return "x86_64"
         else

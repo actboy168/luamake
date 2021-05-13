@@ -74,11 +74,12 @@ local function windows_deps(_, name, attribute, luadir)
 end
 
 return function (lm, name, attribute)
-    local flags = attribute.flags or {}
     local luaversion = attribute.luaversion or "lua54"
     local luadir = fs.path(globals.builddir) / luaversion
-    flags[#flags+1] = lm.cc.includedir(luadir:string())
-    attribute.flags = flags
+
+    local includes = attribute.includes or {}
+    includes[#includes+1] = luadir
+    attribute.includes = includes
 
     if globals.os == "windows" then
         init_rule(lm)

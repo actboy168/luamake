@@ -6,10 +6,6 @@ local globals = require "globals"
 
 local cc
 
-local function isWindows()
-    return globals.os == "windows"
-end
-
 local function fmtpath(path)
     if globals.hostshell == "cmd" then
         path = path:gsub('/', '\\')
@@ -155,7 +151,7 @@ end
 local function update_target(attribute, flags, ldflags)
     local target = attribute.target
     if not target then
-        assert(not isWindows())
+        assert(globals.hostos ~= "windows")
         local function shell(command)
             local f = assert(io.popen(command, 'r'))
             local r = f:read 'l'
@@ -197,7 +193,7 @@ local function update_target(attribute, flags, ldflags)
                 return
             end
         end
-        if globals.os == "macos" then
+        if globals.hostos == "macos" then
             arch = arch or shell "uname -m"
             vendor = vendor or "apple"
             sys = sys or "darwin"
@@ -264,7 +260,7 @@ local function generate(self, rule, name, attribute)
         end
     end
 
-    if not isWindows() then
+    if globals.os ~= "windows" then
         if attribute.visibility ~= "default" then
             flags[#flags+1] = ('-fvisibility=%s'):format(attribute.visibility or 'hidden')
         end
@@ -298,7 +294,7 @@ local function generate(self, rule, name, attribute)
         flags[#flags+1] = cc.undef(macro)
     end
 
-    if rule == "shared_library" and not isWindows() then
+    if rule == "shared_library" and globals.os ~= "windows" then
         flags[#flags+1] = "-fPIC"
     end
 
@@ -355,7 +351,7 @@ local function generate(self, rule, name, attribute)
                 cc.rule_cxx(ninja, name, fin_flags, cxxflags)
             end
             ninja:build(objname, "CXX_"..fmtname, source)
-        elseif isWindows() and type == "rc" then
+        elseif globals.os == "windows" and type == "rc" then
             if not has_rc then
                 cc.rule_rc(ninja, name)
             end
@@ -376,19 +372,19 @@ local function generate(self, rule, name, attribute)
 
     local outname
     if rule == "executable" then
-        if isWindows() then
+        if globals.os == "windows" then
             outname = fs.path("$bin") / (name .. ".exe")
         else
             outname = fs.path("$bin") / name
         end
     elseif rule == "shared_library" then
-        if isWindows() then
+        if globals.os == "windows" then
             outname = fs.path("$bin") / (name .. ".dll")
         else
             outname = fs.path("$bin") / (name .. ".so")
         end
     elseif rule == "static_library" then
-        if isWindows() then
+        if globals.os == "windows" then
             outname = fs.path("$bin") / (name .. ".lib")
         else
             outname = fs.path("$bin") / ("lib"..name .. ".a")
@@ -449,7 +445,7 @@ local function generate(self, rule, name, attribute)
             t.output = lib
             ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars, lib)
         else
-            if isWindows() then
+            if globals.os == "windows" then
                 t.output = outname
             end
             ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
@@ -588,7 +584,7 @@ function GEN.build(self, name, attribute, shell)
         if globals.hostshell == "cmd" then
             table.insert(command, 1, "cmd")
             table.insert(command, 2, "/c")
-        elseif globals.os == "windows" then
+        elseif globals.hostos == "windows" then
             local s = {}
             for _, opt in ipairs(command) do
                 s[#s+1] = opt
@@ -673,7 +669,7 @@ function GEN.copy(self, name, attribute)
                 description = 'Copy $in$input $out',
                 restat = 1,
             })
-        elseif globals.os == "windows" then
+        elseif globals.hostos == "windows" then
             ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
                 description = 'Copy $in$input $out',
                 restat = 1,

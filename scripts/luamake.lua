@@ -148,66 +148,112 @@ local function array_remove(t, k)
     return false
 end
 
-local function update_target(attribute, flags, ldflags)
-    local target = attribute.target
-    if not target then
-        assert(globals.hostos ~= "windows")
-        local function shell(command)
-            local f = assert(io.popen(command, 'r'))
-            local r = f:read 'l'
-            f:close()
-            return r:lower()
-        end
-        local arch = attribute.arch
-        local vendor = attribute.vendor
-        local sys = attribute.sys
-        if not arch and not vendor and not sys then
-            return
-        end
-        if not vendor then
-            if sys:match "^macos" then
-                flags[#flags+1] = sys:gsub("^macos(.*)$", "-mmacosx-version-min=%1")
-                if arch then
-                    flags[#flags+1] = "-arch"
-                    flags[#flags+1] = arch
-                    ldflags[#ldflags+1] = "-arch"
-                    ldflags[#ldflags+1] = arch
-                end
-                return
-            end
-            if sys:match "^ios" then
-                flags[#flags+1] = sys:gsub("^macos(.*)$", "-miphoneos-version-min=%1")
-                if arch then
-                    flags[#flags+1] = "-arch"
-                    flags[#flags+1] = arch
-                    ldflags[#ldflags+1] = "-arch"
-                    ldflags[#ldflags+1] = arch
-                end
-                return
-            end
-            if not sys and arch then
-                flags[#flags+1] = "-arch"
-                flags[#flags+1] = arch
-                ldflags[#ldflags+1] = "-arch"
-                ldflags[#ldflags+1] = arch
-                return
-            end
-        end
-        if globals.hostos == "macos" then
-            arch = arch or shell "uname -m"
-            vendor = vendor or "apple"
-            sys = sys or "darwin"
-        else
-            arch = arch or shell "uname -m"
-            vendor = vendor or "pc"
-            sys = sys or "linux-gnu"
-        end
-        target = ("%s-%s-%s"):format(arch, vendor, sys)
+local function update_flags(flags, attribute, instance, name, rootdir, rule)
+    local optimize = init_single(attribute, 'optimize', (attribute.mode == "debug" and "off" or "speed"))
+    local warnings = get_warnings(attribute.warnings or {})
+    local defines = attribute.defines or {}
+
+    tbl_append(flags, cc.flags)
+    flags[#flags+1] = cc.optimize[optimize]
+    flags[#flags+1] = cc.warnings[warnings.level]
+    if warnings.error then
+        flags[#flags+1] = cc.warnings.error
     end
-    flags[#flags+1] = "-target"
-    flags[#flags+1] = target
-    ldflags[#ldflags+1] = "-target"
-    ldflags[#ldflags+1] = target
+    if globals.os ~= "windows" then
+        if attribute.visibility ~= "default" then
+            flags[#flags+1] = ('-fvisibility=%s'):format(attribute.visibility or 'hidden')
+        end
+        if rule == "shared_library" then
+            flags[#flags+1] = "-fPIC"
+        end
+    end
+    cc.update_flags(flags, attribute, name)
+
+    if attribute.includes then
+        for _, inc in ipairs(attribute.includes) do
+            flags[#flags+1] = cc.includedir(fmtpath_v3(rootdir, inc))
+        end
+    end
+
+    if attribute.mode == "release" then
+        defines[#defines+1] = "NDEBUG"
+    end
+
+    if attribute.undefs then
+        local undefs = attribute.undefs
+        local pos = 1
+        while pos <= #undefs do
+            local macro = undefs[pos]
+            if array_remove(defines, macro) then
+                table.remove(undefs, pos)
+            else
+                pos = pos + 1
+            end
+        end
+        for _, macro in ipairs(defines) do
+            flags[#flags+1] = cc.define(macro)
+        end
+        for _, macro in ipairs(undefs) do
+            flags[#flags+1] = cc.undef(macro)
+        end
+    else
+        for _, macro in ipairs(defines) do
+            flags[#flags+1] = cc.define(macro)
+        end
+    end
+
+    if attribute.flags then
+        tbl_append(flags, attribute.flags)
+    end
+
+    if attribute.deps then
+        for _, dep in ipairs(attribute.deps) do
+            local target = instance._targets[dep]
+            assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+            if target.includedir then
+                flags[#flags+1] = cc.includedir(fmtpath_v3(target.rootdir, target.includedir))
+            end
+        end
+    end
+end
+
+local function update_ldflags(ldflags, attribute, instance, name, rootdir)
+    tbl_append(ldflags, cc.ldflags)
+    cc.update_ldflags(ldflags, attribute)
+
+    if attribute.links then
+        for _, link in ipairs(attribute.links) do
+            ldflags[#ldflags+1] = cc.link(link)
+        end
+    end
+    if attribute.linkdirs then
+        for _, linkdir in ipairs(attribute.linkdirs) do
+            ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
+        end
+    end
+    if attribute.ldflags then
+        tbl_append(ldflags, attribute.ldflags)
+    end
+
+    if attribute.deps then
+        for _, dep in ipairs(attribute.deps) do
+            local target = instance._targets[dep]
+            assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+            if target.links then
+                for _, link in ipairs(target.links) do
+                    ldflags[#ldflags+1] = cc.link(link)
+                end
+            end
+            if target.linkdirs then
+                for _, linkdir in ipairs(target.linkdirs) do
+                    ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(target.rootdir, linkdir))
+                end
+            end
+            if target.ldflags then
+                tbl_append(ldflags, target.ldflags)
+            end
+        end
+    end
 end
 
 local function generate(self, rule, name, attribute)
@@ -217,22 +263,12 @@ local function generate(self, rule, name, attribute)
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local sources = get_sources(rootdir, attribute.sources)
-    local mode = init_single(attribute, 'mode', 'release')
-    local crt = init_single(attribute, 'crt', 'dynamic')
-    local optimize = init_single(attribute, 'optimize', (mode == "debug" and "off" or "speed"))
-    local warnings = get_warnings(attribute.warnings or {})
-    local defines = attribute.defines or {}
-    local undefs = attribute.undefs or {}
-    local includes = attribute.includes or {}
-    local links = attribute.links or {}
-    local linkdirs = attribute.linkdirs or {}
-    local ud_flags = attribute.flags or {}
-    local ud_ldflags = attribute.ldflags or {}
-    local deps = attribute.deps or {}
     local pool = init_single(attribute, 'pool')
     local implicit = {}
     local input = {}
 
+    init_single(attribute, 'mode', 'release')
+    init_single(attribute, 'crt', 'dynamic')
     init_single(attribute, 'c', "c89")
     init_single(attribute, 'cxx', "c++17")
     init_single(attribute, 'permissive')
@@ -243,86 +279,7 @@ local function generate(self, rule, name, attribute)
     init_single(attribute, 'sys')
 
     local flags =  {}
-    local ldflags =  {}
-
-    tbl_append(flags, cc.flags)
-    tbl_append(ldflags, cc.ldflags)
-
-    flags[#flags+1] = cc.optimize[optimize]
-    flags[#flags+1] = cc.warnings[warnings.level]
-    if warnings.error then
-        flags[#flags+1] = cc.warnings.error
-    end
-
-    if globals.compiler == 'msvc' then
-        if not attribute.permissive then
-            flags[#flags+1] = '/permissive-'
-        end
-    end
-
-    if globals.os ~= "windows" then
-        if attribute.visibility ~= "default" then
-            flags[#flags+1] = ('-fvisibility=%s'):format(attribute.visibility or 'hidden')
-        end
-    end
-
-    cc.mode(name, mode, crt, flags, ldflags)
-
-    for _, inc in ipairs(includes) do
-        flags[#flags+1] = cc.includedir(fmtpath_v3(rootdir, inc))
-    end
-
-    if mode == "release" then
-        defines[#defines+1] = "NDEBUG"
-    end
-
-    local pos = 1
-    while pos <= #undefs do
-        local macro = undefs[pos]
-        if array_remove(defines, macro) then
-            table.remove(undefs, pos)
-        else
-            pos = pos + 1
-        end
-    end
-
-    for _, macro in ipairs(defines) do
-        flags[#flags+1] = cc.define(macro)
-    end
-
-    for _, macro in ipairs(undefs) do
-        flags[#flags+1] = cc.undef(macro)
-    end
-
-    if rule == "shared_library" and globals.os ~= "windows" then
-        flags[#flags+1] = "-fPIC"
-    end
-
-    if globals.compiler == "clang" then
-        update_target(attribute, flags, ldflags)
-    end
-
-    for _, dep in ipairs(deps) do
-        local target = self._targets[dep]
-        assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-        if target.includedir then
-            flags[#flags+1] = cc.includedir(fmtpath_v3(target.rootdir, target.includedir))
-        end
-        if target.links then
-            tbl_append(links, target.links)
-        end
-        if target.linkdirs then
-            for _, linkdir in ipairs(target.linkdirs) do
-                ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(target.rootdir, linkdir))
-            end
-        end
-        if target.ldflags then
-            tbl_append(ldflags, target.ldflags)
-        end
-    end
-
-    tbl_append(flags, ud_flags)
-    tbl_append(ldflags, ud_ldflags)
+    update_flags(flags, attribute, self, name, rootdir, rule)
 
     local fin_flags = table.concat(flags, " ")
     local fmtname = name:gsub("[^%w_]", "_")
@@ -400,16 +357,18 @@ local function generate(self, rule, name, attribute)
     }
     self._targets[name] = t
 
-    for _, dep in ipairs(deps) do
-        local target = self._targets[dep]
-        if target.output then
-            if type(target.output) == 'table' then
-                tbl_append(input, target.output)
+    if attribute.deps then
+        for _, dep in ipairs(attribute.deps) do
+            local target = self._targets[dep]
+            if target.output then
+                if type(target.output) == 'table' then
+                    tbl_append(input, target.output)
+                else
+                    input[#input+1] = target.output
+                end
             else
-                input[#input+1] = target.output
+                implicit[#implicit+1] = target.outname
             end
-        else
-            implicit[#implicit+1] = target.outname
         end
     end
     assert(#input > 0, ("`%s`: no source files found."):format(name))
@@ -417,20 +376,15 @@ local function generate(self, rule, name, attribute)
     if rule == 'source_set' then
         assert(#input > 0, ("`%s`: no source files found."):format(name))
         t.output = input
-        t.links = links
-        t.linkdirs = linkdirs
-        t.ldflags = ud_ldflags
+        t.links = attribute.links
+        t.linkdirs = attribute.linkdirs
+        t.ldflags = attribute.ldflags
         return
     end
 
-    local tbl_links = {}
-    for _, link in ipairs(links) do
-        tbl_links[#tbl_links+1] = cc.link(link)
-    end
-    for _, linkdir in ipairs(linkdirs) do
-        ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
-    end
-    local fin_links = table.concat(tbl_links, " ")
+    local ldflags =  {}
+    update_ldflags(ldflags, attribute, self, name, rootdir)
+
     local fin_ldflags = table.concat(ldflags, " ")
 
     if attribute.input or self.input then
@@ -439,7 +393,7 @@ local function generate(self, rule, name, attribute)
 
     local vars = pool and {pool=pool} or nil
     if rule == "shared_library" then
-        cc.rule_dll(ninja, name, fin_links, fin_ldflags)
+        cc.rule_dll(ninja, name, fin_ldflags)
         if globals.compiler == 'msvc' then
             local lib = (fs.path('$bin') / name)..".lib"
             t.output = lib
@@ -451,7 +405,7 @@ local function generate(self, rule, name, attribute)
             ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
         end
     elseif rule == "executable" then
-        cc.rule_exe(ninja, name, fin_links, fin_ldflags)
+        cc.rule_exe(ninja, name, fin_ldflags)
         ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
     elseif rule == "static_library" then
         t.output = outname

@@ -58,13 +58,20 @@ local cl = {
     end
 }
 
-function cl.mode(name, mode, crt, flags, ldflags)
-    if mode == 'debug' then
-        flags[#flags+1] = crt == 'dynamic' and '/MDd' or '/MTd'
+function cl.update_flags(flags, attribute, name)
+    flags[#flags+1] = '/permissive-'
+    if attribute.mode == 'debug' then
+        flags[#flags+1] = attribute.crt == 'dynamic' and '/MDd' or '/MTd'
         flags[#flags+1] = ('/RTC1 /Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")
+    else
+        flags[#flags+1] = attribute.crt == 'dynamic' and '/MD' or '/MT'
+    end
+end
+
+function cl.update_ldflags(ldflags, attribute)
+    if attribute.mode == 'debug' then
         ldflags[#ldflags+1] = '/DEBUG:FASTLINK'
     else
-        flags[#flags+1] = crt == 'dynamic' and '/MD' or '/MT'
         ldflags[#ldflags+1] = '/DEBUG:NONE'
         ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
     end
@@ -86,17 +93,17 @@ function cl.rule_cxx(w, name, flags, cxxflags)
     })
 end
 
-function cl.rule_dll(w, name, links, ldflags)
+function cl.rule_dll(w, name, ldflags)
     local lib = (fs.path('$bin') / name)..".lib"
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out /DLL /IMPLIB:%s]]):format(links, ldflags, lib),
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in /link %s /out:$out /DLL /IMPLIB:%s]]):format(ldflags, lib),
     {
         description = 'Link    Dll $out',
         restat = 1,
     })
 end
 
-function cl.rule_exe(w, name, links, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in %s /link %s /out:$out]]):format(links, ldflags),
+function cl.rule_exe(w, name, ldflags)
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in /link %s /out:$out]]):format(ldflags),
     {
         description = 'Link    Exe $out'
     })

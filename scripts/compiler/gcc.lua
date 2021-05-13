@@ -53,16 +53,20 @@ local gcc = {
     end
 }
 
-function gcc.mode(_, mode, crt, flags, ldflags)
-    if crt == 'dynamic' then
+function gcc.update_flags(flags, attribute)
+    if attribute.mode == 'debug' then
+        flags[#flags+1] = '-g'
+    end
+end
+
+function gcc.update_ldflags(ldflags, attribute)
+    if attribute.crt == 'dynamic' then
         ldflags[#ldflags+1] = "-shared-libgcc"
     else
         ldflags[#ldflags+1] = "-static-libstdc++"
         ldflags[#ldflags+1] = "-static-libgcc"
     end
-    if mode == 'debug' then
-        flags[#flags+1] = '-g'
-    else
+    if attribute.mode == 'release' then
         ldflags[#ldflags+1] = '-s'
     end
 end
@@ -97,17 +101,17 @@ function gcc.rule_cxx(w, name, flags, cxxflags)
     })
 end
 
-function gcc.rule_dll(w, name, links, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc --shared $in -o $out %s %s]])
-    :format(ldflags, links),
+function gcc.rule_dll(w, name, ldflags)
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc --shared $in -o $out %s]])
+    :format(ldflags),
     {
         description = 'Link    Dll $out'
     })
 end
 
-function gcc.rule_exe(w, name, links, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc $in -o $out %s %s]])
-    :format(ldflags, links),
+function gcc.rule_exe(w, name, ldflags)
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc $in -o $out %s]])
+    :format(ldflags),
     {
         description = 'Link    Exe $out'
     })

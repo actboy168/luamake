@@ -78,7 +78,7 @@ return function (lm, name, attribute)
     local luadir = fs.path(globals.builddir) / luaversion
 
     local includes = attribute.includes or {}
-    includes[#includes+1] = luadir
+    includes[#includes+1] = "$builddir/"..luaversion
     attribute.includes = includes
 
     if globals.os == "windows" then

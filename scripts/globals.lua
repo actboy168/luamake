@@ -30,8 +30,6 @@ globals.hostshell = globals.hostshell or (function()
         return "sh"
     end
 end)()
-globals.builddir = globals.builddir or "build"
-
 globals.arch = globals.arch or (function ()
     if globals.hostos == "windows" then
         if string.packsize "T" == 8 then
@@ -41,5 +39,8 @@ globals.arch = globals.arch or (function ()
         end
     end
 end)()
+globals.builddir = globals.builddir or "build"
+globals.bindir = globals.bindir or "$builddir/bin"
+globals.objdir = globals.objdir or "$builddir/obj"
 
 return globals

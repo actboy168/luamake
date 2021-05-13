@@ -672,9 +672,6 @@ function lm:add_script(filename)
         return
     end
     filename = fs.relative(fs.path(filename), WORKDIR):string()
-    if filename == arguments.f then
-        return
-    end
     if self._scripts[filename] then
         return
     end
@@ -734,22 +731,14 @@ function lm:finish()
     fs.create_directories(builddir)
 
     local ninja_syntax = require "ninja_syntax"
-    local ninja_script = ((builddir / arguments.f):replace_extension ".ninja"):string()
+    local ninja_script = (builddir / "build.ninja"):string()
     local ninja = ninja_syntax.Writer(assert(memfile(ninja_script)))
 
     ninja:variable("builddir", fmtpath(globals.builddir))
+    ninja:variable("bin", fmtpath(globals.bindir))
+    ninja:variable("obj", fmtpath(globals.objdir))
     if not arguments.args.prebuilt then
         ninja:variable("luamake", fmtpath(getexe()))
-    end
-    if globals.bindir then
-        ninja:variable("bin", fmtpath(globals.bindir))
-    else
-        ninja:variable("bin", fmtpath("$builddir/bin"))
-    end
-    if globals.objdir then
-        ninja:variable("obj", fmtpath(globals.objdir))
-    else
-        ninja:variable("obj", fmtpath("$builddir/obj"))
     end
 
     self.ninja = ninja
@@ -767,9 +756,8 @@ function lm:finish()
     end
 
     if not arguments.args.prebuilt then
-        local build_ninja = (fs.path '$builddir' / arguments.f):replace_extension ".ninja"
-        ninja:rule('configure', '$luamake init -f $in', { generator = 1 })
-        ninja:build(build_ninja, 'configure', arguments.f, self._scripts)
+        ninja:rule('configure', '$luamake init', { generator = 1 })
+        ninja:build(fs.path '$builddir' / "build.ninja", 'configure', nil, self._scripts)
     end
 
     for _, target in ipairs(self._export_targets) do

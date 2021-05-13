@@ -31,7 +31,6 @@ end
 t.what = what
 t.targets = targets
 t.C = arguments.C               ; arguments.C = nil
-t.f = arguments.f or "make.lua" ; arguments.f = nil
 t.args = arguments
 
 return t

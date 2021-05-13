@@ -20,9 +20,8 @@ local function ninja(args)
         args.searchPath = true
         table.insert(args, 1, 'ninja')
     end
-    local build_ninja = (WORKDIR / globals.builddir / arguments.f):replace_extension ".ninja"
     table.insert(args, 2, "-f")
-    table.insert(args, 3, build_ninja)
+    table.insert(args, 3, WORKDIR / globals.builddir / "build.ninja")
     args.stderr = true
     args.stdout = true
     args.cwd = WORKDIR

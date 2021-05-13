@@ -814,7 +814,6 @@ function lm:finish()
         ninja:variable("cc", globals.cc or "gcc")
     elseif globals.compiler == "clang" then
         ninja:variable("cc", globals.cc or "clang")
-        ninja:variable("gxx", globals.gxx or "clang++") --TODO
     end
 
     if not arguments.args.prebuilt then

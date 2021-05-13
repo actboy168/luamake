@@ -12,14 +12,14 @@ function clang.mode(_, mode, crt, flags, ldflags)
 end
 
 function clang.rule_dll(w, name, links, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$gxx -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s %s]]):format(ldflags, links),
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s %s]]):format(ldflags, links),
     {
         description = 'Link    Dll $out'
     })
 end
 
 function clang.rule_exe(w, name, links, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$gxx $in -o $out %s %s]]):format(ldflags, links),
+    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc $in -o $out %s %s]]):format(ldflags, links),
     {
         description = 'Link    Exe $out'
     })

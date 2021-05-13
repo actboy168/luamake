@@ -1,10 +1,9 @@
 builddir = build/macos
 bin = $builddir/bin
 obj = $builddir/obj
-gcc = clang
-gxx = clang++
+cc = clang
 rule C_source_lua
-  command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -DLUA_USE_MACOSX -DNDEBUG -mmacosx-version-min=10.12 $
       -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
@@ -49,7 +48,7 @@ build $obj/source_lua/lvm.obj: C_source_lua 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/source_lua/lzio.obj: C_source_lua 3rd/bee.lua/3rd/lua/lzio.c
 build source_lua: phony
 rule C_lua
-  command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -fvisibility=hidden -DLUA_USE_MACOSX -DNDEBUG $
       -mmacosx-version-min=10.12 -I3rd/bee.lua -Wunguarded-availability -o $
       $out -c $in
@@ -59,7 +58,7 @@ rule C_lua
 build $obj/lua/lua.obj: C_lua 3rd/bee.lua/3rd/lua/lua.c
 build lua: phony $bin/lua
 rule LINK_lua
-  command = $gxx $in -o $out -Wl,-S,-x -lm -ldl
+  command = $cc $in -o $out -lstdc++ -Wl,-S,-x -lm -ldl
   description = Link    Exe $out
 build $bin/lua: LINK_lua $obj/lua/lua.obj $obj/source_lua/lapi.obj $
     $obj/source_lua/lauxlib.obj $obj/source_lua/lbaselib.obj $
@@ -79,7 +78,7 @@ build $bin/lua: LINK_lua $obj/lua/lua.obj $obj/source_lua/lapi.obj $
     $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
     $obj/source_lua/lzio.obj
 rule C_bee
-  command = $gcc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG -fPIC $
       -mmacosx-version-min=10.12 -Wunguarded-availability -o $out -c $in
@@ -88,7 +87,7 @@ rule C_bee
   deps = gcc
 build $obj/bee/lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule CXX_bee
-  command = $gxx -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG -fPIC $
       -mmacosx-version-min=10.12 -Wunguarded-availability -o $out -c $in
@@ -123,8 +122,8 @@ build $obj/bee/lua_thread.obj: CXX_bee 3rd/bee.lua/binding/lua_thread.cpp
 build $obj/bee/lua_time.obj: CXX_bee 3rd/bee.lua/binding/lua_time.cpp
 build bee: phony $bin/bee.so
 rule LINK_bee
-  command = $gxx -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out $
-      -Wl,-S,-x -framework CoreFoundation -framework CoreServices 
+  command = $cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out $
+      -lstdc++ -Wl,-S,-x -framework CoreFoundation -framework CoreServices 
   description = Link    Dll $out
 build $bin/bee.so: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
     $obj/bee/fsevent_osx.obj $obj/bee/endpoint.obj $obj/bee/socket.obj $
@@ -135,7 +134,7 @@ build $bin/bee.so: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
     $obj/bee/lua_serialization.obj $obj/bee/lua_socket.obj $
     $obj/bee/lua_subprocess.obj $obj/bee/lua_thread.obj $obj/bee/lua_time.obj
 rule CXX_bootstrap
-  command = $gxx -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -fvisibility=hidden -I3rd/bee.lua/3rd/lua -DLUA_USE_MACOSX -DNDEBUG $
       -mmacosx-version-min=10.12 -I3rd/bee.lua -Wunguarded-availability -o $
       $out -c $in
@@ -147,7 +146,7 @@ build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
 build bootstrap: phony $bin/bootstrap
 rule LINK_bootstrap
-  command = $gxx $in -o $out -Wl,-S,-x -lm -ldl
+  command = $cc $in -o $out -lstdc++ -Wl,-S,-x -lm -ldl
   description = Link    Exe $out
 build $bin/bootstrap: LINK_bootstrap $obj/bootstrap/main.obj $
     $obj/bootstrap/progdir.obj $obj/source_lua/lapi.obj $

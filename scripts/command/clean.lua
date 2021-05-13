@@ -1,7 +1,7 @@
 local util = require "util"
 local globals = require "globals"
 
-util.command 'init'
+util.command('init', true)
 
 if globals.compiler == "msvc" then
     local msvc = require "msvc_util"
@@ -10,7 +10,7 @@ if globals.compiler == "msvc" then
         msvc.cleanEnvConfig()
     else
         local fs = require "bee.filesystem"
-        pcall(fs.remove_all, WORKDIR / "build" / "msvc")
+        pcall(fs.remove_all, fs.path(globals.builddir))
     end
 else
     util.ninja { "-t", "clean" }

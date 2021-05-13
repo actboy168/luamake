@@ -42,7 +42,7 @@ build $obj\lua54\lzio.obj: C_lua54 3rd/bee.lua/3rd/lua/lzio.c
 build $obj\lua54\utf8_crt.obj: C_lua54 3rd/bee.lua/3rd/lua/utf8_crt.c
 build lua54: phony $bin\lua54.dll
 rule LINK_lua54
-  command = cl /nologo $in  /link /DEBUG:NONE /LTCG /out:$out /DLL $
+  command = cl /nologo $in /link /DEBUG:NONE /LTCG /out:$out /DLL $
       /IMPLIB:$bin\lua54.lib
   restat = 1
   description = Link    Dll $out
@@ -68,7 +68,7 @@ build $obj\lua\utf8_crt.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_crt.c
 build $obj\lua\utf8_lua.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_lua.c
 build lua: phony $bin\lua.exe
 rule LINK_lua
-  command = cl /nologo $in  /link /DEBUG:NONE /LTCG /out:$out
+  command = cl /nologo $in /link /DEBUG:NONE /LTCG /out:$out
   description = Link    Exe $out
 build $bin\lua.exe: LINK_lua $obj\lua\utf8_crt.obj $obj\lua\utf8_lua.obj $
     $bin\lua54.lib
@@ -128,9 +128,9 @@ build $obj\bee\lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj\bee\lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
 build bee: phony $bin\bee.dll
 rule LINK_bee
-  command = cl /nologo $in advapi32.lib ws2_32.lib ole32.lib user32.lib $
-      version.lib wbemuuid.lib oleAut32.lib /link /DEBUG:NONE /LTCG $
-      /out:$out /DLL /IMPLIB:$bin\bee.lib
+  command = cl /nologo $in /link /DEBUG:NONE /LTCG advapi32.lib ws2_32.lib $
+      ole32.lib user32.lib version.lib wbemuuid.lib oleAut32.lib /out:$out $
+      /DLL /IMPLIB:$bin\bee.lib
   restat = 1
   description = Link    Dll $out
 build $bin\bee.dll | $bin\bee.lib: LINK_bee $obj\bee\lua-seri.obj $
@@ -164,7 +164,7 @@ build $obj\bootstrap\progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
 build bootstrap: phony $bin\bootstrap.exe
 rule LINK_bootstrap
-  command = cl /nologo $in  /link /DEBUG:NONE /LTCG /out:$out
+  command = cl /nologo $in /link /DEBUG:NONE /LTCG /out:$out
   description = Link    Exe $out
 build $bin\bootstrap.exe: LINK_bootstrap $obj\bootstrap\utf8_crt.obj $
     $obj\bootstrap\main.obj $obj\bootstrap\progdir.obj $bin\lua54.lib

@@ -56,8 +56,8 @@ rule C_lua
 build $obj/lua/lua.obj: C_lua 3rd/bee.lua/3rd/lua/lua.c
 build lua: phony $bin/lua
 rule LINK_lua
-  command = $cc $in -o $out -lstdc++ -shared-libgcc -s -Wl,-E -lm -ldl $
-      -lpthread
+  command = $cc $in -o $out -lstdc++ -shared-libgcc -s -lm -ldl -lpthread $
+      -Wl,-E
   description = Link    Exe $out
 build $bin/lua: LINK_lua $obj/lua/lua.obj $obj/source_lua/lapi.obj $
     $obj/source_lua/lauxlib.obj $obj/source_lua/lbaselib.obj $
@@ -78,16 +78,18 @@ build $bin/lua: LINK_lua $obj/lua/lua.obj $obj/source_lua/lapi.obj $
     $obj/source_lua/lzio.obj
 rule C_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
-      -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG -fPIC -o $out -c $in
+      -fvisibility=hidden -fPIC -I3rd/bee.lua/3rd/lua $
+      -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua $
+      -DNDEBUG -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
 build $obj/bee/lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule CXX_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
-      -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
-      -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG -fPIC -o $out -c $in
+      -fvisibility=hidden -fPIC -I3rd/bee.lua/3rd/lua $
+      -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua $
+      -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   depfile = $out.d
   deps = gcc
@@ -142,8 +144,8 @@ build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
 build bootstrap: phony $bin/bootstrap
 rule LINK_bootstrap
-  command = $cc $in -o $out -lstdc++ -shared-libgcc -s -Wl,-E -lm -ldl $
-      -lpthread
+  command = $cc $in -o $out -lstdc++ -shared-libgcc -s -lm -ldl -lpthread $
+      -Wl,-E
   description = Link    Exe $out
 build $bin/bootstrap: LINK_bootstrap $obj/bootstrap/main.obj $
     $obj/bootstrap/progdir.obj $obj/source_lua/lapi.obj $

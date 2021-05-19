@@ -60,10 +60,10 @@ function clang.update_flags(flags, attribute)
     end
     update_target(flags, attribute)
     if attribute.__target then
-        flags[#flags+1] = "--target"
+        flags[#flags+1] = "-target"
         flags[#flags+1] = attribute.__target
     elseif attribute.__arch then
-        flags[#flags+1] = "--arch"
+        flags[#flags+1] = "-arch"
         flags[#flags+1] = attribute.__arch
     end
 end
@@ -73,10 +73,10 @@ function clang.update_ldflags(ldflags, attribute)
         ldflags[#ldflags+1] = '-Wl,-S,-x'
     end
     if attribute.__target then
-        ldflags[#ldflags+1] = "--target"
+        ldflags[#ldflags+1] = "-target"
         ldflags[#ldflags+1] = attribute.__target
     elseif attribute.__arch then
-        ldflags[#ldflags+1] = "--arch"
+        ldflags[#ldflags+1] = "-arch"
         ldflags[#ldflags+1] = attribute.__arch
     end
 end

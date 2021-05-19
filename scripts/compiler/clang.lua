@@ -69,6 +69,12 @@ function clang.update_flags(flags, attribute)
 end
 
 function clang.update_ldflags(ldflags, attribute)
+    if attribute.frameworks then
+        for _, framework in ipairs(attribute.frameworks) do
+            ldflags[#ldflags+1] = "-framework"
+            ldflags[#ldflags+1] = framework
+        end
+    end
     if attribute.mode == 'release' then
         ldflags[#ldflags+1] = '-Wl,-S,-x'
     end

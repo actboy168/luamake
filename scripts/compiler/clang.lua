@@ -1,16 +1,17 @@
 local clang = require 'compiler.gcc'
 local globals = require "globals"
 
+local function shell(command)
+    local f = assert(io.popen(command, 'r'))
+    local r = f:read 'l'
+    f:close()
+    return r
+end
+
 local function update_target(flags, attribute)
     local target = attribute.target
     if not target then
         assert(globals.hostos ~= "windows")
-        local function shell(command)
-            local f = assert(io.popen(command, 'r'))
-            local r = f:read 'l'
-            f:close()
-            return r:lower()
-        end
         local arch = attribute.arch
         local vendor = attribute.vendor
         local sys = attribute.sys
@@ -66,6 +67,13 @@ function clang.update_flags(flags, attribute)
         flags[#flags+1] = "-arch"
         flags[#flags+1] = attribute.__arch
     end
+    if globals.os == "ios" then
+        attribute.__isysroot = shell "xcrun --sdk iphoneos --show-sdk-path"
+    end
+    if attribute.__isysroot then
+        flags[#flags+1] = "-isysroot"
+        flags[#flags+1] = attribute.__isysroot
+    end
 end
 
 function clang.update_ldflags(ldflags, attribute)
@@ -84,6 +92,10 @@ function clang.update_ldflags(ldflags, attribute)
     elseif attribute.__arch then
         ldflags[#ldflags+1] = "-arch"
         ldflags[#ldflags+1] = attribute.__arch
+    end
+    if attribute.__isysroot then
+        ldflags[#ldflags+1] = "-isysroot"
+        ldflags[#ldflags+1] = attribute.__isysroot
     end
 end
 

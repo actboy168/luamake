@@ -160,8 +160,9 @@ local function update_flags(flags, attribute, instance, name, rootdir, rule)
         flags[#flags+1] = cc.warnings.error
     end
     if globals.os ~= "windows" then
-        if attribute.visibility ~= "default" then
-            flags[#flags+1] = ('-fvisibility=%s'):format(attribute.visibility or 'hidden')
+        local visibility = init_single(attribute, 'visibility', "hidden")
+        if visibility ~= "default" then
+            flags[#flags+1] = ('-fvisibility=%s'):format(visibility or 'hidden')
         end
         if rule == "shared_library" then
             flags[#flags+1] = "-fPIC"

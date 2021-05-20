@@ -9,7 +9,6 @@ local gcc = {
     flags = {
     },
     ldflags = {
-        "-lstdc++"
     },
     optimize = {
         off      = '',
@@ -61,9 +60,12 @@ end
 
 function gcc.update_ldflags(ldflags, attribute)
     if attribute.crt == 'dynamic' then
+        ldflags[#ldflags+1] = "-lstdc++"
         ldflags[#ldflags+1] = "-shared-libgcc"
     else
-        ldflags[#ldflags+1] = "-static-libstdc++"
+        ldflags[#ldflags+1] = "-Wl,-Bstatic"
+        ldflags[#ldflags+1] = "-lstdc++"
+        ldflags[#ldflags+1] = "-Wl,-Bdynamic"
         ldflags[#ldflags+1] = "-static-libgcc"
     end
     if attribute.mode == 'release' then

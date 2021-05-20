@@ -121,7 +121,7 @@ build $obj/bee/lua_thread.obj: CXX_bee 3rd/bee.lua/binding/lua_thread.cpp
 build $obj/bee/lua_time.obj: CXX_bee 3rd/bee.lua/binding/lua_time.cpp
 build bee: phony $bin/bee.so
 rule LINK_bee
-  command = $cc --shared $in -o $out -lstdc++ -static-libstdc++ $
+  command = $cc --shared $in -o $out -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic $
       -static-libgcc -s -lpthread
   description = Link    Dll $out
 build $bin/bee.so: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $

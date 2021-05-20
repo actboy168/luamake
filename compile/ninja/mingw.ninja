@@ -43,7 +43,7 @@ build $obj/lua54/lzio.obj: C_lua54 3rd/bee.lua/3rd/lua/lzio.c
 build $obj/lua54/utf8_crt.obj: C_lua54 3rd/bee.lua/3rd/lua/utf8_crt.c
 build lua54: phony $bin/lua54.dll
 rule LINK_lua54
-  command = $cc --shared $in -o $out -lstdc++ -shared-libgcc -s
+  command = $cc --shared $in -o $out -lstdc++ -s
   description = Link    Dll $out
 build $bin/lua54.dll: LINK_lua54 $obj/lua54/lapi.obj $obj/lua54/lauxlib.obj $
     $obj/lua54/lbaselib.obj $obj/lua54/lcode.obj $obj/lua54/lcorolib.obj $
@@ -67,7 +67,7 @@ build $obj/lua/utf8_crt.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_crt.c
 build $obj/lua/utf8_lua.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_lua.c
 build lua: phony $bin/lua.exe
 rule LINK_lua
-  command = $cc $in -o $out -lstdc++ -shared-libgcc -s
+  command = $cc $in -o $out -lstdc++ -s
   description = Link    Exe $out
 build $bin/lua.exe: LINK_lua $obj/lua/utf8_crt.obj $obj/lua/utf8_lua.obj $
     $bin/lua54.dll
@@ -129,9 +129,8 @@ build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
 build bee: phony $bin/bee.dll
 rule LINK_bee
-  command = $cc --shared $in -o $out -lstdc++ -shared-libgcc -s -ladvapi32 $
-      -lws2_32 -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lstdc++fs $
-      -lstdc++
+  command = $cc --shared $in -o $out -lstdc++ -s -ladvapi32 -lws2_32 $
+      -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++
   description = Link    Dll $out
 build $bin/bee.dll: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
     $obj/bee/fsevent_win.obj $obj/bee/endpoint.obj $obj/bee/socket.obj $
@@ -165,7 +164,7 @@ build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
 build bootstrap: phony $bin/bootstrap.exe
 rule LINK_bootstrap
-  command = $cc $in -o $out -lstdc++ -shared-libgcc -s
+  command = $cc $in -o $out -lstdc++ -s
   description = Link    Exe $out
 build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.dll

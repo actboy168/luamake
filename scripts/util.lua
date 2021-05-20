@@ -22,35 +22,14 @@ local function ninja(args)
     end
     table.insert(args, 2, "-f")
     table.insert(args, 3, WORKDIR / globals.builddir / "build.ninja")
-    args.stderr = true
     args.stdout = true
+    args.stderr = "stdout"
     args.cwd = WORKDIR
     local process = assert(sp.spawn(args))
 
-    local errmsg = {}
-    while true do
-        local outn = sp.peek(process.stdout)
-        if outn == nil then
-            errmsg[#errmsg+1] = process.stderr:read "a"
-            break
-        elseif outn ~= 0 then
-            io.write(process.stdout:read(outn))
-        end
-        local errn = sp.peek(process.stderr)
-        if errn == nil then
-            io.write(process.stdout:read "a")
-            break
-        elseif errn ~= 0 then
-            errmsg[#errmsg+1] = process.stderr:read(errn)
-        end
-        if outn == 0 and errn == 0 then
-            io.flush()
-            thread.sleep(0.01)
-        end
-    end
-
-    if #errmsg > 0 then
-        io.write(table.concat(errmsg))
+    for line in process.stdout:lines() do
+        io.write(line)
+        io.write "\n"
     end
     io.flush()
 

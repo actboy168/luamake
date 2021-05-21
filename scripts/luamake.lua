@@ -254,7 +254,7 @@ local function generate(self, rule, name, attribute)
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local sources = get_sources(rootdir, attribute.sources)
-    local implicit = {}
+    local implicit_input = {}
     local input = {}
 
     init_single(attribute, 'mode', 'release')
@@ -313,33 +313,27 @@ local function generate(self, rule, name, attribute)
     end
 
     local t = {
-        rootdir = rootdir,
-        rule = rule,
     }
     self._targets[name] = t
 
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
             local target = self._targets[dep]
-            if target.output then
-                if type(target.output) == 'table' then
-                    tbl_append(input, target.output)
-                else
-                    input[#input+1] = target.output
-                end
-            else
-                implicit[#implicit+1] = target.outname
+            if target.input then
+                tbl_append(input, target.input)
             end
+            implicit_input[#implicit_input+1] = target.implicit_input
         end
     end
     assert(#input > 0, ("`%s`: no source files found."):format(name))
 
     if rule == 'source_set' then
         assert(#input > 0, ("`%s`: no source files found."):format(name))
-        t.output = input
+        t.input = input
         t.links = attribute.links
         t.linkdirs = attribute.linkdirs
         t.ldflags = attribute.ldflags
+        t.rootdir = rootdir
         return
     end
 
@@ -347,49 +341,51 @@ local function generate(self, rule, name, attribute)
         tbl_append(input, attribute.input or self.input)
     end
 
-    local outname
+    local binname
     local ldflags =  {}
     update_ldflags(ldflags, attribute, self, name, rootdir)
 
     local fin_ldflags = table.concat(ldflags, " ")
     if rule == "shared_library" then
         if globals.os == "windows" then
-            outname = fs.path("$bin") / (name .. ".dll")
+            binname = fs.path "$bin" / (name .. ".dll")
         else
-            outname = fs.path("$bin") / (name .. ".so")
+            binname = fs.path "$bin" / (name .. ".so")
         end
         cc.rule_dll(ninja, name, fin_ldflags)
         if globals.compiler == 'msvc' then
-            local lib = (fs.path('$bin') / name)..".lib"
-            t.output = lib
-            ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, nil, lib)
+            local lib = fs.path '$bin' / (name..".lib")
+            t.input = {lib}
+            t.implicit_input = binname
+            ninja:build(binname, "LINK_"..fmtname, input, implicit_input, nil, nil, lib)
         else
             if globals.os == "windows" then
-                t.output = outname
+                t.input = {binname}
+            else
+                t.implicit_input = binname
             end
-            ninja:build(outname, "LINK_"..fmtname, input, implicit)
+            ninja:build(binname, "LINK_"..fmtname, input, implicit_input)
         end
     elseif rule == "executable" then
         if globals.os == "windows" then
-            outname = fs.path("$bin") / (name .. ".exe")
+            binname = fs.path("$bin") / (name .. ".exe")
         else
-            outname = fs.path("$bin") / name
+            binname = fs.path("$bin") / name
         end
+        t.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
-        ninja:build(outname, "LINK_"..fmtname, input, implicit)
+        ninja:build(binname, "LINK_"..fmtname, input, implicit_input)
     elseif rule == "static_library" then
         if globals.os == "windows" then
-            outname = fs.path("$bin") / (name .. ".lib")
+            binname = fs.path("$bin") / (name .. ".lib")
         else
-            outname = fs.path("$bin") / ("lib"..name .. ".a")
+            binname = fs.path("$bin") / ("lib"..name .. ".a")
         end
-        t.output = outname
+        t.input = {binname}
         cc.rule_lib(ninja, name)
-        ninja:build(outname, "LINK_"..fmtname, input, implicit)
+        ninja:build(binname, "LINK_"..fmtname, input, implicit_input)
     end
-
-    ninja:build(name, 'phony', outname)
-    t.outname = outname
+    ninja:build(name, 'phony', binname)
 end
 
 local GEN = {}
@@ -402,24 +398,39 @@ local function generateTargetName()
     return ("_target_0x%08x_"):format(NAMEIDX)
 end
 
+local function addImplicitInput(self, implicit_input, name)
+    local target = self._targets[name]
+    assert(target ~= nil, ("`%s`: undefine."):format(name))
+    if target.input then
+        tbl_append(implicit_input, target.input)
+    end
+    implicit_input[#implicit_input+1] = target.implicit_input
+end
+
+local function getImplicitInput(self, attribute)
+    local implicit_input = {}
+    if attribute.deps then
+        for _, dep in ipairs(attribute.deps) do
+            addImplicitInput(self, implicit_input, dep)
+        end
+    end
+    return implicit_input
+end
+
 function GEN.default(self, attribute)
     local ninja = self.ninja
+    local targets = {}
     if type(attribute) == "table" then
-        local targets = {}
         for _, name in ipairs(attribute) do
             if name then
-                assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
-                targets[#targets+1] = self._targets[name].outname
+                addImplicitInput(self, targets, name)
             end
         end
-        ninja:default(targets)
     elseif type(attribute) == "string" then
         local name = attribute
-        assert(self._targets[name] ~= nil, ("`%s`: undefine."):format(name))
-        ninja:default {
-            self._targets[name].outname
-        }
+        addImplicitInput(self, targets, name)
     end
+    ninja:default(targets)
 end
 
 function GEN.phony(self, name, attribute)
@@ -428,35 +439,28 @@ function GEN.phony(self, name, attribute)
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local deps = attribute.deps or {}
-    local implicit = {}
+    local implicit_input = getImplicitInput(self, attribute)
     for i = 1, #input do
         input[i] = fmtpath_v3(rootdir, input[i])
     end
     for i = 1, #output do
         output[i] = fmtpath_v3(rootdir, output[i])
     end
-    for _, dep in ipairs(deps) do
-        local depsTarget = self._targets[dep]
-        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-        implicit[#implicit+1] = depsTarget.outname
-    end
     if name then
         if #output == 0 then
-            ninja:build(name, 'phony', input, implicit)
+            ninja:build(name, 'phony', input, implicit_input)
         else
             ninja:build(name, 'phony', output)
-            ninja:build(output, 'phony', input, implicit)
+            ninja:build(output, 'phony', input, implicit_input)
         end
         self._targets[name] = {
-            outname = name,
-            rule = 'phony',
+            implicit_input = name,
         }
     else
         if #output == 0 then
             error(("`%s`: no output."):format(name))
         else
-            ninja:build(output, 'phony', input, implicit)
+            ninja:build(output, 'phony', input, implicit_input)
         end
     end
 end
@@ -469,11 +473,10 @@ function GEN.build(self, name, attribute, shell)
     local ninja = self.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
-    local deps = attribute.deps or {}
     local input = attribute.input or {}
     local output = attribute.output or {}
     local pool =  init_single(attribute, 'pool')
-    local implicit = {}
+    local implicit_input = getImplicitInput(self, attribute)
 
     for i = 1, #input do
         input[i] = fmtpath_v3(rootdir, input[i])
@@ -505,12 +508,6 @@ function GEN.build(self, name, attribute, shell)
         end
     end
     push_command(attribute)
-
-    for _, dep in ipairs(deps) do
-        local depsTarget = self._targets[dep]
-        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-        implicit[#implicit+1] = depsTarget.outname
-    end
 
     if shell then
         if globals.hostshell == "cmd" then
@@ -547,14 +544,13 @@ function GEN.build(self, name, attribute, shell)
         outname = output
     end
     ninja:rule('build_'..rule_name, table.concat(command, " "))
-    ninja:build(outname, 'build_'..rule_name, input, implicit, nil, {
+    ninja:build(outname, 'build_'..rule_name, input, implicit_input, nil, {
         pool = pool,
     })
     if not tmpName then
         ninja:build(name, 'phony', outname)
         self._targets[name] = {
-            outname = name,
-            rule = 'build',
+            implicit_input = name,
         }
     end
 end
@@ -567,10 +563,9 @@ function GEN.copy(self, name, attribute)
     local ninja = self.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
-    local deps = attribute.deps or {}
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit = {}
+    local implicit_input = getImplicitInput(self, attribute)
 
     for i = 1, #input do
         local v = input[i]
@@ -585,12 +580,6 @@ function GEN.copy(self, name, attribute)
             v =  v:sub(2)
         end
         output[i] = fmtpath_v3(rootdir, v)
-    end
-
-    for _, dep in ipairs(deps) do
-        local depsTarget = self._targets[dep]
-        assert(depsTarget ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-        implicit[#implicit+1] = depsTarget.outname
     end
 
     if not ruleCopy then
@@ -612,18 +601,17 @@ function GEN.copy(self, name, attribute)
             })
         end
     end
-    if #implicit == 0 then
+    if #implicit_input == 0 then
         ninja:build(output, 'copy', input)
     else
-        ninja:build(output, 'copy', nil, implicit, nil, {
+        ninja:build(output, 'copy', nil, implicit_input, nil, {
             input = input,
         })
     end
     if not tmpName then
         ninja:build(name, 'phony', output)
         self._targets[name] = {
-            outname = name,
-            rule = 'build',
+            implicit_input = name,
         }
     end
 end

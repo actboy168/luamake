@@ -78,7 +78,8 @@ function cl.update_ldflags(ldflags, attribute)
     end
 end
 
-function cl.rule_c(w, name, flags, cflags)
+function cl.rule_c(w, name, attribute, flags)
+    local cflags = assert(cl.c[attribute.c], ("`%s`: unknown std c: `%s`"):format(name, attribute.c))
     w:rule('C_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
     {
         description = 'Compile C   $out',
@@ -86,7 +87,8 @@ function cl.rule_c(w, name, flags, cflags)
     })
 end
 
-function cl.rule_cxx(w, name, flags, cxxflags)
+function cl.rule_cxx(w, name, attribute, flags)
+    local cxxflags = assert(cl.cxx[attribute.cxx], ("`%s`: unknown std c++: `%s`"):format(name, attribute.cxx))
     w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
     {
         description = 'Compile C++ $out',

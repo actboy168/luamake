@@ -206,16 +206,6 @@ local function update_flags(flags, attribute, instance, name, rootdir, rule)
     if attribute.flags then
         tbl_append(flags, attribute.flags)
     end
-
-    if attribute.deps then
-        for _, dep in ipairs(attribute.deps) do
-            local target = instance._targets[dep]
-            assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-            if target.includedir then
-                flags[#flags+1] = cc.includedir(fmtpath_v3(target.rootdir, target.includedir))
-            end
-        end
-    end
 end
 
 local function update_ldflags(ldflags, attribute, instance, name, rootdir)
@@ -294,17 +284,13 @@ local function generate(self, rule, name, attribute)
         if type == "c" then
             if not has_c then
                 has_c = true
-                local c = attribute.c
-                local cflags = assert(cc.c[c], ("`%s`: unknown std c: `%s`"):format(name, c))
-                cc.rule_c(ninja, name, fin_flags, cflags)
+                cc.rule_c(ninja, name, attribute, fin_flags)
             end
             ninja:build(objname, "C_"..fmtname, source)
         elseif type == "cxx" then
             if not has_cxx then
                 has_cxx = true
-                local cxx = attribute.cxx
-                local cxxflags = assert(cc.cxx[cxx], ("`%s`: unknown std c++: `%s`"):format(name, cxx))
-                cc.rule_cxx(ninja, name, fin_flags, cxxflags)
+                cc.rule_cxx(ninja, name, attribute, fin_flags)
             end
             ninja:build(objname, "CXX_"..fmtname, source)
         elseif globals.os == "windows" and type == "rc" then
@@ -326,32 +312,8 @@ local function generate(self, rule, name, attribute)
         end
     end
 
-    local outname
-    if rule == "executable" then
-        if globals.os == "windows" then
-            outname = fs.path("$bin") / (name .. ".exe")
-        else
-            outname = fs.path("$bin") / name
-        end
-    elseif rule == "shared_library" then
-        if globals.os == "windows" then
-            outname = fs.path("$bin") / (name .. ".dll")
-        else
-            outname = fs.path("$bin") / (name .. ".so")
-        end
-    elseif rule == "static_library" then
-        if globals.os == "windows" then
-            outname = fs.path("$bin") / (name .. ".lib")
-        else
-            outname = fs.path("$bin") / ("lib"..name .. ".a")
-        end
-    end
-    ninja:build(name, 'phony', outname)
-
     local t = {
         rootdir = rootdir,
-        includedir = ".",
-        outname = outname,
         rule = rule,
     }
     self._targets[name] = t
@@ -381,11 +343,21 @@ local function generate(self, rule, name, attribute)
         return
     end
 
+    if attribute.input or self.input then
+        tbl_append(input, attribute.input or self.input)
+    end
+
+    local outname
     local ldflags =  {}
     update_ldflags(ldflags, attribute, self, name, rootdir)
 
     local fin_ldflags = table.concat(ldflags, " ")
     if rule == "shared_library" then
+        if globals.os == "windows" then
+            outname = fs.path("$bin") / (name .. ".dll")
+        else
+            outname = fs.path("$bin") / (name .. ".so")
+        end
         cc.rule_dll(ninja, name, fin_ldflags)
         if globals.compiler == 'msvc' then
             local lib = (fs.path('$bin') / name)..".lib"
@@ -398,13 +370,26 @@ local function generate(self, rule, name, attribute)
             ninja:build(outname, "LINK_"..fmtname, input, implicit)
         end
     elseif rule == "executable" then
+        if globals.os == "windows" then
+            outname = fs.path("$bin") / (name .. ".exe")
+        else
+            outname = fs.path("$bin") / name
+        end
         cc.rule_exe(ninja, name, fin_ldflags)
         ninja:build(outname, "LINK_"..fmtname, input, implicit)
     elseif rule == "static_library" then
+        if globals.os == "windows" then
+            outname = fs.path("$bin") / (name .. ".lib")
+        else
+            outname = fs.path("$bin") / ("lib"..name .. ".a")
+        end
         t.output = outname
         cc.rule_lib(ninja, name)
         ninja:build(outname, "LINK_"..fmtname, input, implicit)
     end
+
+    ninja:build(name, 'phony', outname)
+    t.outname = outname
 end
 
 local GEN = {}

@@ -619,7 +619,7 @@ end
 
 function GEN.lua_library(self, name, attribute)
     local lua_library = require "lua_library"
-    generate(lua_library(self, name, attribute, globals))
+    generate(lua_library(self, name, attribute))
 end
 
 local lm = {}

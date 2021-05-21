@@ -56,8 +56,7 @@ local function parse_env(str)
     return strtrim(str:sub(1, pos - 1)), strtrim(str:sub(pos + 1))
 end
 
-local function environment(arch)
-    local env = {}
+local function vsdevcmd(arch, f)
     local vsvars32 = installpath() / 'Common7' / 'Tools' / 'VsDevCmd.bat'
     local args = { vsvars32:string() }
     if arch then
@@ -72,10 +71,7 @@ local function environment(arch)
     for line in process.stdout:lines() do
         local name, value = parse_env(line)
         if name and value then
-            name = name:upper()
-            if need[name] then
-                env[name] = value
-            end
+            f(name, value)
         end
     end
     local err = process.stderr:read "a"
@@ -87,6 +83,16 @@ local function environment(arch)
         io.stderr:write(err)
         os.exit(code, true)
     end
+end
+
+local function environment(arch)
+    local env = {}
+    vsdevcmd(arch, function (name, value)
+        name = name:upper()
+        if need[name] then
+            env[name] = value
+        end
+    end)
     return env
 end
 
@@ -120,7 +126,7 @@ local function prefix(env)
     return prefix
 end
 
-local function vcrtpath(platform)
+local function vcrtpath(arch)
     local RedistVersion = (function ()
         local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCRedistVersion.default.txt'
         local f = assert(io.open(verfile:string(), 'r'))
@@ -142,19 +148,23 @@ local function vcrtpath(platform)
         f:close()
         return r:match '#define%s+_MSVC_STL_VERSION%s+(%d+)'
     end)()
-    return installpath() / 'VC' / 'Redist' / 'MSVC' / RedistVersion / platform / ('Microsoft.VC'..ToolsetVersion..'.CRT')
+    return installpath() / 'VC' / 'Redist' / 'MSVC' / RedistVersion / arch / ('Microsoft.VC'..ToolsetVersion..'.CRT')
 end
 
-local function ucrtpath(platform)
-    local registry = require 'bee.registry'
-    local reg = registry.open [[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots]]
-    local path = fs.path(reg.KitsRoot10) / 'Redist'
+local function ucrtpath(arch)
+    local UniversalCRTSdkDir
+    vsdevcmd(arch, function (name, value)
+        if name == "UniversalCRTSdkDir" then
+            UniversalCRTSdkDir = value
+        end
+    end)
+    if not UniversalCRTSdkDir then
+        return
+    end
+    local path = fs.path(UniversalCRTSdkDir) / 'Redist'
     local res, ver
     local function accept(p)
-        if not fs.is_directory(p) then
-            return
-        end
-        local ucrt = p / 'ucrt' / 'DLLs' / platform
+        local ucrt = p / 'ucrt' / 'DLLs' / arch
         if fs.exists(ucrt) then
             local version = 0
             if p ~= path then
@@ -175,18 +185,18 @@ local function ucrtpath(platform)
     end
 end
 
-local function copy_vcrt(platform, target)
+local function copy_vcrt(arch, target)
     fs.create_directories(target)
-    for dll in vcrtpath(platform):list_directory() do
+    for dll in vcrtpath(arch):list_directory() do
         if dll:filename() ~= fs.path "vccorlib140.dll" then
             fs.copy_file(dll, target / dll:filename(), true)
         end
     end
 end
 
-local function copy_ucrt(platform, target)
+local function copy_ucrt(arch, target)
     fs.create_directories(target)
-    for dll in ucrtpath(platform):list_directory() do
+    for dll in ucrtpath(arch):list_directory() do
         fs.copy_file(dll, target / dll:filename(), true)
     end
 end

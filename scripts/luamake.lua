@@ -338,10 +338,6 @@ local function generate(self, rule, name, attribute)
         return
     end
 
-    if attribute.input or self.input then
-        tbl_append(input, attribute.input or self.input)
-    end
-
     local binname
     local ldflags =  {}
     update_ldflags(ldflags, attribute, self, name, rootdir)
@@ -396,7 +392,7 @@ local ruleCopy = false
 local NAMEIDX = 0
 local function generateTargetName()
     NAMEIDX = NAMEIDX + 1
-    return ("_target_0x%08x_"):format(NAMEIDX)
+    return ("__target_0x%08x__"):format(NAMEIDX)
 end
 
 local function addImplicitInput(self, implicit_input, name)

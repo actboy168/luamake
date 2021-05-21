@@ -50,27 +50,31 @@ local function init_version(lm, luadir, luaversion)
     inited_version[luaversion] = true
     local ninja = lm.ninja
     lua_def(MAKEDIR / "tools" / luaversion)
+    local libname
     if globals.compiler == 'msvc' then
-        ninja:build(luadir / ("lua-"..globals.arch..".lib"), "luadeps", luadir / "lua.def")
+        libname = luadir / ("lua-"..globals.arch..".lib")
+        ninja:build(libname, "luadeps", luadir / "lua.def")
     else
-        ninja:build(luadir / "liblua.a", "luadeps", luadir / "lua.def")
+        libname = luadir / "liblua.a"
+        ninja:build(libname, "luadeps", luadir / "lua.def")
     end
+    lm._targets["__"..luaversion.."__"] = {
+        input = {libname}
+    }
 end
 
-local function windows_deps(_, name, attribute, luadir)
+local function windows_deps(_, name, attribute, luaversion)
     local ldflags = attribute.ldflags or {}
-    local input = attribute.input or {}
+    local deps = attribute.deps or {}
     if globals.compiler == "msvc" then
         local export_luaopen = init_single(attribute, "export_luaopen", "on")
         if export_luaopen ~= "off" then
             ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
         end
-        input[#input+1] = luadir / ("lua-"..globals.arch..".lib")
-    else
-        input[#input+1] = luadir / "liblua.a"
     end
+    deps[#deps+1] = "__"..luaversion.."__"
     attribute.ldflags = ldflags
-    attribute.input = input
+    attribute.deps = deps
 end
 
 return function (lm, name, attribute)
@@ -84,7 +88,7 @@ return function (lm, name, attribute)
     if globals.os == "windows" then
         init_rule(lm)
         init_version(lm, luadir, luaversion)
-        windows_deps(lm, name, attribute, luadir)
+        windows_deps(lm, name, attribute, luaversion)
     end
     copy_dir(MAKEDIR / "tools" / luaversion, luadir)
     return lm, 'shared_library', name, attribute

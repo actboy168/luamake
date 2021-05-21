@@ -385,11 +385,6 @@ local function generate(self, rule, name, attribute)
     update_ldflags(ldflags, attribute, self, name, rootdir)
 
     local fin_ldflags = table.concat(ldflags, " ")
-
-    if attribute.input or self.input then
-        tbl_append(input, attribute.input or self.input)
-    end
-
     if rule == "shared_library" then
         cc.rule_dll(ninja, name, fin_ldflags)
         if globals.compiler == 'msvc' then

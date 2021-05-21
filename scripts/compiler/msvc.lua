@@ -9,7 +9,9 @@ end
 
 local cl = {
     flags = {
-        "/EHsc /Zc:__cplusplus",
+        "/EHsc",
+        "/Zc:__cplusplus",
+        "/permissive-",
     },
     ldflags = {
     },
@@ -59,7 +61,6 @@ local cl = {
 }
 
 function cl.update_flags(flags, attribute, name)
-    flags[#flags+1] = '/permissive-'
     if attribute.mode == 'debug' then
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MDd' or '/MTd'
         flags[#flags+1] = ('/RTC1 /Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")

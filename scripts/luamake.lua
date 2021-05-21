@@ -230,16 +230,6 @@ local function update_ldflags(ldflags, attribute, instance, name, rootdir)
         for _, dep in ipairs(attribute.deps) do
             local target = instance._targets[dep]
             assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
-            if target.links then
-                for _, link in ipairs(target.links) do
-                    ldflags[#ldflags+1] = cc.link(link)
-                end
-            end
-            if target.linkdirs then
-                for _, linkdir in ipairs(target.linkdirs) do
-                    ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(target.rootdir, linkdir))
-                end
-            end
             if target.ldflags then
                 tbl_append(ldflags, target.ldflags)
             end
@@ -329,11 +319,22 @@ local function generate(self, rule, name, attribute)
 
     if rule == 'source_set' then
         assert(#input > 0, ("`%s`: no source files found."):format(name))
+        local dep_ldflags = {}
+        if attribute.links then
+            for _, link in ipairs(attribute.links) do
+                dep_ldflags[#dep_ldflags+1] = cc.link(link)
+            end
+        end
+        if attribute.linkdirs then
+            for _, linkdir in ipairs(attribute.linkdirs) do
+                dep_ldflags[#dep_ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
+            end
+        end
+        if attribute.ldflags then
+            tbl_append(dep_ldflags, attribute.ldflags)
+        end
         t.input = input
-        t.links = attribute.links
-        t.linkdirs = attribute.linkdirs
-        t.ldflags = attribute.ldflags
-        t.rootdir = rootdir
+        t.ldflags = dep_ldflags
         return
     end
 

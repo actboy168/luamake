@@ -747,7 +747,7 @@ function lm:finish()
     if globals.compiler == "msvc" then
         if not arguments.args.prebuilt then
             local msvc = require "msvc_util"
-            msvc.createEnvConfig(globals.arch, globals.winsdk, arguments.what == "rebuild")
+            msvc.createEnvConfig(globals.arch, arguments.what == "rebuild")
             ninja:variable("msvc_deps_prefix", msvc.getPrefix())
         end
     elseif globals.compiler == "gcc"  then

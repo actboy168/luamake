@@ -56,15 +56,12 @@ local function parse_env(str)
     return strtrim(str:sub(1, pos - 1)), strtrim(str:sub(pos + 1))
 end
 
-local function environment(arch, winsdk)
+local function environment(arch)
     local env = {}
     local vsvars32 = installpath() / 'Common7' / 'Tools' / 'VsDevCmd.bat'
     local args = { vsvars32:string() }
     if arch then
         args[#args+1] = ('-arch=%s'):format(arch)
-    end
-    if winsdk then
-        args[#args+1] = ('-winsdk=%s'):format(winsdk)
     end
     local process = assert(sp.spawn {
         'cmd', '/k', args, '&', 'set',

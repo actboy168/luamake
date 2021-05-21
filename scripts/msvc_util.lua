@@ -44,24 +44,21 @@ function m.cleanEnvConfig()
     fs.remove(EnvConfig)
 end
 
-function m.createEnvConfig(arch, winsdk, rebuild)
+function m.createEnvConfig(arch, rebuild)
     if not rebuild and m.hasEnvConfig() then
         local config = readEnvConfig()
-        if config.arch == arch and config.winsdk == winsdk then
+        if config.arch == arch then
             env = config.env
             prefix = config.prefix
             return
         end
     end
-    env = msvc.environment(ArchAlias[arch], winsdk)
+    env = msvc.environment(ArchAlias[arch])
     prefix = msvc.prefix(env)
 
     local s = {}
     s[#s+1] = "return {"
     s[#s+1] = ("arch=%q,"):format(arch)
-    if winsdk then
-        s[#s+1] = ("winsdk=%q,"):format(winsdk)
-    end
     s[#s+1] = ("prefix=%q,"):format(prefix)
     s[#s+1] = ("env={"):format(prefix)
     for name, value in pairs(env) do

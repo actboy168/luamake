@@ -264,7 +264,6 @@ local function generate(self, rule, name, attribute)
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local sources = get_sources(rootdir, attribute.sources)
-    local pool = init_single(attribute, 'pool')
     local implicit = {}
     local input = {}
 
@@ -391,26 +390,25 @@ local function generate(self, rule, name, attribute)
         tbl_append(input, attribute.input or self.input)
     end
 
-    local vars = pool and {pool=pool} or nil
     if rule == "shared_library" then
         cc.rule_dll(ninja, name, fin_ldflags)
         if globals.compiler == 'msvc' then
             local lib = (fs.path('$bin') / name)..".lib"
             t.output = lib
-            ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars, lib)
+            ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, nil, lib)
         else
             if globals.os == "windows" then
                 t.output = outname
             end
-            ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
+            ninja:build(outname, "LINK_"..fmtname, input, implicit)
         end
     elseif rule == "executable" then
         cc.rule_exe(ninja, name, fin_ldflags)
-        ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
+        ninja:build(outname, "LINK_"..fmtname, input, implicit)
     elseif rule == "static_library" then
         t.output = outname
         cc.rule_lib(ninja, name)
-        ninja:build(outname, "LINK_"..fmtname, input, implicit, nil, vars)
+        ninja:build(outname, "LINK_"..fmtname, input, implicit)
     end
 end
 
@@ -592,7 +590,6 @@ function GEN.copy(self, name, attribute)
     local deps = attribute.deps or {}
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local pool = init_single(attribute, 'pool')
     local implicit = {}
 
     for i = 1, #input do
@@ -636,13 +633,10 @@ function GEN.copy(self, name, attribute)
         end
     end
     if #implicit == 0 then
-        ninja:build(output, 'copy', input, nil, nil, {
-            pool = pool,
-        })
+        ninja:build(output, 'copy', input)
     else
         ninja:build(output, 'copy', nil, implicit, nil, {
             input = input,
-            pool = pool,
         })
     end
     if not tmpName then

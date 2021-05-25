@@ -27,11 +27,16 @@ local function ninja(args)
     args.cwd = WORKDIR
     local process = assert(sp.spawn(args))
 
-    for line in process.stdout:lines() do
-        io.write(line)
-        io.write "\n"
+    while true do
+        local n = sp.peek(process.stdout)
+        if n == nil then
+            break
+        end
+        if n > 0 then
+            io.write(process.stdout:read(n))
+            io.flush()
+        end
     end
-    io.flush()
 
     local code = process:wait()
     if code ~= 0 then

@@ -30,6 +30,11 @@ local function ninja(args)
     while true do
         local n = sp.peek(process.stdout)
         if n == nil then
+            local s = process.stdout:read "a"
+            if s then
+                io.write(s)
+                io.flush()
+            end
             break
         end
         if n > 0 then

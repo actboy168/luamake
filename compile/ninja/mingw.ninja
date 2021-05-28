@@ -41,7 +41,6 @@ build $obj/lua54/lutf8lib.obj: C_lua54 3rd/bee.lua/3rd/lua/lutf8lib.c
 build $obj/lua54/lvm.obj: C_lua54 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/lua54/lzio.obj: C_lua54 3rd/bee.lua/3rd/lua/lzio.c
 build $obj/lua54/utf8_crt.obj: C_lua54 3rd/bee.lua/3rd/lua/utf8_crt.c
-build lua54: phony $bin/lua54.dll
 rule LINK_lua54
   command = $cc --shared $in -o $out -lstdc++ -s
   description = Link    Dll $out
@@ -57,26 +56,26 @@ build $bin/lua54.dll: LINK_lua54 $obj/lua54/lapi.obj $obj/lua54/lauxlib.obj $
     $obj/lua54/ltablib.obj $obj/lua54/ltm.obj $obj/lua54/lundump.obj $
     $obj/lua54/lutf8lib.obj $obj/lua54/lvm.obj $obj/lua54/lzio.obj $
     $obj/lua54/utf8_crt.obj
+build lua54: phony $bin/lua54.dll
 rule C_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -D_WIN32_WINNT=0x0601 -DNDEBUG -I3rd/bee.lua -o $out -c $in
+      -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
 build $obj/lua/utf8_crt.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_crt.c
 build $obj/lua/utf8_lua.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_lua.c
-build lua: phony $bin/lua.exe
 rule LINK_lua
   command = $cc $in -o $out -lstdc++ -s
   description = Link    Exe $out
 build $bin/lua.exe: LINK_lua $obj/lua/utf8_crt.obj $obj/lua/utf8_lua.obj $
     $bin/lua54.dll
+build lua: phony $bin/lua.exe
 rule C_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
-      -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -I3rd/bee.lua -o $out $
-      -c $in
+      -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
@@ -85,8 +84,7 @@ rule CXX_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
-      -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -I3rd/bee.lua -o $out $
-      -c $in
+      -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   depfile = $out.d
   deps = gcc
@@ -127,7 +125,6 @@ build $obj/bee/lua_thread.obj: CXX_bee 3rd/bee.lua/binding/lua_thread.cpp
 build $obj/bee/lua_time.obj: CXX_bee 3rd/bee.lua/binding/lua_time.cpp
 build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
-build bee: phony $bin/bee.dll
 rule LINK_bee
   command = $cc --shared $in -o $out -lstdc++ -s -ladvapi32 -lws2_32 $
       -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++
@@ -144,30 +141,29 @@ build $bin/bee.dll: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
     $obj/bee/lua_socket.obj $obj/bee/lua_subprocess.obj $
     $obj/bee/lua_thread.obj $obj/bee/lua_time.obj $obj/bee/lua_unicode.obj $
     $obj/bee/lua_wmi.obj $bin/lua54.dll
+build bee: phony $bin/bee.dll
 rule C_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -I3rd/bee.lua -o $
-      $out -c $in
+      -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C   $out
   depfile = $out.d
   deps = gcc
 build $obj/bootstrap/utf8_crt.obj: C_bootstrap 3rd/bee.lua/3rd/lua/utf8_crt.c
 rule CXX_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
-      -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -I3rd/bee.lua -o $
-      $out -c $in
+      -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   depfile = $out.d
   deps = gcc
 build $obj/bootstrap/main.obj: CXX_bootstrap 3rd/bee.lua/bootstrap/main.cpp
 build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
-build bootstrap: phony $bin/bootstrap.exe
 rule LINK_bootstrap
   command = $cc $in -o $out -lstdc++ -s
   description = Link    Exe $out
 build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.dll
+build bootstrap: phony $bin/bootstrap.exe
 rule copy
   command = sh -c "cp -afv $in$input $out 1>/dev/null"
   restat = 1

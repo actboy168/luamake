@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 
 case "`uname`" in
-  MSYS_NT*)
-    ninja -f compile/ninja/mingw.ninja
-    ;;
-  Windows_NT*)
+  MSYS_NT*|MINGW64_NT*|Windows_NT*)
     ninja -f compile/ninja/mingw.ninja
     ;;
   Linux)

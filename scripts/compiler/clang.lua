@@ -83,6 +83,7 @@ function clang.update_ldflags(ldflags, attribute)
             ldflags[#ldflags+1] = framework
         end
     end
+    ldflags[#ldflags+1] = "-lstdc++"
     if attribute.mode == 'release' then
         ldflags[#ldflags+1] = '-Wl,-S,-x'
     end

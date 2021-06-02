@@ -333,6 +333,12 @@ local function generate(self, rule, name, attribute)
         if attribute.ldflags then
             tbl_append(dep_ldflags, attribute.ldflags)
         end
+        if globals.compiler == "clang" and attribute.frameworks then
+            for _, framework in ipairs(attribute.frameworks) do
+                dep_ldflags[#dep_ldflags+1] = "-framework"
+                dep_ldflags[#dep_ldflags+1] = framework
+            end
+        end
         t.input = input
         t.ldflags = dep_ldflags
         return

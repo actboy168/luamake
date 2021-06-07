@@ -306,17 +306,6 @@ local function generate(self, rule, name, attribute)
     }
     self._targets[name] = t
 
-    if attribute.deps then
-        for _, dep in ipairs(attribute.deps) do
-            local target = self._targets[dep]
-            if target.input then
-                tbl_append(input, target.input)
-            end
-            implicit_input[#implicit_input+1] = target.implicit_input
-        end
-    end
-    assert(#input > 0, ("`%s`: no source files found."):format(name))
-
     if rule == 'source_set' then
         assert(#input > 0, ("`%s`: no source files found."):format(name))
         local dep_ldflags = {}
@@ -341,8 +330,36 @@ local function generate(self, rule, name, attribute)
         end
         t.input = input
         t.ldflags = dep_ldflags
+        t.deps = attribute.deps
         return
     end
+
+    if attribute.deps then
+        local deps = attribute.deps
+        local mark = {[name] = true}
+        local i = 1
+        while i <= #deps do
+            local dep = deps[i]
+            if mark[dep] then
+                table.remove(deps, i)
+            else
+                mark[dep] = true
+                local target = self._targets[dep]
+                if target.deps then
+                    tbl_append(deps, target.deps)
+                end
+                i = i + 1
+            end
+        end
+        for _, dep in ipairs(attribute.deps) do
+            local target = self._targets[dep]
+            if target.input then
+                tbl_append(input, target.input)
+            end
+            implicit_input[#implicit_input+1] = target.implicit_input
+        end
+    end
+    assert(#input > 0, ("`%s`: no source files found."):format(name))
 
     local binname
     local ldflags =  {}

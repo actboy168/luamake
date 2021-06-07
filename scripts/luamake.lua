@@ -576,10 +576,6 @@ function GEN.build(self, name, attribute, shell)
 end
 
 function GEN.copy(self, name, attribute)
-    local tmpName = not name
-    name = name or generateTargetName()
-    assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
-
     local ninja = self.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
@@ -587,6 +583,25 @@ function GEN.copy(self, name, attribute)
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(self, attribute)
 
+    if not ruleCopy then
+        ruleCopy = true
+        if globals.hostshell == "cmd" then
+            ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in $out', {
+                description = 'Copy $in $out',
+                restat = 1,
+            })
+        elseif globals.hostos == "windows" then
+            ninja:rule('copy', 'sh -c "cp -afv $in $out 1>/dev/null"', {
+                description = 'Copy $in $out',
+                restat = 1,
+            })
+        else
+            ninja:rule('copy', 'cp -afv $in $out 1>/dev/null', {
+                description = 'Copy $in $out',
+                restat = 1,
+            })
+        end
+    end
     for i = 1, #input do
         local v = input[i]
         if type(v) == 'string' and v:sub(1,1) == '@' then
@@ -601,34 +616,13 @@ function GEN.copy(self, name, attribute)
         end
         output[i] = fmtpath_v3(rootdir, v)
     end
+    assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
 
-    if not ruleCopy then
-        ruleCopy = true
-        if globals.hostshell == "cmd" then
-            ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
-                description = 'Copy $in$input $out',
-                restat = 1,
-            })
-        elseif globals.hostos == "windows" then
-            ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
-                description = 'Copy $in$input $out',
-                restat = 1,
-            })
-        else
-            ninja:rule('copy', 'cp -afv $in$input $out 1>/dev/null', {
-                description = 'Copy $in$input $out',
-                restat = 1,
-            })
-        end
+    for i = 1, #input do
+        ninja:build(output[i], 'copy', input[i], implicit_input)
     end
-    if #implicit_input == 0 then
-        ninja:build(output, 'copy', input)
-    else
-        ninja:build(output, 'copy', nil, implicit_input, nil, {
-            input = input,
-        })
-    end
-    if not tmpName then
+    if name then
+        assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:build(name, 'phony', output)
         self._targets[name] = {
             implicit_input = name,

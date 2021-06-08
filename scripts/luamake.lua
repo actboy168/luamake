@@ -585,18 +585,18 @@ function GEN.copy(self, name, attribute)
     if not ruleCopy then
         ruleCopy = true
         if globals.hostshell == "cmd" then
-            ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in $out', {
-                description = 'Copy $in $out',
+            ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
+                description = 'Copy $in$input $out',
                 restat = 1,
             })
         elseif globals.hostos == "windows" then
-            ninja:rule('copy', 'sh -c "cp -afv $in $out 1>/dev/null"', {
-                description = 'Copy $in $out',
+            ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
+                description = 'Copy $in$input $out',
                 restat = 1,
             })
         else
-            ninja:rule('copy', 'cp -afv $in $out 1>/dev/null', {
-                description = 'Copy $in $out',
+            ninja:rule('copy', 'cp -afv $in$input $out 1>/dev/null', {
+                description = 'Copy $in$input $out',
                 restat = 1,
             })
         end
@@ -617,9 +617,16 @@ function GEN.copy(self, name, attribute)
     end
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
 
-    for i = 1, #input do
-        ninja:build(output[i], 'copy', input[i], implicit_input)
+    if #implicit_input == 0 then
+        for i = 1, #input do
+            ninja:build(output[i], 'copy', input[i])
+        end
+    else
+        for i = 1, #input do
+            ninja:build(output[i], 'copy', nil, implicit_input, nil, { input = input[i] })
+        end
     end
+
     if name then
         assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:build(name, 'phony', output)

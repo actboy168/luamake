@@ -307,7 +307,6 @@ local function generate(self, rule, name, attribute)
     self._targets[name] = t
 
     if rule == 'source_set' then
-        assert(#input > 0, ("`%s`: no source files found."):format(name))
         local dep_ldflags = {}
         if attribute.links then
             for _, link in ipairs(attribute.links) do

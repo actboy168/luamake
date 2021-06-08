@@ -1,4 +1,4 @@
 local util = require 'util'
-util.command 'init'
-util.ninja { "-t", "clean" }
-util.command 'make'
+util.cmd_init()
+util.cmd_clean()
+util.cmd_make()

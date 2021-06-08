@@ -1,3 +1,3 @@
 local util = require 'util'
-util.command 'init'
-util.command 'make'
+util.cmd_init()
+util.cmd_make()

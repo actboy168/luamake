@@ -1,3 +1,3 @@
 local util = require 'util'
-local arguments = require "arguments"
-util.ninja(arguments.targets)
+util.command('init', true)
+util.cmd_make()

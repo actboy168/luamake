@@ -1,7 +1,5 @@
-local arguments = require "arguments"
 local globals = require "globals"
 local sp = require 'bee.subprocess'
-local thread = require 'bee.thread'
 
 local function ninja(args)
     if globals.compiler == 'msvc' then
@@ -66,9 +64,27 @@ local function sandbox(filename, ...)
     })(...)
 end
 
+local function cmd_init(dontgenerate)
+    local sim = require 'simulator'
+    sim:dofile(WORKDIR / "make.lua")
+    if not dontgenerate then
+        sim:finish()
+    end
+end
+
+local function cmd_make()
+    local arguments = require "arguments"
+    ninja(arguments.targets)
+end
+
+local function cmd_clean()
+    ninja { "-t", "clean" }
+end
 
 return {
-    ninja = ninja,
     command = command,
     sandbox = sandbox,
+    cmd_init = cmd_init,
+    cmd_make = cmd_make,
+    cmd_clean = cmd_clean,
 }

@@ -1,5 +1,6 @@
 local globals = require "globals"
 local sp = require 'bee.subprocess'
+local thread = require 'bee.thread'
 
 local function ninja(args)
     if globals.compiler == 'msvc' then
@@ -38,6 +39,8 @@ local function ninja(args)
         if n > 0 then
             io.write(process.stdout:read(n))
             io.flush()
+        else
+            thread.sleep(1)
         end
     end
 

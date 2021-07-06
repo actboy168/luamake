@@ -97,7 +97,7 @@ local function environment(arch)
 end
 
 local function prefix(env)
-    local testdir = MAKEDIR / 'luamake-temp'
+    local testdir = fs.path(os.tmpname())
     fs.create_directories(testdir)
     createfile(testdir / 'test.h')
     createfile(testdir / 'test.c', '#include "test.h"')

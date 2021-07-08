@@ -97,7 +97,7 @@ local function environment(arch)
 end
 
 local function prefix(env)
-    local testdir = MAKEDIR / 'luamake-temp'
+    local testdir = fs.path(os.tmpname())
     fs.create_directories(testdir)
     createfile(testdir / 'test.h')
     createfile(testdir / 'test.c', '#include "test.h"')
@@ -126,7 +126,7 @@ local function prefix(env)
     return prefix
 end
 
-local function vcrtpath(arch)
+local function vcrtpath(arch, mode)
     local RedistVersion = (function ()
         local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCRedistVersion.default.txt'
         local f = assert(io.open(verfile:string(), 'r'))
@@ -148,10 +148,14 @@ local function vcrtpath(arch)
         f:close()
         return r:match '#define%s+_MSVC_STL_VERSION%s+(%d+)'
     end)()
-    return installpath() / 'VC' / 'Redist' / 'MSVC' / RedistVersion / arch / ('Microsoft.VC'..ToolsetVersion..'.CRT')
+    local path = installpath() / 'VC' / 'Redist' / 'MSVC' / RedistVersion
+    if mode == "debug" then
+        return path / "debug_nonredist" / arch / ('Microsoft.VC'..ToolsetVersion..'.DebugCRT')
+    end
+    return path / arch / ('Microsoft.VC'..ToolsetVersion..'.CRT')
 end
 
-local function ucrtpath(arch)
+local function ucrtpath(arch, mode)
     local UniversalCRTSdkDir
     vsdevcmd(arch, function (name, value)
         if name == "UniversalCRTSdkDir" then
@@ -162,7 +166,7 @@ local function ucrtpath(arch)
         return
     end
     local path = fs.path(UniversalCRTSdkDir) / 'Redist'
-    local res, ver
+    local redist, ver
     local function accept(p)
         local ucrt = p / 'ucrt' / 'DLLs' / arch
         if fs.exists(ucrt) then
@@ -172,7 +176,7 @@ local function ucrtpath(arch)
                 version = tonumber(version)
             end
             if not ver or ver < version then
-                res, ver = ucrt, version
+                redist, ver = ucrt, version
             end
         end
     end
@@ -180,24 +184,42 @@ local function ucrtpath(arch)
     for p in path:list_directory() do
         accept(p)
     end
-    if res then
-        return res
+    if not redist then
+        return
     end
+    if mode == "debug" then
+        return redist, fs.path(UniversalCRTSdkDir) / "bin" / ("10.0.%d.0"):format(ver) / arch / "ucrt"
+    end
+    return redist
 end
 
-local function copy_vcrt(arch, target)
+local function copy_vcrt(arch, target, mode)
+    local ignore = mode == "debug" and fs.path "vccorlib140d.dll" or fs.path "vccorlib140.dll"
     fs.create_directories(target)
-    for dll in vcrtpath(arch):list_directory() do
-        if dll:filename() ~= fs.path "vccorlib140.dll" then
-            fs.copy_file(dll, target / dll:filename(), true)
+    for dll in vcrtpath(arch, mode):list_directory() do
+        local filename = dll:filename()
+        if filename ~= ignore then
+            fs.copy_file(dll, target / filename, fs.copy_options.overwrite_existing)
         end
     end
 end
 
-local function copy_ucrt(arch, target)
+local function copy_ucrt(arch, target, mode)
     fs.create_directories(target)
-    for dll in ucrtpath(arch):list_directory() do
-        fs.copy_file(dll, target / dll:filename(), true)
+    if mode == "debug" then
+        local redist, bin = ucrtpath(arch, mode):list_directory()
+        local ignore = fs.path "ucrtbase.dll"
+        for dll in redist:list_directory() do
+            local filename = dll:filename()
+            if filename ~= ignore then
+                fs.copy_file(dll, target / filename, fs.copy_options.overwrite_existing)
+            end
+        end
+        fs.copy_file(bin / "ucrtbased.dll", target / "ucrtbased.dll", fs.copy_options.overwrite_existing)
+    else
+        for dll in ucrtpath(arch, mode):list_directory() do
+            fs.copy_file(dll, target / dll:filename(), fs.copy_options.overwrite_existing)
+        end
     end
 end
 
@@ -205,8 +227,6 @@ return {
     installpath = installpath,
     environment = environment,
     prefix = prefix,
-    vcrtpath = vcrtpath,
-    ucrtpath = ucrtpath,
     copy_vcrt = copy_vcrt,
     copy_ucrt = copy_ucrt,
 }

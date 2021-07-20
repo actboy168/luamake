@@ -1,6 +1,7 @@
 local lm = require 'luamake'
 local sandbox = require "sandbox"
 local fs = require 'bee.filesystem'
+local fsutil = require 'fsutil'
 local arguments = require "arguments"
 local globals = require "globals"
 
@@ -131,6 +132,7 @@ local function filehook(name, mode)
 end
 
 local visited = {}
+
 local function isVisited(path)
     path = path:string()
     if visited[path] then
@@ -138,8 +140,9 @@ local function isVisited(path)
     end
     visited[path] = true
 end
+
 function dofile(_, path, env)
-    path = fs.absolute(path, fs.path(globals.workdir or "."))
+    path = fsutil.absolute(path, fs.path(globals.workdir or "."))
     if isVisited(path) then
         return
     end

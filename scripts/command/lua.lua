@@ -41,6 +41,14 @@ local function find_exe()
 end
 
 local function update_arg()
+    for i = 1, #arg do
+        if arg[i] == "-e" then
+            table.remove(arg, i)
+            table.remove(arg, i)
+            break
+        end
+    end
+
     if arg[2] == nil then
         error "Not found lua file."
     end

@@ -210,7 +210,6 @@ end
 
 local function update_ldflags(ldflags, attribute, instance, name, rootdir)
     tbl_append(ldflags, cc.ldflags)
-    cc.update_ldflags(ldflags, attribute)
 
     if attribute.links then
         for _, link in ipairs(attribute.links) do
@@ -235,6 +234,8 @@ local function update_ldflags(ldflags, attribute, instance, name, rootdir)
             end
         end
     end
+    
+    cc.update_ldflags(ldflags, attribute)
 end
 
 local function generate(self, rule, name, attribute)

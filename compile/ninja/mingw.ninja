@@ -126,8 +126,8 @@ build $obj/bee/lua_time.obj: CXX_bee 3rd/bee.lua/binding/lua_time.cpp
 build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
 rule LINK_bee
-  command = $cc --shared $in -o $out -lstdc++ -s -ladvapi32 -lws2_32 $
-      -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++
+  command = $cc --shared $in -o $out -ladvapi32 -lws2_32 -lole32 -luser32 $
+      -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++ -lstdc++ -s
   description = Link    Dll $out
 build $bin/bee.dll: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
     $obj/bee/fsevent_win.obj $obj/bee/endpoint.obj $obj/bee/socket.obj $

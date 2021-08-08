@@ -1,4 +1,3 @@
-require 'bee'
 local sp = require 'bee.subprocess'
 local fs = require 'bee.filesystem'
 

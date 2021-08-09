@@ -166,7 +166,7 @@ build $bin/bootstrap: LINK_bootstrap $obj/bootstrap/main.obj $
     $obj/source_lua/lzio.obj
 build bootstrap: phony $bin/bootstrap
 rule copy
-  command = cp -afv $in$input $out 1>/dev/null
+  command = cp -fv $in$input $out 1>/dev/null
   restat = 1
   description = Copy $in$input $out
 build $bin/main.lua: copy | $bin/bootstrap

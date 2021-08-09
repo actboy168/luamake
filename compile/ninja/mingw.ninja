@@ -165,7 +165,7 @@ build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.dll
 build bootstrap: phony $bin/bootstrap.exe
 rule copy
-  command = sh -c "cp -afv $in$input $out 1>/dev/null"
+  command = sh -c "cp -fv $in$input $out 1>/dev/null"
   restat = 1
   description = Copy $in$input $out
 build $bin/main.lua: copy | $bin/bootstrap.exe

@@ -1,15 +1,17 @@
-chcp 65001
-luamake init -prebuilt -builddir build/msvc  -hostos windows
-luamake init -prebuilt -builddir build/mingw -hostos windows -compiler gcc
-luamake init -prebuilt -builddir build/linux -hostos linux
-luamake init -prebuilt -builddir build/macos -hostos macos
-luamake init -prebuilt -builddir build/android -hostos android
-
+@echo off
+chcp 65001 1>nul
 if not exist compile\ninja (
 	md compile\ninja
 )
-copy /Y build\msvc\build.ninja  compile\ninja\msvc.ninja
-copy /Y build\mingw\build.ninja compile\ninja\mingw.ninja
-copy /Y build\linux\build.ninja compile\ninja\linux.ninja
-copy /Y build\macos\build.ninja compile\ninja\macos.ninja
-copy /Y build\android\build.ninja compile\ninja\android.ninja
+
+for %%a in (msvc mingw linux macos android) do (
+	if "%%a" == "msvc" (
+		luamake init -prebuilt -builddir build/msvc -hostos windows
+	) else if "%%a" == "mingw" (
+		luamake init -prebuilt -builddir build/mingw -hostos windows -compiler gcc
+	) else (
+		luamake init -prebuilt -builddir build/%%a -hostos %%a
+	)
+	copy /Y build\%%a\build.ninja compile\ninja\%%a.ninja 1>nul
+	echo Copied %%a.ninja
+)

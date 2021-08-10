@@ -5,7 +5,14 @@ case "`uname`" in
     ninja -f compile/ninja/mingw.ninja
     ;;
   Linux)
-    ninja -f compile/ninja/linux.ninja
+    case "`uname -o`" in
+      Android)
+        ninja -f compile/ninja/android.ninja
+        ;;
+      *)
+        ninja -f compile/ninja/linux.ninja
+        ;;
+    esac
     ;;
   Darwin)
     ninja -f compile/ninja/macos.ninja

@@ -1,6 +1,5 @@
 local fs = require "bee.filesystem"
 local sp = require "bee.subprocess"
-local memfile = require "memfile"
 local arguments = require "arguments"
 local globals = require "globals"
 
@@ -715,7 +714,7 @@ function lm:finish()
 
     local ninja_syntax = require "ninja_syntax"
     local ninja_script = (builddir / "build.ninja"):string()
-    local ninja = ninja_syntax.Writer(assert(memfile(ninja_script)))
+    local ninja = ninja_syntax.Writer(ninja_script)
 
     ninja:variable("builddir", fmtpath(globals.builddir))
     ninja:variable("bin", fmtpath(globals.bindir))

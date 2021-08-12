@@ -4,7 +4,7 @@ local targets = {}
 local what = 'remake'
 
 local function has_command(what)
-    local path = package.searchpath(what, (MAKEDIR / "scripts" / "command" / "?.lua"):string())
+    local path = package.searchpath("command."..what, package.path)
     return path ~= nil
 end
 

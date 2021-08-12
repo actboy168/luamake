@@ -1,3 +1,4 @@
-local util = require 'util'
-util.cmd_init()
-util.cmd_make()
+local action = require "action"
+action.init()
+action.generate()
+action.make()

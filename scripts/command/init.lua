@@ -1,2 +1,3 @@
-local util = require 'util'
-util.cmd_init()
+local action = require "action"
+action.init()
+action.generate()

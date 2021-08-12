@@ -1,17 +1,17 @@
-local util = require "util"
+local action = require "action"
 local globals = require "globals"
 
-util.cmd_init(true)
+action.init()
 
 if globals.compiler == "msvc" then
     local msvc = require "msvc_util"
     if msvc.hasEnvConfig() then
-        util.cmd_clean()
+        action.clean()
         msvc.cleanEnvConfig()
     else
         local fs = require "bee.filesystem"
         pcall(fs.remove_all, fs.path(globals.builddir))
     end
 else
-    util.cmd_clean()
+    action.clean()
 end

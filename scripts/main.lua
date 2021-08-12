@@ -6,8 +6,8 @@ local RawCommand = {
 }
 
 local function command(what)
-    local path = assert(package.searchpath(what, (MAKEDIR / "scripts" / "command" / "?.lua"):string()))
-    assert(loadfile(path))()
+    local path = assert(package.searchpath("command."..what, package.path))
+    dofile(path)
 end
 
 if RawCommand[arg[1]] then

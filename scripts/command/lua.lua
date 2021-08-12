@@ -62,5 +62,15 @@ end
 
 update_arg()
 
-local sandbox = require "util".sandbox
-sandbox(arg[0], table.unpack(arg))
+local globals = require "globals"
+local sandbox = require "sandbox"
+
+assert(sandbox {
+    root = WORKDIR:string(),
+    main = arg[0],
+    io_open = io.open,
+    preload = globals.compiler == 'msvc' and {
+        msvc = require "msvc",
+    },
+    builddir = globals.builddir,
+})(table.unpack(arg))

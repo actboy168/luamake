@@ -50,18 +50,6 @@ local function ninja(args)
     end
 end
 
-local function sandbox(filename, ...)
-    assert(require "sandbox"{
-        root = WORKDIR:string(),
-        main = filename,
-        io_open = io.open,
-        preload = globals.compiler == 'msvc' and {
-            msvc = require "msvc",
-        },
-        builddir = globals.builddir,
-    })(...)
-end
-
 local function cmd_init(dontgenerate)
     local sim = require 'simulator'
     sim:dofile(WORKDIR / "make.lua")
@@ -80,7 +68,6 @@ local function cmd_clean()
 end
 
 return {
-    sandbox = sandbox,
     cmd_init = cmd_init,
     cmd_make = cmd_make,
     cmd_clean = cmd_clean,

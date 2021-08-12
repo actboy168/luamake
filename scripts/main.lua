@@ -1,13 +1,18 @@
-local util = require "util"
 local fs = require "bee.filesystem"
 local RawCommand = {
     lua = true,
     test = true,
     help = true,
 }
+
+local function command(what)
+    local path = assert(package.searchpath(what, (MAKEDIR / "scripts" / "command" / "?.lua"):string()))
+    assert(loadfile(path))()
+end
+
 if RawCommand[arg[1]] then
     WORKDIR = fs.current_path()
-    util.command(arg[1])
+    command(arg[1])
 else
     local arguments = require "arguments"
     local globals = require "globals"
@@ -24,5 +29,5 @@ else
         end
         return path
     end
-    util.command(arguments.what)
+    command(arguments.what)
 end

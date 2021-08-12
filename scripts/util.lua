@@ -50,11 +50,6 @@ local function ninja(args)
     end
 end
 
-local function command(what, ...)
-    local path = assert(package.searchpath(what, (MAKEDIR / "scripts" / "command" / "?.lua"):string()))
-    assert(loadfile(path))(...)
-end
-
 local function sandbox(filename, ...)
     assert(require "sandbox"{
         root = WORKDIR:string(),
@@ -85,7 +80,6 @@ local function cmd_clean()
 end
 
 return {
-    command = command,
     sandbox = sandbox,
     cmd_init = cmd_init,
     cmd_make = cmd_make,

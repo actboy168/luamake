@@ -12,7 +12,7 @@ local ArchAlias = {
 }
 
 local function readEnvConfig()
-    local EnvConfig = fs.path(globals.builddir) / 'env.config'
+    local EnvConfig = WORKDIR / globals.builddir / 'env.config'
     local f = assert(io.open(EnvConfig:string(), 'r'))
     local config = assert(load(assert(f:read 'a')))()
     f:close()
@@ -20,27 +20,26 @@ local function readEnvConfig()
 end
 
 local function writeEnvConfig(data)
-    local EnvConfig = fs.path(globals.builddir) / 'env.config'
-    assert(
-        assert(
-            io.open(EnvConfig:string(), 'w')
-        ):write(data)
-    ):close()
+    local EnvConfig = WORKDIR / globals.builddir / 'env.config'
+    local f <close> = assert(io.open(EnvConfig:string(), 'w'))
+    f:write(data)
 end
 
 local function updateEnvConfig()
-    local config = readEnvConfig()
-    env = config.env
-    prefix = config.prefix
+    if not env then
+        local config = readEnvConfig()
+        env = config.env
+        prefix = config.prefix
+    end
 end
 
 function m.hasEnvConfig()
-    local EnvConfig = fs.path(globals.builddir) / 'env.config'
+    local EnvConfig = WORKDIR / globals.builddir / 'env.config'
     return fs.exists(EnvConfig)
 end
 
 function m.cleanEnvConfig()
-    local EnvConfig = fs.path(globals.builddir) / 'env.config'
+    local EnvConfig = WORKDIR / globals.builddir / 'env.config'
     fs.remove(EnvConfig)
 end
 

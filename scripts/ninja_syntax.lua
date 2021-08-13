@@ -154,11 +154,11 @@ function ninja.Writer(filename)
 			end
 		end
 	end
-	function w:build(outputs, rule, inputs, implicit, order_only, variables,implicit_outputs)
+	function w:build(outputs, rule, inputs, args)
 		local s = {"build"}
 		append_path(s, as_list(outputs))
-		if implicit_outputs then
-			local t = as_list(implicit_outputs)
+		if args and args.implicit_outputs then
+			local t = as_list(args.implicit_outputs)
 			if #t > 0 then
 				s[#s+1] = "|"
 				append_path(s, t)
@@ -167,23 +167,23 @@ function ninja.Writer(filename)
 		s[#s] = s[#s]..":"
 		s[#s+1] = rule
 		append_path(s, as_list(inputs))
-		if implicit then
-			local t = as_list(implicit)
+		if args and args.implicit_inputs then
+			local t = as_list(args.implicit_inputs)
 			if #t > 0 then
 				s[#s+1] = "|"
 				append_path(s, t)
 			end
 		end
-		if order_only then
-			local t = as_list(order_only)
+		if args and args.order_only then
+			local t = as_list(args.order_only)
 			if #t > 0 then
 				s[#s+1] = "||"
 				append_path(s, t)
 			end
 		end
 		writeline(join(s))
-		if variables then
-			for key, value in pairs(variables) do
+		if args and args.variables then
+			for key, value in pairs(args.variables) do
 				self:variable(key, value, 1)
 			end
 		end

@@ -376,14 +376,19 @@ local function generate(self, rule, name, attribute)
             local lib = fs.path '$bin' / (name..".lib")
             t.input = {lib}
             t.implicit_input = binname
-            ninja:build(binname, "LINK_"..fmtname, input, implicit_input, nil, nil, lib)
+            ninja:build(binname, "LINK_"..fmtname, input, {
+                implicit_inputs = implicit_input,
+                implicit_outputs = lib,
+            })
         else
             if globals.os == "windows" then
                 t.input = {binname}
             else
                 t.implicit_input = binname
             end
-            ninja:build(binname, "LINK_"..fmtname, input, implicit_input)
+            ninja:build(binname, "LINK_"..fmtname, input, {
+                implicit_inputs = implicit_input,
+            })
         end
     elseif rule == "executable" then
         if globals.os == "windows" then
@@ -393,7 +398,9 @@ local function generate(self, rule, name, attribute)
         end
         t.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
-        ninja:build(binname, "LINK_"..fmtname, input, implicit_input)
+        ninja:build(binname, "LINK_"..fmtname, input, {
+            implicit_inputs = implicit_input,
+        })
     elseif rule == "static_library" then
         if globals.os == "windows" then
             binname = fs.path("$bin") / (name .. ".lib")
@@ -402,7 +409,9 @@ local function generate(self, rule, name, attribute)
         end
         t.input = {binname}
         cc.rule_lib(ninja, name)
-        ninja:build(binname, "LINK_"..fmtname, input, implicit_input)
+        ninja:build(binname, "LINK_"..fmtname, input, {
+            implicit_inputs = implicit_input,
+        })
     end
     ninja:build(name, 'phony', binname)
 end
@@ -467,10 +476,14 @@ function GEN.phony(self, name, attribute)
     end
     if name then
         if #output == 0 then
-            ninja:build(name, 'phony', input, implicit_input)
+            ninja:build(name, 'phony', input, {
+                implicit_inputs = implicit_input,
+            })
         else
             ninja:build(name, 'phony', output)
-            ninja:build(output, 'phony', input, implicit_input)
+            ninja:build(output, 'phony', input, {
+                implicit_inputs = implicit_input,
+            })
         end
         self._targets[name] = {
             implicit_input = name,
@@ -479,7 +492,9 @@ function GEN.phony(self, name, attribute)
         if #output == 0 then
             error(("`%s`: no output."):format(name))
         else
-            ninja:build(output, 'phony', input, implicit_input)
+            ninja:build(output, 'phony', input, {
+                implicit_inputs = implicit_input,
+            })
         end
     end
 end
@@ -563,8 +578,9 @@ function GEN.build(self, name, attribute, shell)
         outname = output
     end
     ninja:rule('build_'..rule_name, table.concat(command, " "))
-    ninja:build(outname, 'build_'..rule_name, input, implicit_input, nil, {
-        pool = pool,
+    ninja:build(outname, 'build_'..rule_name, input, {
+        implicit_inputs = implicit_input,
+        variables = { pool = pool },
     })
     if not tmpName then
         ninja:build(name, 'phony', outname)
@@ -623,7 +639,10 @@ function GEN.copy(self, name, attribute)
         end
     else
         for i = 1, #input do
-            ninja:build(output[i], 'copy', nil, implicit_input, nil, { input = input[i] })
+            ninja:build(output[i], 'copy', nil, {
+                implicit_inputs = implicit_input,
+                variables = { input = input[i] },
+            })
         end
     end
 
@@ -739,7 +758,9 @@ function lm:finish()
 
     if not arguments.args.prebuilt then
         ninja:rule('configure', '$luamake init', { generator = 1 })
-        ninja:build(fs.path '$builddir' / "build.ninja", 'configure', nil, self._scripts)
+        ninja:build(fs.path '$builddir' / "build.ninja", 'configure', {
+            implicit_inputs = self._scripts,
+        })
     end
 
     for _, target in ipairs(self._export_targets) do

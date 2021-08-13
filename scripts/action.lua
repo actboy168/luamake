@@ -4,29 +4,22 @@ local thread = require 'bee.thread'
 local sim = require 'simulator'
 
 local function ninja(args)
+    local option = {
+        "ninja", "-f",  WORKDIR / globals.builddir / "build.ninja",
+        args,
+        stdout = true,
+        stderr = "stdout",
+        cwd = WORKDIR,
+        searchPath = true,
+    }
     if globals.compiler == 'msvc' then
         local msvc = require "msvc_util"
-        if args.env then
-            for k, v in pairs(msvc.getEnv()) do
-                args.env[k] = v
-            end
-        else
-            args.env = msvc.getEnv()
-        end
-        args.env.VS_UNICODE_OUTPUT = false
-        args.searchPath = true
-        table.insert(args, 1, {'cmd', '/c', 'ninja'})
-    else
-        args.searchPath = true
-        table.insert(args, 1, 'ninja')
+        option.env = msvc.getEnv()
+        option.env.VS_UNICODE_OUTPUT = false
+        option[1] = {'cmd', '/c', 'ninja'}
     end
-    table.insert(args, 2, "-f")
-    table.insert(args, 3, WORKDIR / globals.builddir / "build.ninja")
-    args.stdout = true
-    args.stderr = "stdout"
-    args.cwd = WORKDIR
-    local process = assert(sp.spawn(args))
 
+    local process = assert(sp.spawn(option))
     while true do
         local n = sp.peek(process.stdout)
         if n == nil then

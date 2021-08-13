@@ -10,8 +10,6 @@ local strfind = string.find
 local substr = string.sub
 local strrep = string.rep
 
-local ninja = {}
-
 local line_width <const> = 78
 local rule_kwargs <const> = {
 	'description',
@@ -94,7 +92,7 @@ local function wrapafter(text, index)
 	return wrapafter(text, index+1)
 end
 
-function ninja.Writer(filename)
+return function (filename)
 	local w = {}
 	local output = {}
 	local function write(text)
@@ -205,5 +203,3 @@ function ninja.Writer(filename)
 	end
 	return w
 end
-
-return ninja

@@ -733,7 +733,7 @@ function lm:finish()
 
     local ninja_syntax = require "ninja_syntax"
     local ninja_script = (builddir / "build.ninja"):string()
-    local ninja = ninja_syntax.Writer(ninja_script)
+    local ninja = ninja_syntax(ninja_script)
 
     ninja:variable("builddir", fmtpath(globals.builddir))
     ninja:variable("bin", fmtpath(globals.bindir))

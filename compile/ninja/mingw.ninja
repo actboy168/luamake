@@ -6,8 +6,8 @@ rule C_lua54
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -D_WIN32_WINNT=0x0601 -DLUA_BUILD_AS_DLL -DNDEBUG -o $out -c $in
   description = Compile C   $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/lua54/lapi.obj: C_lua54 3rd/bee.lua/3rd/lua/lapi.c
 build $obj/lua54/lauxlib.obj: C_lua54 3rd/bee.lua/3rd/lua/lauxlib.c
 build $obj/lua54/lbaselib.obj: C_lua54 3rd/bee.lua/3rd/lua/lbaselib.c
@@ -61,8 +61,8 @@ rule C_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C   $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/lua/utf8_crt.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_crt.c
 build $obj/lua/utf8_lua.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_lua.c
 rule LINK_lua
@@ -77,8 +77,8 @@ rule C_bee
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
       -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
   description = Compile C   $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/bee/lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule CXX_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
@@ -86,8 +86,8 @@ rule CXX_bee
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
       -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
   description = Compile C++ $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/bee/error.obj: CXX_bee 3rd/bee.lua/bee/error.cpp
 build $obj/bee/fsevent_win.obj: CXX_bee $
     3rd/bee.lua/bee/fsevent/fsevent_win.cpp
@@ -146,15 +146,15 @@ rule C_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
       -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C   $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/bootstrap/utf8_crt.obj: C_bootstrap 3rd/bee.lua/3rd/lua/utf8_crt.c
 rule CXX_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
       -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/bootstrap/main.obj: CXX_bootstrap 3rd/bee.lua/bootstrap/main.cpp
 build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
@@ -166,8 +166,8 @@ build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
 build bootstrap: phony $bin/bootstrap.exe
 rule copy
   command = sh -c "cp -afv $in$input $out 1>/dev/null"
-  restat = 1
   description = Copy $in$input $out
+  restat = 1
 build $bin/main.lua: copy | $bin/bootstrap.exe
   input = 3rd/bee.lua/bootstrap/main.lua
 build copy_script: phony $bin/main.lua

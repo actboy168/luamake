@@ -14,12 +14,19 @@ local strfmt = string.format
 local ninja = {}
 
 local line_width <const> = 78
-local simple_kwargs <const> = {
-	'description', 'depfile', 'pool', 'rspfile',
-	'rspfile_content', 'deps', 'msvc_deps_prefix'
+local rule_kwargs <const> = {
+	'description',
+	'generator',
+	'pool',
+	'restat',
+	'rspfile',
+	'rspfile_content',
+	'deps',
+	'depfile',
 }
-local bool_kwargs <const> = {
-	'generator', 'restat'
+local rule_bool_kwargs <const> = {
+	['generator'] = true,
+	['restat'] = true,
 }
 
 local function isblank(obj)
@@ -137,15 +144,13 @@ function ninja.Writer(filename)
 		writeline('rule '.. name)
 		self:variable('command', command, 1)
 		if kwargs then
-			for _,key in ipairs(bool_kwargs) do
+			for _, key in ipairs(rule_kwargs) do
 				if kwargs[key] then
-					self:variable(key, '1', 1)
-					kwargs[key] = nil
-				end
-			end
-			for _, key in pairs(simple_kwargs) do
-				if kwargs[key] then
-					self:variable(key, kwargs[key], 1)
+					if rule_bool_kwargs[key] then
+						self:variable(key, '1', 1)
+					else
+						self:variable(key, kwargs[key], 1)
+					end
 				end
 			end
 		end

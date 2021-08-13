@@ -7,8 +7,8 @@ rule C_source_lua
       -mmacosx-version-min=10.12 -DLUA_USE_MACOSX -DNDEBUG $
       -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/source_lua/lapi.obj: C_source_lua 3rd/bee.lua/3rd/lua/lapi.c
 build $obj/source_lua/lauxlib.obj: C_source_lua 3rd/bee.lua/3rd/lua/lauxlib.c
 build $obj/source_lua/lbaselib.obj: C_source_lua $
@@ -51,8 +51,8 @@ rule C_lua
       -fvisibility=hidden -mmacosx-version-min=10.12 -DLUA_USE_MACOSX $
       -DNDEBUG -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/lua/lua.obj: C_lua 3rd/bee.lua/3rd/lua/lua.c
 rule LINK_lua
   command = $cc $in -o $out -lm -ldl -lstdc++ -Wl,-S,-x
@@ -82,8 +82,8 @@ rule C_bee
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG $
       -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/bee/lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule CXX_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
@@ -92,8 +92,8 @@ rule CXX_bee
       -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DNDEBUG $
       -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/bee/error.obj: CXX_bee 3rd/bee.lua/bee/error.cpp
 build $obj/bee/fsevent_osx.obj: CXX_bee $
     3rd/bee.lua/bee/fsevent/fsevent_osx.cpp
@@ -138,8 +138,8 @@ rule CXX_bootstrap
       -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/3rd/lua $
       -DLUA_USE_MACOSX -DNDEBUG -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
-  depfile = $out.d
   deps = gcc
+  depfile = $out.d
 build $obj/bootstrap/main.obj: CXX_bootstrap 3rd/bee.lua/bootstrap/main.cpp
 build $obj/bootstrap/progdir.obj: CXX_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
@@ -167,8 +167,8 @@ build $bin/bootstrap: LINK_bootstrap $obj/bootstrap/main.obj $
 build bootstrap: phony $bin/bootstrap
 rule copy
   command = cp -afv $in$input $out 1>/dev/null
-  restat = 1
   description = Copy $in$input $out
+  restat = 1
 build $bin/main.lua: copy | $bin/bootstrap
   input = 3rd/bee.lua/bootstrap/main.lua
 build copy_script: phony $bin/main.lua

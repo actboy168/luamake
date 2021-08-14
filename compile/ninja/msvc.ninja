@@ -3,8 +3,8 @@ bin = $builddir\bin
 obj = $builddir\obj
 rule C_lua54
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-      /permissive- /O2 /GL /Zc:inline /W3 /MD /D_WIN32_WINNT=0x0601 $
-      /DLUA_BUILD_AS_DLL /DNDEBUG 
+    /permissive- /O2 /GL /Zc:inline /W3 /MD /D_WIN32_WINNT=0x0601 $
+    /DLUA_BUILD_AS_DLL /DNDEBUG 
   description = Compile C   $out
   deps = msvc
 build $obj\lua54\lapi.obj: C_lua54 3rd/bee.lua/3rd/lua/lapi.c
@@ -42,7 +42,7 @@ build $obj\lua54\lzio.obj: C_lua54 3rd/bee.lua/3rd/lua/lzio.c
 build $obj\lua54\utf8_crt.obj: C_lua54 3rd/bee.lua/3rd/lua/utf8_crt.c
 rule LINK_lua54
   command = cl /nologo $in /link /DEBUG:NONE /LTCG /out:$out /DLL $
-      /IMPLIB:$bin\lua54.lib
+    /IMPLIB:$bin\lua54.lib
   description = Link    Dll $out
   restat = 1
 build $bin\lua54.dll | $bin\lua54.lib: LINK_lua54 $obj\lua54\lapi.obj $
@@ -60,7 +60,7 @@ build $bin\lua54.dll | $bin\lua54.lib: LINK_lua54 $obj\lua54\lapi.obj $
 build lua54: phony $bin\lua54.dll
 rule C_lua
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-      /permissive- /O2 /GL /Zc:inline /W3 /MD /D_WIN32_WINNT=0x0601 /DNDEBUG 
+    /permissive- /O2 /GL /Zc:inline /W3 /MD /D_WIN32_WINNT=0x0601 /DNDEBUG 
   description = Compile C   $out
   deps = msvc
 build $obj\lua\utf8_crt.obj: C_lua 3rd/bee.lua/3rd/lua/utf8_crt.c
@@ -73,18 +73,18 @@ build $bin\lua.exe: LINK_lua $obj\lua\utf8_crt.obj $obj\lua\utf8_lua.obj $
 build lua: phony $bin\lua.exe
 rule C_bee
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-      /permissive- /O2 /GL /Zc:inline /W3 /MD /I3rd\bee.lua\3rd\lua $
-      /I3rd\bee.lua\3rd\lua-seri /I3rd\bee.lua\bee\nonstd /I3rd\bee.lua $
-      /D_WIN32_WINNT=0x0601 /DBEE_INLINE /D_CRT_SECURE_NO_WARNINGS /DNDEBUG 
+    /permissive- /O2 /GL /Zc:inline /W3 /MD /I3rd\bee.lua\3rd\lua $
+    /I3rd\bee.lua\3rd\lua-seri /I3rd\bee.lua\bee\nonstd /I3rd\bee.lua $
+    /D_WIN32_WINNT=0x0601 /DBEE_INLINE /D_CRT_SECURE_NO_WARNINGS /DNDEBUG 
   description = Compile C   $out
   deps = msvc
 build $obj\bee\lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule CXX_bee
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-      /permissive- /O2 /GL /Zc:inline /W3 /MD /I3rd\bee.lua\3rd\lua $
-      /I3rd\bee.lua\3rd\lua-seri /I3rd\bee.lua\bee\nonstd /I3rd\bee.lua $
-      /D_WIN32_WINNT=0x0601 /DBEE_INLINE /D_CRT_SECURE_NO_WARNINGS /DNDEBUG $
-      /std:c++17
+    /permissive- /O2 /GL /Zc:inline /W3 /MD /I3rd\bee.lua\3rd\lua $
+    /I3rd\bee.lua\3rd\lua-seri /I3rd\bee.lua\bee\nonstd /I3rd\bee.lua $
+    /D_WIN32_WINNT=0x0601 /DBEE_INLINE /D_CRT_SECURE_NO_WARNINGS /DNDEBUG $
+    /std:c++17
   description = Compile C++ $out
   deps = msvc
 build $obj\bee\error.obj: CXX_bee 3rd/bee.lua/bee/error.cpp
@@ -126,8 +126,8 @@ build $obj\bee\lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj\bee\lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
 rule LINK_bee
   command = cl /nologo $in /link advapi32.lib ws2_32.lib ole32.lib $
-      user32.lib version.lib wbemuuid.lib oleAut32.lib /DEBUG:NONE /LTCG $
-      /out:$out /DLL /IMPLIB:$bin\bee.lib
+    user32.lib version.lib wbemuuid.lib oleAut32.lib /DEBUG:NONE /LTCG $
+    /out:$out /DLL /IMPLIB:$bin\bee.lib
   description = Link    Dll $out
   restat = 1
 build $bin\bee.dll | $bin\bee.lib: LINK_bee $obj\bee\lua-seri.obj $
@@ -146,15 +146,15 @@ build $bin\bee.dll | $bin\bee.lib: LINK_bee $obj\bee\lua-seri.obj $
 build bee: phony $bin\bee.dll
 rule C_bootstrap
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-      /permissive- /O2 /GL /Zc:inline /W3 /MD /I3rd\bee.lua\3rd\lua $
-      /D_WIN32_WINNT=0x0601 /DNDEBUG 
+    /permissive- /O2 /GL /Zc:inline /W3 /MD /I3rd\bee.lua\3rd\lua $
+    /D_WIN32_WINNT=0x0601 /DNDEBUG 
   description = Compile C   $out
   deps = msvc
 build $obj\bootstrap\utf8_crt.obj: C_bootstrap 3rd/bee.lua/3rd/lua/utf8_crt.c
 rule CXX_bootstrap
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-      /permissive- /O2 /GL /Zc:inline /W3 /MD /I3rd\bee.lua\3rd\lua $
-      /D_WIN32_WINNT=0x0601 /DNDEBUG /std:c++17
+    /permissive- /O2 /GL /Zc:inline /W3 /MD /I3rd\bee.lua\3rd\lua $
+    /D_WIN32_WINNT=0x0601 /DNDEBUG /std:c++17
   description = Compile C++ $out
   deps = msvc
 build $obj\bootstrap\main.obj: CXX_bootstrap 3rd/bee.lua/bootstrap/main.cpp

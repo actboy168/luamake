@@ -7,8 +7,7 @@ local pairs = pairs
 local tconcat = table.concat
 local strmatch = string.match
 local strfind = string.find
-local substr = string.sub
-local strrep = string.rep
+ local substr = string.sub
 
 local line_width <const> = 78
 local rule_kwargs <const> = {
@@ -71,34 +70,34 @@ local function is_even_dollars_before_index(str, index)
 	return count % 2 == 0
 end
 
-local function nextwrap(text, available)
-	local truncd = substr(text, 1, available)
+local function nextwrap(text, start, count)
+	local truncd = substr(text, start, start + count - 1)
 	local found = strfind(truncd, '%s+[^%s]*$')
-	if found == nil then return 0 end
+	if found == nil then return end
 	if is_even_dollars_before_index(truncd, found) then
-		return found
+		return start + found - 1
 	end
-	return nextwrap(text, found-1)
+	return nextwrap(text, start, found-1)
 end
 
-local function wrapafter(text, index)
-	local found = strfind(text, '%s+', index)
-	if found == nil then return 0 end
+local function wrapafter(text, start)
+	local found = strfind(text, '%s+', start)
+	if found == nil then return end
 	if is_even_dollars_before_index(text, found) then
 		return found
 	end
 	return wrapafter(text, found+1)
 end
 
-local function findwrap(text, available)
-	if #text <= available then
-		return 0
+local function findwrap(text, start, count)
+	if #text < start + count then
+		return
 	end
-	local space = nextwrap(text, available)
-	if space > 0 then
-		return space
+	local found = nextwrap(text, start, count)
+	if found then
+		return found
 	end
-	return wrapafter(text, available)
+	return wrapafter(text, start + count)
 end
 
 return function (filename)
@@ -108,51 +107,67 @@ return function (filename)
 		output[#output+1] = text
 		output[#output+1] = "\n"
 	end
-	local function writeline(text, indent)
-		indent = indent or 0
-		local leading = strrep('  ', indent)
-		local targetlen = line_width - #leading
-		while #text + #leading > line_width do
-			local available = targetlen - 2 -- #' $'
-			local space = findwrap(text, available)
-			if space < 1 then
+	local function writeline(text)
+		local start
+		do
+			local available <const> = line_width - 2 -- sizeof ' $'
+			if #text <= line_width then
+				write(text)
+				return
+			end
+			local found = findwrap(text, 1, available)
+			if not found then
+				write(text)
+				return
+			end
+			write(substr(text, 1, found - 1)..' $')
+			start = found + 1
+		end
+		local leading <const> = '    '
+		local available <const> = line_width - 4 - 2
+		while #text > start + line_width - 5 do
+			local found = findwrap(text, start, available)
+			if not found then
 				break
 			end
-			write(leading .. substr(text, 1, space - 1) .. ' $')
-			text = substr(text, space + 1)
-			leading = strrep('  ', indent+2)
-			targetlen = line_width - #leading
+			write(leading..substr(text, start, found - 1)..' $')
+			start = found + 1
 		end
-		write(leading .. text)
+		write(leading..substr(text, start))
+	end
+	local function block_variable(key, value)
+		if isblank(value) then return end
+		writeline('  '..key..' = '..value)
+	end
+	function w:variable(key, value)
+		if isblank(value) then return end
+		writeline(key..' = '..value)
 	end
 	function w:comment(text)
 		local available = line_width - 2
-		local space = findwrap(text, available)
-		while space > 1 do
-			write('# ' .. substr(text, 1, space - 1))
-			text = substr(text, space + 1)
-			space = findwrap(text, available)
+		local start = 1
+		local found = findwrap(text, start, available)
+		while found do
+			write('# ' .. substr(text, start, found - 1))
+			start = found + 1
+			found = findwrap(text, start, available)
 		end
 		write('# ' .. text)
 	end
-	function w:variable(key, value, indent)
-		if isblank(value) then return end
-		writeline(key..' = '..value, indent)
-	end
 	function w:pool(name, depth)
 		writeline('pool ' .. name)
-		self:variable('depth', depth, 1)
+		block_variable('depth', depth)
 	end
 	function w:rule(name, command, kwargs)
 		writeline('rule '.. name)
-		self:variable('command', command, 1)
+		block_variable('command', command)
 		if kwargs then
 			for _, key in ipairs(rule_kwargs) do
 				if kwargs[key] then
 					if rule_bool_kwargs[key] then
-						self:variable(key, '1', 1)
+						block_variable(key, '1')
 					else
-						self:variable(key, kwargs[key], 1)
+						block_variable(key, kwargs[key])
 					end
 				end
 			end
@@ -188,7 +203,7 @@ return function (filename)
 		writeline(join(s))
 		if args and args.variables then
 			for key, value in pairs(args.variables) do
-				self:variable(key, value, 1)
+				block_variable(key, value)
 			end
 		end
 	end

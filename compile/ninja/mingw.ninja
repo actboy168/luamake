@@ -4,7 +4,7 @@ obj = $builddir/obj
 cc = gcc
 rule C_lua54
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -D_WIN32_WINNT=0x0601 -DLUA_BUILD_AS_DLL -DNDEBUG -o $out -c $in
+    -D_WIN32_WINNT=0x0601 -DLUA_BUILD_AS_DLL -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -59,7 +59,7 @@ build $bin/lua54.dll: LINK_lua54 $obj/lua54/lapi.obj $obj/lua54/lauxlib.obj $
 build lua54: phony $bin/lua54.dll
 rule C_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -73,18 +73,18 @@ build $bin/lua.exe: LINK_lua $obj/lua/utf8_crt.obj $obj/lua/utf8_lua.obj $
 build lua: phony $bin/lua.exe
 rule C_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
-      -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
-      -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
+    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
+    -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
+    -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
 build $obj/bee/lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule CXX_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
-      -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
-      -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
-      -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
+    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
+    -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
+    -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
@@ -127,7 +127,7 @@ build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
 rule LINK_bee
   command = $cc --shared $in -o $out -ladvapi32 -lws2_32 -lole32 -luser32 $
-      -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++ -lstdc++ -s
+    -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++ -lstdc++ -s
   description = Link    Dll $out
 build $bin/bee.dll: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
     $obj/bee/fsevent_win.obj $obj/bee/endpoint.obj $obj/bee/socket.obj $
@@ -144,14 +144,14 @@ build $bin/bee.dll: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
 build bee: phony $bin/bee.dll
 rule C_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
 build $obj/bootstrap/utf8_crt.obj: C_bootstrap 3rd/bee.lua/3rd/lua/utf8_crt.c
 rule CXX_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
-      -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d

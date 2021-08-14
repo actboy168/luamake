@@ -4,7 +4,7 @@ obj = $builddir/obj
 cc = gcc
 rule C_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -DLUA_USE_LINUX $
-      -DNDEBUG -o $out -c $in
+    -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -47,7 +47,7 @@ build $obj/source_lua/lvm.obj: C_source_lua 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/source_lua/lzio.obj: C_source_lua 3rd/bee.lua/3rd/lua/lzio.c
 rule C_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -fvisibility=hidden -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
+    -fvisibility=hidden -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -75,18 +75,18 @@ build $bin/lua: LINK_lua $obj/lua/lua.obj $obj/source_lua/lapi.obj $
 build lua: phony $bin/lua
 rule C_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-      -fvisibility=hidden -fPIC -I3rd/bee.lua/3rd/lua $
-      -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua $
-      -DNDEBUG -o $out -c $in
+    -fvisibility=hidden -fPIC -I3rd/bee.lua/3rd/lua $
+    -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua $
+    -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
 build $obj/bee/lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule CXX_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
-      -fvisibility=hidden -fPIC -I3rd/bee.lua/3rd/lua $
-      -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua $
-      -DNDEBUG -o $out -c $in
+    -fvisibility=hidden -fPIC -I3rd/bee.lua/3rd/lua $
+    -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua $
+    -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
@@ -130,8 +130,8 @@ build $bin/bee.so: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
 build bee: phony $bin/bee.so
 rule CXX_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
-      -fvisibility=hidden -I3rd/bee.lua/3rd/lua -DLUA_USE_LINUX -DNDEBUG -o $
-      $out -c $in
+    -fvisibility=hidden -I3rd/bee.lua/3rd/lua -DLUA_USE_LINUX -DNDEBUG -o $
+    $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d

@@ -61,7 +61,7 @@ local function join(list)
 	return tconcat(list, ' ')
 end
 
-local function is_event_dollars_before_index(str, index)
+local function is_even_dollars_before_index(str, index)
 	local count = 0
 	index = index - 1
 	while index > 1 and substr(str, index, index) == '$' do
@@ -71,25 +71,34 @@ local function is_event_dollars_before_index(str, index)
 	return count % 2 == 0
 end
 
-local function nextwrap(text, width)
-	if #text <= width then return 0 end
-	local truncd = substr(text, 1, width)
-	local foundws = { strfind(truncd, '^.*()(%s+).*$') }
-	if foundws[3] == nil then return 0 end
-	local index = foundws[3]
-	if is_event_dollars_before_index(truncd, index) then
-		return index
+local function nextwrap(text, available)
+	local truncd = substr(text, 1, available)
+	local found = strfind(truncd, '%s+[^%s]*$')
+	if found == nil then return 0 end
+	if is_even_dollars_before_index(truncd, found) then
+		return found
 	end
-	return nextwrap(text, index-1)
+	return nextwrap(text, found-1)
 end
 
 local function wrapafter(text, index)
-	local index = strfind(text, '%s+', index)
-	if index == nil then return 0 end
-	if is_event_dollars_before_index(text, index) then
-		return index
+	local found = strfind(text, '%s+', index)
+	if found == nil then return 0 end
+	if is_even_dollars_before_index(text, found) then
+		return found
 	end
-	return wrapafter(text, index+1)
+	return wrapafter(text, found+1)
+end
+
+local function findwrap(text, available)
+	if #text <= available then
+		return 0
+	end
+	local space = nextwrap(text, available)
+	if space > 0 then
+		return space
+	end
+	return wrapafter(text, available)
 end
 
 return function (filename)
@@ -105,10 +114,7 @@ return function (filename)
 		local targetlen = line_width - #leading
 		while #text + #leading > line_width do
 			local available = targetlen - 2 -- #' $'
-			local space =  nextwrap(text, available)
-			if space < 1 then
-				space = wrapafter(text, available)
-			end
+			local space = findwrap(text, available)
 			if space < 1 then
 				break
 			end
@@ -120,12 +126,12 @@ return function (filename)
 		write(leading .. text)
 	end
 	function w:comment(text)
-		local linewidth = line_width - 2
-		local idx = nextwrap(text, linewidth)
-		while idx > 1 do
-			write('# ' .. substr(text, 1, idx - 1))
-			text = substr(text, idx + 1)
-			idx = nextwrap(text, linewidth)
+		local available = line_width - 2
+		local space = findwrap(text, available)
+		while space > 1 do
+			write('# ' .. substr(text, 1, space - 1))
+			text = substr(text, space + 1)
+			space = findwrap(text, available)
 		end
 		write('# ' .. text)
 	end

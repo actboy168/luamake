@@ -79,7 +79,7 @@ end
 
 return function (lm, name, attribute)
     local luaversion = attribute.luaversion or "lua54"
-    local luadir = fs.path(globals.builddir) / luaversion
+    local luadir = WORKDIR / globals.builddir / luaversion
 
     local includes = attribute.includes or {}
     includes[#includes+1] = "$builddir/"..luaversion

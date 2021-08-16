@@ -4,10 +4,11 @@ local type = type
 local tostring = tostring
 local ipairs = ipairs
 local pairs = pairs
+local getmetatable = getmetatable
 local tconcat = table.concat
 local strmatch = string.match
 local strfind = string.find
- local substr = string.sub
+local substr = string.sub
 
 local line_width <const> = 78
 local rule_kwargs <const> = {

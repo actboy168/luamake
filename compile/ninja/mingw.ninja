@@ -71,77 +71,6 @@ rule LINK_lua
 build $bin/lua.exe: LINK_lua $obj/lua/utf8_crt.obj $obj/lua/utf8_lua.obj $
     $bin/lua54.dll
 build lua: phony $bin/lua.exe
-rule C_bee
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
-    -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
-    -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
-  description = Compile C   $out
-  deps = gcc
-  depfile = $out.d
-build $obj/bee/lua-seri.obj: C_bee 3rd/bee.lua/3rd/lua-seri/lua-seri.c
-rule CXX_bee
-  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
-    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
-    -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
-    -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
-  description = Compile C++ $out
-  deps = gcc
-  depfile = $out.d
-build $obj/bee/error.obj: CXX_bee 3rd/bee.lua/bee/error.cpp
-build $obj/bee/fsevent_win.obj: CXX_bee $
-    3rd/bee.lua/bee/fsevent/fsevent_win.cpp
-build $obj/bee/endpoint.obj: CXX_bee 3rd/bee.lua/bee/net/endpoint.cpp
-build $obj/bee/socket.obj: CXX_bee 3rd/bee.lua/bee/net/socket.cpp
-build $obj/bee/format.obj: CXX_bee 3rd/bee.lua/bee/nonstd/fmt/format.cc
-build $obj/bee/os.obj: CXX_bee 3rd/bee.lua/bee/nonstd/fmt/os.cc
-build $obj/bee/version_win.obj: CXX_bee $
-    3rd/bee.lua/bee/platform/version_win.cpp
-build $obj/bee/sharedmemory_win.obj: CXX_bee $
-    3rd/bee.lua/bee/subprocess/sharedmemory_win.cpp
-build $obj/bee/subprocess_win.obj: CXX_bee $
-    3rd/bee.lua/bee/subprocess/subprocess_win.cpp
-build $obj/bee/file_helper.obj: CXX_bee $
-    3rd/bee.lua/bee/utility/file_helper.cpp
-build $obj/bee/module_version_win.obj: CXX_bee $
-    3rd/bee.lua/bee/utility/module_version_win.cpp
-build $obj/bee/path_helper.obj: CXX_bee $
-    3rd/bee.lua/bee/utility/path_helper.cpp
-build $obj/bee/unicode_win.obj: CXX_bee $
-    3rd/bee.lua/bee/utility/unicode_win.cpp
-build $obj/bee/lua_embed.obj: CXX_bee 3rd/bee.lua/binding/lua_embed.cpp
-build $obj/bee/lua_filesystem.obj: CXX_bee $
-    3rd/bee.lua/binding/lua_filesystem.cpp
-build $obj/bee/lua_filewatch.obj: CXX_bee $
-    3rd/bee.lua/binding/lua_filewatch.cpp
-build $obj/bee/lua_platform.obj: CXX_bee 3rd/bee.lua/binding/lua_platform.cpp
-build $obj/bee/lua_registry.obj: CXX_bee 3rd/bee.lua/binding/lua_registry.cpp
-build $obj/bee/lua_serialization.obj: CXX_bee $
-    3rd/bee.lua/binding/lua_serialization.cpp
-build $obj/bee/lua_socket.obj: CXX_bee 3rd/bee.lua/binding/lua_socket.cpp
-build $obj/bee/lua_subprocess.obj: CXX_bee $
-    3rd/bee.lua/binding/lua_subprocess.cpp
-build $obj/bee/lua_thread.obj: CXX_bee 3rd/bee.lua/binding/lua_thread.cpp
-build $obj/bee/lua_time.obj: CXX_bee 3rd/bee.lua/binding/lua_time.cpp
-build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
-build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
-rule LINK_bee
-  command = $cc --shared $in -o $out -ladvapi32 -lws2_32 -lole32 -luser32 $
-    -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++ -lstdc++ -s
-  description = Link    Dll $out
-build $bin/bee.dll: LINK_bee $obj/bee/lua-seri.obj $obj/bee/error.obj $
-    $obj/bee/fsevent_win.obj $obj/bee/endpoint.obj $obj/bee/socket.obj $
-    $obj/bee/format.obj $obj/bee/os.obj $obj/bee/version_win.obj $
-    $obj/bee/sharedmemory_win.obj $obj/bee/subprocess_win.obj $
-    $obj/bee/file_helper.obj $obj/bee/module_version_win.obj $
-    $obj/bee/path_helper.obj $obj/bee/unicode_win.obj $
-    $obj/bee/lua_embed.obj $obj/bee/lua_filesystem.obj $
-    $obj/bee/lua_filewatch.obj $obj/bee/lua_platform.obj $
-    $obj/bee/lua_registry.obj $obj/bee/lua_serialization.obj $
-    $obj/bee/lua_socket.obj $obj/bee/lua_subprocess.obj $
-    $obj/bee/lua_thread.obj $obj/bee/lua_time.obj $obj/bee/lua_unicode.obj $
-    $obj/bee/lua_wmi.obj $bin/lua54.dll
-build bee: phony $bin/bee.dll
 rule C_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
     -I3rd/bee.lua/3rd/lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
@@ -164,6 +93,84 @@ rule LINK_bootstrap
 build $bin/bootstrap.exe: LINK_bootstrap $obj/bootstrap/utf8_crt.obj $
     $obj/bootstrap/main.obj $obj/bootstrap/progdir.obj $bin/lua54.dll
 build bootstrap: phony $bin/bootstrap.exe
+rule C_lua_seri
+  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri -D_WIN32_WINNT=0x0601 $
+    -DNDEBUG -o $out -c $in
+  description = Compile C   $out
+  deps = gcc
+  depfile = $out.d
+build $obj/lua-seri/lua-seri.obj: C_lua_seri $
+    3rd/bee.lua/3rd/lua-seri/lua-seri.c
+rule CXX_bee_core
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+    -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
+    -DBEE_INLINE -DNDEBUG -o $out -c $in
+  description = Compile C++ $out
+  deps = gcc
+  depfile = $out.d
+build $obj/bee-core/error.obj: CXX_bee_core 3rd/bee.lua/bee/error.cpp
+build $obj/bee-core/fsevent_win.obj: CXX_bee_core $
+    3rd/bee.lua/bee/fsevent/fsevent_win.cpp
+build $obj/bee-core/endpoint.obj: CXX_bee_core $
+    3rd/bee.lua/bee/net/endpoint.cpp
+build $obj/bee-core/socket.obj: CXX_bee_core 3rd/bee.lua/bee/net/socket.cpp
+build $obj/bee-core/format.obj: CXX_bee_core $
+    3rd/bee.lua/bee/nonstd/fmt/format.cc
+build $obj/bee-core/os.obj: CXX_bee_core 3rd/bee.lua/bee/nonstd/fmt/os.cc
+build $obj/bee-core/version_win.obj: CXX_bee_core $
+    3rd/bee.lua/bee/platform/version_win.cpp
+build $obj/bee-core/subprocess_win.obj: CXX_bee_core $
+    3rd/bee.lua/bee/subprocess/subprocess_win.cpp
+build $obj/bee-core/file_helper.obj: CXX_bee_core $
+    3rd/bee.lua/bee/utility/file_helper.cpp
+build $obj/bee-core/module_version_win.obj: CXX_bee_core $
+    3rd/bee.lua/bee/utility/module_version_win.cpp
+build $obj/bee-core/path_helper.obj: CXX_bee_core $
+    3rd/bee.lua/bee/utility/path_helper.cpp
+build $obj/bee-core/unicode_win.obj: CXX_bee_core $
+    3rd/bee.lua/bee/utility/unicode_win.cpp
+rule CXX_bee
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
+    -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
+    -DBEE_INLINE -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
+  description = Compile C++ $out
+  deps = gcc
+  depfile = $out.d
+build $obj/bee/lua_embed.obj: CXX_bee 3rd/bee.lua/binding/lua_embed.cpp
+build $obj/bee/lua_filesystem.obj: CXX_bee $
+    3rd/bee.lua/binding/lua_filesystem.cpp
+build $obj/bee/lua_filewatch.obj: CXX_bee $
+    3rd/bee.lua/binding/lua_filewatch.cpp
+build $obj/bee/lua_platform.obj: CXX_bee 3rd/bee.lua/binding/lua_platform.cpp
+build $obj/bee/lua_registry.obj: CXX_bee 3rd/bee.lua/binding/lua_registry.cpp
+build $obj/bee/lua_serialization.obj: CXX_bee $
+    3rd/bee.lua/binding/lua_serialization.cpp
+build $obj/bee/lua_socket.obj: CXX_bee 3rd/bee.lua/binding/lua_socket.cpp
+build $obj/bee/lua_subprocess.obj: CXX_bee $
+    3rd/bee.lua/binding/lua_subprocess.cpp
+build $obj/bee/lua_thread.obj: CXX_bee 3rd/bee.lua/binding/lua_thread.cpp
+build $obj/bee/lua_time.obj: CXX_bee 3rd/bee.lua/binding/lua_time.cpp
+build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
+build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
+rule LINK_bee
+  command = $cc --shared $in -o $out -ladvapi32 -lws2_32 -lole32 -luser32 $
+    -lversion -lwbemuuid -loleAut32 -lstdc++ -s
+  description = Link    Dll $out
+build $bin/bee.dll: LINK_bee $obj/bee/lua_embed.obj $
+    $obj/bee/lua_filesystem.obj $obj/bee/lua_filewatch.obj $
+    $obj/bee/lua_platform.obj $obj/bee/lua_registry.obj $
+    $obj/bee/lua_serialization.obj $obj/bee/lua_socket.obj $
+    $obj/bee/lua_subprocess.obj $obj/bee/lua_thread.obj $
+    $obj/bee/lua_time.obj $obj/bee/lua_unicode.obj $obj/bee/lua_wmi.obj $
+    $obj/lua-seri/lua-seri.obj $obj/bee-core/error.obj $
+    $obj/bee-core/fsevent_win.obj $obj/bee-core/endpoint.obj $
+    $obj/bee-core/socket.obj $obj/bee-core/format.obj $obj/bee-core/os.obj $
+    $obj/bee-core/version_win.obj $obj/bee-core/subprocess_win.obj $
+    $obj/bee-core/file_helper.obj $obj/bee-core/module_version_win.obj $
+    $obj/bee-core/path_helper.obj $obj/bee-core/unicode_win.obj $bin/lua54.dll
+build bee: phony $bin/bee.dll
 rule copy
   command = sh -c "cp -afv $in$input $out 1>/dev/null"
   description = Copy $in$input $out

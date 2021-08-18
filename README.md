@@ -11,7 +11,7 @@ git submodule update --init
 msvc
 * compile/install.bat
 
-mingw / macos / linux
+mingw / macos / linux / android
 
 * Install ninja
 * compile/install.sh

@@ -117,6 +117,9 @@ local function vsdevcmd(winsdk, arch, f)
         stderr = true,
         stdout = true,
         searchPath = true,
+        env = {
+            VSCMD_SKIP_SENDTELEMETRY = "1"
+        }
     })
     for line in process.stdout:lines() do
         local name, value = parse_env(line)

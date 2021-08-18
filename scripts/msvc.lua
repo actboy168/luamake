@@ -55,11 +55,62 @@ local function parse_env(str)
     return strtrim(str:sub(1, pos - 1)), strtrim(str:sub(pos + 1))
 end
 
-local function vsdevcmd(arch, f)
+local function findwinsdk()
+    local function query(command)
+        local f = io.popen(command, "r")
+        if f then
+            for l in f:lines() do
+                local r = l:match "^    [^%s]+    [^%s]+    (.*)$"
+                if r then
+                    f:close()
+                    return r
+                end
+            end
+        end
+    end
+    local function find(dir)
+        local max
+        local winsdk = fs.path(dir) / "include"
+        for file in winsdk:list_directory() do
+            if fs.exists(file / "um" / "winsdkver.h") then
+                local version = file:filename():string()
+                if version:sub(1,3) == "10." then
+                    if max then
+                        if max < version then
+                            max = version
+                        end
+                    else
+                        max = version
+                    end
+                end
+            end
+        end
+        return max
+    end
+    for _, v in ipairs {
+        [[HKLM\SOFTWARE\Wow6432Node]],
+        [[HKCU\SOFTWARE\Wow6432Node]],
+        [[HKLM\SOFTWARE]],
+        [[HKCU\SOFTWARE]]
+    } do
+        local WindowsSdkDir = query(([[reg query "%s\Microsoft\Microsoft SDKs\Windows\v10.0" /v "InstallationFolder"]]):format(v))
+        if WindowsSdkDir then
+            local WindowSdkVersion = find(WindowsSdkDir)
+            if WindowSdkVersion then
+                return WindowSdkVersion
+            end
+        end
+    end
+end
+
+local function vsdevcmd(winsdk, arch, f)
     local vsvars32 = installpath() / 'Common7' / 'Tools' / 'VsDevCmd.bat'
     local args = { vsvars32:string() }
     if arch then
         args[#args+1] = ('-arch=%s'):format(arch)
+    end
+    if winsdk then
+        args[#args+1] = ('-winsdk=%s'):format(winsdk)
     end
     local process = assert(sp.spawn {
         'cmd', '/k', args, '&', 'set',
@@ -84,9 +135,9 @@ local function vsdevcmd(arch, f)
     end
 end
 
-local function environment(arch)
+local function environment(winsdk, arch)
     local env = {}
-    vsdevcmd(arch, function (name, value)
+    vsdevcmd(winsdk, arch, function (name, value)
         name = name:upper()
         if need[name] then
             env[name] = value
@@ -156,7 +207,7 @@ end
 
 local function ucrtpath(arch, mode)
     local UniversalCRTSdkDir
-    vsdevcmd(arch, function (name, value)
+    vsdevcmd(findwinsdk(), arch, function (name, value)
         if name == "UniversalCRTSdkDir" then
             UniversalCRTSdkDir = value
         end
@@ -228,4 +279,5 @@ return {
     prefix = prefix,
     copy_vcrt = copy_vcrt,
     copy_ucrt = copy_ucrt,
+    findwinsdk = findwinsdk
 }

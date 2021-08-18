@@ -52,18 +52,22 @@ function m.createEnvConfig(arch, rebuild)
             return
         end
     end
-    env = msvc.environment(ArchAlias[arch])
+    local winsdk = msvc.findwinsdk()
+    env = msvc.environment(winsdk, ArchAlias[arch])
     prefix = msvc.prefix(env)
 
     local s = {}
     s[#s+1] = "return {"
     s[#s+1] = ("arch=%q,"):format(arch)
+    if winsdk then
+        s[#s+1] = ("winsdk=%q,"):format(winsdk)
+    end
     s[#s+1] = ("prefix=%q,"):format(prefix)
-    s[#s+1] = ("env={"):format(prefix)
+    s[#s+1] = "env={"
     for name, value in pairs(env) do
         s[#s+1] = ("%s=%q,"):format(name, value)
     end
-    s[#s+1] = ("},"):format(prefix)
+    s[#s+1] = "},"
     s[#s+1] = "}"
     s[#s+1] = ""
     writeEnvConfig(table.concat(s, '\n'))

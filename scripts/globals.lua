@@ -12,23 +12,22 @@ globals.crt = globals.crt or "dynamic"
 
 globals.hostos = globals.hostos or platform.OS:lower()
 globals.os = globals.os or globals.hostos
-globals.compiler = globals.compiler or (function()
+globals.hostshell = globals.hostshell or (function()
     if globals.hostos == "windows" then
         if os.getenv "MSYSTEM" then
-            return "gcc"
+            return "sh"
         end
+        return "cmd"
+    end
+    return "sh"
+end)()
+globals.compiler = globals.compiler or (function()
+    if globals.hostshell == "cmd" then
         return "msvc"
     elseif globals.hostos == "macos" then
         return "clang"
     end
     return "gcc"
-end)()
-globals.hostshell = globals.hostshell or (function()
-    if globals.compiler == "msvc" then
-        return "cmd"
-    else
-        return "sh"
-    end
 end)()
 globals.arch = globals.arch or (function ()
     if globals.hostos == "windows" then

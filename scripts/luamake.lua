@@ -114,19 +114,6 @@ local function get_warnings(warnings)
     return {error = error, level = level}
 end
 
-local function merge_attribute(from, to)
-    if type(from) == 'string' then
-        to[#to+1] = from
-    elseif type(from) == 'userdata' then
-        to[#to+1] = from
-    elseif type(from) == 'table' then
-        for _, e in ipairs(from) do
-            merge_attribute(e, to)
-        end
-    end
-    return to
-end
-
 local function init_single(attribute, attr_name, default)
     local attr = attribute[attr_name]
     if type(attr) == 'table' then
@@ -147,7 +134,7 @@ local function array_remove(t, k)
     return false
 end
 
-local function update_flags(flags, attribute, instance, name, rootdir, rule)
+local function update_flags(flags, attribute, name, rootdir, rule)
     local optimize = init_single(attribute, 'optimize', (attribute.mode == "debug" and "off" or "speed"))
     local warnings = get_warnings(attribute.warnings or {})
     local defines = attribute.defines or {}
@@ -258,7 +245,7 @@ local function generate(self, rule, name, attribute)
     init_single(attribute, 'sys')
 
     local flags =  {}
-    update_flags(flags, attribute, self, name, rootdir, rule)
+    update_flags(flags, attribute, name, rootdir, rule)
 
     local fin_flags = table.concat(flags, " ")
     local fmtname = name:gsub("[^%w_]", "_")

@@ -344,7 +344,7 @@ local function generate(self, rule, name, attribute)
             else
                 mark[dep] = true
                 local target = self._targets[dep]
-                assert(target ~= nil, ("`%s`: undefine."):format(dep))
+                assert(target ~= nil, ("`%s`: deps `%s` undefine."):format(name, dep))
                 if target.deps then
                     tbl_append(deps, target.deps)
                 end

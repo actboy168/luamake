@@ -258,9 +258,9 @@ local function generate(self, rule, name, attribute)
         local objname = fs.path(source):filename():replace_extension(".obj"):string()
         if objs[objname] then
             local n = 1
-            local rawobjname = objname
+            local stem = fs.path(source):stem():string()
             repeat
-                objname = ("%s-%d"):format(rawobjname, n)
+                objname = ("%s-%d.obj"):format(stem, n)
                 n = n + 1
             until not objs[objname]
         end

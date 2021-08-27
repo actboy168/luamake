@@ -253,9 +253,20 @@ local function generate(self, rule, name, attribute)
     local has_cxx = false
     local has_rc = false
     local has_asm = false
+    local objs = {}
     for _, source in ipairs(sources) do
-        local objname = fs.path("$obj") / name / fs.path(source):filename():replace_extension(".obj")
-        input[#input+1] = objname
+        local objname = fs.path(source):filename():replace_extension(".obj"):string()
+        if objs[objname] then
+            local n = 1
+            local rawobjname = objname
+            repeat
+                objname = ("%s-%d"):format(rawobjname, n)
+                n = n + 1
+            until not objs[objname]
+        end
+        objs[objname] = true
+        local objpath = fs.path("$obj") / name / objname
+        input[#input+1] = objpath
         local ext = fs.path(source):extension():string():sub(2):lower()
         local type = file_type[ext]
         if type == "c" then
@@ -263,18 +274,18 @@ local function generate(self, rule, name, attribute)
                 has_c = true
                 cc.rule_c(ninja, name, attribute, fin_flags)
             end
-            ninja:build(objname, "C_"..fmtname, source)
+            ninja:build(objpath, "C_"..fmtname, source)
         elseif type == "cxx" then
             if not has_cxx then
                 has_cxx = true
                 cc.rule_cxx(ninja, name, attribute, fin_flags)
             end
-            ninja:build(objname, "CXX_"..fmtname, source)
+            ninja:build(objpath, "CXX_"..fmtname, source)
         elseif globals.os == "windows" and type == "rc" then
             if not has_rc then
                 cc.rule_rc(ninja, name)
             end
-            ninja:build(objname, "RC_"..fmtname, source)
+            ninja:build(objpath, "RC_"..fmtname, source)
         elseif type == "asm" then
             if globals.compiler == "msvc" then
                 error "TODO"
@@ -283,7 +294,7 @@ local function generate(self, rule, name, attribute)
                 has_asm = true
                 cc.rule_asm(ninja, name, fin_flags)
             end
-            ninja:build(objname, "ASM_"..fmtname, source)
+            ninja:build(objpath, "ASM_"..fmtname, source)
         else
             error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))
         end

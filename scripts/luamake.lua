@@ -766,6 +766,9 @@ function lm:finish()
         if res[globals.compiler] then
             mergeTable(res, res[globals.compiler])
         end
+        if globals.os == "windows" and globals.compiler == "gcc" then
+            mergeTable(res, res.mingw)
+        end
         if GEN[rule] then
             GEN[rule](self, name, res)
         else

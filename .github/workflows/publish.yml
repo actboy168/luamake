@@ -9,7 +9,7 @@ jobs:
         submodules : recursive
     - run: .\compile\install.bat
   linux:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
       with:

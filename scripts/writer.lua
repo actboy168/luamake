@@ -662,20 +662,26 @@ function GEN.lua_library(context, name, attribute)
     generate(lua_library(context, name, attribute))
 end
 
-local lm = {}
+local writer = {}
+local scripts = {}
+local targets = {}
 
-lm._scripts = {}
-lm._targets = {}
-function lm:add_script(filename)
+writer._targets = {}
+
+function writer:add_script(filename)
     if fs.path(filename:sub(1, #(MAKEDIR:string()))) == MAKEDIR then
         return
     end
     filename = fs.relative(fs.path(filename), WORKDIR):string()
-    if self._scripts[filename] then
+    if scripts[filename] then
         return
     end
-    self._scripts[filename] = true
-    self._scripts[#self._scripts+1] = filename
+    scripts[filename] = true
+    scripts[#scripts+1] = filename
+end
+
+function writer:add_target(t)
+    targets[#targets+1] = t
 end
 
 local function getexe()
@@ -723,7 +729,7 @@ local function mergeTable(a, b)
     return a
 end
 
-function lm:finish()
+function writer:finish()
     local context = self
     local globals = require "globals"
     local builddir = WORKDIR / globals.builddir
@@ -760,11 +766,11 @@ function lm:finish()
     if not arguments.args.prebuilt then
         ninja:rule('configure', '$luamake init', { generator = 1 })
         ninja:build(fs.path '$builddir' / "build.ninja", 'configure', {
-            implicit_inputs = context._scripts,
+            implicit_inputs = scripts,
         })
     end
 
-    for _, target in ipairs(context._export_targets) do
+    for _, target in ipairs(targets) do
         local rule, name, attribute = target[1], target[2], target[3]
         if rule == "default" then
             GEN.default(context, name)
@@ -793,4 +799,4 @@ function lm:finish()
     ninja:close()
 end
 
-return lm
+return writer

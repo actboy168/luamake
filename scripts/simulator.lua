@@ -1,4 +1,4 @@
-local lm = require 'luamake'
+local writer = require 'writer'
 local sandbox = require "sandbox"
 local fs = require 'bee.filesystem'
 local fsutil = require 'fsutil'
@@ -7,14 +7,13 @@ local globals = require "globals"
 
 local dofile
 
-local targets = {}
 local simulator = {}
 local mainscript = true
 
 local function accept(type, name, attribute)
     attribute.workdir = attribute.workdir or globals.workdir or "."
     attribute.rootdir = attribute.rootdir or globals.rootdir or "."
-    targets[#targets+1] = {type, name, attribute}
+    writer:add_target {type, name, attribute}
 end
 
 function simulator:source_set(name)
@@ -79,7 +78,7 @@ function simulator:copy(name)
 end
 function simulator:default(attribute)
     if mainscript then
-        targets[#targets+1] = {'default', attribute}
+        writer:add_target {'default', attribute}
     end
 end
 function simulator:phony(name)
@@ -121,12 +120,10 @@ local function getter(_, k)
 end
 simulator = setmetatable(simulator, {__index = getter, __newindex = setter})
 
-lm._export_targets = targets
-
 local function filehook(name, mode)
     local f, err = io.open(name, mode)
     if f then
-        lm:add_script(name)
+        writer:add_script(name)
     end
     return f, err
 end
@@ -165,7 +162,7 @@ function dofile(_, path, env)
 end
 
 local function finish()
-    lm:finish()
+    writer:finish()
 end
 
 return  {

@@ -156,7 +156,7 @@ build $obj/bee/lua_unicode.obj: CXX_bee 3rd/bee.lua/binding/lua_unicode.cpp
 build $obj/bee/lua_wmi.obj: CXX_bee 3rd/bee.lua/binding/lua_wmi.cpp
 rule LINK_bee
   command = $cc --shared $in -o $out -ladvapi32 -lws2_32 -lole32 -luser32 $
-    -lversion -lwbemuuid -loleAut32 -lstdc++ -s
+    -lversion -lwbemuuid -loleAut32 -lstdc++fs -lstdc++ -s
   description = Link    Dll $out
 build $bin/bee.dll: LINK_bee $obj/bee/lua_embed.obj $
     $obj/bee/lua_filesystem.obj $obj/bee/lua_filewatch.obj $

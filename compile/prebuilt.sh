@@ -1,5 +1,5 @@
 luamake init -prebuilt -builddir build/msvc  -hostos windows
-luamake init -prebuilt -builddir build/mingw -hostos windows -compiler gcc
+luamake init -prebuilt -builddir build/mingw -hostos windows -hostshell sh
 luamake init -prebuilt -builddir build/linux -hostos linux
 luamake init -prebuilt -builddir build/macos -hostos macos
 luamake init -prebuilt -builddir build/android -hostos android

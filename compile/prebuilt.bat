@@ -8,7 +8,7 @@ for %%a in (msvc mingw linux macos android) do (
 	if "%%a" == "msvc" (
 		luamake init -prebuilt -builddir build/msvc -hostos windows
 	) else if "%%a" == "mingw" (
-		luamake init -prebuilt -builddir build/mingw -hostos windows -compiler gcc
+		luamake init -prebuilt -builddir build/mingw -hostos windows -hostshell sh
 	) else (
 		luamake init -prebuilt -builddir build/%%a -hostos %%a
 	)

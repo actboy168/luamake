@@ -164,7 +164,7 @@ return function (c)
         return fs.absolute(fs.path(name), fs.path(c.root)):string()
     end
     local function openfile(name, mode)
-        return c.io_open(absolute(name), mode)
+        return io.open(absolute(name), mode)
     end
     local env = c.env or {}
     local function loadlua(name, mode, ENV)

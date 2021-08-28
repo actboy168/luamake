@@ -663,22 +663,9 @@ function GEN.lua_library(context, name, attribute)
 end
 
 local writer = {}
-local scripts = {}
 local targets = {}
 
 writer._targets = {}
-
-function writer:add_script(filename)
-    if fs.path(filename:sub(1, #(MAKEDIR:string()))) == MAKEDIR then
-        return
-    end
-    filename = fs.relative(fs.path(filename), WORKDIR):string()
-    if scripts[filename] then
-        return
-    end
-    scripts[filename] = true
-    scripts[#scripts+1] = filename
-end
 
 function writer:add_target(t)
     targets[#targets+1] = t
@@ -761,13 +748,6 @@ function writer:finish()
         ninja:variable("cc", globals.cc or "gcc")
     elseif globals.compiler == "clang" then
         ninja:variable("cc", globals.cc or "clang")
-    end
-
-    if not arguments.args.prebuilt then
-        ninja:rule('configure', '$luamake init', { generator = 1 })
-        ninja:build(fs.path '$builddir' / "build.ninja", 'configure', {
-            implicit_inputs = scripts,
-        })
     end
 
     for _, target in ipairs(targets) do

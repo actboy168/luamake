@@ -68,7 +68,6 @@ local sandbox = require "sandbox"
 assert(sandbox {
     root = WORKDIR:string(),
     main = arg[0],
-    io_open = io.open,
     preload = globals.compiler == 'msvc' and {
         msvc = require "msvc",
     },

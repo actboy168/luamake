@@ -120,14 +120,6 @@ local function getter(_, k)
 end
 simulator = setmetatable(simulator, {__index = getter, __newindex = setter})
 
-local function filehook(name, mode)
-    local f, err = io.open(name, mode)
-    if f then
-        writer:add_script(name)
-    end
-    return f, err
-end
-
 local visited = {}
 
 local function isVisited(path)
@@ -150,7 +142,6 @@ function dofile(_, path, env)
     assert(sandbox {
         root = dir,
         main = file,
-        io_open = filehook,
         preload =  {
             luamake = simulator,
             msvc = (not arguments.args.prebuilt and globals.compiler == 'msvc') and require "msvc" or nil

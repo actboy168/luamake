@@ -1,5 +1,4 @@
 local fs = require "bee.filesystem"
-local globals = require "globals"
 local lua_def = require "lua_def"
 local inited_rule = false
 local inited_version = {}
@@ -23,15 +22,15 @@ local function init_single(attribute, attr_name, default)
     return attribute[attr_name]
 end
 
-local function init_rule(lm)
+local function init_rule(context)
     if inited_rule then
         return
     end
     inited_rule = true
-    local ninja = lm.ninja
-    if globals.compiler == 'msvc' then
+    local ninja = context.ninja
+    if context.globals.compiler == 'msvc' then
         local msvc = require "msvc_util"
-        ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(globals.arch)),
+        ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(context.globals.arch)),
         {
             description = 'Lua import lib $out'
         })
@@ -43,30 +42,30 @@ local function init_rule(lm)
     end
 end
 
-local function init_version(lm, luadir, luaversion)
+local function init_version(context, luadir, luaversion)
     if inited_version[luaversion] then
         return
     end
     inited_version[luaversion] = true
-    local ninja = lm.ninja
+    local ninja = context.ninja
     lua_def(MAKEDIR / "tools" / luaversion)
     local libname
-    if globals.compiler == 'msvc' then
-        libname = luadir / ("lua-"..globals.arch..".lib")
+    if context.globals.compiler == 'msvc' then
+        libname = luadir / ("lua-"..context.globals.arch..".lib")
         ninja:build(libname, "luadeps", luadir / "lua.def")
     else
         libname = luadir / "liblua.a"
         ninja:build(libname, "luadeps", luadir / "lua.def")
     end
-    lm._targets["__"..luaversion.."__"] = {
+    context._targets["__"..luaversion.."__"] = {
         input = {libname}
     }
 end
 
-local function windows_deps(_, name, attribute, luaversion)
+local function windows_deps(context, name, attribute, luaversion)
     local ldflags = attribute.ldflags or {}
     local deps = attribute.deps or {}
-    if globals.compiler == "msvc" then
+    if context.globals.compiler == "msvc" then
         local export_luaopen = init_single(attribute, "export_luaopen", "on")
         if export_luaopen ~= "off" then
             ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
@@ -77,19 +76,19 @@ local function windows_deps(_, name, attribute, luaversion)
     attribute.deps = deps
 end
 
-return function (lm, name, attribute)
+return function (context, name, attribute)
     local luaversion = attribute.luaversion or "lua54"
-    local luadir = WORKDIR / globals.builddir / luaversion
+    local luadir = WORKDIR / context.globals.builddir / luaversion
 
     local includes = attribute.includes or {}
     includes[#includes+1] = "$builddir/"..luaversion
     attribute.includes = includes
 
-    if globals.os == "windows" then
-        init_rule(lm)
-        init_version(lm, luadir, luaversion)
-        windows_deps(lm, name, attribute, luaversion)
+    if context.globals.os == "windows" then
+        init_rule(context)
+        init_version(context, luadir, luaversion)
+        windows_deps(context, name, attribute, luaversion)
     end
     copy_dir(MAKEDIR / "tools" / luaversion, luadir)
-    return lm, 'shared_library', name, attribute
+    return context, 'shared_library', name, attribute
 end

@@ -1,12 +1,11 @@
 local fs = require "bee.filesystem"
 local sp = require "bee.subprocess"
 local arguments = require "arguments"
-local globals = require "globals"
 
 local cc
 
-local function fmtpath(path)
-    if globals.hostshell == "cmd" then
+local function fmtpath(context, path)
+    if context.globals.hostshell == "cmd" then
         path = path:gsub('/', '\\')
     else
         path = path:gsub('\\', '/')
@@ -14,12 +13,12 @@ local function fmtpath(path)
     return path
 end
 
-local function fmtpath_v3(rootdir, path)
+local function fmtpath_v3(context, rootdir, path)
     path = fs.path(path)
     if not path:is_absolute() and path:string():sub(1, 1) ~= "$" then
         path = fs.relative(fs.absolute(path, rootdir), WORKDIR)
     end
-    return fmtpath(path:string())
+    return fmtpath(context, path:string())
 end
 
 -- TODO 在某些平台上忽略大小写？
@@ -134,7 +133,7 @@ local function array_remove(t, k)
     return false
 end
 
-local function update_flags(flags, attribute, name, rootdir, rule)
+local function update_flags(context, flags, attribute, name, rootdir, rule)
     local optimize = init_single(attribute, 'optimize', (attribute.mode == "debug" and "off" or "speed"))
     local warnings = get_warnings(attribute.warnings or {})
     local defines = attribute.defines or {}
@@ -145,7 +144,7 @@ local function update_flags(flags, attribute, name, rootdir, rule)
     if warnings.error then
         flags[#flags+1] = cc.warnings.error
     end
-    if globals.os ~= "windows" then
+    if context.globals.os ~= "windows" then
         local visibility = init_single(attribute, 'visibility', "hidden")
         if visibility ~= "default" then
             flags[#flags+1] = ('-fvisibility=%s'):format(visibility or 'hidden')
@@ -154,11 +153,11 @@ local function update_flags(flags, attribute, name, rootdir, rule)
             flags[#flags+1] = "-fPIC"
         end
     end
-    cc.update_flags(flags, attribute, name)
+    cc.update_flags(context, flags, attribute, name)
 
     if attribute.includes then
         for _, inc in ipairs(attribute.includes) do
-            flags[#flags+1] = cc.includedir(fmtpath_v3(rootdir, inc))
+            flags[#flags+1] = cc.includedir(fmtpath_v3(context, rootdir, inc))
         end
     end
 
@@ -194,7 +193,7 @@ local function update_flags(flags, attribute, name, rootdir, rule)
     end
 end
 
-local function update_ldflags(ldflags, attribute, instance, name, rootdir)
+local function update_ldflags(context, ldflags, attribute, instance, name, rootdir)
     tbl_append(ldflags, cc.ldflags)
 
     if attribute.links then
@@ -204,7 +203,7 @@ local function update_ldflags(ldflags, attribute, instance, name, rootdir)
     end
     if attribute.linkdirs then
         for _, linkdir in ipairs(attribute.linkdirs) do
-            ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
+            ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(context, rootdir, linkdir))
         end
     end
     if attribute.ldflags then
@@ -221,13 +220,13 @@ local function update_ldflags(ldflags, attribute, instance, name, rootdir)
         end
     end
     
-    cc.update_ldflags(ldflags, attribute)
+    cc.update_ldflags(context, ldflags, attribute)
 end
 
-local function generate(self, rule, name, attribute)
-    assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
+local function generate(context, rule, name, attribute)
+    assert(context._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
-    local ninja = self.ninja
+    local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local sources = get_sources(rootdir, attribute.sources)
@@ -245,7 +244,7 @@ local function generate(self, rule, name, attribute)
     init_single(attribute, 'sys')
 
     local flags =  {}
-    update_flags(flags, attribute, name, rootdir, rule)
+    update_flags(context, flags, attribute, name, rootdir, rule)
 
     local fin_flags = table.concat(flags, " ")
     local fmtname = name:gsub("[^%w_]", "_")
@@ -281,13 +280,13 @@ local function generate(self, rule, name, attribute)
                 cc.rule_cxx(ninja, name, attribute, fin_flags)
             end
             ninja:build(objpath, "CXX_"..fmtname, source)
-        elseif globals.os == "windows" and type == "rc" then
+        elseif context.globals.os == "windows" and type == "rc" then
             if not has_rc then
                 cc.rule_rc(ninja, name)
             end
             ninja:build(objpath, "RC_"..fmtname, source)
         elseif type == "asm" then
-            if globals.compiler == "msvc" then
+            if context.globals.compiler == "msvc" then
                 error "TODO"
             end
             if not has_asm then
@@ -302,7 +301,7 @@ local function generate(self, rule, name, attribute)
 
     local t = {
     }
-    self._targets[name] = t
+    context._targets[name] = t
 
     if rule == 'source_set' then
         local dep_ldflags = {}
@@ -313,13 +312,13 @@ local function generate(self, rule, name, attribute)
         end
         if attribute.linkdirs then
             for _, linkdir in ipairs(attribute.linkdirs) do
-                dep_ldflags[#dep_ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
+                dep_ldflags[#dep_ldflags+1] = cc.linkdir(fmtpath_v3(context, rootdir, linkdir))
             end
         end
         if attribute.ldflags then
             tbl_append(dep_ldflags, attribute.ldflags)
         end
-        if globals.compiler == "clang" and attribute.frameworks then
+        if context.globals.compiler == "clang" and attribute.frameworks then
             for _, framework in ipairs(attribute.frameworks) do
                 dep_ldflags[#dep_ldflags+1] = "-framework"
                 dep_ldflags[#dep_ldflags+1] = framework
@@ -341,7 +340,7 @@ local function generate(self, rule, name, attribute)
                 table.remove(deps, i)
             else
                 mark[dep] = true
-                local target = self._targets[dep]
+                local target = context._targets[dep]
                 assert(target ~= nil, ("`%s`: deps `%s` undefine."):format(name, dep))
                 if target.deps then
                     tbl_append(deps, target.deps)
@@ -350,7 +349,7 @@ local function generate(self, rule, name, attribute)
             end
         end
         for _, dep in ipairs(attribute.deps) do
-            local target = self._targets[dep]
+            local target = context._targets[dep]
             if target.input then
                 tbl_append(input, target.input)
             end
@@ -361,17 +360,17 @@ local function generate(self, rule, name, attribute)
 
     local binname
     local ldflags =  {}
-    update_ldflags(ldflags, attribute, self, name, rootdir)
+    update_ldflags(context, ldflags, attribute, context, name, rootdir)
 
     local fin_ldflags = table.concat(ldflags, " ")
     if rule == "shared_library" then
-        if globals.os == "windows" then
+        if context.globals.os == "windows" then
             binname = fs.path "$bin" / (name .. ".dll")
         else
             binname = fs.path "$bin" / (name .. ".so")
         end
         cc.rule_dll(ninja, name, fin_ldflags)
-        if globals.compiler == 'msvc' then
+        if context.globals.compiler == 'msvc' then
             local lib = fs.path '$bin' / (name..".lib")
             t.input = {lib}
             t.implicit_input = binname
@@ -380,7 +379,7 @@ local function generate(self, rule, name, attribute)
                 implicit_outputs = lib,
             })
         else
-            if globals.os == "windows" then
+            if context.globals.os == "windows" then
                 t.input = {binname}
             else
                 t.implicit_input = binname
@@ -390,7 +389,7 @@ local function generate(self, rule, name, attribute)
             })
         end
     elseif rule == "executable" then
-        if globals.os == "windows" then
+        if context.globals.os == "windows" then
             binname = fs.path("$bin") / (name .. ".exe")
         else
             binname = fs.path("$bin") / name
@@ -401,7 +400,7 @@ local function generate(self, rule, name, attribute)
             implicit_inputs = implicit_input,
         })
     elseif rule == "static_library" then
-        if globals.os == "windows" then
+        if context.globals.os == "windows" then
             binname = fs.path("$bin") / (name .. ".lib")
         else
             binname = fs.path("$bin") / ("lib"..name .. ".a")
@@ -460,18 +459,18 @@ function GEN.default(self, attribute)
     ninja:default(targets)
 end
 
-function GEN.phony(self, name, attribute)
-    local ninja = self.ninja
+function GEN.phony(context, name, attribute)
+    local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_input = getImplicitInput(self, attribute)
+    local implicit_input = getImplicitInput(context, attribute)
     for i = 1, #input do
-        input[i] = fmtpath_v3(rootdir, input[i])
+        input[i] = fmtpath_v3(context, rootdir, input[i])
     end
     for i = 1, #output do
-        output[i] = fmtpath_v3(rootdir, output[i])
+        output[i] = fmtpath_v3(context, rootdir, output[i])
     end
     if name then
         if #output == 0 then
@@ -484,7 +483,7 @@ function GEN.phony(self, name, attribute)
                 implicit_inputs = implicit_input,
             })
         end
-        self._targets[name] = {
+        context._targets[name] = {
             implicit_input = name,
         }
     else
@@ -498,24 +497,24 @@ function GEN.phony(self, name, attribute)
     end
 end
 
-function GEN.build(self, name, attribute, shell)
+function GEN.build(context, name, attribute, shell)
     local tmpName = not name
     name = name or generateTargetName()
-    assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
+    assert(context._targets[name] == nil, ("`%s`: redefinition."):format(name))
 
-    local ninja = self.ninja
+    local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local pool =  init_single(attribute, 'pool')
-    local implicit_input = getImplicitInput(self, attribute)
+    local implicit_input = getImplicitInput(context, attribute)
 
     for i = 1, #input do
-        input[i] = fmtpath_v3(rootdir, input[i])
+        input[i] = fmtpath_v3(context, rootdir, input[i])
     end
     for i = 1, #output do
-        output[i] = fmtpath_v3(rootdir, output[i])
+        output[i] = fmtpath_v3(context, rootdir, output[i])
     end
 
     local command = {}
@@ -527,13 +526,13 @@ function GEN.build(self, name, attribute, shell)
             if type(v) == 'table' then
                 push_command(v)
             elseif type(v) == 'userdata' then
-                push(fmtpath_v3(rootdir, v))
+                push(fmtpath_v3(context, rootdir, v))
             elseif type(v) == 'string' then
                 if v:sub(1,1) == '@' then
-                    push(fmtpath_v3(rootdir, v:sub(2)))
+                    push(fmtpath_v3(context, rootdir, v:sub(2)))
                 else
                     v = v:gsub("@{([^}]*)}", function (s)
-                        return fmtpath_v3(rootdir, s)
+                        return fmtpath_v3(context, rootdir, s)
                     end)
                     push(v)
                 end
@@ -543,10 +542,10 @@ function GEN.build(self, name, attribute, shell)
     push_command(attribute)
 
     if shell then
-        if globals.hostshell == "cmd" then
+        if context.globals.hostshell == "cmd" then
             table.insert(command, 1, "cmd")
             table.insert(command, 2, "/c")
-        elseif globals.hostos == "windows" then
+        elseif context.globals.hostos == "windows" then
             local s = {}
             for _, opt in ipairs(command) do
                 s[#s+1] = opt
@@ -583,28 +582,28 @@ function GEN.build(self, name, attribute, shell)
     })
     if not tmpName then
         ninja:build(name, 'phony', outname)
-        self._targets[name] = {
+        context._targets[name] = {
             implicit_input = name,
         }
     end
 end
 
-function GEN.copy(self, name, attribute)
-    local ninja = self.ninja
+function GEN.copy(context, name, attribute)
+    local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_input = getImplicitInput(self, attribute)
+    local implicit_input = getImplicitInput(context, attribute)
 
     if not ruleCopy then
         ruleCopy = true
-        if globals.hostshell == "cmd" then
+        if context.globals.hostshell == "cmd" then
             ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
                 description = 'Copy $in$input $out',
                 restat = 1,
             })
-        elseif globals.hostos == "windows" then
+        elseif context.globals.hostos == "windows" then
             ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
                 description = 'Copy $in$input $out',
                 restat = 1,
@@ -621,14 +620,14 @@ function GEN.copy(self, name, attribute)
         if type(v) == 'string' and v:sub(1,1) == '@' then
             v =  v:sub(2)
         end
-        input[i] = fmtpath_v3(rootdir, v)
+        input[i] = fmtpath_v3(context, rootdir, v)
     end
     for i = 1, #output do
         local v = output[i]
         if type(v) == 'string' and v:sub(1,1) == '@' then
             v =  v:sub(2)
         end
-        output[i] = fmtpath_v3(rootdir, v)
+        output[i] = fmtpath_v3(context, rootdir, v)
     end
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
 
@@ -646,9 +645,9 @@ function GEN.copy(self, name, attribute)
     end
 
     if name then
-        assert(self._targets[name] == nil, ("`%s`: redefinition."):format(name))
+        assert(context._targets[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:build(name, 'phony', output)
-        self._targets[name] = {
+        context._targets[name] = {
             implicit_input = name,
         }
     end
@@ -658,9 +657,9 @@ function GEN.shell(self, name, attribute)
     GEN.build(self, name, attribute, true)
 end
 
-function GEN.lua_library(self, name, attribute)
+function GEN.lua_library(context, name, attribute)
     local lua_library = require "lua_library"
-    generate(lua_library(self, name, attribute))
+    generate(lua_library(context, name, attribute))
 end
 
 local lm = {}
@@ -725,23 +724,26 @@ local function mergeTable(a, b)
 end
 
 function lm:finish()
+    local context = self
+    local globals = require "globals"
     local builddir = WORKDIR / globals.builddir
     cc = require("compiler." .. globals.compiler)
-    self.cc = cc
+    context.cc = cc
+    context.globals = globals
     fs.create_directories(builddir)
 
     local ninja_syntax = require "ninja_syntax"
     local ninja_script = (builddir / "build.ninja"):string()
     local ninja = ninja_syntax(ninja_script)
 
-    ninja:variable("builddir", fmtpath(globals.builddir))
-    ninja:variable("bin", fmtpath(globals.bindir))
-    ninja:variable("obj", fmtpath(globals.objdir))
+    ninja:variable("builddir", fmtpath(context, globals.builddir))
+    ninja:variable("bin", fmtpath(context, globals.bindir))
+    ninja:variable("obj", fmtpath(context, globals.objdir))
     if not arguments.args.prebuilt then
-        ninja:variable("luamake", fmtpath(getexe()))
+        ninja:variable("luamake", fmtpath(context, getexe()))
     end
 
-    self.ninja = ninja
+    context.ninja = ninja
 
     if globals.compiler == "msvc" then
         if not arguments.args.prebuilt then
@@ -758,14 +760,14 @@ function lm:finish()
     if not arguments.args.prebuilt then
         ninja:rule('configure', '$luamake init', { generator = 1 })
         ninja:build(fs.path '$builddir' / "build.ninja", 'configure', {
-            implicit_inputs = self._scripts,
+            implicit_inputs = context._scripts,
         })
     end
 
-    for _, target in ipairs(self._export_targets) do
+    for _, target in ipairs(context._export_targets) do
         local rule, name, attribute = target[1], target[2], target[3]
         if rule == "default" then
-            GEN.default(self, name)
+            GEN.default(context, name)
             goto continue
         end
         local res = {}
@@ -781,9 +783,9 @@ function lm:finish()
             mergeTable(res, res.mingw)
         end
         if GEN[rule] then
-            GEN[rule](self, name, res)
+            GEN[rule](context, name, res)
         else
-            generate(self, rule, name, res)
+            generate(context, rule, name, res)
         end
         ::continue::
     end

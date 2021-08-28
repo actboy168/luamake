@@ -1,6 +1,3 @@
-
-local globals = require "globals"
-
 local function format_path(path)
     if path:match " " then
         return '"'..path..'"'
@@ -55,14 +52,14 @@ local gcc = {
     end
 }
 
-function gcc.update_flags(flags, attribute)
+function gcc.update_flags(context, flags, attribute)
     if attribute.mode == 'debug' then
         flags[#flags+1] = '-g'
     end
 end
 
-function gcc.update_ldflags(ldflags, attribute)
-    if globals.os == "android" then
+function gcc.update_ldflags(context, ldflags, attribute)
+    if context.globals.os == "android" then
         --TODO android不支持static crt
         ldflags[#ldflags+1] = "-lstdc++"
     elseif attribute.crt == "dynamic" then

@@ -60,7 +60,7 @@ local cl = {
     end
 }
 
-function cl.update_flags(flags, attribute, name)
+function cl.update_flags(context, flags, attribute, name)
     if attribute.mode == 'debug' then
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MDd' or '/MTd'
         flags[#flags+1] = ('/RTC1 /Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")
@@ -69,7 +69,7 @@ function cl.update_flags(flags, attribute, name)
     end
 end
 
-function cl.update_ldflags(ldflags, attribute)
+function cl.update_ldflags(context, ldflags, attribute)
     if attribute.mode == 'debug' then
         ldflags[#ldflags+1] = '/DEBUG:FASTLINK'
     else

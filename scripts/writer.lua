@@ -193,7 +193,7 @@ local function update_flags(context, flags, attribute, name, rootdir, rule)
     end
 end
 
-local function update_ldflags(context, ldflags, attribute, instance, name, rootdir)
+local function update_ldflags(context, ldflags, attribute, name, rootdir)
     tbl_append(ldflags, cc.ldflags)
 
     if attribute.links then
@@ -212,7 +212,7 @@ local function update_ldflags(context, ldflags, attribute, instance, name, rootd
 
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            local target = instance._targets[dep]
+            local target = context.loaded_targets[dep]
             assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
             if target.ldflags then
                 tbl_append(ldflags, target.ldflags)
@@ -224,7 +224,7 @@ local function update_ldflags(context, ldflags, attribute, instance, name, rootd
 end
 
 local function generate(context, rule, name, attribute)
-    assert(context._targets[name] == nil, ("`%s`: redefinition."):format(name))
+    assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
@@ -301,7 +301,7 @@ local function generate(context, rule, name, attribute)
 
     local t = {
     }
-    context._targets[name] = t
+    context.loaded_targets[name] = t
 
     if rule == 'source_set' then
         local dep_ldflags = {}
@@ -340,7 +340,7 @@ local function generate(context, rule, name, attribute)
                 table.remove(deps, i)
             else
                 mark[dep] = true
-                local target = context._targets[dep]
+                local target = context.loaded_targets[dep]
                 assert(target ~= nil, ("`%s`: deps `%s` undefine."):format(name, dep))
                 if target.deps then
                     tbl_append(deps, target.deps)
@@ -349,7 +349,7 @@ local function generate(context, rule, name, attribute)
             end
         end
         for _, dep in ipairs(attribute.deps) do
-            local target = context._targets[dep]
+            local target = context.loaded_targets[dep]
             if target.input then
                 tbl_append(input, target.input)
             end
@@ -360,7 +360,7 @@ local function generate(context, rule, name, attribute)
 
     local binname
     local ldflags =  {}
-    update_ldflags(context, ldflags, attribute, context, name, rootdir)
+    update_ldflags(context, ldflags, attribute, name, rootdir)
 
     local fin_ldflags = table.concat(ldflags, " ")
     if rule == "shared_library" then
@@ -424,8 +424,8 @@ local function generateTargetName()
     return ("__target_0x%08x__"):format(NAMEIDX)
 end
 
-local function addImplicitInput(self, implicit_input, name)
-    local target = self._targets[name]
+local function addImplicitInput(context, implicit_input, name)
+    local target = context.loaded_targets[name]
     assert(target ~= nil, ("`%s`: undefine."):format(name))
     if target.input then
         tbl_append(implicit_input, target.input)
@@ -483,7 +483,7 @@ function GEN.phony(context, name, attribute)
                 implicit_inputs = implicit_input,
             })
         end
-        context._targets[name] = {
+        context.loaded_targets[name] = {
             implicit_input = name,
         }
     else
@@ -500,7 +500,7 @@ end
 function GEN.build(context, name, attribute, shell)
     local tmpName = not name
     name = name or generateTargetName()
-    assert(context._targets[name] == nil, ("`%s`: redefinition."):format(name))
+    assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
@@ -582,7 +582,7 @@ function GEN.build(context, name, attribute, shell)
     })
     if not tmpName then
         ninja:build(name, 'phony', outname)
-        context._targets[name] = {
+        context.loaded_targets[name] = {
             implicit_input = name,
         }
     end
@@ -645,9 +645,9 @@ function GEN.copy(context, name, attribute)
     end
 
     if name then
-        assert(context._targets[name] == nil, ("`%s`: redefinition."):format(name))
+        assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:build(name, 'phony', output)
-        context._targets[name] = {
+        context.loaded_targets[name] = {
             implicit_input = name,
         }
     end
@@ -662,10 +662,10 @@ function GEN.lua_library(context, name, attribute)
     generate(lua_library(context, name, attribute))
 end
 
-local writer = {}
+local writer = {
+    loaded_targets = {}
+}
 local targets = {}
-
-writer._targets = {}
 
 function writer:add_target(t)
     targets[#targets+1] = t

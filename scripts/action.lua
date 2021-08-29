@@ -61,6 +61,43 @@ local function clean()
     ninja { "-t", "clean" }
 end
 
+if globals.perf then
+    local pref_status = {}
+    local function pref_end()
+        local time = os.clock() - pref_status[2]
+        print(("%s: %.3fms."):format(pref_status[1], time * 1000.))
+    end
+    local function pref(what)
+        pref_status[1] = what
+        pref_status[2] = os.clock()
+        return pref_status
+    end
+    setmetatable(pref_status, {__close = pref_end})
+
+    local function pref_init(...)
+        local _ <close> = pref "init"
+        return init(...)
+    end
+    local function pref_generate(...)
+        local _ <close> = pref "generate"
+        return generate(...)
+    end
+    local function pref_make(...)
+        local _ <close> = pref "make"
+        return make(...)
+    end
+    local function pref_clean(...)
+        local _ <close> = pref "clean"
+        return clean(...)
+    end
+    return {
+        init = pref_init,
+        generate = pref_generate,
+        make = pref_make,
+        clean = pref_clean,
+    }
+end
+
 return {
     init = init,
     generate = generate,

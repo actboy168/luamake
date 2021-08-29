@@ -12,8 +12,12 @@ local i = 1
 while i <= #arg do
     if arg[i]:sub(1, 1) == '-' then
         local k = arg[i]:sub(2)
-        i = i + 1
-        arguments[k] = arg[i]
+        if arg[i+1] ~= nil and arg[i+1]:sub(1, 1) ~= '-' then
+            i = i + 1
+            arguments[k] = arg[i]
+        else
+            arguments[k] = "on"
+        end
     else
         targets[#targets+1] = arg[i]
     end

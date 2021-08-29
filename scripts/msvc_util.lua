@@ -11,6 +11,14 @@ local ArchAlias = {
     x86 = "x86",
 }
 
+local function getConsoleCP()
+    local f = io.popen("chcp", "r")
+    if f then
+        local data = f:read "a"
+        return data:match "%d+"
+    end
+end
+
 local function readEnvConfig()
     local EnvConfig = WORKDIR / globals.builddir / 'env.config'
     local f = assert(io.open(EnvConfig:string(), 'r'))
@@ -44,9 +52,10 @@ function m.cleanEnvConfig()
 end
 
 function m.createEnvConfig(arch, rebuild)
+    local console_cp = getConsoleCP()
     if not rebuild and m.hasEnvConfig() then
         local config = readEnvConfig()
-        if config.arch == arch then
+        if config.arch == arch and config.console_cp == console_cp then
             env = config.env
             prefix = config.prefix
             return
@@ -59,6 +68,7 @@ function m.createEnvConfig(arch, rebuild)
     local s = {}
     s[#s+1] = "return {"
     s[#s+1] = ("arch=%q,"):format(arch)
+    s[#s+1] = ("console_cp=%q,"):format(console_cp)
     if winsdk then
         s[#s+1] = ("winsdk=%q,"):format(winsdk)
     end

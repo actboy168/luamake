@@ -443,18 +443,18 @@ local function getImplicitInput(self, attribute)
     return implicit_input
 end
 
-function GEN.default(self, attribute)
-    local ninja = self.ninja
+function GEN.default(context, attribute)
+    local ninja = context.ninja
     local targets = {}
     if type(attribute) == "table" then
         for _, name in ipairs(attribute) do
             if name then
-                addImplicitInput(self, targets, name)
+                addImplicitInput(context, targets, name)
             end
         end
     elseif type(attribute) == "string" then
         local name = attribute
-        addImplicitInput(self, targets, name)
+        addImplicitInput(context, targets, name)
     end
     ninja:default(targets)
 end
@@ -716,7 +716,7 @@ local function mergeTable(a, b)
     return a
 end
 
-function writer:finish()
+function writer:generate()
     local context = self
     local globals = require "globals"
     local builddir = WORKDIR / globals.builddir
@@ -751,14 +751,17 @@ function writer:finish()
     end
 
     for _, target in ipairs(targets) do
-        local rule, name, attribute = target[1], target[2], target[3]
+        local rule = target[1]
+        local name = target[2]
+        local local_attribute = target[3]
+        local global_attribute = target[4]
         if rule == "default" then
             GEN.default(context, name)
             goto continue
         end
         local res = {}
-        mergeTable(res, globals)
-        mergeTable(res, attribute)
+        mergeTable(res, global_attribute)
+        mergeTable(res, local_attribute)
         if res[globals.os] then
             mergeTable(res, res[globals.os])
         end
@@ -768,6 +771,7 @@ function writer:finish()
         if res.mingw and globals.os == "windows" and globals.compiler == "gcc" then
             mergeTable(res, res.mingw)
         end
+        context.globals = global_attribute
         if GEN[rule] then
             GEN[rule](context, name, res)
         else

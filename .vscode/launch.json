@@ -5,7 +5,10 @@
             "type": "lua",
             "request": "launch",
             "name": "Launch",
-            "program": "${workspaceFolder}/scripts/command/lua.lua"
+            "luaexe": "luamake",
+            "path": null,
+            "cpath": null,
+            "program": "init"
         }
     ]
 }

@@ -5,97 +5,82 @@ local fsutil = require 'fsutil'
 local arguments = require "arguments"
 local globals = require "globals"
 
-local dofile
+local mainSimulator = {}
 
-local simulator = {}
-local mainscript = true
-
-local function accept(type, name, attribute)
-    attribute.workdir = attribute.workdir or globals.workdir or "."
-    attribute.rootdir = attribute.rootdir or globals.rootdir or "."
-    writer:add_target {type, name, attribute}
-end
-
-function simulator:source_set(name)
+function mainSimulator:source_set(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('source_set', name, attribute)
+        writer:add_target { 'source_set', name, attribute, self }
     end
 end
-function simulator:shared_library(name)
+function mainSimulator:shared_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('shared_library', name, attribute)
+        writer:add_target { 'shared_library', name, attribute, self }
     end
 end
-function simulator:static_library(name)
+function mainSimulator:static_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('static_library', name, attribute)
+        writer:add_target { 'static_library', name, attribute, self }
     end
 end
-function simulator:executable(name)
+function mainSimulator:executable(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('executable', name, attribute)
+        writer:add_target { 'executable', name, attribute, self }
     end
 end
-function simulator:lua_library(name)
+function mainSimulator:lua_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('lua_library', name, attribute)
+        writer:add_target { 'lua_library', name, attribute, self }
     end
 end
-function simulator:build(name)
+function mainSimulator:build(name)
     if type(name) == "table" then
-        accept('build', nil, name)
+        writer:add_target { 'build', nil, name, self }
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('build', name, attribute)
+        writer:add_target { 'build', name, attribute, self }
     end
 end
-function simulator:shell(name)
+function mainSimulator:shell(name)
     if type(name) == "table" then
-        accept('shell', nil, name)
+        writer:add_target { 'shell', nil, name, self }
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('shell', name, attribute)
+        writer:add_target { 'shell', name, attribute, self }
     end
 end
-function simulator:copy(name)
+function mainSimulator:copy(name)
     if type(name) == "table" then
-        accept('copy', nil, name)
+        writer:add_target { 'copy', nil, name, self }
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('copy', name, attribute)
+        writer:add_target { 'copy', name, attribute, self }
     end
 end
-function simulator:default(attribute)
-    if mainscript then
+function mainSimulator:default(attribute)
+    if self == mainSimulator then
         writer:add_target {'default', attribute}
     end
 end
-function simulator:phony(name)
+function mainSimulator:phony(name)
     if type(name) == "table" then
-        accept('phony', nil, name)
+        writer:add_target { 'phony', nil, name, self }
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        accept('phony', name, attribute)
+        writer:add_target { 'phony', name, attribute, self }
     end
-end
-function simulator:import(path, env)
-    local v = mainscript
-    mainscript = false
-    dofile(nil, fs.path(path), env)
-    mainscript = v
 end
 
 local alias = {
@@ -106,19 +91,52 @@ local alias = {
     lua_dll = "lua_library",
 }
 for to, from in pairs(alias) do
-    simulator[to] = simulator[from]
+    mainSimulator[to] = mainSimulator[from]
 end
 
-local function setter(_, k, v)
+local mainMt = {}
+mainMt.__index = globals
+function mainMt:__newindex(k, v)
     if arguments.args[k] ~= nil then
         return
     end
     globals[k] = v
 end
-local function getter(_, k)
-    return globals[k]
+function mainMt:__pairs()
+    return pairs(globals)
 end
-simulator = setmetatable(simulator, {__index = getter, __newindex = setter})
+
+local subMt = {}
+subMt.__index = mainSimulator
+function subMt:__pairs()
+    local selfpairs = true
+    local mark = {}
+    return function (_, k)
+        if selfpairs then
+            local newk, newv = next(self, k)
+            if newk ~= nil then
+                mark[newk] = true
+                return newk, newv
+            end
+            selfpairs = false
+            k = nil
+        end
+        local newk = k
+        local newv
+        repeat
+            newk, newv = next(globals, newk)
+        until newk == nil or not mark[newk]
+        return newk, newv
+    end, self
+end
+
+do
+    setmetatable(mainSimulator, mainMt)
+end
+
+local function createSubSimulator()
+    return setmetatable({}, subMt)
+end
 
 local visited = {}
 
@@ -130,34 +148,41 @@ local function isVisited(path)
     visited[path] = true
 end
 
-function dofile(_, path, env)
-    path = fsutil.absolute(path, fs.path(globals.workdir or "."))
+local function importfile(simulator, path, env)
     if isVisited(path) then
         return
     end
-    local dir = path:parent_path():string()
-    local file = path:filename():string()
-    local last = globals.workdir
-    globals.workdir = dir
+    local rootdir = path:parent_path():string()
+    local filename = path:filename():string()
+    simulator.workdir = rootdir
     sandbox {
         env = env,
-        rootdir = dir,
+        rootdir = rootdir,
         builddir = globals.builddir,
         preload =  {
             luamake = simulator,
             msvc = (not arguments.args.prebuilt and globals.compiler == 'msvc') and require "msvc" or nil
         },
-        main = file,
+        main = filename,
         args = arg,
     }
-    globals.workdir = last
 end
 
-local function finish()
-    writer:finish()
+function mainSimulator:import(path, env)
+    local absolutepath = fsutil.absolute(fs.path(path), fs.path(self.workdir))
+    importfile(createSubSimulator(), absolutepath, env)
+end
+
+local function import(path)
+    local absolutepath = fsutil.absolute(fs.path(path), fs.path(globals.workdir))
+    importfile(mainSimulator, absolutepath)
+end
+
+local function generate()
+    writer:generate()
 end
 
 return  {
-    dofile = dofile,
-    finish = finish,
+    import = import,
+    generate = generate,
 }

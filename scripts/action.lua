@@ -45,11 +45,11 @@ local function ninja(args)
 end
 
 local function init()
-    sim:dofile(WORKDIR / "make.lua")
+    sim.import(WORKDIR / "make.lua")
 end
 
 local function generate()
-    sim:finish()
+    sim.generate()
 end
 
 local function make()

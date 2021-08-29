@@ -41,5 +41,7 @@ end)()
 globals.builddir = globals.builddir or "build"
 globals.bindir = globals.bindir or "$builddir/bin"
 globals.objdir = globals.objdir or "$builddir/obj"
+globals.rootdir = "."
+globals.workdir = "."
 
 return globals

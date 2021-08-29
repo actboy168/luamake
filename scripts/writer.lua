@@ -1,6 +1,7 @@
 local fs = require "bee.filesystem"
 local sp = require "bee.subprocess"
 local arguments = require "arguments"
+local globals = require "globals"
 
 local cc
 
@@ -50,6 +51,7 @@ local function expand_dir(t, pattern, dir)
         end
     end
 end
+
 local function expand_path(t, path)
     local filename = path:filename():string()
     if filename:find("*", 1, true) == nil then
@@ -59,6 +61,7 @@ local function expand_path(t, path)
     local pattern = glob_compile(filename)
     expand_dir(t, pattern, path:parent_path())
 end
+
 local function get_sources(root, sources)
     if type(sources) ~= "table" then
         return {}
@@ -100,17 +103,94 @@ local function tbl_append(t, a)
     table.move(a, 1, #a, #t + 1, t)
 end
 
-local function get_warnings(warnings)
-    local error = nil
-    local level = 'on'
-    for _, warn in ipairs(warnings) do
-        if warn == 'error' then
-            error = true
-        else
-            level = warn
+local function pushTable(t, b)
+    if type(b) == 'string' then
+        t[#t+1] = b
+    elseif type(b) == 'userdata' then
+        t[#t+1] = b
+    elseif type(b) == 'table' then
+        for k, e in pairs(b) do
+            if type(k) == "string" then
+                if t[k] == nil then
+                    t[k] = {}
+                end
+                pushTable(t[k], e)
+            end
+        end
+        for _, e in ipairs(b) do
+            pushTable(t, e)
         end
     end
-    return {error = error, level = level}
+    return t
+end
+
+local function mergeTable(a, b)
+    for k, v in pairs(b) do
+        if type(k) == "string" then
+            local ov = a[k]
+            if type(ov) == "table" then
+                pushTable(ov, v)
+            elseif not ov then
+                local t = {}
+                pushTable(t, v)
+                a[k] = t
+            else
+                local t = {}
+                pushTable(t, ov)
+                pushTable(t, v)
+                a[k] = t
+            end
+        end
+    end
+    for _, v in ipairs(b) do
+        pushTable(a, v)
+    end
+    return a
+end
+
+local function reslovePlatformSpecific(a, b)
+    local t = {}
+    mergeTable(t, a)
+    mergeTable(t, b)
+    if t[globals.os] then
+        mergeTable(t, t[globals.os])
+    end
+    if t[globals.compiler] then
+        mergeTable(t, t[globals.compiler])
+    end
+    if t.mingw and globals.os == "windows" and globals.compiler == "gcc" then
+        mergeTable(t, t.mingw)
+    end
+    return t
+end
+
+local function update_warnings(flags, warnings)
+    if not warnings then
+        flags[#flags+1] = cc.warnings["on"]
+        return
+    end
+
+    warnings = reslovePlatformSpecific({}, warnings)
+    local error = nil
+    local level = 'on'
+    for _, v in ipairs(warnings) do
+        if v == 'error' then
+            error = true
+        elseif cc.warnings[v] then
+            level = v
+        end
+    end
+    flags[#flags+1] = cc.warnings[level]
+    if error then
+        flags[#flags+1] = cc.warnings.error
+    end
+
+    local disable = warnings.disable
+    if disable then
+        for _, v in ipairs(disable) do
+            flags[#flags+1] = cc.disable_warning(v)
+        end
+    end
 end
 
 local function init_single(attribute, attr_name, default)
@@ -135,15 +215,11 @@ end
 
 local function update_flags(context, flags, attribute, name, rootdir, rule)
     local optimize = init_single(attribute, 'optimize', (attribute.mode == "debug" and "off" or "speed"))
-    local warnings = get_warnings(attribute.warnings or {})
     local defines = attribute.defines or {}
 
     tbl_append(flags, cc.flags)
     flags[#flags+1] = cc.optimize[optimize]
-    flags[#flags+1] = cc.warnings[warnings.level]
-    if warnings.error then
-        flags[#flags+1] = cc.warnings.error
-    end
+    update_warnings(flags, attribute.warnings)
     if context.globals.os ~= "windows" then
         local visibility = init_single(attribute, 'visibility', "hidden")
         if visibility ~= "default" then
@@ -675,47 +751,6 @@ local function getexe()
     return fs.exe_path():string()
 end
 
-local function pushTable(t, b)
-    if type(b) == 'string' then
-        t[#t+1] = b
-    elseif type(b) == 'userdata' then
-        t[#t+1] = b
-    elseif type(b) == 'table' then
-        if b[1] == nil then
-            for k, e in pairs(b) do
-                if t[k] == nil then
-                    t[k] = {}
-                end
-                pushTable(t[k], e)
-            end
-        else
-            for _, e in ipairs(b) do
-                pushTable(t, e)
-            end
-        end
-    end
-    return t
-end
-
-local function mergeTable(a, b)
-    for k, v in pairs(b) do
-        local ov = a[k]
-        if type(ov) == "table" then
-            pushTable(ov, v)
-        elseif not ov then
-            local t = {}
-            pushTable(t, v)
-            a[k] = t
-        else
-            local t = {}
-            pushTable(t, ov)
-            pushTable(t, v)
-            a[k] = t
-        end
-    end
-    return a
-end
-
 function writer:generate()
     local context = self
     local globals = require "globals"
@@ -759,18 +794,7 @@ function writer:generate()
             GEN.default(context, name)
             goto continue
         end
-        local res = {}
-        mergeTable(res, global_attribute)
-        mergeTable(res, local_attribute)
-        if res[globals.os] then
-            mergeTable(res, res[globals.os])
-        end
-        if res[globals.compiler] then
-            mergeTable(res, res[globals.compiler])
-        end
-        if res.mingw and globals.os == "windows" and globals.compiler == "gcc" then
-            mergeTable(res, res.mingw)
-        end
+        local res = reslovePlatformSpecific(global_attribute, local_attribute)
         context.globals = global_attribute
         if GEN[rule] then
             GEN[rule](context, name, res)

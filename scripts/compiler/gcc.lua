@@ -19,7 +19,7 @@ local gcc = {
     warnings = {
         off = "-w",
         on  = "-Wall",
-        all = "-Wall",
+        all = "-Wall -Wextra",
         error = "-Werror",
     },
     cxx = {
@@ -49,6 +49,9 @@ local gcc = {
     end,
     linkdir = function (dir)
         return "-L" .. format_path(dir)
+    end,
+    disable_warning = function (w)
+        return "-Wno-" .. w
     end
 }
 

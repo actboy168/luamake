@@ -18,14 +18,14 @@ local function update_target(context, flags, attribute)
             return
         end
         if not vendor then
-            if sys:match "^macos.+" then
+            if sys and sys:match "^macos.+" then
                 flags[#flags+1] = sys:gsub("^macos(.*)$", "-mmacosx-version-min=%1")
                 if arch then
                     attribute.__arch = arch
                 end
                 return
             end
-            if sys:match "^ios.+" then
+            if sys and sys:match "^ios.+" then
                 flags[#flags+1] = sys:gsub("^ios(.*)$", "-miphoneos-version-min=%1")
                 if arch then
                     attribute.__arch = arch

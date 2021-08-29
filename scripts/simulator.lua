@@ -148,7 +148,7 @@ local function isVisited(path)
     visited[path] = true
 end
 
-local function importfile(simulator, path, env)
+local function importfile(simulator, path)
     if isVisited(path) then
         return
     end
@@ -156,7 +156,6 @@ local function importfile(simulator, path, env)
     local filename = path:filename():string()
     simulator.workdir = rootdir
     sandbox {
-        env = env,
         rootdir = rootdir,
         builddir = globals.builddir,
         preload =  {
@@ -168,9 +167,9 @@ local function importfile(simulator, path, env)
     }
 end
 
-function mainSimulator:import(path, env)
+function mainSimulator:import(path)
     local absolutepath = fsutil.absolute(fs.path(path), fs.path(self.workdir))
-    importfile(createSubSimulator(), absolutepath, env)
+    importfile(createSubSimulator(), absolutepath)
 end
 
 local function import(path)

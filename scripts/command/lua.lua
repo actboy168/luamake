@@ -65,11 +65,12 @@ update_arg()
 local globals = require "globals"
 local sandbox = require "sandbox"
 
-assert(sandbox {
-    root = WORKDIR:string(),
-    main = arg[0],
+sandbox {
+    rootdir = WORKDIR:string(),
+    builddir = globals.builddir,
     preload = globals.compiler == 'msvc' and {
         msvc = require "msvc",
     },
-    builddir = globals.builddir,
-})(table.unpack(arg))
+    main = arg[0],
+    args = arg,
+}

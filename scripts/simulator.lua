@@ -139,16 +139,17 @@ function dofile(_, path, env)
     local file = path:filename():string()
     local last = globals.workdir
     globals.workdir = dir
-    assert(sandbox {
-        root = dir,
-        main = file,
+    sandbox {
+        env = env,
+        rootdir = dir,
+        builddir = globals.builddir,
         preload =  {
             luamake = simulator,
             msvc = (not arguments.args.prebuilt and globals.compiler == 'msvc') and require "msvc" or nil
         },
-        env = env,
-        builddir = globals.builddir,
-    })(table.unpack(arg))
+        main = file,
+        args = arg,
+    }
     globals.workdir = last
 end
 

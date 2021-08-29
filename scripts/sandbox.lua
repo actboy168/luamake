@@ -161,7 +161,7 @@ end
 
 return function (c)
     local function absolute(name)
-        return fs.absolute(fs.path(name), fs.path(c.root)):string()
+        return fs.absolute(fs.path(name), fs.path(c.rootdir)):string()
     end
     local function openfile(name, mode)
         return io.open(absolute(name), mode)
@@ -169,7 +169,8 @@ return function (c)
     local env = c.env or {}
     local function loadlua(name, mode, ENV)
         assert (mode == nil or mode == "t")
-        local f, err = openfile(name, 'r')
+        local path = absolute(name)
+        local f, err = io.open(path, 'r')
         if f then
             if '#' == f:read(1) then
                 f:read "l"
@@ -178,14 +179,14 @@ return function (c)
             end
             local str = f:read 'a'
             f:close()
-            return load(str, '@' .. absolute(name), 't', ENV or env)
+            return load(str, '@' .. path, 't', ENV or env)
         end
         return nil, err
     end
     local init, err = loadlua(c.main)
     if not init then
-        return nil, err
+        error(err, 2)
     end
     debug.setupvalue(init, 1, sandbox_env(env, loadlua, openfile, c.preload, c.builddir))
-    return init
+    init(table.unpack(c.args))
 end

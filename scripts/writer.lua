@@ -17,7 +17,7 @@ end
 local function fmtpath_v3(context, rootdir, path)
     path = fs.path(path)
     if not path:is_absolute() and path:string():sub(1, 1) ~= "$" then
-        path = fs.relative(fs.absolute(path, rootdir), WORKDIR)
+        path = fs.relative((rootdir / path):lexically_normal(), WORKDIR)
     end
     return fmtpath(context, path:string())
 end
@@ -304,7 +304,7 @@ local function generate(context, rule, name, attribute)
 
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
-    local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
+    local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
     local sources = get_sources(rootdir, attribute.sources)
     local implicit_input = {}
     local input = {}
@@ -538,7 +538,7 @@ end
 function GEN.phony(context, name, attribute)
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
-    local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
+    local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, attribute)
@@ -580,7 +580,7 @@ function GEN.build(context, name, attribute, shell)
 
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
-    local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
+    local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
     local input = attribute.input or {}
     local output = attribute.output or {}
     local pool =  init_single(attribute, 'pool')
@@ -667,7 +667,7 @@ end
 function GEN.copy(context, name, attribute)
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
-    local rootdir = fs.absolute(fs.path(init_single(attribute, 'rootdir', '.')), workdir)
+    local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, attribute)

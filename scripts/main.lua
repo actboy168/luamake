@@ -16,8 +16,12 @@ if RawCommand[arg[1]] then
 else
     local arguments = require "arguments"
     local globals = require "globals"
-    WORKDIR = arguments.C and fs.absolute(fs.path(arguments.C)) or fs.current_path()
-    fs.current_path(WORKDIR)
+    if arguments.C then
+        WORKDIR = fs.absolute(fs.path(arguments.C)):lexically_normal()
+        fs.current_path(WORKDIR)
+    else
+        WORKDIR = fs.current_path()
+    end
     local mt = debug.getmetatable(fs.path())
     local rawtostring = mt.__tostring
     function mt:__tostring()

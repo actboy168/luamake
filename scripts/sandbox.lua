@@ -161,7 +161,7 @@ end
 
 return function (c)
     local function absolute(name)
-        return fs.absolute(fs.path(name), fs.path(c.rootdir)):string()
+        return (fs.path(c.rootdir) / name):lexically_normal():string()
     end
     local function openfile(name, mode)
         return io.open(absolute(name), mode)

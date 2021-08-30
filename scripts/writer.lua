@@ -788,17 +788,20 @@ local function configure_args()
     return table.concat(s, " ")
 end
 
-function writer:generate()
-    local context = self
+function writer:generate(force)
     local builddir = WORKDIR / globals.builddir
+    local ninja_script = builddir / "build.ninja"
+    if not force and fs.exists(ninja_script) then
+        return
+    end
+    local context = self
     cc = require("compiler." .. globals.compiler)
     context.cc = cc
     context.globals = globals
     fs.create_directories(builddir)
 
     local ninja_syntax = require "ninja_syntax"
-    local ninja_script = (builddir / "build.ninja"):string()
-    local ninja = ninja_syntax(ninja_script)
+    local ninja = ninja_syntax(ninja_script:string())
 
     ninja:variable("builddir", fmtpath(context, globals.builddir))
     ninja:variable("bin", fmtpath(context, globals.bindir))

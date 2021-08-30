@@ -1,3 +1,3 @@
 local action = require "action"
 action.init()
-action.generate()
+action.generate(true)

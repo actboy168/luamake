@@ -48,8 +48,8 @@ local function init()
     sim.import(WORKDIR / "make.lua")
 end
 
-local function generate()
-    sim.generate()
+local function generate(force)
+    sim.generate(force)
 end
 
 local function make()

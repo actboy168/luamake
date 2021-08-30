@@ -186,8 +186,8 @@ local function import(path)
     importfile(mainSimulator, absolutepath)
 end
 
-local function generate()
-    writer:generate()
+local function generate(force)
+    writer:generate(force)
 end
 
 return  {

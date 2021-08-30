@@ -2,6 +2,7 @@ local fs = require "bee.filesystem"
 local sp = require "bee.subprocess"
 local arguments = require "arguments"
 local globals = require "globals"
+local fsutil = require "fsutil"
 
 local cc
 
@@ -742,18 +743,45 @@ local writer = {
     loaded_targets = {}
 }
 local targets = {}
+local scripts = {}
+local mark_scripts = {}
 
 function writer:add_target(t)
     targets[#targets+1] = t
 end
 
-local function getexe()
-    return fs.exe_path():string()
+function writer:add_script(path)
+    if mark_scripts[path] then
+        return
+    end
+    mark_scripts[path] = true
+    path = fsutil.relative(path, WORKDIR:string())
+    if path:sub(1,2) == "./" and #path > 2 then
+        path = path:sub(3)
+    end
+    scripts[#scripts+1] = path
+end
+
+local function configure_args()
+    local s = {}
+    if arguments.C then
+        s[#s+1] = "-C"
+        s[#s+1] = arguments.C
+    end
+    for _, v in ipairs(arguments.targets) do
+        s[#s+1] = v
+    end
+    for k, v in pairs(arguments.args) do
+        s[#s+1] = "-"..k
+        if v ~= "on" then
+            s[#s+1] = v
+        end
+    end
+    return table.concat(s, " ")
 end
 
 function writer:generate()
     local context = self
-    local globals = require "globals"
     local builddir = WORKDIR / globals.builddir
     cc = require("compiler." .. globals.compiler)
     context.cc = cc
@@ -767,9 +795,6 @@ function writer:generate()
     ninja:variable("builddir", fmtpath(context, globals.builddir))
     ninja:variable("bin", fmtpath(context, globals.bindir))
     ninja:variable("obj", fmtpath(context, globals.objdir))
-    if not arguments.args.prebuilt then
-        ninja:variable("luamake", fmtpath(context, getexe()))
-    end
 
     context.ninja = ninja
 
@@ -783,6 +808,12 @@ function writer:generate()
         ninja:variable("cc", globals.cc or "gcc")
     elseif globals.compiler == "clang" then
         ninja:variable("cc", globals.cc or "clang")
+    end
+
+    if not arguments.args.prebuilt then
+        ninja:variable("luamake", fmtpath(context, fs.exe_path():string()))
+        ninja:rule('configure', '$luamake init ' .. configure_args(), { generator = 1 })
+        ninja:build("$builddir/build.ninja", "configure", scripts)
     end
 
     for _, target in ipairs(targets) do

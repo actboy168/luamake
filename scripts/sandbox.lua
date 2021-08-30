@@ -160,17 +160,15 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
 end
 
 return function (c)
+    local openfile = c.openfile or io.open
+    local env = c.env or {}
     local function absolute(name)
         return (fs.path(c.rootdir) / name):lexically_normal():string()
     end
-    local function openfile(name, mode)
-        return io.open(absolute(name), mode)
-    end
-    local env = c.env or {}
-    local function loadlua(name, mode, ENV)
+    local function sandbox_loadlua(name, mode, ENV)
         assert (mode == nil or mode == "t")
         local path = absolute(name)
-        local f, err = io.open(path, 'r')
+        local f, err = openfile(path, 'r')
         if f then
             if '#' == f:read(1) then
                 f:read "l"
@@ -183,10 +181,13 @@ return function (c)
         end
         return nil, err
     end
-    local init, err = loadlua(c.main)
+    local function sandbox_openfile(name, mode)
+        return openfile(absolute(name), mode)
+    end
+    local init, err = sandbox_loadlua(c.main)
     if not init then
         error(err, 2)
     end
-    debug.setupvalue(init, 1, sandbox_env(env, loadlua, openfile, c.preload, c.builddir))
+    debug.setupvalue(init, 1, sandbox_env(env, sandbox_loadlua, sandbox_openfile, c.preload, c.builddir))
     init(table.unpack(c.args))
 end

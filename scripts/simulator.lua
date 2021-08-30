@@ -138,6 +138,14 @@ local function createSubSimulator()
     return setmetatable({}, subMt)
 end
 
+local function openfile(name, mode)
+    local f, err = io.open(name, mode)
+    if f and (mode == nil or mode:match "r") then
+        writer:add_script(name)
+    end
+    return f, err
+end
+
 local visited = {}
 
 local function isVisited(path)
@@ -162,6 +170,7 @@ local function importfile(simulator, path)
             luamake = simulator,
             msvc = (not arguments.args.prebuilt and globals.compiler == 'msvc') and require "msvc" or nil
         },
+        openfile = openfile,
         main = filename,
         args = arg,
     }

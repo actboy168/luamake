@@ -62,39 +62,39 @@ local function clean()
 end
 
 if globals.perf then
-    local pref_status = {}
-    local function pref_end()
-        local time = os.clock() - pref_status[2]
-        print(("%s: %.3fms."):format(pref_status[1], time * 1000.))
+    local perf_status = {}
+    local function perf_end()
+        local time = os.clock() - perf_status[2]
+        print(("%s: %.3fms."):format(perf_status[1], time * 1000.))
     end
-    local function pref(what)
-        pref_status[1] = what
-        pref_status[2] = os.clock()
-        return pref_status
+    local function perf(what)
+        perf_status[1] = what
+        perf_status[2] = os.clock()
+        return perf_status
     end
-    setmetatable(pref_status, {__close = pref_end})
+    setmetatable(perf_status, {__close = perf_end})
 
-    local function pref_init(...)
-        local _ <close> = pref "init"
+    local function perf_init(...)
+        local _ <close> = perf "init"
         return init(...)
     end
-    local function pref_generate(...)
-        local _ <close> = pref "generate"
+    local function perf_generate(...)
+        local _ <close> = perf "generate"
         return generate(...)
     end
-    local function pref_make(...)
-        local _ <close> = pref "make"
+    local function perf_make(...)
+        local _ <close> = perf "make"
         return make(...)
     end
-    local function pref_clean(...)
-        local _ <close> = pref "clean"
+    local function perf_clean(...)
+        local _ <close> = perf "clean"
         return clean(...)
     end
     return {
-        init = pref_init,
-        generate = pref_generate,
-        make = pref_make,
-        clean = pref_clean,
+        init = perf_init,
+        generate = perf_generate,
+        make = perf_make,
+        clean = perf_clean,
     }
 end
 

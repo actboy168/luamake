@@ -762,6 +762,14 @@ function writer:add_script(path)
     scripts[#scripts+1] = path
 end
 
+local function get_luamake(context)
+    local proc = arg[-1]
+    if proc == "luamake" then
+        return "luamake"
+    end
+    return fmtpath(context, fs.exe_path():string())
+end
+
 local function configure_args()
     local s = {}
     if arguments.C then
@@ -811,7 +819,7 @@ function writer:generate()
     end
 
     if not arguments.args.prebuilt then
-        ninja:variable("luamake", fmtpath(context, fs.exe_path():string()))
+        ninja:variable("luamake", get_luamake(context))
         ninja:rule('configure', '$luamake init ' .. configure_args(), { generator = 1 })
         ninja:build("$builddir/build.ninja", "configure", scripts)
     end

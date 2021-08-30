@@ -5,7 +5,7 @@ local sim = require 'simulator'
 
 local function ninja(args)
     local option = {
-        "ninja", "-f",  WORKDIR / globals.builddir / "build.ninja",
+        "ninja", "-f",  globals.builddir .. "/build.ninja",
         args,
         stdout = true,
         stderr = "stdout",

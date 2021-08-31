@@ -16,11 +16,11 @@ local function fmtpath(context, path)
 end
 
 local function fmtpath_v3(context, rootdir, path)
-    path = fs.path(path)
-    if not path:is_absolute() and path:string():sub(1, 1) ~= "$" then
-        path = fs.relative((rootdir / path):lexically_normal(), WORKDIR)
+    if not fs.path(path):is_absolute() and path:sub(1, 1) ~= "$" then
+        path = fsutil.normalize((rootdir / path):string())
+        path = fsutil.relative(path, WORKDIR:string())
     end
-    return fmtpath(context, path:string())
+    return fmtpath(context, path)
 end
 
 -- TODO 在某些平台上忽略大小写？
@@ -33,7 +33,7 @@ end
 
 local function accept_path(t, path)
     assert(fs.exists(path), ("source `%s` is not exists."):format(path:string()))
-    local repath = fs.relative(path, WORKDIR):string()
+    local repath = fsutil.relative(path:string(), WORKDIR:string())
     if t[repath] then
         return
     end
@@ -755,11 +755,7 @@ function writer:add_script(path)
         return
     end
     mark_scripts[path] = true
-    path = fsutil.relative(path, WORKDIR:string())
-    if path:sub(1,2) == "./" and #path > 2 then
-        path = path:sub(3)
-    end
-    scripts[#scripts+1] = path
+    scripts[#scripts+1] = fsutil.relative(path, WORKDIR:string())
 end
 
 local function get_luamake(context)

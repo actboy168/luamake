@@ -35,14 +35,11 @@ function fsutil.relative(path, base)
         table.remove(rbase, 1)
     end
     if #rpath == 0 and #rbase== 0 then
-        return "./"
+        return "."
     end
     local s = {}
     for _ in ipairs(rbase) do
         s[#s+1] = '..'
-    end
-    if #s == 0 then
-        s[#s+1] = '.'
     end
     for _, e in ipairs(rpath) do
         s[#s+1] = e

@@ -48,7 +48,7 @@ local function init_version(context, luadir, luaversion)
     end
     inited_version[luaversion] = true
     local ninja = context.ninja
-    lua_def(MAKEDIR / "tools" / luaversion)
+    lua_def(fs.path(package.procdir) / "tools" / luaversion)
     local libname
     if context.globals.compiler == 'msvc' then
         libname = luadir / ("lua-"..context.globals.arch..".lib")
@@ -89,6 +89,6 @@ return function (context, name, attribute)
         init_version(context, luadir, luaversion)
         windows_deps(context, name, attribute, luaversion)
     end
-    copy_dir(MAKEDIR / "tools" / luaversion, luadir)
+    copy_dir(fs.path(package.procdir) / "tools" / luaversion, luadir)
     return context, 'shared_library', name, attribute
 end

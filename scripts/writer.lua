@@ -1,5 +1,4 @@
 local fs = require "bee.filesystem"
-local sp = require "bee.subprocess"
 local arguments = require "arguments"
 local globals = require "globals"
 local fsutil = require "fsutil"
@@ -596,7 +595,7 @@ function GEN.build(context, name, attribute, shell)
 
     local command = {}
     local function push(v)
-        command[#command+1] = sp.quotearg(v)
+        command[#command+1] = fsutil.quotearg(v)
     end
     local function push_command(t)
         for _, v in ipairs(t) do
@@ -630,7 +629,7 @@ function GEN.build(context, name, attribute, shell)
             command = {
                 "sh",
                 "-e",
-                "-c", sp.quotearg(table.concat(s, " "))
+                "-c", fsutil.quotearg(table.concat(s, " "))
             }
         else
             local s = {}
@@ -640,7 +639,7 @@ function GEN.build(context, name, attribute, shell)
             command = {
                 "/bin/sh",
                 "-e",
-                "-c", sp.quotearg(table.concat(s, " "))
+                "-c", fsutil.quotearg(table.concat(s, " "))
             }
         end
     end

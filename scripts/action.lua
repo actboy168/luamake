@@ -1,6 +1,5 @@
 local globals = require "globals"
 local sp = require 'bee.subprocess'
-local thread = require 'bee.thread'
 local sim = require 'simulator'
 
 local function ninja(args)
@@ -9,7 +8,6 @@ local function ninja(args)
         args,
         stdout = true,
         stderr = "stdout",
-        cwd = WORKDIR,
         searchPath = true,
     }
     if globals.compiler == 'msvc' then
@@ -20,23 +18,11 @@ local function ninja(args)
     end
 
     local process = assert(sp.spawn(option))
-    while true do
-        local n = sp.peek(process.stdout)
-        if n == nil then
-            local s = process.stdout:read "a"
-            if s then
-                io.write(s)
-                io.flush()
-            end
-            break
-        end
-        if n > 0 then
-            io.write(process.stdout:read(n))
-            io.flush()
-        else
-            thread.sleep(1)
-        end
+    for line in process.stdout:lines() do
+        io.write(line, "\n")
+        io.flush()
     end
+    process.stdout:close()
 
     local code = process:wait()
     if code ~= 0 then

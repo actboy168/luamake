@@ -1,12 +1,28 @@
 local fs = require 'bee.filesystem'
-local platform = require 'bee.platform'
+local globals = require "globals"
 
 local fsutil = {}
 
+local isWindows <const> = globals.hostos == "windows"
+local isMacOS <const> = globals.hostos == "macos"
+local PathSpilt <const> = isWindows and '[^/\\]*' or '[^/]*'
+local PathIgnoreCase <const> = isWindows or isMacOS
+
+local path_equal; do
+    if PathIgnoreCase then
+        function path_equal(a, b)
+            return a:lower() == b:lower()
+        end
+    else
+        function path_equal(a, b)
+            return a == b
+        end
+    end
+end
+
 local function normalize(p)
-    local pattern = platform.OS == "Windows" and '[^/\\]*' or '[^/]*'
     local stack = {}
-    p:gsub(pattern, function (w)
+    p:gsub(PathSpilt, function (w)
         if #w == 0 and #stack ~= 0 then
         elseif w == '..' and #stack ~= 0 and stack[#stack] ~= '..' then
             stack[#stack] = nil
@@ -22,15 +38,12 @@ function fsutil.normalize(p)
 end
 
 function fsutil.relative(path, base)
-    local equal = platform.OS ~= "Linux"
-        and (function(a, b) return a:lower() == b:lower() end)
-        or (function(a, b) return a == b end)
     local rpath = normalize(path)
     local rbase = normalize(base)
-    if platform.OS == "Windows" and not equal(rpath[1], rbase[1]) then
+    if isWindows and not path_equal(rpath[1], rbase[1]) then
         return table.concat(rpath, '/')
     end
-    while #rpath > 0 and #rbase > 0 and equal(rpath[1], rbase[1]) do
+    while #rpath > 0 and #rbase > 0 and path_equal(rpath[1], rbase[1]) do
         table.remove(rpath, 1)
         table.remove(rbase, 1)
     end

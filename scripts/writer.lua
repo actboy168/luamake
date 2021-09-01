@@ -15,6 +15,7 @@ local function fmtpath(context, path)
 end
 
 local function fmtpath_v3(context, rootdir, path)
+    path = tostring(path)
     if not fs.path(path):is_absolute() and path:sub(1, 1) ~= "$" then
         path = fsutil.normalize((rootdir / path):string())
         path = fsutil.relative(path, WORKDIR:string())

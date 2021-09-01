@@ -1,7 +1,7 @@
 local t = {}
 local arguments = {}
 local targets = {}
-local what = 'make'
+local what = 'remake'
 
 local function has_command(what)
     local path = package.searchpath("command."..what, package.path)

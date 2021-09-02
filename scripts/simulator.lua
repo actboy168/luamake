@@ -106,35 +106,35 @@ function mainMt:__pairs()
     return pairs(globals)
 end
 
-local subMt = {}
-subMt.__index = mainSimulator
-function subMt:__pairs()
-    local selfpairs = true
-    local mark = {}
-    return function (_, k)
-        if selfpairs then
-            local newk, newv = next(self, k)
-            if newk ~= nil then
-                mark[newk] = true
-                return newk, newv
-            end
-            selfpairs = false
-            k = nil
-        end
-        local newk = k
-        local newv
-        repeat
-            newk, newv = next(globals, newk)
-        until newk == nil or not mark[newk]
-        return newk, newv
-    end, self
-end
-
 do
     setmetatable(mainSimulator, mainMt)
 end
 
-local function createSubSimulator()
+local function createSubSimulator(parentSimulator)
+    local subMt = {}
+    subMt.__index = parentSimulator
+    function subMt:__pairs()
+        local selfpairs = true
+        local mark = {}
+        local pnext, parent = pairs(parentSimulator)
+        return function (_, k)
+            if selfpairs then
+                local newk, newv = next(self, k)
+                if newk ~= nil then
+                    mark[newk] = true
+                    return newk, newv
+                end
+                selfpairs = false
+                k = nil
+            end
+            local newk = k
+            local newv
+            repeat
+                newk, newv = pnext(parent, newk)
+            until newk == nil or not mark[newk]
+            return newk, newv
+        end, self
+    end
     return setmetatable({}, subMt)
 end
 
@@ -178,7 +178,7 @@ end
 
 function mainSimulator:import(path)
     local absolutepath = fsutil.absolute(fs.path(path), fs.path(self.workdir))
-    importfile(createSubSimulator(), absolutepath)
+    importfile(createSubSimulator(self), absolutepath)
 end
 
 local function import(path)

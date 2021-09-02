@@ -42,7 +42,7 @@ local function accept_path(t, path)
 end
 local function expand_dir(t, pattern, dir)
     assert(fs.exists(dir), ("source dir `%s` is not exists."):format(dir:string()))
-    for file in dir:list_directory() do
+    for file in fs.pairs(dir) do
         if fs.is_directory(file) then
             expand_dir(t, pattern, file)
         else

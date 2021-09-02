@@ -66,7 +66,7 @@ local cl = {
 function cl.update_flags(context, flags, attribute, name)
     if attribute.mode == 'debug' then
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MDd' or '/MTd'
-        flags[#flags+1] = ('/RTC1 /Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")
+        flags[#flags+1] = (' /Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")
     else
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MD' or '/MT'
     end
@@ -74,7 +74,7 @@ end
 
 function cl.update_ldflags(context, ldflags, attribute)
     if attribute.mode == 'debug' then
-        ldflags[#ldflags+1] = '/DEBUG:FASTLINK'
+        ldflags[#ldflags+1] = '/DEBUG'
     else
         ldflags[#ldflags+1] = '/DEBUG:NONE'
         ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental

@@ -71,7 +71,7 @@ local function findwinsdk()
     local function find(dir)
         local max
         local winsdk = fs.path(dir) / "include"
-        for file in winsdk:list_directory() do
+        for file in fs.pairs(winsdk) do
             if fs.exists(file / "um" / "winsdkver.h") then
                 local version = file:filename():string()
                 if version:sub(1,3) == "10." then
@@ -234,7 +234,7 @@ local function ucrtpath(arch, mode)
         end
     end
     accept(path)
-    for p in path:list_directory() do
+    for p in fs.pairs(path) do
         accept(p)
     end
     if not redist then
@@ -249,7 +249,7 @@ end
 local function copy_vcrt(arch, target, mode)
     local ignore = mode == "debug" and fs.path "vccorlib140d.dll" or fs.path "vccorlib140.dll"
     fs.create_directories(target)
-    for dll in vcrtpath(arch, mode):list_directory() do
+    for dll in fs.pairs(vcrtpath(arch, mode)) do
         local filename = dll:filename()
         if filename ~= ignore then
             fs.copy_file(dll, target / filename, fs.copy_options.overwrite_existing)
@@ -260,9 +260,9 @@ end
 local function copy_ucrt(arch, target, mode)
     fs.create_directories(target)
     if mode == "debug" then
-        local redist, bin = ucrtpath(arch, mode):list_directory()
+        local redist, bin = ucrtpath(arch, mode)
         local ignore = fs.path "ucrtbase.dll"
-        for dll in redist:list_directory() do
+        for dll in fs.pairs(redist) do
             local filename = dll:filename()
             if filename ~= ignore then
                 fs.copy_file(dll, target / filename, fs.copy_options.overwrite_existing)
@@ -270,7 +270,7 @@ local function copy_ucrt(arch, target, mode)
         end
         fs.copy_file(bin / "ucrtbased.dll", target / "ucrtbased.dll", fs.copy_options.overwrite_existing)
     else
-        for dll in ucrtpath(arch, mode):list_directory() do
+        for dll in fs.pairs(ucrtpath(arch, mode)) do
             fs.copy_file(dll, target / dll:filename(), fs.copy_options.overwrite_existing)
         end
     end

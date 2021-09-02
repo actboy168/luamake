@@ -11,7 +11,6 @@ globals.mode = globals.mode or "release"
 globals.crt = globals.crt or "dynamic"
 
 globals.hostos = globals.hostos or platform.OS:lower()
-globals.os = globals.os or globals.hostos
 globals.hostshell = globals.hostshell or (function()
     if globals.hostos == "windows" then
         if os.getenv "MSYSTEM" then
@@ -28,6 +27,12 @@ globals.compiler = globals.compiler or (function()
         return "clang"
     end
     return "gcc"
+end)()
+globals.os = globals.os or (function ()
+    if globals.compiler == "emcc" then
+        return "browser"
+    end
+    return globals.hostos
 end)()
 globals.arch = globals.arch or (function ()
     if globals.hostos == "windows" then

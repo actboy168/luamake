@@ -14,6 +14,8 @@ local function ninja(args)
         local msvc = require "msvc_util"
         option.env = msvc.getEnv()
         option.env.VS_UNICODE_OUTPUT = false
+    end
+    if globals.hostshell == 'cmd' then
         option[1] = {'cmd', '/c', 'ninja'}
     end
 

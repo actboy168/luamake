@@ -466,7 +466,9 @@ local function generate(context, rule, name, attribute)
             })
         end
     elseif rule == "executable" then
-        if context.globals.os == "windows" then
+        if context.globals.compiler == "emcc" then
+            binname = fs.path("$bin") / (name .. ".js")
+        elseif context.globals.os == "windows" then
             binname = fs.path("$bin") / (name .. ".exe")
         else
             binname = fs.path("$bin") / name
@@ -811,10 +813,13 @@ function writer:generate(force)
             msvc.createEnvConfig(globals.arch, arguments.what == "rebuild")
             ninja:variable("msvc_deps_prefix", msvc.getPrefix())
         end
-    elseif globals.compiler == "gcc"  then
-        ninja:variable("cc", globals.cc or "gcc")
-    elseif globals.compiler == "clang" then
-        ninja:variable("cc", globals.cc or "clang")
+    else
+        assert(globals.compiler=="gcc" or globals.compiler=="clang" or globals.compiler=="emcc")
+        local cc = globals.cc or globals.compiler
+        if globals.hostshell == 'cmd' then
+            cc = 'cmd /c '..cc
+        end
+        ninja:variable("cc", cc)
     end
 
     if not arguments.args.prebuilt then

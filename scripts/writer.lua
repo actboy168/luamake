@@ -303,6 +303,10 @@ end
 local function generate(context, rule, name, attribute)
     assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
 
+    if context.globals.compiler == "emcc" and rule == "shared_library" then
+        rule = "source_set"
+    end
+
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()

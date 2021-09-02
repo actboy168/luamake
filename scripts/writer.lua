@@ -303,10 +303,6 @@ end
 local function generate(context, rule, name, attribute)
     assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
 
-    if context.globals.compiler == "emcc" and rule == "shared_library" then
-        rule = "source_set"
-    end
-
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
@@ -445,7 +441,9 @@ local function generate(context, rule, name, attribute)
 
     local fin_ldflags = table.concat(ldflags, " ")
     if rule == "shared_library" then
-        if context.globals.os == "windows" then
+        if context.globals.compiler == "emcc" then
+            binname = fs.path "$bin" / (name .. ".wasm")
+        elseif context.globals.os == "windows" then
             binname = fs.path "$bin" / (name .. ".dll")
         else
             binname = fs.path "$bin" / (name .. ".so")
@@ -471,11 +469,11 @@ local function generate(context, rule, name, attribute)
         end
     elseif rule == "executable" then
         if context.globals.compiler == "emcc" then
-            binname = fs.path("$bin") / (name .. ".js")
+            binname = fs.path "$bin" / (name .. ".js")
         elseif context.globals.os == "windows" then
-            binname = fs.path("$bin") / (name .. ".exe")
+            binname = fs.path "$bin" / (name .. ".exe")
         else
-            binname = fs.path("$bin") / name
+            binname = fs.path "$bin" / name
         end
         t.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)

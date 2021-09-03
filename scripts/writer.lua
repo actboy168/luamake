@@ -505,20 +505,20 @@ local function generateTargetName()
     return ("__target_0x%08x__"):format(NAMEIDX)
 end
 
-local function addImplicitInput(context, implicit_input, name)
-    local target = context.loaded_targets[name]
-    assert(target ~= nil, ("`%s`: undefine."):format(name))
+local function addImplicitInput(context, implicit_input, name, dep)
+    local target = context.loaded_targets[dep]
+    assert(target ~= nil, ("`%s`: deps `%s` undefine."):format(name, dep))
     if target.input then
         tbl_append(implicit_input, target.input)
     end
     implicit_input[#implicit_input+1] = target.implicit_input
 end
 
-local function getImplicitInput(self, attribute)
+local function getImplicitInput(context, name, attribute)
     local implicit_input = {}
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            addImplicitInput(self, implicit_input, dep)
+            addImplicitInput(context, implicit_input, name, dep)
         end
     end
     return implicit_input
@@ -528,14 +528,14 @@ function GEN.default(context, attribute)
     local ninja = context.ninja
     local targets = {}
     if type(attribute) == "table" then
-        for _, name in ipairs(attribute) do
-            if name then
-                addImplicitInput(context, targets, name)
+        for _, dep in ipairs(attribute) do
+            if dep then
+                addImplicitInput(context, targets, 'default', dep)
             end
         end
     elseif type(attribute) == "string" then
-        local name = attribute
-        addImplicitInput(context, targets, name)
+        local dep = attribute
+        addImplicitInput(context, targets, 'default', dep)
     end
     ninja:default(targets)
 end
@@ -546,7 +546,7 @@ function GEN.phony(context, name, attribute)
     local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_input = getImplicitInput(context, attribute)
+    local implicit_input = getImplicitInput(context, name, attribute)
     for i = 1, #input do
         input[i] = fmtpath_v3(context, rootdir, input[i])
     end
@@ -589,7 +589,7 @@ function GEN.build(context, name, attribute, shell)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local pool =  init_single(attribute, 'pool')
-    local implicit_input = getImplicitInput(context, attribute)
+    local implicit_input = getImplicitInput(context, name, attribute)
 
     for i = 1, #input do
         input[i] = fmtpath_v3(context, rootdir, input[i])
@@ -675,7 +675,7 @@ function GEN.copy(context, name, attribute)
     local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_input = getImplicitInput(context, attribute)
+    local implicit_input = getImplicitInput(context, name, attribute)
 
     if not ruleCopy then
         ruleCopy = true

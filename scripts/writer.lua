@@ -333,11 +333,6 @@ local function generate(context, rule, name, attribute)
     update_flags(context, flags, attribute, name, rootdir, rule)
 
     local fin_flags = table.concat(flags, " ")
-    local fmtname = name:gsub("[^%w_]", "_")
-    local has_c = false
-    local has_cxx = false
-    local has_rc = false
-    local has_asm = false
     local objs = {}
     for _, source in ipairs(sources) do
         local objname = fs.path(source):filename():replace_extension(".obj"):string()
@@ -355,38 +350,26 @@ local function generate(context, rule, name, attribute)
         local ext = fs.path(source):extension():string():sub(2):lower()
         local type = file_type[ext]
         if type == "c" then
-            if not has_c then
-                has_c = true
-                cc.rule_c(ninja, name, attribute, fin_flags)
-            end
-            ninja:build(objpath, "C_"..fmtname, source)
+            cc.rule_c(ninja, name, attribute, fin_flags)
+            ninja:build(objpath, source)
         elseif type == "cxx" then
-            if not has_cxx then
-                has_cxx = true
-                cc.rule_cxx(ninja, name, attribute, fin_flags)
-            end
-            ninja:build(objpath, "CXX_"..fmtname, source)
+            cc.rule_cxx(ninja, name, attribute, fin_flags)
+            ninja:build(objpath, source)
         elseif context.globals.os == "windows" and type == "rc" then
-            if not has_rc then
-                cc.rule_rc(ninja, name)
-            end
-            ninja:build(objpath, "RC_"..fmtname, source)
+            cc.rule_rc(ninja, name)
+            ninja:build(objpath, source)
         elseif type == "asm" then
             if context.globals.compiler == "msvc" then
                 error "TODO"
             end
-            if not has_asm then
-                has_asm = true
-                cc.rule_asm(ninja, name, fin_flags)
-            end
-            ninja:build(objpath, "ASM_"..fmtname, source)
+            cc.rule_asm(ninja, name, fin_flags)
+            ninja:build(objpath, source)
         else
             error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))
         end
     end
 
-    local t = {
-    }
+    local t = {}
     context.loaded_targets[name] = t
 
     if rule == 'source_set' then
@@ -462,7 +445,7 @@ local function generate(context, rule, name, attribute)
             local lib = fs.path '$bin' / (name..".lib")
             t.input = {lib}
             t.implicit_input = binname
-            ninja:build(binname, "LINK_"..fmtname, input, {
+            ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
                 implicit_outputs = lib,
             })
@@ -472,7 +455,7 @@ local function generate(context, rule, name, attribute)
             else
                 t.implicit_input = binname
             end
-            ninja:build(binname, "LINK_"..fmtname, input, {
+            ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
             })
         end
@@ -486,7 +469,7 @@ local function generate(context, rule, name, attribute)
         end
         t.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
-        ninja:build(binname, "LINK_"..fmtname, input, {
+        ninja:build(binname, input, {
             implicit_inputs = implicit_input,
         })
     elseif rule == "static_library" then
@@ -497,16 +480,14 @@ local function generate(context, rule, name, attribute)
         end
         t.input = {binname}
         cc.rule_lib(ninja, name)
-        ninja:build(binname, "LINK_"..fmtname, input, {
+        ninja:build(binname, input, {
             implicit_inputs = implicit_input,
         })
     end
-    ninja:build(name, 'phony', binname)
+    ninja:phony(name, binname)
 end
 
 local GEN = {}
-
-local ruleCopy = false
 
 local NAMEIDX = 0
 local function generateTargetName()
@@ -564,12 +545,12 @@ function GEN.phony(context, name, attribute)
     end
     if name then
         if #output == 0 then
-            ninja:build(name, 'phony', input, {
+            ninja:phony(name, input, {
                 implicit_inputs = implicit_input,
             })
         else
-            ninja:build(name, 'phony', output)
-            ninja:build(output, 'phony', input, {
+            ninja:phony(name, output)
+            ninja:phony(output, input, {
                 implicit_inputs = implicit_input,
             })
         end
@@ -580,7 +561,7 @@ function GEN.phony(context, name, attribute)
         if #output == 0 then
             error(("`%s`: no output."):format(name))
         else
-            ninja:build(output, 'phony', input, {
+            ninja:phony(output, input, {
                 implicit_inputs = implicit_input,
             })
         end
@@ -666,12 +647,12 @@ function GEN.build(context, name, attribute, shell)
         outname = output
     end
     ninja:rule('build_'..rule_name, table.concat(command, " "))
-    ninja:build(outname, 'build_'..rule_name, input, {
+    ninja:build(outname, input, {
         implicit_inputs = implicit_input,
         variables = { pool = pool },
     })
     if not tmpName then
-        ninja:build(name, 'phony', outname)
+        ninja:phony(name, outname)
         context.loaded_targets[name] = {
             implicit_input = name,
         }
@@ -686,25 +667,23 @@ function GEN.copy(context, name, attribute)
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
 
-    if not ruleCopy then
-        ruleCopy = true
-        if context.globals.hostshell == "cmd" then
-            ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
-                description = 'Copy $in$input $out',
-                restat = 1,
-            })
-        elseif context.globals.hostos == "windows" then
-            ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
-                description = 'Copy $in$input $out',
-                restat = 1,
-            })
-        else
-            ninja:rule('copy', 'cp -afv $in$input $out 1>/dev/null', {
-                description = 'Copy $in$input $out',
-                restat = 1,
-            })
-        end
+    if context.globals.hostshell == "cmd" then
+        ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
+            description = 'Copy $in$input $out',
+            restat = 1,
+        })
+    elseif context.globals.hostos == "windows" then
+        ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
+            description = 'Copy $in$input $out',
+            restat = 1,
+        })
+    else
+        ninja:rule('copy', 'cp -afv $in$input $out 1>/dev/null', {
+            description = 'Copy $in$input $out',
+            restat = 1,
+        })
     end
+
     for i = 1, #input do
         local v = input[i]
         if type(v) == 'string' and v:sub(1,1) == '@' then
@@ -723,11 +702,11 @@ function GEN.copy(context, name, attribute)
 
     if #implicit_input == 0 then
         for i = 1, #input do
-            ninja:build(output[i], 'copy', input[i])
+            ninja:build(output[i], input[i])
         end
     else
         for i = 1, #input do
-            ninja:build(output[i], 'copy', nil, {
+            ninja:build(output[i], nil, {
                 implicit_inputs = implicit_input,
                 variables = { input = input[i] },
             })
@@ -736,7 +715,7 @@ function GEN.copy(context, name, attribute)
 
     if name then
         assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
-        ninja:build(name, 'phony', output)
+        ninja:phony(name, output)
         context.loaded_targets[name] = {
             implicit_input = name,
         }
@@ -809,8 +788,7 @@ function writer:generate(force)
     context.globals = globals
     fs.create_directories(builddir)
 
-    local ninja_syntax = require "ninja_syntax"
-    local ninja = ninja_syntax(ninja_script:string())
+    local ninja = require "ninja_writer"(ninja_script:string())
 
     ninja:variable("builddir", fmtpath(context, globals.builddir))
     ninja:variable("bin", fmtpath(context, globals.bindir))
@@ -836,7 +814,7 @@ function writer:generate(force)
     if not arguments.args.prebuilt then
         ninja:variable("luamake", get_luamake(context))
         ninja:rule('configure', '$luamake init ' .. configure_args(), { generator = 1 })
-        ninja:build("$builddir/build.ninja", "configure", scripts)
+        ninja:build("$builddir/build.ninja", scripts)
     end
 
     for _, target in ipairs(targets) do

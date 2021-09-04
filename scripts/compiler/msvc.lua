@@ -83,7 +83,7 @@ end
 
 function cl.rule_c(w, name, attribute, flags)
     local cflags = assert(cl.c[attribute.c], ("`%s`: unknown std c: `%s`"):format(name, attribute.c))
-    w:rule('C_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
+    w:rule('c_'..name, ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
     {
         description = 'Compile C   $out',
         deps = 'msvc',
@@ -92,7 +92,7 @@ end
 
 function cl.rule_cxx(w, name, attribute, flags)
     local cxxflags = assert(cl.cxx[attribute.cxx], ("`%s`: unknown std c++: `%s`"):format(name, attribute.cxx))
-    w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
+    w:rule('cxx_'..name, ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
     {
         description = 'Compile C++ $out',
         deps = 'msvc',
@@ -101,7 +101,7 @@ end
 
 function cl.rule_dll(w, name, ldflags)
     local lib = (fs.path('$bin') / name)..".lib"
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in /link %s /out:$out /DLL /IMPLIB:%s]]):format(ldflags, lib),
+    w:rule('link_'..name, ([[cl /nologo $in /link %s /out:$out /DLL /IMPLIB:%s]]):format(ldflags, lib),
     {
         description = 'Link    Dll $out',
         restat = 1,
@@ -109,21 +109,21 @@ function cl.rule_dll(w, name, ldflags)
 end
 
 function cl.rule_exe(w, name, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[cl /nologo $in /link %s /out:$out]]):format(ldflags),
+    w:rule('link_'..name, ([[cl /nologo $in /link %s /out:$out]]):format(ldflags),
     {
         description = 'Link    Exe $out'
     })
 end
 
 function cl.rule_lib(w, name)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), [[lib /nologo $in /out:$out]],
+    w:rule('link_'..name, [[lib /nologo $in /out:$out]],
     {
         description = 'Link    Lib $out'
     })
 end
 
 function cl.rule_rc(w, name)
-    w:rule('RC_'..name:gsub('[^%w_]', '_'), [[rc /nologo /fo $out $in]],
+    w:rule('rc_'..name, [[rc /nologo /fo $out $in]],
     {
         description = 'Compile Res $out',
     })

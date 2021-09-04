@@ -79,7 +79,7 @@ function gcc.update_ldflags(context, ldflags, attribute)
 end
 
 function gcc.rule_asm(w, name, flags)
-    w:rule('ASM_'..name:gsub('[^%w_]', '_'), ([[$cc -MMD -MT $out -MF $out.d %s -o $out -c $in]])
+    w:rule('asm_'..name, ([[$cc -MMD -MT $out -MF $out.d %s -o $out -c $in]])
     :format(flags),
     {
         description = 'Compile ASM $out',
@@ -90,7 +90,7 @@ end
 
 function gcc.rule_c(w, name, attribute, flags)
     local cflags = assert(gcc.c[attribute.c], ("`%s`: unknown std c: `%s`"):format(name, attribute.c))
-    w:rule('C_'..name:gsub('[^%w_]', '_'), ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
+    w:rule('c_'..name, ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(cflags, flags),
     {
         description = 'Compile C   $out',
@@ -101,7 +101,7 @@ end
 
 function gcc.rule_cxx(w, name, attribute, flags)
     local cxxflags = assert(gcc.cxx[attribute.cxx], ("`%s`: unknown std c++: `%s`"):format(name, attribute.cxx))
-    w:rule('CXX_'..name:gsub('[^%w_]', '_'), ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
+    w:rule('cxx_'..name, ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(cxxflags, flags),
     {
         description = 'Compile C++ $out',
@@ -111,7 +111,7 @@ function gcc.rule_cxx(w, name, attribute, flags)
 end
 
 function gcc.rule_dll(w, name, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc --shared $in -o $out %s]])
+    w:rule('link_'..name, ([[$cc --shared $in -o $out %s]])
     :format(ldflags),
     {
         description = 'Link    Dll $out'
@@ -119,7 +119,7 @@ function gcc.rule_dll(w, name, ldflags)
 end
 
 function gcc.rule_exe(w, name, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc $in -o $out %s]])
+    w:rule('link_'..name, ([[$cc $in -o $out %s]])
     :format(ldflags),
     {
         description = 'Link    Exe $out'
@@ -127,7 +127,7 @@ function gcc.rule_exe(w, name, ldflags)
 end
 
 function gcc.rule_lib(w, name)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), [[rm -f $out && ar rcs $out $in]],
+    w:rule('link_'..name, [[rm -f $out && ar rcs $out $in]],
     {
         description = 'Link    Lib $out'
     })
@@ -135,7 +135,7 @@ end
 
 -- mingw only
 function gcc.rule_rc(w, name)
-    w:rule('RC_'..name:gsub('[^%w_]', '_'), [[windres -i $in -o $out]],
+    w:rule('rc_'..name, [[windres -i $in -o $out]],
     {
         description = 'Compile Res $out',
     })

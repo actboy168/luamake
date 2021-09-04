@@ -100,14 +100,14 @@ function clang.update_ldflags(context, ldflags, attribute)
 end
 
 function clang.rule_dll(w, name, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
+    w:rule('link_'..name, ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
     {
         description = 'Link    Dll $out'
     })
 end
 
 function clang.rule_exe(w, name, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc $in -o $out %s]]):format(ldflags),
+    w:rule('link_'..name, ([[$cc $in -o $out %s]]):format(ldflags),
     {
         description = 'Link    Exe $out'
     })

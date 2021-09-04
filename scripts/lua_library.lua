@@ -52,10 +52,10 @@ local function init_version(context, luadir, luaversion)
     local libname
     if context.globals.compiler == 'msvc' then
         libname = luadir / ("lua-"..context.globals.arch..".lib")
-        ninja:build(libname, "luadeps", luadir / "lua.def")
+        ninja:build(libname, luadir / "lua.def")
     else
         libname = luadir / "liblua.a"
-        ninja:build(libname, "luadeps", luadir / "lua.def")
+        ninja:build(libname, luadir / "lua.def")
     end
     context.loaded_targets["__"..luaversion.."__"] = {
         input = {libname}

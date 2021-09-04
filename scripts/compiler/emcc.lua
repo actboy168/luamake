@@ -6,7 +6,7 @@ function emcc.update_ldflags(context, ldflags, attribute)
 end
 
 function emcc.rule_dll(w, name, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc $in -o $out -s SIDE_MODULE=1 %s]])
+    w:rule('link_'..name, ([[$cc $in -o $out -s SIDE_MODULE=1 %s]])
     :format(ldflags),
     {
         description = 'Link    Dll $out'
@@ -14,7 +14,7 @@ function emcc.rule_dll(w, name, ldflags)
 end
 
 function emcc.rule_exe(w, name, ldflags)
-    w:rule('LINK_'..name:gsub('[^%w_]', '_'), ([[$cc $in -o $out %s]])
+    w:rule('link_'..name, ([[$cc $in -o $out %s]])
     :format(ldflags),
     {
         description = 'Link    Exe $out'

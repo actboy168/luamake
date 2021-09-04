@@ -25,7 +25,16 @@ end
 
 -- TODO 在某些平台上忽略大小写？
 local function glob_compile(pattern)
-    return ("^%s$"):format(pattern:gsub("[%^%$%(%)%%%.%[%]%+%-%?]", "%%%0"):gsub("%*", ".*"))
+    local sep = globals.hostshell == "cmd" and "\\/" or "/"
+    return ("^%s$"):format(pattern
+        :gsub("[%^%$%(%)%%%.%[%]%+%-%?]", "%%%0")
+        :gsub("%*%*", "${d}")
+        :gsub("%*", "${f}")
+        :gsub("%$%{([^}]*)%}", {
+            d = ".*",
+            f = "[^"..sep.."]*",
+        })
+    )
 end
 local function glob_match(pattern, target)
     return target:match(pattern) ~= nil
@@ -46,7 +55,7 @@ local function expand_dir(t, pattern, dir)
         if fs.is_directory(file) then
             expand_dir(t, pattern, file)
         else
-            if glob_match(pattern, file:filename():string()) then
+            if glob_match(pattern, file:lexically_normal():string()) then
                 accept_path(t, file)
             end
         end
@@ -54,7 +63,7 @@ local function expand_dir(t, pattern, dir)
 end
 
 local function expand_path(t, path)
-    local filename = path:filename():string()
+    local filename = path:lexically_normal():string()
     if filename:find("*", 1, true) == nil then
         accept_path(t, path)
         return

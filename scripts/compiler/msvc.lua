@@ -66,7 +66,9 @@ local cl = {
 function cl.update_flags(context, flags, attribute, name)
     if attribute.mode == 'debug' then
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MDd' or '/MTd'
-        flags[#flags+1] = (' /Zi /FS /Fd%s'):format(fs.path('$obj') / name / "luamake.pdb")
+        flags[#flags+1] = '/FS'
+        flags[#flags+1] = '/Zi'
+        flags[#flags+1] = ('/Fd$obj/%s/'):format(name)
     else
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MD' or '/MT'
     end
@@ -75,6 +77,7 @@ end
 function cl.update_ldflags(context, ldflags, attribute)
     if attribute.mode == 'debug' then
         ldflags[#ldflags+1] = '/DEBUG'
+        ldflags[#ldflags+1] = '/pdb:$obj/$name/$name.pdb'
     else
         ldflags[#ldflags+1] = '/DEBUG:NONE'
         ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
@@ -100,8 +103,7 @@ function cl.rule_cxx(w, name, attribute, flags)
 end
 
 function cl.rule_dll(w, name, ldflags)
-    local lib = (fs.path('$bin') / name)..".lib"
-    w:rule('link_'..name, ([[cl /nologo $in /link %s /out:$out /DLL /IMPLIB:%s]]):format(ldflags, lib),
+    w:rule('link_'..name, ([[cl /nologo $in /link %s /out:$out /DLL /IMPLIB:$obj/$name/$name.lib]]):format(ldflags),
     {
         description = 'Link    Dll $out',
         restat = 1,

@@ -454,12 +454,13 @@ local function generate(context, rule, name, attribute)
         end
         cc.rule_dll(ninja, name, fin_ldflags)
         if context.globals.compiler == 'msvc' then
-            local lib = fs.path '$bin' / (name..".lib")
+            local lib = fs.path(('$obj/%s/%s.lib'):format(name, name))
             target.input = {lib}
             target.implicit_input = binname
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
                 implicit_outputs = lib,
+                variables = { name = name }
             })
         else
             if context.globals.os == "windows" then
@@ -481,9 +482,16 @@ local function generate(context, rule, name, attribute)
         end
         target.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
-        ninja:build(binname, input, {
-            implicit_inputs = implicit_input,
-        })
+        if context.globals.compiler == 'msvc' then
+            ninja:build(binname, input, {
+                implicit_inputs = implicit_input,
+                variables = { name = name }
+            })
+        else
+            ninja:build(binname, input, {
+                implicit_inputs = implicit_input,
+            })
+        end
     elseif rule == "static_library" then
         if context.globals.os == "windows" then
             binname = fs.path("$bin") / (name .. ".lib")

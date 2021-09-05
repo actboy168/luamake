@@ -310,14 +310,36 @@ local function update_ldflags(context, ldflags, attribute, name, rootdir)
 end
 
 local function generate(context, rule, name, attribute)
-    assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
+    local target = context.loaded_targets[name]
+    local input
+    local ldflags
+    local deps
+    do
+        if target then
+            if target.rule == "source_set" then
+                target.rule = rule
+                input = target.input
+                ldflags = target.ldflags
+                deps = target.deps
+                target.input = nil
+                target.ldflags = nil
+                target.deps = nil
+            else
+                error(("`%s`: redefinition."):format(name))
+            end
+        else
+            target = { rule = rule }
+            input = {}
+            ldflags =  {}
+            context.loaded_targets[name] = target
+        end
+    end
 
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
     local sources = get_sources(rootdir, attribute.sources)
     local implicit_input = {}
-    local input = {}
 
     init_single(attribute, 'mode', 'release')
     init_single(attribute, 'crt', 'dynamic')
@@ -328,6 +350,14 @@ local function generate(context, rule, name, attribute)
     init_single(attribute, 'arch')
     init_single(attribute, 'vendor')
     init_single(attribute, 'sys')
+
+    if attribute.deps then
+        if deps then
+            tbl_append(deps, attribute.deps)
+        else
+            deps = attribute.deps
+        end
+    end
 
     local flags =  {}
     update_flags(context, flags, attribute, name, rootdir, rule)
@@ -357,38 +387,33 @@ local function generate(context, rule, name, attribute)
         end
     end
 
-    local t = {}
-    context.loaded_targets[name] = t
-
     if rule == 'source_set' then
-        local dep_ldflags = {}
         if attribute.links then
             for _, link in ipairs(attribute.links) do
-                dep_ldflags[#dep_ldflags+1] = cc.link(link)
+                ldflags[#ldflags+1] = cc.link(link)
             end
         end
         if attribute.linkdirs then
             for _, linkdir in ipairs(attribute.linkdirs) do
-                dep_ldflags[#dep_ldflags+1] = cc.linkdir(fmtpath_v3(context, rootdir, linkdir))
+                ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(context, rootdir, linkdir))
             end
         end
         if attribute.ldflags then
-            tbl_append(dep_ldflags, attribute.ldflags)
+            tbl_append(ldflags, attribute.ldflags)
         end
         if context.globals.compiler == "clang" and attribute.frameworks then
             for _, framework in ipairs(attribute.frameworks) do
-                dep_ldflags[#dep_ldflags+1] = "-framework"
-                dep_ldflags[#dep_ldflags+1] = framework
+                ldflags[#ldflags+1] = "-framework"
+                ldflags[#ldflags+1] = framework
             end
         end
-        t.input = input
-        t.ldflags = dep_ldflags
-        t.deps = attribute.deps
+        target.input = input
+        target.ldflags = ldflags
+        target.deps = deps
         return
     end
 
-    if attribute.deps then
-        local deps = attribute.deps
+    if deps then
         local mark = {[name] = true}
         local i = 1
         while i <= #deps do
@@ -416,7 +441,6 @@ local function generate(context, rule, name, attribute)
     assert(#input > 0, ("`%s`: no source files found."):format(name))
 
     local binname
-    local ldflags =  {}
     update_ldflags(context, ldflags, attribute, name, rootdir)
 
     local fin_ldflags = table.concat(ldflags, " ")
@@ -431,17 +455,17 @@ local function generate(context, rule, name, attribute)
         cc.rule_dll(ninja, name, fin_ldflags)
         if context.globals.compiler == 'msvc' then
             local lib = fs.path '$bin' / (name..".lib")
-            t.input = {lib}
-            t.implicit_input = binname
+            target.input = {lib}
+            target.implicit_input = binname
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
                 implicit_outputs = lib,
             })
         else
             if context.globals.os == "windows" then
-                t.input = {binname}
+                target.input = {binname}
             else
-                t.implicit_input = binname
+                target.implicit_input = binname
             end
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
@@ -455,7 +479,7 @@ local function generate(context, rule, name, attribute)
         else
             binname = fs.path "$bin" / name
         end
-        t.implicit_input = binname
+        target.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
         ninja:build(binname, input, {
             implicit_inputs = implicit_input,
@@ -466,7 +490,7 @@ local function generate(context, rule, name, attribute)
         else
             binname = fs.path("$bin") / ("lib"..name .. ".a")
         end
-        t.input = {binname}
+        target.input = {binname}
         cc.rule_lib(ninja, name)
         ninja:build(binname, input, {
             implicit_inputs = implicit_input,

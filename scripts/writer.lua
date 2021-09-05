@@ -333,37 +333,25 @@ local function generate(context, rule, name, attribute)
     update_flags(context, flags, attribute, name, rootdir, rule)
 
     local fin_flags = table.concat(flags, " ")
-    local objs = {}
     for _, source in ipairs(sources) do
-        local objname = fs.path(source):filename():replace_extension(".obj"):string()
-        if objs[objname] then
-            local n = 1
-            local stem = fs.path(source):stem():string()
-            repeat
-                objname = ("%s-%d.obj"):format(stem, n)
-                n = n + 1
-            until not objs[objname]
-        end
-        objs[objname] = true
-        local objpath = fs.path("$obj") / name / objname
-        input[#input+1] = objpath
+        local objpath = fs.path("$obj") / name / fs.path(source):filename()
         local ext = fs.path(source):extension():string():sub(2):lower()
         local type = file_type[ext]
         if type == "c" then
             cc.rule_c(ninja, name, attribute, fin_flags)
-            ninja:build(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source)
         elseif type == "cxx" then
             cc.rule_cxx(ninja, name, attribute, fin_flags)
-            ninja:build(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source)
         elseif context.globals.os == "windows" and type == "rc" then
             cc.rule_rc(ninja, name)
-            ninja:build(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source)
         elseif type == "asm" then
             if context.globals.compiler == "msvc" then
                 error "TODO"
             end
             cc.rule_asm(ninja, name, fin_flags)
-            ninja:build(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source)
         else
             error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))
         end

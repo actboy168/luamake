@@ -1,7 +1,10 @@
+local fs = require "bee.filesystem"
+
 return function (filename)
     local ninja = require "ninja_syntax"(filename)
     local rule_name = {}
     local rule_command = {}
+    local obj_name = {}
     local last_rule
     local m = {}
     function m:rule(name, command, kwargs)
@@ -23,6 +26,22 @@ return function (filename)
         rule_command[command] = name
         last_rule = name
         ninja:rule(name, command, kwargs)
+    end
+    function m:build_obj(output, inputs, args)
+        output = output:replace_extension ".obj"
+        local name = output:string()
+        if obj_name[name] then
+            local n = 1
+            local stem = (output:parent_path() / output:stem()):string()
+            repeat
+                name = ("%s-%d.obj"):format(stem, n)
+                n = n + 1
+            until not obj_name[name]
+        end
+        obj_name[name] = true
+        name = fs.path(name)
+        ninja:build(name, last_rule, inputs, args)
+        return name
     end
     function m:build(outputs, inputs, args)
         ninja:build(outputs, last_rule, inputs, args)

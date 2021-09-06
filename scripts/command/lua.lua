@@ -34,9 +34,10 @@ local globals = require "globals"
 local sandbox = require "sandbox"
 
 if globals.os == "windows" then
-    local ok, err = package.loadlib(package.procdir.."/tools/lua54.dll", "*")
+    local luadll = package.procdir.."/tools/lua54.dll"
+    local ok, err = package.loadlib(luadll, "*")
     if not ok then
-        error(err)
+        error(("could not be found: %s\n\t%s"):format(luadll, err))
     end
 end
 

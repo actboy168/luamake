@@ -37,7 +37,7 @@ if globals.os == "windows" then
     local luadll = package.procdir.."/tools/lua54.dll"
     local ok, err = package.loadlib(luadll, "*")
     if not ok then
-        error(("could not be found: %s\n\t%s"):format(luadll, err))
+        --error(("could not be found: %s\n\t%s"):format(luadll, err))
     end
 end
 

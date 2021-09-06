@@ -582,7 +582,9 @@ function GEN.phony(context, name, attribute)
             ninja:phony(name, input)
         else
             ninja:phony(name, output)
-            ninja:phony(output, input)
+            for _, out in ipairs(output) do
+                ninja:phony(out, input)
+            end
         end
         context.loaded_targets[name] = {
             implicit_input = name,
@@ -591,7 +593,9 @@ function GEN.phony(context, name, attribute)
         if #output == 0 then
             error(("`%s`: no output."):format(name))
         else
-            ninja:phony(output, input)
+            for _, out in ipairs(output) do
+                ninja:phony(out, input)
+            end
         end
     end
 end

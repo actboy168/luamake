@@ -5,6 +5,9 @@ return function (filename)
     local rule_name = {}
     local rule_command = {}
     local obj_name = {}
+    local build_name = {}
+    local phony = {}
+    local default
     local last_rule
     local m = {}
     function m:rule(name, command, kwargs)
@@ -43,11 +46,29 @@ return function (filename)
         ninja:build(name, last_rule, inputs, args)
         return name
     end
-    function m:build(outputs, inputs, args)
-        ninja:build(outputs, last_rule, inputs, args)
+    function m:build(output, inputs, args)
+        assert(build_name[output] == nil)
+        build_name[output] = true
+        ninja:build(output, last_rule, inputs, args)
     end
-    function m:phony(outputs, inputs)
-        ninja:build(outputs, 'phony', inputs)
+    function m:phony(output, inputs)
+        assert(phony[output] == nil)
+        phony[output] = inputs
+        phony[#phony+1] = output
+    end
+    function m:default(targets)
+        default = targets
+    end
+    function m:close()
+        for _, out in ipairs(phony) do
+            if not build_name[out] then
+                ninja:build(out, 'phony', phony[out])
+            end
+        end
+        if default then
+            ninja:default(default)
+        end
+        ninja:close()
     end
     m.comment = ninja.comment
     m.variable = ninja.variable
@@ -55,7 +76,5 @@ return function (filename)
     m.variable = ninja.variable
     m.include = ninja.include
     m.subninja = ninja.subninja
-    m.default = ninja.default
-    m.close = ninja.close
     return m
 end

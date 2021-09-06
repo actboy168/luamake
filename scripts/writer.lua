@@ -107,6 +107,7 @@ local file_type = {
     m = "c",
     rc = "rc",
     s = "asm",
+    def = "raw"
 }
 
 local function tbl_append(t, a)
@@ -364,9 +365,13 @@ local function generate(context, rule, name, attribute)
 
     local fin_flags = table.concat(flags, " ")
     for _, source in ipairs(sources) do
-        local objpath = fs.path("$obj") / name / fs.path(source):filename()
         local ext = fs.path(source):extension():string():sub(2):lower()
         local type = file_type[ext]
+        if type == "raw" then
+            input[#input+1] = fs.path(source)
+            goto continue
+        end
+        local objpath = fs.path("$obj") / name / fs.path(source):filename()
         if type == "c" then
             cc.rule_c(ninja, name, attribute, fin_flags)
             input[#input+1] = ninja:build_obj(objpath, source)
@@ -385,6 +390,7 @@ local function generate(context, rule, name, attribute)
         else
             error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))
         end
+        ::continue::
     end
 
     if rule == 'source_set' then

@@ -670,14 +670,13 @@ function GEN.build(context, name, attribute, shell)
         end
     end
 
-    local rule_name = name:gsub("[^%w_]", "_")
     local outname
     if #output == 0 then
-        outname = '$builddir/_/' .. rule_name
+        outname = '$builddir/_/' .. name
     else
         outname = output
     end
-    ninja:rule('build_'..rule_name, table.concat(command, " "))
+    ninja:rule('build_'..name, table.concat(command, " "))
     ninja:build(outname, input, {
         implicit_inputs = implicit_input,
         variables = { pool = pool },

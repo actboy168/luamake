@@ -6,7 +6,11 @@ local fsutil = require "fsutil"
 local cc
 
 local function fmtpath(path)
-    return path:gsub('\\', '/')
+    if globals.hostshell == "cmd" then
+        return path:gsub('/', '\\')
+    else
+        return path:gsub('\\', '/')
+    end
 end
 
 local function fmtpath_v3(rootdir, path)
@@ -15,7 +19,7 @@ local function fmtpath_v3(rootdir, path)
         path = fsutil.normalize((rootdir / path):string())
         path = fsutil.relative(path, WORKDIR:string())
     end
-    return fmtpath(path)
+    return path:gsub('\\', '/')
 end
 
 -- TODO 在某些平台上忽略大小写？

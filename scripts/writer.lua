@@ -5,22 +5,17 @@ local fsutil = require "fsutil"
 
 local cc
 
-local function fmtpath(context, path)
-    if context.globals.hostshell == "cmd" then
-        path = path:gsub('/', '\\')
-    else
-        path = path:gsub('\\', '/')
-    end
-    return path
+local function fmtpath(path)
+    return path:gsub('\\', '/')
 end
 
-local function fmtpath_v3(context, rootdir, path)
+local function fmtpath_v3(rootdir, path)
     path = tostring(path)
     if not fs.path(path):is_absolute() and path:sub(1, 1) ~= "$" then
         path = fsutil.normalize((rootdir / path):string())
         path = fsutil.relative(path, WORKDIR:string())
     end
-    return fmtpath(context, path)
+    return fmtpath(path)
 end
 
 -- TODO 在某些平台上忽略大小写？
@@ -244,7 +239,7 @@ local function update_flags(context, flags, attribute, name, rootdir, rule)
 
     if attribute.includes then
         for _, inc in ipairs(attribute.includes) do
-            flags[#flags+1] = cc.includedir(fmtpath_v3(context, rootdir, inc))
+            flags[#flags+1] = cc.includedir(fmtpath_v3(rootdir, inc))
         end
     end
 
@@ -290,7 +285,7 @@ local function update_ldflags(context, ldflags, attribute, name, rootdir)
     end
     if attribute.linkdirs then
         for _, linkdir in ipairs(attribute.linkdirs) do
-            ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(context, rootdir, linkdir))
+            ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
         end
     end
     if attribute.ldflags then
@@ -406,7 +401,7 @@ local function generate(context, rule, name, attribute)
         end
         if attribute.linkdirs then
             for _, linkdir in ipairs(attribute.linkdirs) do
-                ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(context, rootdir, linkdir))
+                ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
             end
         end
         if attribute.ldflags then
@@ -569,10 +564,10 @@ function GEN.phony(context, name, attribute)
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
     for i = 1, #input do
-        input[i] = fmtpath_v3(context, rootdir, input[i])
+        input[i] = fmtpath_v3(rootdir, input[i])
     end
     for i = 1, #output do
-        output[i] = fmtpath_v3(context, rootdir, output[i])
+        output[i] = fmtpath_v3(rootdir, output[i])
     end
     if name then
         if #output == 0 then
@@ -613,10 +608,10 @@ function GEN.build(context, name, attribute)
     local implicit_input = getImplicitInput(context, name, attribute)
 
     for i = 1, #input do
-        input[i] = fmtpath_v3(context, rootdir, input[i])
+        input[i] = fmtpath_v3(rootdir, input[i])
     end
     for i = 1, #output do
-        output[i] = fmtpath_v3(context, rootdir, output[i])
+        output[i] = fmtpath_v3(rootdir, output[i])
     end
 
     local command = {}
@@ -628,13 +623,13 @@ function GEN.build(context, name, attribute)
             if type(v) == 'table' then
                 push_command(v)
             elseif type(v) == 'userdata' then
-                push(fmtpath_v3(context, rootdir, v))
+                push(fmtpath_v3(rootdir, v))
             elseif type(v) == 'string' then
                 if v:sub(1,1) == '@' then
-                    push(fmtpath_v3(context, rootdir, v:sub(2)))
+                    push(fmtpath_v3(rootdir, v:sub(2)))
                 else
                     v = v:gsub("@{([^}]*)}", function (s)
-                        return fmtpath_v3(context, rootdir, s)
+                        return fmtpath_v3(rootdir, s)
                     end)
                     push(v)
                 end
@@ -692,16 +687,28 @@ function GEN.copy(context, name, attribute)
         if type(v) == 'string' and v:sub(1,1) == '@' then
             v =  v:sub(2)
         end
-        input[i] = fmtpath_v3(context, rootdir, v)
+        input[i] = fmtpath_v3(rootdir, v)
     end
     for i = 1, #output do
         local v = output[i]
         if type(v) == 'string' and v:sub(1,1) == '@' then
             v =  v:sub(2)
         end
-        output[i] = fmtpath_v3(context, rootdir, v)
+        output[i] = fmtpath_v3(rootdir, v)
     end
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
+
+    if context.globals.hostshell == "cmd" then
+        for i, v in ipairs(input) do
+            input[i] = v:gsub("/", "\\")
+        end
+        for i, v in ipairs(output) do
+            output[i] = v:gsub("/", "\\")
+        end
+        for i, v in ipairs(implicit_input) do
+            implicit_input[i] = tostring(v):gsub("/", "\\")
+        end
+    end
 
     if #implicit_input == 0 then
         for i = 1, #input do
@@ -749,12 +756,12 @@ function writer:add_script(path)
     scripts[#scripts+1] = fsutil.relative(path, WORKDIR:string())
 end
 
-local function get_luamake(context)
+local function get_luamake()
     local proc = arg[-1]
     if proc == "luamake" then
         return "luamake"
     end
-    return fmtpath(context, fs.exe_path():string())
+    return fmtpath(fs.exe_path():string())
 end
 
 local function configure_args()
@@ -789,9 +796,9 @@ function writer:generate(force)
 
     local ninja = require "ninja_writer"(ninja_script:string())
 
-    ninja:variable("builddir", fmtpath(context, globals.builddir))
-    ninja:variable("bin", fmtpath(context, globals.bindir))
-    ninja:variable("obj", fmtpath(context, globals.objdir))
+    ninja:variable("builddir", fmtpath(globals.builddir))
+    ninja:variable("bin", fmtpath(globals.bindir))
+    ninja:variable("obj", fmtpath(globals.objdir))
 
     context.ninja = ninja
 
@@ -811,7 +818,7 @@ function writer:generate(force)
     end
 
     if not arguments.args.prebuilt then
-        ninja:variable("luamake", get_luamake(context))
+        ninja:variable("luamake", get_luamake())
         ninja:rule('configure', '$luamake init ' .. configure_args(), { generator = 1 })
         ninja:build("$builddir/build.ninja", scripts)
     end

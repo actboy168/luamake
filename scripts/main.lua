@@ -25,13 +25,7 @@ else
     local mt = debug.getmetatable(fs.path())
     local rawtostring = mt.__tostring
     function mt:__tostring()
-        local path = rawtostring(self)
-        if globals.hostshell == "cmd" then
-            path = path:gsub('/', '\\')
-        else
-            path = path:gsub('\\', '/')
-        end
-        return path
+        return rawtostring(self):gsub('\\', '/')
     end
     command(arguments.what)
 end

@@ -46,8 +46,8 @@ return function (filename)
     function m:build(outputs, inputs, args)
         ninja:build(outputs, last_rule, inputs, args)
     end
-    function m:phony(outputs, inputs, args)
-        ninja:build(outputs, 'phony', inputs, args)
+    function m:phony(outputs, inputs)
+        ninja:build(outputs, 'phony', inputs)
     end
     m.comment = ninja.comment
     m.variable = ninja.variable

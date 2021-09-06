@@ -143,20 +143,19 @@ build $bin/luamake: link_luamake $obj/luamake/main.obj $
     $obj/source_lua/ltablib.obj $obj/source_lua/ltm.obj $
     $obj/source_lua/lundump.obj $obj/source_lua/lutf8lib.obj $
     $obj/source_lua/lvm.obj $obj/source_lua/lzio.obj
-build luamake: phony $bin/luamake
 rule copy
   command = cp -afv $in$input $out 1>/dev/null
   description = Copy $in$input $out
   restat = 1
 build $bin/main.lua: copy | $bin/luamake
   input = 3rd/bee.lua/bootstrap/main.lua
-build copy_script: phony $bin/main.lua
 rule build_test
   command = $bin/luamake 3rd/bee.lua/test/test.lua
 build $builddir/_/test: build_test | $bin/luamake copy_script
   pool = console
-build test: phony $builddir/_/test
 build luamake: copy | $bin/luamake
   input = $bin/luamake
+build copy_script: phony $bin/main.lua
+build test: phony $builddir/_/test
 build copy_luamake: phony luamake
 default test copy_luamake

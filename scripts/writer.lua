@@ -570,19 +570,21 @@ function GEN.phony(context, name, attribute)
     for i = 1, #input do
         input[i] = fmtpath_v3(rootdir, input[i])
     end
+    local n = #input
+    for i = 1, #implicit_input do
+        input[n+i] = implicit_input
+    end
     for i = 1, #output do
         output[i] = fmtpath_v3(rootdir, output[i])
     end
     if name then
         if #output == 0 then
-            ninja:phony(name, input, {
-                implicit_inputs = implicit_input,
-            })
+            ninja:phony(name, input)
         else
             ninja:phony(name, output)
-            ninja:phony(output, input, {
-                implicit_inputs = implicit_input,
-            })
+            for _, out in ipairs(output) do
+                ninja:phony(out, input)
+            end
         end
         context.loaded_targets[name] = {
             implicit_input = name,
@@ -591,9 +593,9 @@ function GEN.phony(context, name, attribute)
         if #output == 0 then
             error(("`%s`: no output."):format(name))
         else
-            ninja:phony(output, input, {
-                implicit_inputs = implicit_input,
-            })
+            for _, out in ipairs(output) do
+                ninja:phony(out, input)
+            end
         end
     end
 end

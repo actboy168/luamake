@@ -77,7 +77,7 @@ end
 function cl.update_ldflags(context, ldflags, attribute)
     if attribute.mode == 'debug' then
         ldflags[#ldflags+1] = '/DEBUG'
-        ldflags[#ldflags+1] = '/pdb:$obj/$name/$name.pdb'
+        ldflags[#ldflags+1] = '/pdb:$obj/$name.pdb'
     else
         ldflags[#ldflags+1] = '/DEBUG:NONE'
         ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental

@@ -351,6 +351,11 @@ local function generate(context, rule, name, attribute)
     init_single(attribute, 'arch')
     init_single(attribute, 'vendor')
     init_single(attribute, 'sys')
+    init_single(attribute, 'luaversion')
+
+    if attribute.luaversion then
+        require "lua_library"(context, name, attribute)
+    end
 
     if attribute.deps then
         if deps then
@@ -753,8 +758,8 @@ function GEN.shell(self, name, attribute)
 end
 
 function GEN.lua_library(context, name, attribute)
-    local lua_library = require "lua_library"
-    generate(lua_library(context, name, attribute))
+    attribute.luaversion = attribute.luaversion or "lua54"
+    generate(context, 'shared_library', name, attribute)
 end
 
 local writer = {

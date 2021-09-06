@@ -83,12 +83,11 @@ return function (context, name, attribute)
     local includes = attribute.includes or {}
     includes[#includes+1] = "$builddir/"..luaversion
     attribute.includes = includes
+    copy_dir(fs.path(package.procdir) / "tools" / luaversion, luadir)
 
     if context.globals.os == "windows" then
         init_rule(context)
         init_version(context, luadir, luaversion)
         windows_deps(context, name, attribute, luaversion)
     end
-    copy_dir(fs.path(package.procdir) / "tools" / luaversion, luadir)
-    return context, 'shared_library', name, attribute
 end

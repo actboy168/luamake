@@ -72,6 +72,10 @@ function mainSimulator:phony(name)
         writer:add_target { 'phony', name, attribute, self }
     end
 end
+function mainSimulator:variable(name, value)
+    assert(type(name) == "string", "Name is not a string.")
+    writer:add_target { 'variable', name, value }
+end
 
 local alias = {
     exe = "executable",

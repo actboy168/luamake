@@ -4,6 +4,8 @@ local isWindows = lm.os == 'windows'
 local exe = isWindows and ".exe" or ""
 local dll = isWindows and ".dll" or ".so"
 
+lm:variable("luamake", "luamake")
+
 lm.EXE_NAME = "luamake"
 lm:import "3rd/bee.lua/make.lua"
 
@@ -16,7 +18,7 @@ lm:copy "copy_luamake" {
 if isWindows then
     lm:copy "copy_lua54" {
         input = "$bin/lua54"..dll,
-        output = "lua54"..dll,
+        output = "tools/lua54"..dll,
         deps = "lua54"
     }
 end

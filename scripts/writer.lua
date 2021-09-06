@@ -836,6 +836,10 @@ function writer:generate(force)
             GEN.default(context, name)
             goto continue
         end
+        if rule == "variable" then
+            ninja:variable(name, local_attribute)
+            goto continue
+        end
         local res = reslovePlatformSpecific(global_attribute, local_attribute)
         context.globals = global_attribute
         if GEN[rule] then

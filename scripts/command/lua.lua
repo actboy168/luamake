@@ -33,6 +33,13 @@ update_arg()
 local globals = require "globals"
 local sandbox = require "sandbox"
 
+if globals.os == "windows" then
+    local ok, err = package.loadlib(package.procdir.."/tools/lua54.dll", "*")
+    if not ok then
+        error(err)
+    end
+end
+
 sandbox {
     rootdir = WORKDIR:string(),
     builddir = globals.builddir,

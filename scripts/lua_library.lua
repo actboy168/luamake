@@ -52,11 +52,10 @@ local function init_version(context, luadir, luaversion)
     local libname
     if context.globals.compiler == 'msvc' then
         libname = luadir.."/lua-"..context.globals.arch..".lib"
-        ninja:build(libname, luadir.."/lua.def")
     else
         libname = luadir.."/liblua.a"
-        ninja:build(libname, luadir.."/lua.def")
     end
+    ninja:build(libname, luadir.."/lua.def")
     context.loaded_targets["__"..luaversion.."__"] = {
         input = {libname}
     }
@@ -82,12 +81,14 @@ return function (context, name, attribute)
     local includes = attribute.includes or {}
     includes[#includes+1] = "$builddir/"..luaversion
     attribute.includes = includes
-    copy_dir(fs.path(package.procdir) / "tools" / luaversion, WORKDIR / context.globals.builddir / luaversion)
-
     if context.globals.os == "windows" then
         local luadir = "$builddir/"..luaversion
         init_rule(context)
         init_version(context, luadir, luaversion)
         windows_deps(context, name, attribute, luaversion)
     end
+    copy_dir(
+        fs.path(package.procdir) / "tools" / luaversion,
+        WORKDIR / context.globals.builddir / luaversion
+    )
 end

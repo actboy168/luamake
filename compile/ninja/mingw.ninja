@@ -2,6 +2,7 @@ builddir = build/mingw
 bin = $builddir/bin
 obj = $builddir/obj
 cc = gcc
+luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
     -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri -D_WIN32_WINNT=0x0601 $
@@ -166,25 +167,6 @@ build $bin/luamake.exe: link_luamake $obj/luamake/utf8_crt.obj $
     $obj/source_lua/ltm.obj $obj/source_lua/lundump.obj $
     $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
     $obj/source_lua/lzio.obj
-rule build_forward_lua
-  command = $luamake lua 3rd/bee.lua/bootstrap/forward_lua.lua $
-    3rd/bee.lua/3rd/lua $out luamake.exe
-build 3rd/bee.lua/bootstrap/forward_lua.h: build_forward_lua $
-    3rd/bee.lua/bootstrap/forward_lua.lua 3rd/bee.lua/3rd/lua/lua.h $
-    3rd/bee.lua/3rd/lua/lauxlib.h 3rd/bee.lua/3rd/lua/lualib.h
-rule c_lua54
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -I3rd/bee.lua/bootstrap -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
-  description = Compile C   $out
-  deps = gcc
-  depfile = $out.d
-build $obj/lua54/forward_lua.obj: c_lua54 3rd/bee.lua/bootstrap/forward_lua.c
-rule link_lua54
-  command = $cc --shared $in -o $out -luser32 $obj/luamake/luamake.lib $
-    -lstdc++ -s
-  description = Link    Dll $out
-build $bin/lua54.dll: link_lua54 $obj/lua54/forward_lua.obj | forward_lua $
-    $bin/luamake.exe
 rule copy
   command = sh -c "cp -afv $in$input $out 1>/dev/null"
   description = Copy $in$input $out
@@ -195,14 +177,36 @@ rule build_test
   command = $bin/luamake.exe 3rd/bee.lua/test/test.lua
 build $builddir/_/test: build_test | $bin/luamake.exe copy_script
   pool = console
+rule build_forward_lua
+  command = $luamake lua 3rd/bee.lua/bootstrap/forward_lua.lua $
+    3rd/bee.lua/3rd/lua $out luamake.exe
+build 3rd/bee.lua/bootstrap/forward_lua.h: build_forward_lua $
+    3rd/bee.lua/bootstrap/forward_lua.lua 3rd/bee.lua/3rd/lua/lua.h $
+    3rd/bee.lua/3rd/lua/lauxlib.h 3rd/bee.lua/3rd/lua/lualib.h | $
+    copy_script $bin/luamake.exe
+rule c_lua54
+  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+    -I3rd/bee.lua/bootstrap -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+  description = Compile C   $out
+  deps = gcc
+  depfile = $out.d
+build $obj/lua54/forward_lua.obj: c_lua54 3rd/bee.lua/bootstrap/forward_lua.c
+rule link_lua54
+  command = $cc --shared $in -o $out $obj/luamake/luamake.lib -lstdc++ -s
+  description = Link    Dll $out
+build $bin/lua54.dll: link_lua54 $obj/lua54/forward_lua.obj | forward_lua $
+    $bin/luamake.exe
 build luamake.exe: copy | $bin/luamake.exe
   input = $bin/luamake.exe
+build tools/lua54.dll: copy | $bin/lua54.dll
+  input = $bin/lua54.dll
 build luamake: phony $bin/luamake.exe
+build copy_script: phony $bin/main.lua
+build test: phony $builddir/_/test
 build forward_lua: phony 3rd/bee.lua/bootstrap/forward_lua.h
 build 3rd/bee.lua/bootstrap/forward_lua.c: phony $
     3rd/bee.lua/bootstrap/forward_lua.h
 build lua54: phony $bin/lua54.dll
-build copy_script: phony $bin/main.lua
-build test: phony $builddir/_/test
 build copy_luamake: phony luamake.exe
-default test copy_luamake
+build copy_lua54: phony tools/lua54.dll
+default test copy_luamake copy_lua54

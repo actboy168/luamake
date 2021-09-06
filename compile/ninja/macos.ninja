@@ -2,6 +2,7 @@ builddir = build/macos
 bin = $builddir/bin
 obj = $builddir/obj
 cc = clang
+luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
     -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/3rd/lua $

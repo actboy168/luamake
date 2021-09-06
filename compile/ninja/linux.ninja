@@ -2,6 +2,7 @@ builddir = build/linux
 bin = $builddir/bin
 obj = $builddir/obj
 cc = gcc
+luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
     -fvisibility=hidden -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $

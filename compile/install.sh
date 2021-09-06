@@ -23,6 +23,11 @@ case "`uname`" in
     ;;
 esac
 
+if [ "$?" != "0" ] 
+then
+  exit 1
+fi
+
 write_profile()
 {
     work_path=$(pwd)

@@ -599,7 +599,7 @@ function GEN.phony(context, name, attribute)
     end
 end
 
-function GEN.build(context, name, attribute, shell)
+function GEN.build(context, name, attribute)
     local tmpName = not name
     name = name or generateTargetName()
     assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
@@ -642,33 +642,6 @@ function GEN.build(context, name, attribute, shell)
         end
     end
     push_command(attribute)
-
-    if shell then
-        if context.globals.hostshell == "cmd" then
-            table.insert(command, 1, "cmd")
-            table.insert(command, 2, "/c")
-        elseif context.globals.hostos == "windows" then
-            local s = {}
-            for _, opt in ipairs(command) do
-                s[#s+1] = opt
-            end
-            command = {
-                "sh",
-                "-e",
-                "-c", fsutil.quotearg(table.concat(s, " "))
-            }
-        else
-            local s = {}
-            for _, opt in ipairs(command) do
-                s[#s+1] = opt
-            end
-            command = {
-                "/bin/sh",
-                "-e",
-                "-c", fsutil.quotearg(table.concat(s, " "))
-            }
-        end
-    end
 
     local outname
     if #output == 0 then
@@ -750,10 +723,6 @@ function GEN.copy(context, name, attribute)
             implicit_input = name,
         }
     end
-end
-
-function GEN.shell(self, name, attribute)
-    GEN.build(self, name, attribute, true)
 end
 
 function GEN.lua_library(context, name, attribute)

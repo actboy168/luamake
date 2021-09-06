@@ -47,16 +47,6 @@ function mainSimulator:build(name)
         writer:add_target { 'build', name, attribute, self }
     end
 end
-function mainSimulator:shell(name)
-    if type(name) == "table" then
-        writer:add_target { 'shell', nil, name, self }
-        return
-    end
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_target { 'shell', name, attribute, self }
-    end
-end
 function mainSimulator:copy(name)
     if type(name) == "table" then
         writer:add_target { 'copy', nil, name, self }

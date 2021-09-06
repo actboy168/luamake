@@ -22,10 +22,5 @@ else
     else
         WORKDIR = fs.current_path()
     end
-    local mt = debug.getmetatable(fs.path())
-    local rawtostring = mt.__tostring
-    function mt:__tostring()
-        return rawtostring(self):gsub('\\', '/')
-    end
     command(arguments.what)
 end

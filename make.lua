@@ -13,7 +13,16 @@ lm:copy "copy_luamake" {
     deps = "luamake",
 }
 
+if isWindows then
+    lm:copy "copy_lua54" {
+        input = "$bin/lua54"..dll,
+        output = "lua54"..dll,
+        deps = "lua54"
+    }
+end
+
 lm:default {
     "test",
     "copy_luamake",
+    isWindows and "copy_lua54",
 }

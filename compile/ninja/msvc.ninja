@@ -1,6 +1,6 @@
-builddir = build\msvc
-bin = $builddir\bin
-obj = $builddir\obj
+builddir = build/msvc
+bin = $builddir/bin
+obj = $builddir/obj
 luamake = luamake
 rule c_source_bee
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
@@ -166,17 +166,18 @@ build $bin/luamake.exe: link_luamake $obj/luamake/utf8_crt.obj $
     $obj/source_lua/lzio.obj
   name = luamake
 rule copy
-  command = cmd /c copy 1>NUL 2>NUL /y $in$input $out
+  command = powershell -NonInteractive -Command Copy-Item -Path $in$input $
+    -Destination $out | Out-Null
   description = Copy $in$input $out
   restat = 1
-build $bin\main.lua: copy | $bin\luamake.exe
-  input = 3rd\bee.lua\bootstrap\main.lua
+build $bin/main.lua: copy | $bin/luamake.exe
+  input = 3rd/bee.lua/bootstrap/main.lua
 rule build_test
   command = $bin/luamake.exe 3rd/bee.lua/test/test.lua
 build $builddir/_/test: build_test | $bin/luamake.exe copy_script
   pool = console
-build luamake.exe: copy | $bin\luamake.exe
-  input = $bin\luamake.exe
+build luamake.exe: copy | $bin/luamake.exe
+  input = $bin/luamake.exe
 rule build_forward_lua
   command = $luamake lua 3rd/bee.lua/bootstrap/forward_lua.lua $
     3rd/bee.lua/3rd/lua $out luamake.exe msvc
@@ -198,15 +199,15 @@ rule link_lua54
 build $bin/lua54.dll | $obj/lua54/lua54.lib: link_lua54 $
     $obj/lua54/forward_lua.obj | forward_lua $bin/luamake.exe
   name = lua54
-build tools\lua54.dll: copy | $obj\lua54\lua54.lib $bin\lua54.dll
-  input = $bin\lua54.dll
+build tools/lua54.dll: copy | $obj/lua54/lua54.lib $bin/lua54.dll
+  input = $bin/lua54.dll
 build luamake: phony $bin/luamake.exe
-build copy_script: phony $bin\main.lua
+build copy_script: phony $bin/main.lua
 build test: phony $builddir/_/test
 build copy_luamake: phony luamake.exe
 build forward_lua: phony 3rd/bee.lua/bootstrap/forward_lua.h
 build 3rd/bee.lua/bootstrap/forward_lua.c: phony $
     3rd/bee.lua/bootstrap/forward_lua.h
 build lua54: phony $bin/lua54.dll
-build copy_lua54: phony tools\lua54.dll
+build copy_lua54: phony tools/lua54.dll
 default test copy_luamake copy_lua54

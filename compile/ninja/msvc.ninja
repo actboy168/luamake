@@ -177,7 +177,7 @@ build $builddir/_/test: build_test | $bin/luamake.exe copy_script
   pool = console
 rule build_forward_lua
   command = $luamake lua 3rd/bee.lua/bootstrap/forward_lua.lua $
-    3rd/bee.lua/3rd/lua $out luamake.exe
+    3rd/bee.lua/3rd/lua $out luamake.exe msvc
 build 3rd/bee.lua/bootstrap/forward_lua.h: build_forward_lua $
     3rd/bee.lua/bootstrap/forward_lua.lua 3rd/bee.lua/3rd/lua/lua.h $
     3rd/bee.lua/3rd/lua/lauxlib.h 3rd/bee.lua/3rd/lua/lualib.h | $

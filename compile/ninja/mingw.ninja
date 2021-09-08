@@ -179,7 +179,7 @@ build $builddir/_/test: build_test | $bin/luamake.exe copy_script
   pool = console
 rule build_forward_lua
   command = $luamake lua 3rd/bee.lua/bootstrap/forward_lua.lua $
-    3rd/bee.lua/3rd/lua $out luamake.exe
+    3rd/bee.lua/3rd/lua $out luamake.exe gcc
 build 3rd/bee.lua/bootstrap/forward_lua.h: build_forward_lua $
     3rd/bee.lua/bootstrap/forward_lua.lua 3rd/bee.lua/3rd/lua/lua.h $
     3rd/bee.lua/3rd/lua/lauxlib.h 3rd/bee.lua/3rd/lua/lualib.h | $
@@ -199,6 +199,8 @@ build $bin/lua54.dll: link_lua54 $obj/lua54/forward_lua.obj | forward_lua $
   name = lua54
 build luamake.exe: copy | $bin/luamake.exe
   input = $bin/luamake.exe
+build tools/lua54.dll: copy | $bin/lua54.dll
+  input = $bin/lua54.dll
 build luamake: phony $bin/luamake.exe
 build copy_script: phony $bin/main.lua
 build test: phony $builddir/_/test
@@ -207,4 +209,5 @@ build 3rd/bee.lua/bootstrap/forward_lua.c: phony $
     3rd/bee.lua/bootstrap/forward_lua.h
 build lua54: phony $bin/lua54.dll
 build copy_luamake: phony luamake.exe
-default test copy_luamake
+build copy_lua54: phony tools/lua54.dll
+default test copy_luamake copy_lua54

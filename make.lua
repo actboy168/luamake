@@ -15,7 +15,8 @@ lm:copy "copy_luamake" {
     deps = "luamake",
 }
 
-if isWindows then
+local isMsvc = lm.compiler == 'msvc'
+if isMsvc then
     lm:copy "copy_lua54" {
         input = "$bin/lua54"..dll,
         output = "tools/lua54"..dll,
@@ -26,5 +27,5 @@ end
 lm:default {
     "test",
     "copy_luamake",
-    isWindows and "copy_lua54",
+    isMsvc and "copy_lua54",
 }

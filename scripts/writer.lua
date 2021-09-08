@@ -472,12 +472,14 @@ local function generate(context, rule, name, attribute)
                 implicit_outputs = lib,
                 variables = { name = name }
             })
+        elseif context.globals.os == "windows" then
+            target.input = {binname}
+            ninja:build(binname, input, {
+                implicit_inputs = implicit_input,
+                variables = { name = name }
+            })
         else
-            if context.globals.os == "windows" then
-                target.input = {binname}
-            else
-                target.implicit_input = binname
-            end
+            target.implicit_input = binname
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
             })
@@ -492,7 +494,7 @@ local function generate(context, rule, name, attribute)
         end
         target.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
-        if context.globals.compiler == 'msvc' then
+        if context.globals.os == 'windows' then
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
                 variables = { name = name }

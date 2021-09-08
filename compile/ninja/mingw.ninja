@@ -132,9 +132,8 @@ rule cxx_luamake
 build $obj/luamake/main.obj: cxx_luamake 3rd/bee.lua/bootstrap/main.cpp
 build $obj/luamake/progdir.obj: cxx_luamake 3rd/bee.lua/bootstrap/progdir.cpp
 rule link_luamake
-  command = $cc $in -o $out /IMPLIB:$obj/$name/$name.lib -ladvapi32 $
-    -lws2_32 -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lstdc++fs $
-    -lstdc++ -s
+  command = $cc $in -o $out -ladvapi32 -lws2_32 -lole32 -luser32 -lversion $
+    -lwbemuuid -loleAut32 -lshell32 -luuid -lstdc++fs -lstdc++ -s
   description = Link    Exe $out
 build $bin/luamake.exe: link_luamake $obj/luamake/utf8_crt.obj $
     $obj/luamake/main.obj $obj/luamake/progdir.obj $
@@ -167,6 +166,7 @@ build $bin/luamake.exe: link_luamake $obj/luamake/utf8_crt.obj $
     $obj/source_lua/ltm.obj $obj/source_lua/lundump.obj $
     $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
     $obj/source_lua/lzio.obj
+  name = luamake
 rule copy
   command = sh -c "cp -afv $in$input $out 1>/dev/null"
   description = Copy $in$input $out
@@ -196,10 +196,9 @@ rule link_lua54
   description = Link    Dll $out
 build $bin/lua54.dll: link_lua54 $obj/lua54/forward_lua.obj | forward_lua $
     $bin/luamake.exe
+  name = lua54
 build luamake.exe: copy | $bin/luamake.exe
   input = $bin/luamake.exe
-build tools/lua54.dll: copy | $bin/lua54.dll
-  input = $bin/lua54.dll
 build luamake: phony $bin/luamake.exe
 build copy_script: phony $bin/main.lua
 build test: phony $builddir/_/test
@@ -208,5 +207,4 @@ build 3rd/bee.lua/bootstrap/forward_lua.c: phony $
     3rd/bee.lua/bootstrap/forward_lua.h
 build lua54: phony $bin/lua54.dll
 build copy_luamake: phony luamake.exe
-build copy_lua54: phony tools/lua54.dll
-default test copy_luamake copy_lua54
+default test copy_luamake

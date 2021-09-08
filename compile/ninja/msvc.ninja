@@ -131,7 +131,7 @@ build $obj/luamake/progdir.obj: cxx_luamake 3rd/bee.lua/bootstrap/progdir.cpp
 rule link_luamake
   command = cl /nologo $in /link /IMPLIB:$obj/$name/$name.lib advapi32.lib $
     ws2_32.lib ole32.lib user32.lib version.lib wbemuuid.lib oleAut32.lib $
-    /DEBUG:NONE /LTCG /out:$out
+    shell32.lib /DEBUG:NONE /LTCG /out:$out
   description = Link    Exe $out
 build $bin/luamake.exe: link_luamake $obj/luamake/utf8_crt.obj $
     $obj/luamake/main.obj $obj/luamake/progdir.obj $

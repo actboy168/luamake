@@ -15,7 +15,7 @@ local function ninja(args)
         option.env = msvc.getEnv()
         option.env.VS_UNICODE_OUTPUT = false
     end
-    if globals.hostshell == 'cmd' then
+    if globals.hostshell == "cmd" then
         option[1] = {'cmd', '/c', 'ninja'}
     end
 

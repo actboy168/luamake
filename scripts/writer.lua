@@ -12,11 +12,7 @@ local scripts = {}
 local mark_scripts = {}
 
 local function fmtpath(path)
-    if globals.hostshell == "cmd" then
-        return path:gsub('/', '\\')
-    else
-        return path:gsub('\\', '/')
-    end
+    return path:gsub('\\', '/')
 end
 
 local function fmtpath_v3(rootdir, path)
@@ -25,7 +21,7 @@ local function fmtpath_v3(rootdir, path)
         path = fsutil.normalize((rootdir / path):string())
         path = fsutil.relative(path, WORKDIR:string())
     end
-    return path:gsub('\\', '/')
+    return fmtpath(path)
 end
 
 -- TODO 在某些平台上忽略大小写？
@@ -683,7 +679,7 @@ function GEN.copy(context, name, attribute)
     local implicit_input = getImplicitInput(context, name, attribute)
 
     if context.globals.hostshell == "cmd" then
-        ninja:rule('copy', 'cmd /c copy 1>NUL 2>NUL /y $in$input $out', {
+        ninja:rule('copy', "powershell -NonInteractive -Command Copy-Item -Path $in$input -Destination $out | Out-Null", {
             description = 'Copy $in$input $out',
             restat = 1,
         })
@@ -714,18 +710,6 @@ function GEN.copy(context, name, attribute)
         output[i] = fmtpath_v3(rootdir, v)
     end
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
-
-    if context.globals.hostshell == "cmd" then
-        for i, v in ipairs(input) do
-            input[i] = v:gsub("/", "\\")
-        end
-        for i, v in ipairs(output) do
-            output[i] = v:gsub("/", "\\")
-        end
-        for i, v in ipairs(implicit_input) do
-            implicit_input[i] = tostring(v):gsub("/", "\\")
-        end
-    end
 
     if #implicit_input == 0 then
         for i = 1, #input do
@@ -861,7 +845,7 @@ function writer:generate(force)
     else
         assert(globals.compiler=="gcc" or globals.compiler=="clang" or globals.compiler=="emcc")
         local cc = globals.cc or globals.compiler
-        if globals.hostshell == 'cmd' then
+        if globals.hostshell == "cmd" then
             cc = 'cmd /c '..cc
         end
         ninja:variable("cc", cc)

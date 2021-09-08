@@ -132,8 +132,9 @@ rule cxx_luamake
 build $obj/luamake/main.obj: cxx_luamake 3rd/bee.lua/bootstrap/main.cpp
 build $obj/luamake/progdir.obj: cxx_luamake 3rd/bee.lua/bootstrap/progdir.cpp
 rule link_luamake
-  command = $cc $in -o $out -ladvapi32 -lws2_32 -lole32 -luser32 -lversion $
-    -lwbemuuid -loleAut32 -lshell32 -luuid -lstdc++fs -lstdc++ -s
+  command = $cc $in -o $out -Wl,--out-implib,$obj/$name/$name.lib $
+    -ladvapi32 -lws2_32 -lole32 -luser32 -lversion -lwbemuuid -loleAut32 $
+    -lshell32 -luuid -lstdc++fs -lstdc++ -s
   description = Link    Exe $out
 build $bin/luamake.exe: link_luamake $obj/luamake/utf8_crt.obj $
     $obj/luamake/main.obj $obj/luamake/progdir.obj $

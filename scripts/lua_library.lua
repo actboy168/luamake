@@ -56,7 +56,7 @@ local function init_version(context, luadir, luaversion)
         libname = luadir.."/liblua.a"
     end
     ninja:build(libname, luadir.."/lua.def")
-    context.loaded_targets["__"..luaversion.."__"] = {
+    context.loaded["__"..luaversion.."__"] = {
         input = {libname}
     }
 end

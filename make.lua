@@ -6,6 +6,7 @@ local dll = isWindows and ".dll" or ".so"
 
 lm:variable("luamake", "luamake")
 
+lm.LUAMAKE = "copy_luamake"
 lm.EXE_NAME = "luamake"
 lm:import "3rd/bee.lua/make.lua"
 

@@ -5,6 +5,12 @@ local fsutil = require "fsutil"
 
 local cc
 
+local writer = {loaded={}}
+local loaded = writer.loaded
+local targets = {}
+local scripts = {}
+local mark_scripts = {}
+
 local function fmtpath(path)
     if globals.hostshell == "cmd" then
         return path:gsub('/', '\\')
@@ -298,8 +304,8 @@ local function update_ldflags(context, ldflags, attribute, name, rootdir)
 
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            local target = context.loaded_targets[dep]
-            assert(target ~= nil, ("`%s`: can`t find deps `%s`"):format(name, dep))
+            local target = context:load(dep)
+            assert(target, ("`%s`: can`t find deps `%s`"):format(name, dep))
             if target.ldflags then
                 tbl_append(ldflags, target.ldflags)
             end
@@ -310,7 +316,7 @@ local function update_ldflags(context, ldflags, attribute, name, rootdir)
 end
 
 local function generate(context, rule, name, attribute)
-    local target = context.loaded_targets[name]
+    local target = loaded[name]
     local input
     local ldflags
     local deps
@@ -331,7 +337,7 @@ local function generate(context, rule, name, attribute)
             target = { rule = rule }
             input = {}
             ldflags =  {}
-            context.loaded_targets[name] = target
+            loaded[name] = target
         end
     end
 
@@ -432,8 +438,8 @@ local function generate(context, rule, name, attribute)
                 table.remove(deps, i)
             else
                 mark[dep] = true
-                local target = context.loaded_targets[dep]
-                assert(target ~= nil, ("`%s`: deps `%s` undefine."):format(name, dep))
+                local target = context:load(dep)
+                assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
                 if target.deps then
                     tbl_append(deps, target.deps)
                 end
@@ -441,7 +447,7 @@ local function generate(context, rule, name, attribute)
             end
         end
         for _, dep in ipairs(attribute.deps) do
-            local target = context.loaded_targets[dep]
+            local target = context:load(dep)
             if target.input then
                 tbl_append(input, target.input)
             end
@@ -528,8 +534,8 @@ local function generateTargetName()
 end
 
 local function addImplicitInput(context, implicit_input, name, dep)
-    local target = context.loaded_targets[dep]
-    assert(target ~= nil, ("`%s`: deps `%s` undefine."):format(name, dep))
+    local target = context:load(dep)
+    assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
     if target.input then
         tbl_append(implicit_input, target.input)
     end
@@ -588,7 +594,7 @@ function GEN.phony(context, name, attribute)
                 ninja:phony(out, input)
             end
         end
-        context.loaded_targets[name] = {
+        loaded[name] = {
             implicit_input = name,
         }
     else
@@ -605,7 +611,7 @@ end
 function GEN.build(context, name, attribute)
     local tmpName = not name
     name = name or generateTargetName()
-    assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
+    assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
@@ -659,13 +665,16 @@ function GEN.build(context, name, attribute)
     })
     if not tmpName then
         ninja:phony(name, outname)
-        context.loaded_targets[name] = {
+        loaded[name] = {
             implicit_input = name,
         }
     end
 end
 
 function GEN.copy(context, name, attribute)
+    if loaded[name] ~= nil then
+        return
+    end
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
@@ -732,9 +741,9 @@ function GEN.copy(context, name, attribute)
     end
 
     if name then
-        assert(context.loaded_targets[name] == nil, ("`%s`: redefinition."):format(name))
+        assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:phony(name, output)
-        context.loaded_targets[name] = {
+        loaded[name] = {
             implicit_input = name,
         }
     end
@@ -745,15 +754,48 @@ function GEN.lua_library(context, name, attribute)
     generate(context, 'shared_library', name, attribute)
 end
 
-local writer = {
-    loaded_targets = {}
-}
-local targets = {}
-local scripts = {}
-local mark_scripts = {}
+local function loadtarget(context, target)
+    local rule = target[1]
+    local name = target[2]
+    local local_attribute = target[3]
+    local global_attribute = target[4]
+    local res = reslovePlatformSpecific(global_attribute, local_attribute)
+    context.globals = global_attribute
+    target.loaded = true
+    if GEN[rule] then
+        GEN[rule](context, name, res)
+    else
+        generate(context, rule, name, res)
+    end
+    if name == nil then
+        return false
+    end
+    if loaded[name] == nil then
+        loaded[name] = false
+        return false
+    end
+    return loaded[name]
+end
+
+function writer:load(name)
+    local r = loaded[name]
+    if r ~= nil then
+        return r
+    end
+    local t = targets[name]
+    if not t then
+        loaded[name] = false
+        return false
+    end
+    return loadtarget(self, t)
+end
 
 function writer:add_target(t)
     targets[#targets+1] = t
+    local name = t[2]
+    if name then
+        targets[name] = t
+    end
 end
 
 function writer:add_script(path)
@@ -834,24 +876,16 @@ function writer:generate(force)
     for _, target in ipairs(targets) do
         local rule = target[1]
         local name = target[2]
-        local local_attribute = target[3]
-        local global_attribute = target[4]
         if rule == "default" then
             GEN.default(context, name)
-            goto continue
-        end
-        if rule == "variable" then
-            ninja:variable(name, local_attribute)
-            goto continue
-        end
-        local res = reslovePlatformSpecific(global_attribute, local_attribute)
-        context.globals = global_attribute
-        if GEN[rule] then
-            GEN[rule](context, name, res)
+        elseif rule == "variable" then
+            local value = target[3]
+            ninja:variable(name, value)
         else
-            generate(context, rule, name, res)
+            if not target.loaded then
+                loadtarget(context, target)
+            end
         end
-        ::continue::
     end
 
     ninja:close()

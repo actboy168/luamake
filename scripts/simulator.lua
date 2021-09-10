@@ -176,7 +176,12 @@ function mainSimulator:import(path)
 end
 
 local function import(path)
-    local absolutepath = fsutil.absolute(fs.path(path), fs.path(globals.workdir))
+    local absolutepath
+    if path then
+        absolutepath = fsutil.absolute(fs.path(path), WORKDIR)
+    else
+        absolutepath = WORKDIR / "make.lua"
+    end
     importfile(mainSimulator, absolutepath)
 end
 

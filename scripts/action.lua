@@ -33,7 +33,8 @@ local function ninja(args)
 end
 
 local function init()
-    sim.import(WORKDIR / "make.lua")
+    local arguments = require "arguments"
+    sim.import(arguments.f)
 end
 
 local function generate(force)

@@ -31,7 +31,8 @@ end
 
 t.what = what
 t.targets = targets
-t.C = arguments.C               ; arguments.C = nil
+t.C = arguments.C ; arguments.C = nil
+t.f = arguments.f ; arguments.f = nil
 t.args = arguments
 
 if arguments.e then

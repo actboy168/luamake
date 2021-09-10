@@ -551,16 +551,19 @@ end
 function GEN.default(context, attribute)
     local ninja = context.ninja
     local targets = {}
-    if type(attribute) == "table" then
-        for _, dep in ipairs(attribute) do
-            if dep then
-                addImplicitInput(context, targets, 'default', dep)
+    local function add_target(v)
+        if type(v) == "table" then
+            for _, dep in ipairs(v) do
+                if dep then
+                    add_target(dep)
+                end
             end
+        elseif type(v) == "string" then
+            local dep = v
+            addImplicitInput(context, targets, 'default', dep)
         end
-    elseif type(attribute) == "string" then
-        local dep = attribute
-        addImplicitInput(context, targets, 'default', dep)
     end
+    add_target(attribute)
     ninja:default(targets)
 end
 

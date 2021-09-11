@@ -340,6 +340,7 @@ local function generate(context, rule, name, attribute)
     local ninja = context.ninja
     local workdir = fs.path(init_single(attribute, 'workdir', '.'))
     local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
+    local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_sources(rootdir, attribute.sources)
     local implicit_input = {}
 
@@ -453,13 +454,16 @@ local function generate(context, rule, name, attribute)
     assert(#input > 0, ("`%s`: no source files found."):format(name))
 
     local binname
+    if bindir == globals.bindir then
+        bindir = "$bin"
+    end
     update_ldflags(context, ldflags, attribute, name, rootdir)
 
     local fin_ldflags = table.concat(ldflags, " ")
     if rule == "shared_library" then
         cc.rule_dll(ninja, name, fin_ldflags)
         if globals.compiler == 'msvc' then
-            binname = "$bin/"..name..".dll"
+            binname = bindir.."/"..name..".dll"
             local lib = ('$obj/%s/%s.lib'):format(name, name)
             target.input = {lib}
             target.implicit_input = binname
@@ -469,7 +473,7 @@ local function generate(context, rule, name, attribute)
                 variables = { name = name }
             })
         elseif globals.os == "windows" then
-            binname = "$bin/"..name..".dll"
+            binname = bindir.."/"..name..".dll"
             target.input = {binname}
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
@@ -477,9 +481,9 @@ local function generate(context, rule, name, attribute)
             })
         else
             if globals.compiler == "emcc" then
-                binname = "$bin/"..name..".wasm"
+                binname = bindir.."/"..name..".wasm"
             else
-                binname = "$bin/"..name..".so"
+                binname = bindir.."/"..name..".so"
             end
             target.implicit_input = binname
             ninja:build(binname, input, {
@@ -488,11 +492,11 @@ local function generate(context, rule, name, attribute)
         end
     elseif rule == "executable" then
         if globals.compiler == "emcc" then
-            binname = "$bin/"..name .. ".js"
+            binname = bindir.."/"..name .. ".js"
         elseif globals.os == "windows" then
-            binname = "$bin/"..name .. ".exe"
+            binname = bindir.."/"..name .. ".exe"
         else
-            binname = "$bin/"..name
+            binname = bindir.."/"..name
         end
         target.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
@@ -508,9 +512,9 @@ local function generate(context, rule, name, attribute)
         end
     elseif rule == "static_library" then
         if globals.os == "windows" then
-            binname = "$bin/"..name ..".lib"
+            binname = bindir.."/"..name ..".lib"
         else
-            binname = "$bin/lib"..name .. ".a"
+            binname = bindir.."/lib"..name .. ".a"
         end
         target.input = {binname}
         cc.rule_lib(ninja, name)

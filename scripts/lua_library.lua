@@ -1,5 +1,6 @@
 local fs = require "bee.filesystem"
 local lua_def = require "lua_def"
+local globals = require "globals"
 local inited_rule = false
 local inited_version = {}
 
@@ -28,9 +29,9 @@ local function init_rule(context)
     end
     inited_rule = true
     local ninja = context.ninja
-    if context.globals.compiler == 'msvc' then
+    if globals.compiler == 'msvc' then
         local msvc = require "msvc_util"
-        ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(context.globals.arch)),
+        ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(globals.arch)),
         {
             description = 'Lua import lib $out'
         })
@@ -50,8 +51,8 @@ local function init_version(context, luadir, luaversion)
     local ninja = context.ninja
     lua_def(fs.path(package.procdir) / "tools" / luaversion)
     local libname
-    if context.globals.compiler == 'msvc' then
-        libname = luadir.."/lua-"..context.globals.arch..".lib"
+    if globals.compiler == 'msvc' then
+        libname = luadir.."/lua-"..globals.arch..".lib"
     else
         libname = luadir.."/liblua.a"
     end
@@ -64,7 +65,7 @@ end
 local function windows_deps(context, name, attribute, luaversion)
     local ldflags = attribute.ldflags or {}
     local deps = attribute.deps or {}
-    if context.globals.compiler == "msvc" then
+    if globals.compiler == "msvc" then
         local export_luaopen = init_single(attribute, "export_luaopen", "on")
         if export_luaopen ~= "off" then
             ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
@@ -81,7 +82,7 @@ return function (context, name, attribute)
     local includes = attribute.includes or {}
     includes[#includes+1] = "$builddir/"..luaversion
     attribute.includes = includes
-    if context.globals.os == "windows" then
+    if globals.os == "windows" then
         local luadir = "$builddir/"..luaversion
         init_rule(context)
         init_version(context, luadir, luaversion)
@@ -89,6 +90,6 @@ return function (context, name, attribute)
     end
     copy_dir(
         fs.path(package.procdir) / "tools" / luaversion,
-        WORKDIR / context.globals.builddir / luaversion
+        WORKDIR / globals.builddir / luaversion
     )
 end

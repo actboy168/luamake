@@ -232,7 +232,7 @@ local function update_flags(context, flags, attribute, name, rootdir, rule)
     tbl_append(flags, cc.flags)
     flags[#flags+1] = cc.optimize[optimize]
     update_warnings(flags, attribute.warnings)
-    if context.globals.os ~= "windows" then
+    if globals.os ~= "windows" then
         local visibility = init_single(attribute, 'visibility', "hidden")
         if visibility ~= "default" then
             flags[#flags+1] = ('-fvisibility=%s'):format(visibility or 'hidden')
@@ -384,11 +384,11 @@ local function generate(context, rule, name, attribute)
         elseif type == "cxx" then
             cc.rule_cxx(ninja, name, attribute, fin_flags)
             input[#input+1] = ninja:build_obj(objpath, source)
-        elseif context.globals.os == "windows" and type == "rc" then
+        elseif globals.os == "windows" and type == "rc" then
             cc.rule_rc(ninja, name)
             input[#input+1] = ninja:build_obj(objpath, source)
         elseif type == "asm" then
-            if context.globals.compiler == "msvc" then
+            if globals.compiler == "msvc" then
                 error "TODO"
             end
             cc.rule_asm(ninja, name, fin_flags)
@@ -413,7 +413,7 @@ local function generate(context, rule, name, attribute)
         if attribute.ldflags then
             tbl_append(ldflags, attribute.ldflags)
         end
-        if context.globals.compiler == "clang" and attribute.frameworks then
+        if globals.compiler == "clang" and attribute.frameworks then
             for _, framework in ipairs(attribute.frameworks) do
                 ldflags[#ldflags+1] = "-framework"
                 ldflags[#ldflags+1] = framework
@@ -457,15 +457,15 @@ local function generate(context, rule, name, attribute)
 
     local fin_ldflags = table.concat(ldflags, " ")
     if rule == "shared_library" then
-        if context.globals.compiler == "emcc" then
+        if globals.compiler == "emcc" then
             binname = fs.path "$bin" / (name .. ".wasm")
-        elseif context.globals.os == "windows" then
+        elseif globals.os == "windows" then
             binname = fs.path "$bin" / (name .. ".dll")
         else
             binname = fs.path "$bin" / (name .. ".so")
         end
         cc.rule_dll(ninja, name, fin_ldflags)
-        if context.globals.compiler == 'msvc' then
+        if globals.compiler == 'msvc' then
             local lib = fs.path(('$obj/%s/%s.lib'):format(name, name))
             target.input = {lib}
             target.implicit_input = binname
@@ -474,7 +474,7 @@ local function generate(context, rule, name, attribute)
                 implicit_outputs = lib,
                 variables = { name = name }
             })
-        elseif context.globals.os == "windows" then
+        elseif globals.os == "windows" then
             target.input = {binname}
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
@@ -487,16 +487,16 @@ local function generate(context, rule, name, attribute)
             })
         end
     elseif rule == "executable" then
-        if context.globals.compiler == "emcc" then
+        if globals.compiler == "emcc" then
             binname = fs.path "$bin" / (name .. ".js")
-        elseif context.globals.os == "windows" then
+        elseif globals.os == "windows" then
             binname = fs.path "$bin" / (name .. ".exe")
         else
             binname = fs.path "$bin" / name
         end
         target.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
-        if context.globals.os == 'windows' then
+        if globals.os == 'windows' then
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
                 variables = { name = name }
@@ -507,7 +507,7 @@ local function generate(context, rule, name, attribute)
             })
         end
     elseif rule == "static_library" then
-        if context.globals.os == "windows" then
+        if globals.os == "windows" then
             binname = fs.path("$bin") / (name .. ".lib")
         else
             binname = fs.path("$bin") / ("lib"..name .. ".a")
@@ -681,12 +681,12 @@ function GEN.copy(context, name, attribute)
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
 
-    if context.globals.hostshell == "cmd" then
+    if globals.hostshell == "cmd" then
         ninja:rule('copy', "powershell -NonInteractive -Command Copy-Item -Path $in$input -Destination $out | Out-Null", {
             description = 'Copy $in$input $out',
             restat = 1,
         })
-    elseif context.globals.hostos == "windows" then
+    elseif globals.hostos == "windows" then
         ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
             description = 'Copy $in$input $out',
             restat = 1,
@@ -747,7 +747,6 @@ local function loadtarget(context, target)
     local local_attribute = target[3]
     local global_attribute = target[4]
     local res = reslovePlatformSpecific(global_attribute, local_attribute)
-    context.globals = global_attribute
     target.loaded = true
     if GEN[rule] then
         GEN[rule](context, name, res)
@@ -828,7 +827,6 @@ function writer:generate(force)
     local context = self
     cc = require("compiler." .. globals.compiler)
     context.cc = cc
-    context.globals = globals
     fs.create_directories(builddir)
 
     local ninja = require "ninja_writer"(ninja_script:string())

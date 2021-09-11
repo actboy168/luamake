@@ -1,4 +1,5 @@
 local clang = require 'compiler.gcc'
+local globals = require 'globals'
 
 local function shell(command)
     local f = assert(io.popen(command, 'r'))
@@ -10,7 +11,7 @@ end
 local function update_target(context, flags, attribute)
     local target = attribute.target
     if not target then
-        assert(context.globals.hostos ~= "windows")
+        assert(globals.hostos ~= "windows")
         local arch = attribute.arch
         local vendor = attribute.vendor
         local sys = attribute.sys
@@ -37,7 +38,7 @@ local function update_target(context, flags, attribute)
                 return
             end
         end
-        if context.globals.hostos == "macos" then
+        if globals.hostos == "macos" then
             arch = arch or shell "uname -m"
             vendor = vendor or "apple"
             sys = sys or "darwin"
@@ -66,7 +67,7 @@ function clang.update_flags(context, flags, attribute)
         flags[#flags+1] = "-arch"
         flags[#flags+1] = attribute.__arch
     end
-    if context.globals.os == "ios" then
+    if globals.os == "ios" then
         attribute.__isysroot = shell "xcrun --sdk iphoneos --show-sdk-path"
     end
     if attribute.__isysroot then

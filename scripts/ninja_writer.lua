@@ -42,7 +42,6 @@ return function (filename)
             until not obj_name[name]
         end
         obj_name[name] = true
-        name = fs.path(name)
         ninja:build(name, last_rule, inputs, args)
         return name
     end

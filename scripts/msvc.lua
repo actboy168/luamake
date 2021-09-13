@@ -179,6 +179,17 @@ local function prefix(env)
     return prefix
 end
 
+local function toolspath()
+    local ToolsVersion = (function ()
+        local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCToolsVersion.default.txt'
+        local f = assert(io.open(verfile:string(), 'r'))
+        local r = f:read 'a'
+        f:close()
+        return strtrim(r)
+    end)()
+    return installpath() / 'VC' / 'Tools' / 'MSVC' / ToolsVersion
+end
+
 local function vcrtpath(arch, mode)
     local RedistVersion = (function ()
         local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCRedistVersion.default.txt'
@@ -187,7 +198,7 @@ local function vcrtpath(arch, mode)
         f:close()
         return strtrim(r)
     end)()
-    local ToolVersion = (function ()
+    local ToolsVersion = (function ()
         local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCToolsVersion.default.txt'
         local f = assert(io.open(verfile:string(), 'r'))
         local r = f:read 'a'
@@ -195,7 +206,7 @@ local function vcrtpath(arch, mode)
         return strtrim(r)
     end)()
     local ToolsetVersion = (function ()
-        local verfile = installpath() / 'VC' / 'Tools' / 'MSVC' / ToolVersion / 'include' / 'yvals_core.h'
+        local verfile = installpath() / 'VC' / 'Tools' / 'MSVC' / ToolsVersion / 'include' / 'yvals_core.h'
         local f = assert(io.open(verfile:string(), 'r'))
         local r = f:read 'a'
         f:close()
@@ -278,6 +289,7 @@ end
 
 return {
     installpath = installpath,
+    toolspath = toolspath,
     environment = environment,
     prefix = prefix,
     copy_vcrt = copy_vcrt,

@@ -55,7 +55,10 @@ function m.createEnvConfig(arch, rebuild)
     local console_cp = getConsoleCP()
     if not rebuild and m.hasEnvConfig() then
         local config = readEnvConfig()
-        if config.arch == arch and (not console_cp or config.console_cp == console_cp) then
+        if config.arch == arch
+            and (not console_cp or config.console_cp == console_cp)
+            and config.toolspath and fs.exists(fs.path(config.toolspath))
+        then
             env = config.env
             prefix = config.prefix
             return
@@ -68,6 +71,7 @@ function m.createEnvConfig(arch, rebuild)
     local s = {}
     s[#s+1] = "return {"
     s[#s+1] = ("arch=%q,"):format(arch)
+    s[#s+1] = ("toolspath=%q,"):format(msvc.toolspath():string())
     s[#s+1] = ("console_cp=%q,"):format(console_cp)
     if winsdk then
         s[#s+1] = ("winsdk=%q,"):format(winsdk)

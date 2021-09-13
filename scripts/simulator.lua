@@ -143,7 +143,6 @@ end
 local visited = {}
 
 local function isVisited(path)
-    path = path:string()
     if visited[path] then
         return true
     end
@@ -154,8 +153,8 @@ local function importfile(simulator, path)
     if isVisited(path) then
         return
     end
-    local rootdir = path:parent_path():string()
-    local filename = path:filename():string()
+    local rootdir = fsutil.parent_path(path)
+    local filename = fsutil.filename(path)
     simulator.workdir = rootdir
     sandbox {
         rootdir = rootdir,
@@ -171,17 +170,12 @@ local function importfile(simulator, path)
 end
 
 function mainSimulator:import(path)
-    local absolutepath = fsutil.absolute(fs.path(path), fs.path(self.workdir))
+    local absolutepath = fsutil.normalize(self.workdir, path)
     importfile(createSubSimulator(self), absolutepath)
 end
 
 local function import(path)
-    local absolutepath
-    if path then
-        absolutepath = fsutil.absolute(fs.path(path), WORKDIR)
-    else
-        absolutepath = WORKDIR / "make.lua"
-    end
+    local absolutepath = fsutil.normalize(WORKDIR:string(), path or "make.lua")
     importfile(mainSimulator, absolutepath)
 end
 

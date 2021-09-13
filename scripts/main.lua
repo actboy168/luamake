@@ -15,7 +15,6 @@ if RawCommand[arg[1]] then
     command(arg[1])
 else
     local arguments = require "arguments"
-    local globals = require "globals"
     if arguments.C then
         WORKDIR = fs.absolute(fs.path(arguments.C)):lexically_normal()
         fs.current_path(WORKDIR)

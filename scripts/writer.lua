@@ -18,8 +18,7 @@ end
 local function fmtpath_v3(rootdir, path)
     path = tostring(path)
     if not fs.path(path):is_absolute() and path:sub(1, 1) ~= "$" then
-        path = fsutil.normalize((rootdir / path):string())
-        path = fsutil.relative(path, WORKDIR:string())
+        path = fsutil.relative(fsutil.join(rootdir, path), WORKDIR:string())
     end
     return fmtpath(path)
 end
@@ -77,6 +76,7 @@ local function get_sources(root, sources)
     if type(sources) ~= "table" then
         return {}
     end
+    root = fs.path(root)
     local result = {}
     local ignore = {}
     for _, source in ipairs(sources) do
@@ -338,8 +338,8 @@ local function generate(context, rule, name, attribute)
     end
 
     local ninja = context.ninja
-    local workdir = fs.path(init_single(attribute, 'workdir', '.'))
-    local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
+    local workdir = init_single(attribute, 'workdir', '.')
+    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_sources(rootdir, attribute.sources)
     local implicit_input = {}
@@ -372,13 +372,13 @@ local function generate(context, rule, name, attribute)
 
     local fin_flags = table.concat(flags, " ")
     for _, source in ipairs(sources) do
-        local ext = fs.path(source):extension():string():sub(2):lower()
+        local ext = fsutil.extension(source):sub(2):lower()
         local type = file_type[ext]
         if type == "raw" then
             input[#input+1] = fs.path(source)
             goto continue
         end
-        local objpath = fs.path("$obj") / name / fs.path(source):filename()
+        local objpath = fsutil.join("$obj", name, fsutil.filename(source))
         if type == "c" then
             cc.rule_c(ninja, name, attribute, fin_flags)
             input[#input+1] = ninja:build_obj(objpath, source)
@@ -573,8 +573,8 @@ end
 
 function GEN.phony(context, name, attribute)
     local ninja = context.ninja
-    local workdir = fs.path(init_single(attribute, 'workdir', '.'))
-    local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
+    local workdir = init_single(attribute, 'workdir', '.')
+    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
@@ -617,8 +617,8 @@ function GEN.build(context, name, attribute)
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
-    local workdir = fs.path(init_single(attribute, 'workdir', '.'))
-    local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
+    local workdir = init_single(attribute, 'workdir', '.')
+    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local input = attribute.input or {}
     local output = attribute.output or {}
     local pool =  init_single(attribute, 'pool')
@@ -679,8 +679,8 @@ function GEN.copy(context, name, attribute)
         return
     end
     local ninja = context.ninja
-    local workdir = fs.path(init_single(attribute, 'workdir', '.'))
-    local rootdir = (workdir / init_single(attribute, 'rootdir', '.')):lexically_normal()
+    local workdir = init_single(attribute, 'workdir', '.')
+    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)

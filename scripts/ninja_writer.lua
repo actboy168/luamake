@@ -1,4 +1,4 @@
-local fs = require "bee.filesystem"
+local fsutil = require "fsutil"
 
 return function (filename)
     local ninja = require "ninja_syntax"(filename)
@@ -31,13 +31,12 @@ return function (filename)
         ninja:rule(name, command, kwargs)
     end
     function m:build_obj(output, inputs, args)
-        output = output:replace_extension ".obj"
-        local name = output:string()
+        output = fsutil.join(fsutil.parent_path(output), fsutil.stem(output))
+        local name = output..".obj"
         if obj_name[name] then
             local n = 1
-            local stem = (output:parent_path() / output:stem()):string()
             repeat
-                name = ("%s-%d.obj"):format(stem, n)
+                name = ("%s-%d.obj"):format(output, n)
                 n = n + 1
             until not obj_name[name]
         end

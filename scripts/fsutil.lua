@@ -1,4 +1,3 @@
-local fs = require 'bee.filesystem'
 local globals = require "globals"
 
 local fsutil = {}
@@ -33,8 +32,28 @@ local function normalize(p)
     return stack
 end
 
-function fsutil.normalize(p)
-    return table.concat(normalize(p), '/')
+function fsutil.join(...)
+    return table.concat(table.pack(...), '/')
+end
+
+function fsutil.normalize(...)
+    return table.concat(normalize(fsutil.join(...)), '/')
+end
+
+function fsutil.parent_path(path)
+    return path:match "^(.+)/[^/]*$"
+end
+
+function fsutil.filename(path)
+    return path:match "[/]?([^/]*)$"
+end
+
+function fsutil.stem(path)
+    return path:match "[/]?([^/]*)[.][^./]*$" or path:match "[/]?([.]?[^./]*)$"
+end
+
+function fsutil.extension(path)
+    return path:match "[^/]([.][^./]*)$"
 end
 
 function fsutil.relative(path, base)
@@ -58,10 +77,6 @@ function fsutil.relative(path, base)
         s[#s+1] = e
     end
     return table.concat(s, '/')
-end
-
-function fsutil.absolute(path, base)
-    return fs.path(fsutil.normalize((base / path):string()))
 end
 
 function fsutil.quotearg(s)

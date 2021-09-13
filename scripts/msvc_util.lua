@@ -55,7 +55,7 @@ function m.createEnvConfig(arch, rebuild)
     local console_cp = getConsoleCP()
     if not rebuild and m.hasEnvConfig() then
         local config = readEnvConfig()
-        if config.arch == arch and config.console_cp == console_cp then
+        if config.arch == arch and (not console_cp or config.console_cp == console_cp) then
             env = config.env
             prefix = config.prefix
             return

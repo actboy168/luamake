@@ -53,13 +53,19 @@ local function init_version(context, luadir, luaversion)
     local libname
     if globals.compiler == 'msvc' then
         libname = luadir.."/lua-"..globals.arch..".lib"
+        context.loaded["__"..luaversion.."__"] = {
+            input = {libname}
+        }
     else
         libname = luadir.."/liblua.a"
+        context.loaded["__"..luaversion.."__"] = {
+            ldflags = {
+                "-L"..luadir,
+                "-llua",
+            }
+        }
     end
     ninja:build(libname, luadir.."/lua.def")
-    context.loaded["__"..luaversion.."__"] = {
-        input = {libname}
-    }
 end
 
 local function windows_deps(context, name, attribute, luaversion)

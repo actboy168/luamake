@@ -308,7 +308,7 @@ local function update_ldflags(context, ldflags, attribute, name, rootdir)
         end
     end
     
-    cc.update_ldflags(context, ldflags, attribute)
+    cc.update_ldflags(context, ldflags, attribute, name)
 end
 
 local function generate(context, rule, name, attribute)
@@ -470,14 +470,12 @@ local function generate(context, rule, name, attribute)
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
                 implicit_outputs = lib,
-                variables = { name = name }
             })
         elseif globals.os == "windows" then
             binname = bindir.."/"..name..".dll"
             target.input = {binname}
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
-                variables = { name = name }
             })
         else
             if globals.compiler == "emcc" then
@@ -500,16 +498,9 @@ local function generate(context, rule, name, attribute)
         end
         target.implicit_input = binname
         cc.rule_exe(ninja, name, fin_ldflags)
-        if globals.os == 'windows' then
-            ninja:build(binname, input, {
-                implicit_inputs = implicit_input,
-                variables = { name = name }
-            })
-        else
-            ninja:build(binname, input, {
-                implicit_inputs = implicit_input,
-            })
-        end
+        ninja:build(binname, input, {
+            implicit_inputs = implicit_input,
+        })
     elseif rule == "static_library" then
         if globals.os == "windows" then
             binname = bindir.."/"..name ..".lib"

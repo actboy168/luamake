@@ -74,10 +74,10 @@ function cl.update_flags(context, flags, attribute, name)
     end
 end
 
-function cl.update_ldflags(context, ldflags, attribute)
+function cl.update_ldflags(context, ldflags, attribute, name)
     if attribute.mode == 'debug' then
         ldflags[#ldflags+1] = '/DEBUG'
-        ldflags[#ldflags+1] = '/pdb:$obj/$name.pdb'
+        ldflags[#ldflags+1] = ('/pdb:$obj/%s.pdb'):format(name)
     else
         ldflags[#ldflags+1] = '/DEBUG:NONE'
         ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
@@ -103,7 +103,7 @@ function cl.rule_cxx(w, name, attribute, flags)
 end
 
 function cl.rule_dll(w, name, ldflags)
-    w:rule('link_'..name, ([[cl /nologo $in /link %s /out:$out /DLL /IMPLIB:$obj/$name/$name.lib]]):format(ldflags),
+    w:rule('link_'..name, ([[cl /nologo $in /link %s /out:$out /DLL /IMPLIB:$obj/%s/%s.lib]]):format(ldflags, name, name),
     {
         description = 'Link    Dll $out',
         restat = 1,

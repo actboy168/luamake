@@ -20,15 +20,16 @@ local function getConsoleCP()
 end
 
 local function readEnvConfig()
-    local EnvConfig = WORKDIR / globals.builddir / 'env.config'
-    local f = assert(io.open(EnvConfig:string(), 'r'))
-    local config = assert(load(assert(f:read 'a')))()
+    local EnvConfig = WORKDIR / globals.builddir / 'env.lua'
+    local f <close> = assert(io.open(EnvConfig:string(), 'r'))
+    local data = assert(f:read 'a')
+    local config = assert(load(data, "t", nil))()
     f:close()
     return config
 end
 
 local function writeEnvConfig(data)
-    local EnvConfig = WORKDIR / globals.builddir / 'env.config'
+    local EnvConfig = WORKDIR / globals.builddir / 'env.lua'
     local f <close> = assert(io.open(EnvConfig:string(), 'w'))
     f:write(data)
 end
@@ -42,12 +43,12 @@ local function updateEnvConfig()
 end
 
 function m.hasEnvConfig()
-    local EnvConfig = WORKDIR / globals.builddir / 'env.config'
+    local EnvConfig = WORKDIR / globals.builddir / 'env.lua'
     return fs.exists(EnvConfig)
 end
 
 function m.cleanEnvConfig()
-    local EnvConfig = WORKDIR / globals.builddir / 'env.config'
+    local EnvConfig = WORKDIR / globals.builddir / 'env.lua'
     fs.remove(EnvConfig)
 end
 

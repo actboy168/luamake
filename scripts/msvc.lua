@@ -7,7 +7,7 @@ local function Is64BitWindows()
 end
 
 local ProgramFiles = Is64BitWindows() and 'ProgramFiles(x86)' or 'ProgramFiles'
-local vswhere = fs.path(os.getenv(ProgramFiles)) / 'Microsoft Visual Studio' / 'Installer' / 'vswhere.exe'
+local vswhere = os.getenv(ProgramFiles)..'/Microsoft Visual Studio/Installer/vswhere.exe'
 local need = { LIB = true, LIBPATH = true, PATH = true, INCLUDE = true }
 
 local function createfile(filename, content)

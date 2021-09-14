@@ -375,7 +375,7 @@ local function generate(context, rule, name, attribute)
         local ext = fsutil.extension(source):sub(2):lower()
         local type = file_type[ext]
         if type == "raw" then
-            input[#input+1] = fs.path(source)
+            input[#input+1] = source
             goto continue
         end
         local objpath = fsutil.join("$obj", name, fsutil.filename(source))

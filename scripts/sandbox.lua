@@ -1,4 +1,4 @@
-local fs = require "bee.filesystem"
+local fsutil = require "fsutil"
 
 local function sandbox_env(env, loadlua, openfile, preload, builddir)
     setmetatable(env, {__index=_G})
@@ -163,7 +163,7 @@ return function (c)
     local openfile = c.openfile or io.open
     local env = c.env or {}
     local function absolute(name)
-        return (fs.path(c.rootdir) / name):lexically_normal():string()
+        return fsutil.normalize(c.rootdir, name)
     end
     local function sandbox_loadlua(name, mode, ENV)
         assert (mode == nil or mode == "t")

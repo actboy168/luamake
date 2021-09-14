@@ -583,7 +583,7 @@ function GEN.phony(context, name, attribute)
     end
     local n = #input
     for i = 1, #implicit_input do
-        input[n+i] = implicit_input
+        input[n+i] = implicit_input[i]
     end
     for i = 1, #output do
         output[i] = fmtpath_v3(rootdir, output[i])

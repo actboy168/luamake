@@ -167,7 +167,6 @@ build $bin/luamake.exe: link_luamake $obj/luamake/utf8_crt.obj $
     $obj/source_lua/ltm.obj $obj/source_lua/lundump.obj $
     $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
     $obj/source_lua/lzio.obj
-  name = luamake
 rule copy
   command = sh -c "cp -afv $in$input $out 1>/dev/null"
   description = Copy $in$input $out
@@ -198,7 +197,6 @@ rule link_lua54
   description = Link    Dll $out
 build $bin/lua54.dll: link_lua54 $obj/lua54/forward_lua.obj | forward_lua $
     $bin/luamake.exe
-  name = lua54
 build tools/lua54.dll: copy | $bin/lua54.dll
   input = $bin/lua54.dll
 build luamake: phony $bin/luamake.exe

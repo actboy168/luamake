@@ -107,6 +107,12 @@ end
 local function createSubSimulator(parentSimulator)
     local subMt = {}
     subMt.__index = parentSimulator
+    function subMt:__newindex(k, v)
+        if arguments.args[k] ~= nil then
+            return
+        end
+        rawset(self, k, v)
+    end
     function subMt:__pairs()
         local selfpairs = true
         local mark = {}

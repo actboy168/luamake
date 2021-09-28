@@ -4,7 +4,7 @@ obj = $builddir/obj
 cc = clang
 luamake = luamake
 rule c_source_bee
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
     -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/3rd/lua $
     -I3rd/bee.lua/3rd/lua-seri -DNDEBUG -Wunguarded-availability -o $out -c $
     $in
@@ -14,7 +14,7 @@ rule c_source_bee
 build $obj/source_bee/lua-seri.obj: c_source_bee $
     3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
-  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
     -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/bee/nonstd $
     -I3rd/bee.lua -DBEE_INLINE -DNDEBUG -Wunguarded-availability -o $out -c $
     $in
@@ -37,16 +37,16 @@ build $obj/source_bee/file_helper.obj: cxx_source_bee $
     3rd/bee.lua/bee/utility/file_helper.cpp
 build $obj/source_bee/path_helper.obj: cxx_source_bee $
     3rd/bee.lua/bee/utility/path_helper.cpp
+build $obj/source_bee/path_helper-1.obj: cxx_source_bee $
+    3rd/bee.lua/bee/utility/path_helper.mm
 rule cxx_source_bee_1
-  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
     -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/3rd/lua $
     -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua $
     -DBEE_INLINE -DNDEBUG -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/lua_embed.obj: cxx_source_bee_1 $
-    3rd/bee.lua/binding/lua_embed.cpp
 build $obj/source_bee/lua_filesystem.obj: cxx_source_bee_1 $
     3rd/bee.lua/binding/lua_filesystem.cpp
 build $obj/source_bee/lua_filewatch.obj: cxx_source_bee_1 $
@@ -64,7 +64,7 @@ build $obj/source_bee/lua_thread.obj: cxx_source_bee_1 $
 build $obj/source_bee/lua_time.obj: cxx_source_bee_1 $
     3rd/bee.lua/binding/lua_time.cpp
 rule c_source_lua
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
     -mmacosx-version-min=10.12 -DLUA_USE_MACOSX -DNDEBUG $
     -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
@@ -108,7 +108,7 @@ build $obj/source_lua/lutf8lib.obj: c_source_lua $
 build $obj/source_lua/lvm.obj: c_source_lua 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/source_lua/lzio.obj: c_source_lua 3rd/bee.lua/3rd/lua/lzio.c
 rule cxx_luamake
-  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall $
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
     -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/3rd/lua $
     -DLUA_USE_MACOSX -DNDEBUG -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
@@ -117,8 +117,8 @@ rule cxx_luamake
 build $obj/luamake/main.obj: cxx_luamake 3rd/bee.lua/bootstrap/main.cpp
 build $obj/luamake/progdir.obj: cxx_luamake 3rd/bee.lua/bootstrap/progdir.cpp
 rule link_luamake
-  command = $cc $in -o $out -lm -ldl -framework CoreFoundation -framework $
-    CoreServices -lstdc++ -Wl,-S,-x
+  command = $cc $in -o $out -lm -ldl -framework Foundation -framework $
+    CoreFoundation -framework CoreServices -lstdc++ -Wl,-S,-x
   description = Link    Exe $out
 build $bin/luamake: link_luamake $obj/luamake/main.obj $
     $obj/luamake/progdir.obj $obj/source_bee/lua-seri.obj $
@@ -126,7 +126,7 @@ build $bin/luamake: link_luamake $obj/luamake/main.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
     $obj/source_bee/format.obj $obj/source_bee/os.obj $
     $obj/source_bee/subprocess_posix.obj $obj/source_bee/file_helper.obj $
-    $obj/source_bee/path_helper.obj $obj/source_bee/lua_embed.obj $
+    $obj/source_bee/path_helper.obj $obj/source_bee/path_helper-1.obj $
     $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
     $obj/source_bee/lua_platform.obj $obj/source_bee/lua_serialization.obj $
     $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $

@@ -31,6 +31,8 @@ build $obj/source_bee/format.obj: cxx_source_bee $
 build $obj/source_bee/os.obj: cxx_source_bee 3rd/bee.lua/bee/nonstd/fmt/os.cc
 build $obj/source_bee/subprocess_posix.obj: cxx_source_bee $
     3rd/bee.lua/bee/subprocess/subprocess_posix.cpp
+build $obj/source_bee/simplethread_posix.obj: cxx_source_bee $
+    3rd/bee.lua/bee/thread/simplethread_posix.cpp
 build $obj/source_bee/file_helper.obj: cxx_source_bee $
     3rd/bee.lua/bee/utility/file_helper.cpp
 build $obj/source_bee/path_helper.obj: cxx_source_bee $
@@ -102,25 +104,27 @@ build $obj/source_lua/lutf8lib.obj: c_source_lua $
     3rd/bee.lua/3rd/lua/lutf8lib.c
 build $obj/source_lua/lvm.obj: c_source_lua 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/source_lua/lzio.obj: c_source_lua 3rd/bee.lua/3rd/lua/lzio.c
-rule cxx_luamake
+rule cxx_source_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
     -fvisibility=hidden -I3rd/bee.lua/3rd/lua -DLUA_USE_LINUX -DNDEBUG $
     -fPIC -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/luamake/main.obj: cxx_luamake 3rd/bee.lua/bootstrap/main.cpp
-build $obj/luamake/progdir.obj: cxx_luamake 3rd/bee.lua/bootstrap/progdir.cpp
+build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
+    3rd/bee.lua/bootstrap/main.cpp
+build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
+    3rd/bee.lua/bootstrap/progdir.cpp
 rule link_luamake
-  command = $cc $in -o $out -lm -ldl -lpthread -Wl,-E -lpthread $
-    -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic -static-libgcc -s
+  command = $cc $in -o $out -lm -ldl -lpthread -Wl,-E -lpthread -lstdc++ -s
   description = Link    Exe $out
-build $bin/luamake: link_luamake $obj/luamake/main.obj $
-    $obj/luamake/progdir.obj $obj/source_bee/lua-seri.obj $
+build $bin/luamake: link_luamake $obj/source_bootstrap/main.obj $
+    $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $
     $obj/source_bee/error.obj $obj/source_bee/fsevent_linux.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
     $obj/source_bee/format.obj $obj/source_bee/os.obj $
-    $obj/source_bee/subprocess_posix.obj $obj/source_bee/file_helper.obj $
+    $obj/source_bee/subprocess_posix.obj $
+    $obj/source_bee/simplethread_posix.obj $obj/source_bee/file_helper.obj $
     $obj/source_bee/path_helper.obj $obj/source_bee/lua_filesystem.obj $
     $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
     $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $

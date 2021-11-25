@@ -132,7 +132,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         config = package.config,
         loaded = _LOADED,
         preload = _PRELOAD,
-        path = '?.lua',
+        path = '?.lua;?/init.lua',
         cpath = '?.'..ext..';'..builddir..'/bin/?.'..ext,
         searchpath = searchpath,
         loadlib = package.loadlib,

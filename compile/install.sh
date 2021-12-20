@@ -23,7 +23,7 @@ case "`uname`" in
     ;;
 esac
 
-if [ "$?" != "0" ] 
+if [ "$?" != "0" ]
 then
   exit 1
 fi
@@ -35,7 +35,12 @@ write_profile()
 }
 
 if   [[ "$SHELL" = */zsh ]]; then
-    write_profile ~/.zshrc
+    source ~/.zshenv
+    if [ -d "$ZDOTDIR" ]; then
+        write_profile "$ZDOTDIR"/.zshrc
+    else
+        write_profile ~/.zshrc
+    fi
 elif [[ "$SHELL" = */ksh ]]; then
     write_profile ~/.kshrc
 elif [[ "$SHELL" = */bash ]]; then
@@ -43,5 +48,5 @@ elif [[ "$SHELL" = */bash ]]; then
     if [ "$(uname)" == "Darwin" ]; then
         write_profile ~/.bash_profile
     fi
-else write_profile ~/.profile 
+else write_profile ~/.profile
 fi

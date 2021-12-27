@@ -129,7 +129,8 @@ function gcc.rule_exe(w, name, ldflags)
 end
 
 function gcc.rule_lib(w, name)
-    w:rule('link_'..name, [[rm -f $out && ar rcs $out $in]],
+    --rm -f $out
+    w:rule('link_'..name, [[ar rcs $out $in]],
     {
         description = 'Link    Lib $out'
     })

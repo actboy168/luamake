@@ -115,6 +115,12 @@ local function tbl_append(t, a)
     table.move(a, 1, #a, #t + 1, t)
 end
 
+local function tbl_insert(t, pos, a)
+    for i = 1, #a do
+        table.insert(t, pos+i-1, a[i])
+    end
+end
+
 local function pushTable(t, b)
     if type(b) == 'string' then
         t[#t+1] = b
@@ -438,7 +444,7 @@ local function generate(context, rule, name, attribute)
                 local target = context:load(dep)
                 assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
                 if target.deps then
-                    tbl_append(deps, target.deps)
+                    tbl_insert(deps, i + 1, target.deps)
                 end
                 i = i + 1
             end

@@ -129,11 +129,20 @@ function gcc.rule_exe(w, name, ldflags)
 end
 
 function gcc.rule_lib(w, name)
-    --rm -f $out
-    w:rule('link_'..name, [[ar rcs $out $in]],
-    {
-        description = 'Link    Lib $out'
-    })
+    if globals.hostos == "windows" then
+        -- mingw
+        w:rule('link_'..name, [[sh -c "rm -f $out && ar rcs $out @$out.rsp"]],
+        {
+            description = 'Link    Lib $out',
+            rspfile = "$out.rsp",
+            rspfile_content = "$in",
+        })
+    else
+        w:rule('link_'..name, [[rm -f $out && ar rcs $out $in]],
+        {
+            description = 'Link    Lib $out'
+        })
+    end
 end
 
 -- mingw only

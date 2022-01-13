@@ -34,8 +34,12 @@ write_profile()
     grep -sq "luamake" $1 || echo -e "\nalias luamake=$work_path/luamake" >> $1
 }
 
+include () {
+    [[ -f "$1" ]] && source "$1"
+}
+
 if   [[ "$SHELL" = */zsh ]]; then
-    source ~/.zshenv
+    include ~/.zshenv
     if [ -d "$ZDOTDIR" ]; then
         write_profile "$ZDOTDIR"/.zshrc
     else

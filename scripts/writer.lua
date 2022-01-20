@@ -40,8 +40,10 @@ local function glob_match(pattern, target)
     return target:match(pattern) ~= nil
 end
 
-local function accept_path(t, path)
-    assert(fs.exists(path), ("source `%s` is not exists."):format(path:string()))
+local function accept_path(t, path, checkexist)
+    if checkexist and not fs.exists(path) then
+        error(("source `%s` is not exists."):format(path:string()))
+    end
     local repath = fsutil.relative(path:string(), WORKDIR:string())
     if t[repath] then
         return
@@ -49,8 +51,14 @@ local function accept_path(t, path)
     t[#t+1] = repath
     t[repath] = #t
 end
-local function expand_dir(t, pattern, dir)
-    assert(fs.exists(dir), ("source dir `%s` is not exists."):format(dir:string()))
+local function expand_dir(t, pattern, dir, checkexist)
+    if not fs.exists(dir) then
+        if checkexist then
+            error("source dir `%s` is not exists."):format(dir:string())
+        else
+            return
+        end
+    end
     for file in fs.pairs(dir) do
         if fs.is_directory(file) then
             expand_dir(t, pattern, file)
@@ -62,14 +70,14 @@ local function expand_dir(t, pattern, dir)
     end
 end
 
-local function expand_path(t, path)
+local function expand_path(t, path, checkexist)
     local filename = path:lexically_normal():string()
     if filename:find("*", 1, true) == nil then
-        accept_path(t, path)
+        accept_path(t, path, checkexist)
         return
     end
     local pattern = glob_compile(filename)
-    expand_dir(t, pattern, path:parent_path())
+    expand_dir(t, pattern, path:parent_path(), checkexist)
 end
 
 local function get_sources(root, sources)
@@ -81,9 +89,9 @@ local function get_sources(root, sources)
     local ignore = {}
     for _, source in ipairs(sources) do
         if source:sub(1,1) ~= "!" then
-            expand_path(result, root / source)
+            expand_path(result, root / source, true)
         else
-            expand_path(ignore, root / source:sub(2))
+            expand_path(ignore, root / source:sub(2), false)
         end
     end
     for _, path in ipairs(ignore) do

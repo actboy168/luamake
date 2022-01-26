@@ -11,6 +11,19 @@ local targets = {}
 local scripts = {}
 local mark_scripts = {}
 
+local file_type = {
+    cxx = "cxx",
+    cpp = "cxx",
+    cc = "cxx",
+    mm = "cxx",
+    c = "c",
+    m = "c",
+    rc = "rc",
+    s = "asm",
+    def = "raw",
+    obj = "raw",
+}
+
 local function fmtpath(path)
     return path:gsub('\\', '/')
 end
@@ -42,7 +55,10 @@ end
 
 local function accept_path(t, path, checkexist)
     if checkexist and not fs.exists(path) then
+        local type = file_type[fsutil.extension(path:string()):sub(2):lower()]
+        if type ~= "raw" then
         error(("source `%s` is not exists."):format(path:string()))
+        end
     end
     local repath = fsutil.relative(path:string(), WORKDIR:string())
     if t[repath] then

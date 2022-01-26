@@ -360,7 +360,7 @@ local function generate(context, rule, name, attribute)
     local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_sources(rootdir, attribute.sources)
-    local objargs = attribute.implicit_inputs and {implicit_inputs=attribute.implicit_inputs} or nil
+    local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
     local implicit_input = {}
 
     init_single(attribute, 'mode', 'release')

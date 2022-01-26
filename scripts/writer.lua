@@ -57,7 +57,7 @@ local function accept_path(t, path, checkexist)
     if checkexist and not fs.exists(path) then
         local type = file_type[fsutil.extension(path:string()):sub(2):lower()]
         if type ~= "raw" then
-        error(("source `%s` is not exists."):format(path:string()))
+            error(("source `%s` is not exists."):format(path:string()))
         end
     end
     local repath = fsutil.relative(path:string(), WORKDIR:string())
@@ -122,18 +122,6 @@ local function get_sources(root, sources)
     table.sort(result)
     return result
 end
-
-local file_type = {
-    cxx = "cxx",
-    cpp = "cxx",
-    cc = "cxx",
-    mm = "cxx",
-    c = "c",
-    m = "c",
-    rc = "rc",
-    s = "asm",
-    def = "raw"
-}
 
 local function tbl_append(t, a)
     table.move(a, 1, #a, #t + 1, t)
@@ -607,9 +595,7 @@ function GEN.phony(context, name, attribute)
     for i = 1, #implicit_input do
         input[n+i] = implicit_input[i]
     end
-    for i = 1, #output do
-        output[i] = fmtpath_v3(rootdir, output[i])
-    end
+    output = get_sources(rootdir, output)
     if name then
         if #output == 0 then
             ninja:phony(name, input)

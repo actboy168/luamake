@@ -356,6 +356,7 @@ local function generate(context, rule, name, attribute)
     local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_sources(rootdir, attribute.sources)
+    local objargs = attribute.implicit_inputs and {implicit_inputs=attribute.implicit_inputs} or nil
     local implicit_input = {}
 
     init_single(attribute, 'mode', 'release')
@@ -395,19 +396,19 @@ local function generate(context, rule, name, attribute)
         local objpath = fsutil.join("$obj", name, fsutil.filename(source))
         if type == "c" then
             cc.rule_c(ninja, name, attribute, fin_flags)
-            input[#input+1] = ninja:build_obj(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif type == "cxx" then
             cc.rule_cxx(ninja, name, attribute, fin_flags)
-            input[#input+1] = ninja:build_obj(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif globals.os == "windows" and type == "rc" then
             cc.rule_rc(ninja, name)
-            input[#input+1] = ninja:build_obj(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif type == "asm" then
             if globals.compiler == "msvc" then
                 error "TODO"
             end
             cc.rule_asm(ninja, name, fin_flags)
-            input[#input+1] = ninja:build_obj(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source, objargs)
         else
             error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))
         end

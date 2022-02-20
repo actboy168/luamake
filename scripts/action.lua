@@ -14,6 +14,7 @@ local function ninja(args)
         local msvc = require "msvc_util"
         option.env = msvc.getEnv()
         option.env.VS_UNICODE_OUTPUT = false
+        option.env.TMP = globals.builddir
     end
     if globals.hostshell == "cmd" then
         option[1] = {'cmd', '/c', 'ninja'}
@@ -64,21 +65,21 @@ if globals.perf then
     end
     setmetatable(perf_status, {__close = perf_end})
 
-    local function perf_init(...)
+    local function perf_init()
         local _ <close> = perf "init"
-        return init(...)
+        return init()
     end
     local function perf_generate(...)
         local _ <close> = perf "generate"
         return generate(...)
     end
-    local function perf_make(...)
+    local function perf_make()
         local _ <close> = perf "make"
-        return make(...)
+        return make()
     end
-    local function perf_clean(...)
+    local function perf_clean()
         local _ <close> = perf "clean"
-        return clean(...)
+        return clean()
     end
     return {
         init = perf_init,

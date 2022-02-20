@@ -11,6 +11,19 @@ local targets = {}
 local scripts = {}
 local mark_scripts = {}
 
+local file_type = {
+    cxx = "cxx",
+    cpp = "cxx",
+    cc = "cxx",
+    mm = "cxx",
+    c = "c",
+    m = "c",
+    rc = "rc",
+    s = "asm",
+    def = "raw",
+    obj = "raw",
+}
+
 local function fmtpath(path)
     return path:gsub('\\', '/')
 end
@@ -40,8 +53,13 @@ local function glob_match(pattern, target)
     return target:match(pattern) ~= nil
 end
 
-local function accept_path(t, path)
-    assert(fs.exists(path), ("source `%s` is not exists."):format(path:string()))
+local function accept_path(t, path, checkexist)
+    if checkexist and not fs.exists(path) then
+        local type = file_type[fsutil.extension(path:string()):sub(2):lower()]
+        if type ~= "raw" then
+            error(("source `%s` is not exists."):format(path:string()))
+        end
+    end
     local repath = fsutil.relative(path:string(), WORKDIR:string())
     if t[repath] then
         return
@@ -49,8 +67,14 @@ local function accept_path(t, path)
     t[#t+1] = repath
     t[repath] = #t
 end
-local function expand_dir(t, pattern, dir)
-    assert(fs.exists(dir), ("source dir `%s` is not exists."):format(dir:string()))
+local function expand_dir(t, pattern, dir, checkexist)
+    if not fs.exists(dir) then
+        if checkexist then
+            error("source dir `%s` is not exists."):format(dir:string())
+        else
+            return
+        end
+    end
     for file in fs.pairs(dir) do
         if fs.is_directory(file) then
             expand_dir(t, pattern, file)
@@ -62,14 +86,14 @@ local function expand_dir(t, pattern, dir)
     end
 end
 
-local function expand_path(t, path)
+local function expand_path(t, path, checkexist)
     local filename = path:lexically_normal():string()
     if filename:find("*", 1, true) == nil then
-        accept_path(t, path)
+        accept_path(t, path, checkexist)
         return
     end
     local pattern = glob_compile(filename)
-    expand_dir(t, pattern, path:parent_path())
+    expand_dir(t, pattern, path:parent_path(), checkexist)
 end
 
 local function get_sources(root, sources)
@@ -81,9 +105,9 @@ local function get_sources(root, sources)
     local ignore = {}
     for _, source in ipairs(sources) do
         if source:sub(1,1) ~= "!" then
-            expand_path(result, root / source)
+            expand_path(result, root / source, true)
         else
-            expand_path(ignore, root / source:sub(2))
+            expand_path(ignore, root / source:sub(2), false)
         end
     end
     for _, path in ipairs(ignore) do
@@ -99,20 +123,14 @@ local function get_sources(root, sources)
     return result
 end
 
-local file_type = {
-    cxx = "cxx",
-    cpp = "cxx",
-    cc = "cxx",
-    mm = "cxx",
-    c = "c",
-    m = "c",
-    rc = "rc",
-    s = "asm",
-    def = "raw"
-}
-
 local function tbl_append(t, a)
     table.move(a, 1, #a, #t + 1, t)
+end
+
+local function tbl_insert(t, pos, a)
+    for i = 1, #a do
+        table.insert(t, pos+i-1, a[i])
+    end
 end
 
 local function pushTable(t, b)
@@ -342,6 +360,7 @@ local function generate(context, rule, name, attribute)
     local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_sources(rootdir, attribute.sources)
+    local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
     local implicit_input = {}
 
     init_single(attribute, 'mode', 'release')
@@ -381,19 +400,19 @@ local function generate(context, rule, name, attribute)
         local objpath = fsutil.join("$obj", name, fsutil.filename(source))
         if type == "c" then
             cc.rule_c(ninja, name, attribute, fin_flags)
-            input[#input+1] = ninja:build_obj(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif type == "cxx" then
             cc.rule_cxx(ninja, name, attribute, fin_flags)
-            input[#input+1] = ninja:build_obj(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif globals.os == "windows" and type == "rc" then
             cc.rule_rc(ninja, name)
-            input[#input+1] = ninja:build_obj(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif type == "asm" then
             if globals.compiler == "msvc" then
                 error "TODO"
             end
             cc.rule_asm(ninja, name, fin_flags)
-            input[#input+1] = ninja:build_obj(objpath, source)
+            input[#input+1] = ninja:build_obj(objpath, source, objargs)
         else
             error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))
         end
@@ -438,7 +457,7 @@ local function generate(context, rule, name, attribute)
                 local target = context:load(dep)
                 assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
                 if target.deps then
-                    tbl_append(deps, target.deps)
+                    tbl_insert(deps, i + 1, target.deps)
                 end
                 i = i + 1
             end
@@ -576,9 +595,7 @@ function GEN.phony(context, name, attribute)
     for i = 1, #implicit_input do
         input[n+i] = implicit_input[i]
     end
-    for i = 1, #output do
-        output[i] = fmtpath_v3(rootdir, output[i])
-    end
+    output = get_sources(rootdir, output)
     if name then
         if #output == 0 then
             ninja:phony(name, input)

@@ -70,7 +70,7 @@ end
 local function expand_dir(t, pattern, dir, checkexist)
     if not fs.exists(dir) then
         if checkexist then
-            error("source dir `%s` is not exists."):format(dir:string())
+            error(("source dir `%s` is not exists."):format(dir:string()))
         else
             return
         end

@@ -36,8 +36,10 @@ end
 
 t.what = what
 t.targets = targets
-t.C = arguments.C ; arguments.C = nil
-t.f = arguments.f ; arguments.f = nil
+for _, opt in ipairs {"C", "f", "h", "v", "j", "k", "l", "n", "d", "t", "w"} do
+    t[opt] = arguments[opt]
+    arguments[opt] = nil
+end
 t.args = arguments
 
 if arguments.e then

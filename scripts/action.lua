@@ -1,6 +1,7 @@
 local globals = require "globals"
 local sp = require 'bee.subprocess'
 local sim = require 'simulator'
+local arguments = require "arguments"
 
 local function ninja(args)
     local option = {
@@ -20,6 +21,15 @@ local function ninja(args)
         option[1] = {'cmd', '/c', 'ninja'}
     end
 
+    for _, opt in ipairs {"h", "v", "j", "k", "l", "n", "d", "t", "w"} do
+        if arguments[opt] then
+            table.insert(option, {
+                "-"..opt,
+                arguments[opt] ~= "on" and arguments[opt] or nil
+            })
+        end
+    end
+
     local process = assert(sp.spawn(option))
     for line in process.stdout:lines() do
         io.write(line, "\n")
@@ -34,7 +44,6 @@ local function ninja(args)
 end
 
 local function init()
-    local arguments = require "arguments"
     sim.import(arguments.f)
 end
 
@@ -43,12 +52,12 @@ local function generate(force)
 end
 
 local function make()
-    local arguments = require "arguments"
     ninja(arguments.targets)
 end
 
 local function clean()
-    ninja { "-t", "clean" }
+    arguments.t = "clean"
+    ninja { }
 end
 
 if globals.perf then

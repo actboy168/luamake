@@ -104,24 +104,30 @@ function cl.rule_cxx(w, name, attribute, flags)
 end
 
 function cl.rule_dll(w, name, ldflags)
-    w:rule('link_'..name, ([[cl /nologo $in /link %s /out:$out /DLL /IMPLIB:$obj/%s/%s.lib]]):format(ldflags, name, name),
+    w:rule('link_'..name, ([[cl /nologo @$out.rsp /link %s /out:$out /DLL /IMPLIB:$obj/%s/%s.lib]]):format(ldflags, name, name),
     {
         description = 'Link    Dll $out',
+        rspfile = "$out.rsp",
+        rspfile_content = "$in_newline",
         restat = 1,
     })
 end
 
 function cl.rule_exe(w, name, ldflags)
-    w:rule('link_'..name, ([[cl /nologo $in /link %s /out:$out]]):format(ldflags),
+    w:rule('link_'..name, ([[cl /nologo @$out.rsp /link %s /out:$out]]):format(ldflags),
     {
-        description = 'Link    Exe $out'
+        description = 'Link    Exe $out',
+        rspfile = "$out.rsp",
+        rspfile_content = "$in_newline",
     })
 end
 
 function cl.rule_lib(w, name)
-    w:rule('link_'..name, [[lib /nologo $in /out:$out]],
+    w:rule('link_'..name, [[lib /nologo @$out.rsp /out:$out]],
     {
-        description = 'Link    Lib $out'
+        description = 'Link    Lib $out',
+        rspfile = "$out.rsp",
+        rspfile_content = "$in_newline",
     })
 end
 

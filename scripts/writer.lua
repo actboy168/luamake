@@ -788,6 +788,10 @@ function writer:load(name)
     return loadtarget(self, t)
 end
 
+function writer:has(name)
+    return targets[name] ~= nil
+end
+
 function writer:add_target(t)
     targets[#targets+1] = t
     local name = t[2]

@@ -76,6 +76,11 @@ function mainSimulator:variable(name, value)
     assert(type(name) == "string", "Name is not a string.")
     writer:add_target { 'variable', name, value }
 end
+function mainSimulator:has(name)
+    assert(type(name) == "string", "Name is not a string.")
+    return writer:has(name)
+end
+
 
 local alias = {
     exe = "executable",

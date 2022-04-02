@@ -128,10 +128,12 @@ build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
 build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
     3rd/bee.lua/bootstrap/progdir.cpp
 rule link_luamake
-  command = cl /nologo $in /link /IMPLIB:$obj/luamake.lib advapi32.lib $
-    ws2_32.lib ole32.lib user32.lib version.lib wbemuuid.lib oleAut32.lib $
-    shell32.lib /DEBUG:NONE /LTCG /out:$out
+  command = cl /nologo @$out.rsp /link /IMPLIB:$obj/luamake.lib $
+    advapi32.lib ws2_32.lib ole32.lib user32.lib version.lib wbemuuid.lib $
+    oleAut32.lib shell32.lib /DEBUG:NONE /LTCG /out:$out
   description = Link    Exe $out
+  rspfile = $out.rsp
+  rspfile_content = $in_newline
 build $bin/luamake.exe: link_luamake $obj/source_bootstrap/utf8_crt.obj $
     $obj/source_bootstrap/main.obj $obj/source_bootstrap/progdir.obj $
     $obj/source_bee/lua-seri.obj $obj/source_bee/error.obj $
@@ -189,10 +191,12 @@ rule c_lua54
   deps = msvc
 build $obj/lua54/forward_lua.obj: c_lua54 3rd/bee.lua/bootstrap/forward_lua.c
 rule link_lua54
-  command = cl /nologo $in /link $obj/luamake.lib /DEBUG:NONE /LTCG $
+  command = cl /nologo @$out.rsp /link $obj/luamake.lib /DEBUG:NONE /LTCG $
     /out:$out /DLL /IMPLIB:$obj/lua54/lua54.lib
   description = Link    Dll $out
   restat = 1
+  rspfile = $out.rsp
+  rspfile_content = $in_newline
 build $bin/lua54.dll | $obj/lua54/lua54.lib: link_lua54 $
     $obj/lua54/forward_lua.obj | forward_lua $bin/luamake.exe
 build tools/lua54.dll: copy | $obj/lua54/lua54.lib $bin/lua54.dll

@@ -83,20 +83,19 @@ local function windows_deps(context, name, attribute, luaversion)
     attribute.deps = deps
 end
 
-return function (context, name, attribute)
+return function (context, rule, name, attribute)
     local luaversion = attribute.luaversion or "lua54"
-
     local includes = attribute.includes or {}
     includes[#includes+1] = "$builddir/"..luaversion
     attribute.includes = includes
-    if globals.os == "windows" then
+    copy_dir(
+        fs.path(package.procdir) / "tools" / luaversion,
+        WORKDIR / globals.builddir / luaversion
+    )
+    if rule == "shared_library"  and globals.os == "windows" then
         local luadir = "$builddir/"..luaversion
         init_rule(context)
         init_version(context, luadir, luaversion)
         windows_deps(context, name, attribute, luaversion)
     end
-    copy_dir(
-        fs.path(package.procdir) / "tools" / luaversion,
-        WORKDIR / globals.builddir / luaversion
-    )
 end

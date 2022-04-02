@@ -34,7 +34,15 @@ end
 function mainSimulator:lua_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'lua_library', name, attribute, self }
+        attribute.luaversion = attribute.luaversion or "lua54"
+        writer:add_target { 'shared_library', name, attribute, self }
+    end
+end
+function mainSimulator:lua_source(name)
+    assert(type(name) == "string", "Name is not a string.")
+    return function (attribute)
+        attribute.luaversion = attribute.luaversion or "lua54"
+        writer:add_target { 'source_set', name, attribute, self }
     end
 end
 function mainSimulator:build(name)
@@ -88,6 +96,7 @@ local alias = {
     lib = "static_library",
     src = "source_set",
     lua_dll = "lua_library",
+    lua_src = "lua_source",
 }
 for to, from in pairs(alias) do
     mainSimulator[to] = mainSimulator[from]

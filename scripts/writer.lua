@@ -375,7 +375,7 @@ local function generate(context, rule, name, attribute)
     init_single(attribute, 'luaversion')
 
     if attribute.luaversion then
-        require "lua_library"(context, name, attribute)
+        require "lua_support"(context, rule, name, attribute)
     end
 
     if attribute.deps then
@@ -746,11 +746,6 @@ function GEN.copy(context, name, attribute)
             implicit_input = name,
         }
     end
-end
-
-function GEN.lua_library(context, name, attribute)
-    attribute.luaversion = attribute.luaversion or "lua54"
-    generate(context, 'shared_library', name, attribute)
 end
 
 local function loadtarget(context, target)

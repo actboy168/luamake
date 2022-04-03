@@ -21,15 +21,6 @@ local function ninja(args)
         option[1] = {'cmd', '/c', 'ninja'}
     end
 
-    for _, opt in ipairs {"h", "v", "j", "k", "l", "n", "d", "t", "w"} do
-        if arguments[opt] then
-            table.insert(option, {
-                "-"..opt,
-                arguments[opt] ~= "on" and arguments[opt] or nil
-            })
-        end
-    end
-
     local process = assert(sp.spawn(option))
     for line in process.stdout:lines() do
         io.write(line, "\n")
@@ -52,12 +43,20 @@ local function generate(force)
 end
 
 local function make()
-    ninja(arguments.targets)
+    local options = {}
+    for _, opt in ipairs {"h", "v", "j", "k", "l", "n", "d", "t", "w"} do
+        if arguments[opt] then
+            table.insert(options, {
+                "-"..opt,
+                arguments[opt] ~= "on" and arguments[opt] or nil
+            })
+        end
+    end
+    ninja {arguments.targets, options}
 end
 
 local function clean()
-    arguments.t = "clean"
-    ninja { }
+    ninja {"-t", "clean"}
 end
 
 if globals.perf then

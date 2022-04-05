@@ -699,12 +699,12 @@ function GEN.copy(context, name, attribute)
             restat = 1,
         })
     elseif globals.hostos == "windows" then
-        ninja:rule('copy', 'sh -c "cp -afv $in$input $out 1>/dev/null"', {
+        ninja:rule('copy', 'sh -c "cp -fv $in$input $out 1>/dev/null"', {
             description = 'Copy $in$input $out',
             restat = 1,
         })
     else
-        ninja:rule('copy', 'cp -afv $in$input $out 1>/dev/null', {
+        ninja:rule('copy', 'cp -fv $in$input $out 1>/dev/null', {
             description = 'Copy $in$input $out',
             restat = 1,
         })

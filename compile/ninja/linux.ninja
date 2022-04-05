@@ -148,7 +148,7 @@ build $bin/luamake: link_luamake $obj/source_bootstrap/main.obj $
     $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
     $obj/source_lua/lzio.obj
 rule copy
-  command = cp -afv $in$input $out 1>/dev/null
+  command = cp -fv $in$input $out 1>/dev/null
   description = Copy $in$input $out
   restat = 1
 build $bin/main.lua: copy | $bin/luamake

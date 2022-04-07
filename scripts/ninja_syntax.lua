@@ -1,4 +1,5 @@
 local open = io.open
+local rename = os.rename
 local assert = assert
 local type = type
 local tostring = tostring
@@ -102,11 +103,11 @@ local function findwrap(text, start, count)
 end
 
 return function (filename)
+	local f = assert(open(filename..".tmp", 'wb'))
 	local w = {}
-	local output = {}
 	local function write(text)
-		output[#output+1] = text
-		output[#output+1] = "\n"
+		f:write(text)
+		f:write "\n"
 	end
 	local function writeline(text)
 		local start
@@ -220,8 +221,8 @@ return function (filename)
 		writeline('default ' .. join(as_list(targets)))
 	end
 	function w:close()
-		local f <close> = assert(open(filename, 'wb'))
-		f:write(tconcat(output))
+		f:close()
+		rename(filename..".tmp", filename)
 	end
 	return w
 end

@@ -1,5 +1,6 @@
 local open = io.open
-local rename = os.rename
+local os_remove = os.remove
+local os_rename = os.rename
 local assert = assert
 local type = type
 local tostring = tostring
@@ -222,7 +223,8 @@ return function (filename)
 	end
 	function w:close()
 		f:close()
-		rename(filename..".tmp", filename)
+		os_remove(filename)
+		os_rename(filename..".tmp", filename)
 	end
 	return w
 end

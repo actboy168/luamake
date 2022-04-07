@@ -1,5 +1,3 @@
-local fs = require "bee.filesystem"
-
 local function format_path(path)
     if path:match " " then
         return '"'..path..'"'

@@ -30,9 +30,8 @@ local function fmtpath(path)
 end
 
 local function fmtpath_v3(rootdir, path)
-    path = tostring(path)
     if not fs.path(path):is_absolute() and path:sub(1, 1) ~= "$" then
-        path = fsutil.relative(fsutil.join(rootdir, path), WORKDIR:string())
+        path = fsutil.relative(fsutil.join(rootdir, path), WORKDIR)
     end
     return fmtpath(path)
 end
@@ -43,7 +42,7 @@ local function get_sources(rootdir, sources)
     end
     local result = glob(rootdir, sources)
     for i, r in ipairs(result) do
-        result[i] = fsutil.relative(r, WORKDIR:string())
+        result[i] = fsutil.relative(r, WORKDIR)
     end
     table.sort(result)
     return result
@@ -574,7 +573,7 @@ function GEN.build(context, name, attribute)
             if type(v) == 'table' then
                 push_command(v)
             elseif type(v) == 'userdata' then
-                push(fmtpath_v3(rootdir, v))
+                push(fmtpath_v3(rootdir, tostring(v)))
             elseif type(v) == 'string' then
                 if v:sub(1,1) == '@' then
                     push(fmtpath_v3(rootdir, v:sub(2)))
@@ -726,7 +725,7 @@ function writer:add_script(path)
         return
     end
     mark_scripts[path] = true
-    scripts[#scripts+1] = fsutil.relative(path, WORKDIR:string())
+    scripts[#scripts+1] = fsutil.relative(path, WORKDIR)
 end
 
 local function get_luamake()
@@ -756,17 +755,17 @@ local function configure_args()
 end
 
 function writer:generate(force)
-    local builddir = WORKDIR / globals.builddir
-    local ninja_script = builddir / "build.ninja"
-    if not force and fs.exists(ninja_script) then
+    local builddir = fsutil.join(WORKDIR, globals.builddir)
+    local ninja_script = fsutil.join(builddir, "build.ninja")
+    if not force and fs.exists(fs.path(ninja_script)) then
         return
     end
     local context = self
     cc = require("compiler." .. globals.compiler)
     context.cc = cc
-    fs.create_directories(builddir)
+    fs.create_directories(fs.path(builddir))
 
-    local ninja = require "ninja_writer"(ninja_script:string())
+    local ninja = require "ninja_writer"(ninja_script)
 
     ninja:variable("builddir", fmtpath(globals.builddir))
     ninja:variable("bin", fmtpath(globals.bindir))

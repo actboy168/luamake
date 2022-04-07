@@ -187,7 +187,7 @@ local function glob_match_file(patterns, path)
 end
 
 local function glob_match(patterns, path)
-    local filename = path:filename():string()
+    local filename = fsutil.filename(path:string())
     if fs.is_directory(path) then
         return glob_match_dir(patterns, filename)
     else

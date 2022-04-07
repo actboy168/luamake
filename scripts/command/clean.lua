@@ -10,7 +10,9 @@ if globals.compiler == "msvc" then
         msvc.cleanEnvConfig()
     else
         local fs = require "bee.filesystem"
-        pcall(fs.remove_all, WORKDIR / globals.builddir)
+        local fsutil = require "fsutil"
+        local builddir = fsutil.join(WORKDIR, globals.builddir)
+        pcall(fs.remove_all, fs.path(builddir))
     end
 else
     action.clean()

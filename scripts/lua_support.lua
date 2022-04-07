@@ -1,10 +1,13 @@
 local fs = require "bee.filesystem"
+local fsutil = require "fsutil"
 local lua_def = require "lua_def"
 local globals = require "globals"
 local inited_rule = false
 local inited_version = {}
 
 local function copy_dir(from, to)
+    from = fs.path(from)
+    to = fs.path(to)
     fs.create_directories(to)
     for file in fs.pairs(from) do
         if not fs.is_directory(file) then
@@ -89,8 +92,8 @@ return function (context, rule, name, attribute)
     includes[#includes+1] = "$builddir/"..luaversion
     attribute.includes = includes
     copy_dir(
-        fs.path(package.procdir) / "tools" / luaversion,
-        WORKDIR / globals.builddir / luaversion
+        fsutil.join(package.procdir, "tools", luaversion),
+        fsutil.join(WORKDIR, globals.builddir, luaversion)
     )
     if rule == "shared_library"  and globals.os == "windows" then
         local luadir = "$builddir/"..luaversion

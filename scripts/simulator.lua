@@ -196,7 +196,7 @@ function mainSimulator:import(path)
 end
 
 local function import(path)
-    importfile(mainSimulator, WORKDIR:string(), path or "make.lua")
+    importfile(mainSimulator, WORKDIR, path or "make.lua")
 end
 
 local function generate(force)

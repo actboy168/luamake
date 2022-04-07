@@ -42,7 +42,7 @@ if globals.os == "windows" then
 end
 
 sandbox {
-    rootdir = WORKDIR:string(),
+    rootdir = WORKDIR,
     builddir = globals.builddir,
     preload = globals.compiler == 'msvc' and {
         msvc = require "msvc",

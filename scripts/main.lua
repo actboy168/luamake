@@ -1,4 +1,6 @@
 local fs = require "bee.filesystem"
+local fsutil = require "fsutil"
+
 local RawCommand = {
     lua = true,
     test = true,
@@ -10,16 +12,15 @@ local function command(what)
     dofile(path)
 end
 
+WORKDIR = fs.current_path():string()
+
 if RawCommand[arg[1]] then
-    WORKDIR = fs.current_path()
     command(arg[1])
 else
     local arguments = require "arguments"
     if arguments.C then
-        WORKDIR = fs.absolute(fs.path(arguments.C)):lexically_normal()
-        fs.current_path(WORKDIR)
-    else
-        WORKDIR = fs.current_path()
+        WORKDIR = fsutil.normalize(WORKDIR, arguments.C)
+        fs.current_path(fs.path(WORKDIR))
     end
     command(arguments.what)
 end

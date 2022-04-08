@@ -162,18 +162,23 @@ end
 
 local visited = {}
 
-local function isVisited(rootdir, filename)
-    local path = fsutil.normalize(rootdir, filename)
+local function isVisited(path)
     if visited[path] then
         return true
     end
     visited[path] = true
 end
 
-local function importfile(simulator, rootdir, filename)
-    if isVisited(rootdir, filename) then
+local function importfile(simulator, ...)
+    local path = fsutil.normalize(...)
+    if fs.is_directory(fs.path(path)) then
+        path = fsutil.join(path, "make.lua")
+    end
+    if isVisited(path) then
         return
     end
+    local rootdir = fsutil.parent_path(path)
+    local filename = fsutil.filename(path)
     simulator.workdir = rootdir
     sandbox {
         rootdir = rootdir,
@@ -184,19 +189,16 @@ local function importfile(simulator, rootdir, filename)
         },
         openfile = openfile,
         main = filename,
-        args = arg,
+        args = {}
     }
 end
 
 function mainSimulator:import(path)
-    local absolutepath = fsutil.normalize(self.workdir, path)
-    local rootdir = fsutil.parent_path(absolutepath)
-    local filename = fsutil.filename(absolutepath)
-    importfile(createSubSimulator(self), rootdir, filename)
+    importfile(createSubSimulator(self), self.workdir, path)
 end
 
 local function import(path)
-    importfile(mainSimulator, WORKDIR, path or "make.lua")
+    importfile(mainSimulator, WORKDIR, path)
 end
 
 local function generate(force)

@@ -171,6 +171,9 @@ end
 
 local function importfile(simulator, ...)
     local path = fsutil.normalize(...)
+    if fs.is_directory(fs.path(path)) then
+        path = fsutil.join(path, "make.lua")
+    end
     if isVisited(path) then
         return
     end
@@ -186,7 +189,7 @@ local function importfile(simulator, ...)
         },
         openfile = openfile,
         main = filename,
-        args = arg,
+        args = {}
     }
 end
 
@@ -195,7 +198,7 @@ function mainSimulator:import(path)
 end
 
 local function import(path)
-    importfile(mainSimulator, WORKDIR, path or "make.lua")
+    importfile(mainSimulator, WORKDIR, path)
 end
 
 local function generate(force)

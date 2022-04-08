@@ -387,7 +387,7 @@ local function generate(context, rule, name, attribute)
                 i = i + 1
             end
         end
-        for _, dep in ipairs(attribute.deps) do
+        for _, dep in ipairs(deps) do
             local target = context:load(dep)
             if target.input then
                 tbl_append(input, target.input)

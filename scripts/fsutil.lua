@@ -4,7 +4,7 @@ local fsutil = {}
 
 local isWindows <const> = globals.hostos == "windows"
 local isMacOS <const> = globals.hostos == "macos"
-local PathSpilt <const> = isWindows and '[^/\\]*' or '[^/]*'
+local PathSpilt <const> = isWindows and '[^/\\]+' or '[^/]+'
 local PathIgnoreCase <const> = isWindows or isMacOS
 
 local path_equal; do
@@ -22,8 +22,7 @@ end
 local function normalize(p)
     local stack = {}
     p:gsub(PathSpilt, function (w)
-        if #w == 0 and #stack ~= 0 then
-        elseif w == '..' and #stack ~= 0 and stack[#stack] ~= '..' then
+        if w == '..' and #stack ~= 0 and stack[#stack] ~= '..' then
             stack[#stack] = nil
         elseif w ~= '.' then
             stack[#stack + 1] = w

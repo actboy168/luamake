@@ -3,7 +3,8 @@ local fsutil = require "fsutil"
 local globals = require "globals"
 
 local isWindows <const> = globals.hostos == "windows"
-local PathSpilt <const> = isWindows and '[^/\\]*' or '[^/]*'
+local PathMatch <const> = isWindows and '[^/\\]*' or '[^/]*'
+local PathSpilt <const> = isWindows and '[^/\\]+' or '[^/]+'
 
 local MATCH_SUCCESS <const> = 0
 local MATCH_PENDING <const> = 1
@@ -23,7 +24,7 @@ end
 local function compile(pattern)
     return ("^%s$"):format(pattern
         :gsub("[%^%$%(%)%%%.%[%]%+%-%?]", "%%%0")
-        :gsub("%*", PathSpilt)
+        :gsub("%*", PathMatch)
     )
 end
 
@@ -40,8 +41,7 @@ local function pattern_compile(res, root, str)
     local pattern = {ignore=ignore}
     local path = fsutil.join(root, str)
     path:gsub(PathSpilt, function (w)
-        if #w == 0 and #pattern ~= 0 then
-        elseif w == '..' and #pattern ~= 0 and pattern[#pattern] ~= '..' then
+        if w == '..' and #pattern ~= 0 and pattern[#pattern] ~= '..' then
             if pattern[#pattern] == GlobStar then
                 error "`**/..` is not a valid glob."
             end
@@ -155,7 +155,7 @@ local function glob_compile(root, patterns)
             res[#res+1] = pattern_copy(v, 2)
         end
     end
-    return fsutil.join(table.unpack(gcd)), res, files
+    return fsutil.normalize(table.unpack(gcd)), res, files
 end
 
 local function glob_match_dir(patterns, path)

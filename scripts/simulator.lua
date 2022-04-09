@@ -7,46 +7,47 @@ local globals = require "globals"
 local pathutil = require "pathutil"
 
 local mainSimulator = {}
+local api = {}
 
-function mainSimulator:source_set(name)
+function api:source_set(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         writer:add_target { 'source_set', name, attribute, self }
     end
 end
-function mainSimulator:shared_library(name)
+function api:shared_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         writer:add_target { 'shared_library', name, attribute, self }
     end
 end
-function mainSimulator:static_library(name)
+function api:static_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         writer:add_target { 'static_library', name, attribute, self }
     end
 end
-function mainSimulator:executable(name)
+function api:executable(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         writer:add_target { 'executable', name, attribute, self }
     end
 end
-function mainSimulator:lua_library(name)
+function api:lua_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         attribute.luaversion = attribute.luaversion or "lua54"
         writer:add_target { 'shared_library', name, attribute, self }
     end
 end
-function mainSimulator:lua_source(name)
+function api:lua_source(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         attribute.luaversion = attribute.luaversion or "lua54"
         writer:add_target { 'source_set', name, attribute, self }
     end
 end
-function mainSimulator:build(name)
+function api:build(name)
     if type(name) == "table" then
         writer:add_target { 'build', nil, name, self }
         return
@@ -56,7 +57,7 @@ function mainSimulator:build(name)
         writer:add_target { 'build', name, attribute, self }
     end
 end
-function mainSimulator:copy(name)
+function api:copy(name)
     if type(name) == "table" then
         writer:add_target { 'copy', nil, name, self }
         return
@@ -66,12 +67,12 @@ function mainSimulator:copy(name)
         writer:add_target { 'copy', name, attribute, self }
     end
 end
-function mainSimulator:default(attribute)
+function api:default(attribute)
     if self == mainSimulator then
         writer:add_target {'default', attribute}
     end
 end
-function mainSimulator:phony(name)
+function api:phony(name)
     if type(name) == "table" then
         writer:add_target { 'phony', nil, name, self }
         return
@@ -81,16 +82,12 @@ function mainSimulator:phony(name)
         writer:add_target { 'phony', name, attribute, self }
     end
 end
-function mainSimulator:variable(name, value)
-    assert(type(name) == "string", "Name is not a string.")
-    writer:add_target { 'variable', name, value }
-end
-function mainSimulator:has(name)
+function api:has(name)
     assert(type(name) == "string", "Name is not a string.")
     return writer:has(name)
 end
-function mainSimulator:path(...)
-    return pathutil.create(fsutil.join(...))
+function api:path(value)
+    return pathutil.create(value)
 end
 
 local alias = {
@@ -102,11 +99,55 @@ local alias = {
     lua_src = "lua_source",
 }
 for to, from in pairs(alias) do
-    mainSimulator[to] = mainSimulator[from]
+    api[to] = api[from]
 end
 
+local lstandard; lstandard = {
+    _G = lstandard,
+    _VERSION = _VERSION,
+    assert = assert,
+    collectgarbage = collectgarbage,
+    coroutine = coroutine,
+    debug = debug,
+    dofile = dofile,
+    error = error,
+    getmetatable = getmetatable,
+    io = io,
+    ipairs = ipairs,
+    load = load,
+    loadfile = loadfile,
+    math = math,
+    next = next,
+    os = os,
+    package = package,
+    pairs = pairs,
+    pcall = pcall,
+    print = print,
+    rawequal = rawequal,
+    rawget = rawget,
+    rawset = rawset,
+    require = require,
+    select = select,
+    setmetatable = setmetatable,
+    string = string,
+    table = table,
+    tonumber = tonumber,
+    tostring = tostring,
+    type = type,
+    xpcall = xpcall,
+    rawlen = rawlen,
+    utf8 = utf8,
+    warn = warn,
+}
+
 local mainMt = {}
-mainMt.__index = globals
+function mainMt:__index(k)
+    local v = globals[k]
+    if v ~= nil then
+        return v
+    end
+    return lstandard[k]
+end
 function mainMt:__newindex(k, v)
     if arguments.args[k] ~= nil then
         return
@@ -117,8 +158,21 @@ function mainMt:__pairs()
     return pairs(globals)
 end
 
+local function initSimulator(sim, mt)
+    for k, v in pairs(api) do
+        sim[k] = function (p1, p2)
+            if p2 == nil then
+                return v(sim, p1)
+            end
+            return v(sim, p2)
+        end
+    end
+    setmetatable(sim, mt)
+    return sim
+end
+
 do
-    setmetatable(mainSimulator, mainMt)
+    initSimulator(mainSimulator, mainMt)
 end
 
 local function createSubSimulator(parentSimulator)
@@ -153,7 +207,7 @@ local function createSubSimulator(parentSimulator)
             return newk, newv
         end, self
     end
-    return setmetatable({}, subMt)
+    return initSimulator({}, subMt)
 end
 
 local function openfile(name, mode)

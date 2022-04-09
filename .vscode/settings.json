@@ -1,6 +1,0 @@
-{
-    "Lua.completion.autoRequire": false,
-    "Lua.diagnostics.disable": [
-        "discard-returns"
-    ]
-}

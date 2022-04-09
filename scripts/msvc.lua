@@ -163,11 +163,11 @@ local function prefix(env)
         stdout = true,
         stderr = true,
     })
-    local prefix
+    local result
     for line in process.stdout:lines() do
         local m = line:match('[^:]+:[^:]+:')
         if m then
-            prefix = m
+            result = m
             break
         end
     end
@@ -175,8 +175,8 @@ local function prefix(env)
     process.stderr:close()
     process:wait()
     fs.remove_all(testdir)
-    assert(prefix, "can't find msvc.")
-    return prefix
+    assert(result, "can't find msvc.")
+    return result
 end
 
 local function toolspath()

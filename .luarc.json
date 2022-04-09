@@ -1,0 +1,13 @@
+{
+    "diagnostics": {
+        "disable": [
+            "discard-returns"
+        ],
+        "severity": {
+            "redefined-local": "Warning"
+        }
+    },
+    "completion": {
+        "autoRequire": false
+    }
+}

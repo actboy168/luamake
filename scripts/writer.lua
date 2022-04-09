@@ -383,20 +383,20 @@ local function generate(context, rule, name, attribute)
                 table.remove(deps, i)
             else
                 mark[dep] = true
-                local target = context:load(dep)
-                assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
-                if target.deps then
-                    tbl_insert(deps, i + 1, target.deps)
+                local t = context:load(dep)
+                assert(t, ("`%s`: deps `%s` undefine."):format(name, dep))
+                if t.deps then
+                    tbl_insert(deps, i + 1, t.deps)
                 end
                 i = i + 1
             end
         end
         for _, dep in ipairs(deps) do
-            local target = context:load(dep)
-            if target.input then
-                tbl_append(input, target.input)
+            local t = context:load(dep)
+            if t.input then
+                tbl_append(input, t.input)
             end
-            implicit_input[#implicit_input+1] = target.implicit_input
+            implicit_input[#implicit_input+1] = t.implicit_input
         end
     end
     assert(#input > 0, ("`%s`: no source files found."):format(name))
@@ -493,7 +493,7 @@ end
 
 function GEN.default(context, attribute)
     local ninja = context.ninja
-    local targets = {}
+    local default_targets = {}
     local function add_target(v)
         if type(v) == "table" then
             for _, dep in ipairs(v) do
@@ -503,11 +503,11 @@ function GEN.default(context, attribute)
             end
         elseif type(v) == "string" then
             local dep = v
-            addImplicitInput(context, targets, 'default', dep)
+            addImplicitInput(context, default_targets, 'default', dep)
         end
     end
     add_target(attribute)
-    ninja:default(targets)
+    ninja:default(default_targets)
 end
 
 function GEN.phony(context, name, attribute)
@@ -728,12 +728,12 @@ function writer:add_target(t)
     end
 end
 
-function writer:add_script(path)
-    if mark_scripts[path] then
+function writer:add_script(p)
+    if mark_scripts[p] then
         return
     end
-    mark_scripts[path] = true
-    scripts[#scripts+1] = fsutil.relative(path, WORKDIR)
+    mark_scripts[p] = true
+    scripts[#scripts+1] = fsutil.relative(p, WORKDIR)
 end
 
 local function get_luamake()
@@ -789,11 +789,11 @@ function writer:generate(force)
         end
     else
         assert(globals.compiler=="gcc" or globals.compiler=="clang" or globals.compiler=="emcc")
-        local cc = globals.cc or globals.compiler
+        local compiler = globals.cc or globals.compiler
         if globals.hostshell == "cmd" then
-            cc = 'cmd /c '..cc
+            compiler = 'cmd /c '..compiler
         end
-        ninja:variable("cc", cc)
+        ninja:variable("cc", compiler)
     end
 
     if not arguments.args.prebuilt then

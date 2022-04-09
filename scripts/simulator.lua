@@ -228,7 +228,7 @@ local function isVisited(path)
 end
 
 local function importfile(simulator, rootdir, filename)
-    rawset(simulator, 'workdir', rootdir)
+    simulator.workdir = rootdir
     sandbox {
         rootdir = rootdir,
         builddir = globals.builddir,

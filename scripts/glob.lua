@@ -155,6 +155,9 @@ local function glob_compile(root, patterns)
             res[#res+1] = pattern_copy(v, 2)
         end
     end
+    if not isWindows and root:sub(1,1) == '/' then
+        gcd[1] = '/'.. (gcd[1] or '')
+    end
     return fsutil.normalize(table.unpack(gcd)), res, files
 end
 

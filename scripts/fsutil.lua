@@ -28,9 +28,6 @@ local function normalize(p)
             stack[#stack + 1] = w
         end
     end)
-    if #stack == 0 then
-        return {"."}
-    end
     return stack
 end
 
@@ -39,7 +36,16 @@ function fsutil.join(...)
 end
 
 function fsutil.normalize(...)
-    return table.concat(normalize(fsutil.join(...)), '/')
+    local path = fsutil.join(...)
+    local hasRoot = (not isWindows and path:sub(1, 1) == "/")
+    local stack = normalize(path)
+    if hasRoot then
+        return '/' .. table.concat(stack, '/')
+    elseif #stack == 0 then
+        return "."
+    else
+        return table.concat(stack, '/')
+    end
 end
 
 function fsutil.parent_path(path)

@@ -146,6 +146,14 @@ local function update_warnings(flags, warnings)
     end
 end
 
+local function init_workdir(attribute)
+    local attr = attribute.workdir
+    if type(attr) == 'table' then
+        attribute.workdir = attr[#attr]
+    end
+    return assert(attribute.workdir)
+end
+
 local function init_single(attribute, attr_name, default)
     local attr = attribute[attr_name]
     if type(attr) == 'table' then
@@ -279,7 +287,7 @@ local function generate(context, rule, name, attribute)
     end
 
     local ninja = context.ninja
-    local workdir = init_single(attribute, 'workdir', '.')
+    local workdir = init_workdir(attribute)
     local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_sources(rootdir, attribute.sources)
@@ -506,7 +514,7 @@ end
 
 function GEN.phony(context, name, attribute)
     local ninja = context.ninja
-    local workdir = init_single(attribute, 'workdir', '.')
+    local workdir = init_workdir(attribute)
     local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local input = attribute.input or {}
     local output = attribute.output or {}
@@ -548,7 +556,7 @@ function GEN.build(context, name, attribute)
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
-    local workdir = init_single(attribute, 'workdir', '.')
+    local workdir = init_workdir(attribute)
     local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local input = attribute.input or {}
     local output = attribute.output or {}
@@ -614,7 +622,7 @@ function GEN.copy(context, name, attribute)
         return
     end
     local ninja = context.ninja
-    local workdir = init_single(attribute, 'workdir', '.')
+    local workdir = init_workdir(attribute)
     local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local input = attribute.input or {}
     local output = attribute.output or {}

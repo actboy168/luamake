@@ -64,16 +64,20 @@ local function pushTable(t, b)
     elseif type(b) == 'userdata' then
         t[#t+1] = b
     elseif type(b) == 'table' then
-        for k, e in pairs(b) do
-            if type(k) == "string" then
-                if t[k] == nil then
-                    t[k] = {}
+        if getmetatable(b) ~= nil then
+            t[#t+1] = b
+        else
+            for k, e in pairs(b) do
+                if type(k) == "string" then
+                    if t[k] == nil then
+                        t[k] = {}
+                    end
+                    pushTable(t[k], e)
                 end
-                pushTable(t[k], e)
             end
-        end
-        for _, e in ipairs(b) do
-            pushTable(t, e)
+            for _, e in ipairs(b) do
+                pushTable(t, e)
+            end
         end
     end
     return t
@@ -571,7 +575,11 @@ function GEN.build(context, name, attribute)
     local function push_command(t)
         for _, v in ipairs(t) do
             if type(v) == 'table' then
-                push_command(v)
+                if getmetatable(v) == nil then
+                    push_command(v)
+                else
+                    push(fmtpath_v3(rootdir, tostring(v)))
+                end
             elseif type(v) == 'userdata' then
                 push(fmtpath_v3(rootdir, tostring(v)))
             elseif type(v) == 'string' then

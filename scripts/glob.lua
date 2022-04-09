@@ -33,7 +33,7 @@ local function pattern_compile(res, root, str)
     str = str:gsub("(%*%*)([^"..PathSeq.."])", "**/*%1")
 
     local ignore
-    if str:sub(1,1) == "!" then
+    if str:match "^!" then
         ignore = true
         str = str:sub(2)
     end
@@ -109,12 +109,17 @@ local function match_prefix(t, s)
 end
 
 local function glob_compile(root, patterns)
-    if #patterns == 0 then
-        return root, {}
-    end
     local res = {}
+    local files = {}
     for _, pattern in ipairs(patterns) do
-        pattern_compile(res, root, pattern)
+        if pattern:match "^!" or pattern:match "%*" then
+            pattern_compile(res, root, pattern)
+        else
+            files[#files+1] = fsutil.normalize(root, pattern)
+        end
+    end
+    if #res == 0 then
+        return root, res, files
     end
     local gcd = {}
     local first = res[1]
@@ -150,7 +155,7 @@ local function glob_compile(root, patterns)
             res[#res+1] = pattern_copy(v, 2)
         end
     end
-    return fsutil.join(table.unpack(gcd)), res
+    return fsutil.join(table.unpack(gcd)), res, files
 end
 
 local function glob_match_dir(patterns, path)
@@ -195,27 +200,22 @@ local function glob_match(patterns, path)
     end
 end
 
-local function glob_scan_(patterns, dir, result)
+local function glob_scan(patterns, dir, result)
     if #patterns == 0 then
         return
     end
     for path in fs.pairs(dir) do
         local res, sub = glob_match(patterns, path)
         if res == MATCH_PENDING then
-            glob_scan_(sub, path, result)
+            glob_scan(sub, path, result)
         elseif res == MATCH_SUCCESS then
             result[#result+1] = path:string()
         end
     end
 end
 
-local function glob_scan(patterns, dir)
-    local result = {}
-    glob_scan_(patterns, dir, result)
-    return result
-end
-
 return function (dir, patterns)
-    local root, compiled = glob_compile(dir, patterns)
-    return glob_scan(compiled, fs.path(root))
+    local root, compiled, files = glob_compile(dir, patterns)
+    glob_scan(compiled, fs.path(root), files)
+    return files
 end

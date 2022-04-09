@@ -29,6 +29,9 @@ local function normalize(p)
             stack[#stack + 1] = w
         end
     end)
+    if #stack == 0 then
+        return {"."}
+    end
     return stack
 end
 

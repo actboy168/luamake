@@ -4,6 +4,7 @@ local fs = require 'bee.filesystem'
 local fsutil = require 'fsutil'
 local arguments = require "arguments"
 local globals = require "globals"
+local pathutil = require "pathutil"
 
 local mainSimulator = {}
 
@@ -88,7 +89,9 @@ function mainSimulator:has(name)
     assert(type(name) == "string", "Name is not a string.")
     return writer:has(name)
 end
-
+function mainSimulator:path(...)
+    return pathutil.create(fsutil.join(...))
+end
 
 local alias = {
     exe = "executable",
@@ -108,7 +111,7 @@ function mainMt:__newindex(k, v)
     if arguments.args[k] ~= nil then
         return
     end
-    globals[k] = v
+    globals[k] = pathutil.accept(self.workdir, v)
 end
 function mainMt:__pairs()
     return pairs(globals)
@@ -125,6 +128,7 @@ local function createSubSimulator(parentSimulator)
         if arguments.args[k] ~= nil then
             return
         end
+        v = pathutil.accept(self.workdir, v)
         rawset(self, k, v)
     end
     function subMt:__pairs()
@@ -169,17 +173,8 @@ local function isVisited(path)
     visited[path] = true
 end
 
-local function importfile(simulator, ...)
-    local path = fsutil.normalize(...)
-    if fs.is_directory(fs.path(path)) then
-        path = fsutil.join(path, "make.lua")
-    end
-    if isVisited(path) then
-        return
-    end
-    local rootdir = fsutil.parent_path(path)
-    local filename = fsutil.filename(path)
-    simulator.workdir = rootdir
+local function importfile(simulator, rootdir, filename)
+    rawset(simulator, 'workdir', rootdir)
     sandbox {
         rootdir = rootdir,
         builddir = globals.builddir,
@@ -194,10 +189,24 @@ local function importfile(simulator, ...)
 end
 
 function mainSimulator:import(path)
-    importfile(createSubSimulator(self), self.workdir, path)
+    local fullpath = fsutil.normalize(self.workdir, path)
+    if fs.is_directory(fs.path(fullpath)) then
+        fullpath = fsutil.join(fullpath, "make.lua")
+    end
+    if isVisited(fullpath) then
+        return
+    end
+    local rootdir = fsutil.parent_path(fullpath)
+    local filename = fsutil.filename(fullpath)
+    importfile(createSubSimulator(self), rootdir, filename)
 end
 
 local function import(path)
+    path = path or "make.lua"
+    local fullpath = fsutil.normalize(WORKDIR, path)
+    if isVisited(fullpath) then
+        return
+    end
     importfile(mainSimulator, WORKDIR, path)
 end
 

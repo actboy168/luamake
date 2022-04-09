@@ -3,6 +3,7 @@ local arguments = require "arguments"
 local globals = require "globals"
 local fsutil = require "fsutil"
 local glob = require "glob"
+local pathutil = require "pathutil"
 
 local cc
 
@@ -25,15 +26,8 @@ local file_type = {
     obj = "raw",
 }
 
-local function fmtpath(path)
-    return path:gsub('\\', '/')
-end
-
-local function fmtpath_v3(rootdir, path)
-    if not fs.path(path):is_absolute() and path:sub(1, 1) ~= "$" then
-        path = fsutil.relative(fsutil.join(rootdir, path), WORKDIR)
-    end
-    return fmtpath(path)
+local function fmtpath(p)
+    return p:gsub('\\', '/')
 end
 
 local function get_sources(rootdir, sources)
@@ -192,7 +186,7 @@ local function update_flags(context, flags, attribute, name, rootdir, rule)
 
     if attribute.includes then
         for _, inc in ipairs(attribute.includes) do
-            flags[#flags+1] = cc.includedir(fmtpath_v3(rootdir, inc))
+            flags[#flags+1] = cc.includedir(pathutil.normalize(rootdir, inc))
         end
     end
 
@@ -238,7 +232,7 @@ local function update_ldflags(context, ldflags, attribute, name, rootdir)
     end
     if attribute.linkdirs then
         for _, linkdir in ipairs(attribute.linkdirs) do
-            ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
+            ldflags[#ldflags+1] = cc.linkdir(pathutil.normalize(rootdir, linkdir))
         end
     end
     if attribute.ldflags then
@@ -356,7 +350,7 @@ local function generate(context, rule, name, attribute)
         end
         if attribute.linkdirs then
             for _, linkdir in ipairs(attribute.linkdirs) do
-                ldflags[#ldflags+1] = cc.linkdir(fmtpath_v3(rootdir, linkdir))
+                ldflags[#ldflags+1] = cc.linkdir(pathutil.normalize(rootdir, linkdir))
             end
         end
         if attribute.ldflags then
@@ -518,7 +512,7 @@ function GEN.phony(context, name, attribute)
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
     for i = 1, #input do
-        input[i] = fmtpath_v3(rootdir, input[i])
+        input[i] = pathutil.normalize(rootdir, input[i])
     end
     local n = #input
     for i = 1, #implicit_input do
@@ -562,10 +556,10 @@ function GEN.build(context, name, attribute)
     local implicit_input = getImplicitInput(context, name, attribute)
 
     for i = 1, #input do
-        input[i] = fmtpath_v3(rootdir, input[i])
+        input[i] = pathutil.normalize(rootdir, input[i])
     end
     for i = 1, #output do
-        output[i] = fmtpath_v3(rootdir, output[i])
+        output[i] = pathutil.normalize(rootdir, output[i])
     end
 
     local command = {}
@@ -578,16 +572,16 @@ function GEN.build(context, name, attribute)
                 if getmetatable(v) == nil then
                     push_command(v)
                 else
-                    push(fmtpath_v3(rootdir, tostring(v)))
+                    push(pathutil.normalize(rootdir, tostring(v)))
                 end
             elseif type(v) == 'userdata' then
-                push(fmtpath_v3(rootdir, tostring(v)))
+                push(pathutil.normalize(rootdir, tostring(v)))
             elseif type(v) == 'string' then
                 if v:sub(1,1) == '@' then
-                    push(fmtpath_v3(rootdir, v:sub(2)))
+                    push(pathutil.normalize(rootdir, v:sub(2)))
                 else
                     v = v:gsub("@{([^}]*)}", function (s)
-                        return fmtpath_v3(rootdir, s)
+                        return pathutil.normalize(rootdir, s)
                     end)
                     push(v)
                 end
@@ -648,14 +642,14 @@ function GEN.copy(context, name, attribute)
         if type(v) == 'string' and v:sub(1,1) == '@' then
             v =  v:sub(2)
         end
-        input[i] = fmtpath_v3(rootdir, v)
+        input[i] = pathutil.normalize(rootdir, v)
     end
     for i = 1, #output do
         local v = output[i]
         if type(v) == 'string' and v:sub(1,1) == '@' then
             v =  v:sub(2)
         end
-        output[i] = fmtpath_v3(rootdir, v)
+        output[i] = pathutil.normalize(rootdir, v)
     end
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
 

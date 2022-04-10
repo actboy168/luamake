@@ -24,7 +24,7 @@ else
         else
             WORKDIR = fsutil.normalize(WORKDIR, arguments.C)
         end
-        fs.current_path(fs.path(WORKDIR))
+        fs.current_path(WORKDIR)
     end
     command(arguments.what)
 end

@@ -30,17 +30,17 @@ local function parse(folder)
 end
 
 return function (path)
-    local output = path / "lua.def"
+    local output = path.. "/lua.def"
     if fs.exists(output) then
         return
     end
-    local version, export = parse(path:string())
+    local version, export = parse(path)
     local s = {}
     s[#s+1] = ([[LIBRARY lua%s]]):format(version)
     s[#s+1] = [[EXPORTS]]
     for _, api in ipairs(export) do
         s[#s+1] = ([[    %s]]):format(api)
     end
-    local f <close> = assert(io.open(output:string(), "w"))
+    local f <close> = assert(io.open(output, "w"))
     f:write(table.concat(s, "\n"))
 end

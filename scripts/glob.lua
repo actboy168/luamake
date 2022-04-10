@@ -219,6 +219,6 @@ end
 
 return function (dir, patterns)
     local root, compiled, files = glob_compile(dir, patterns)
-    glob_scan(compiled, fs.path(root), files)
+    glob_scan(compiled, root, files)
     return files
 end

@@ -45,12 +45,12 @@ end
 
 function m.hasEnvConfig()
     local EnvConfig = fsutil.join(WORKDIR, globals.builddir, 'env.lua')
-    return fs.exists(fs.path(EnvConfig))
+    return fs.exists(EnvConfig)
 end
 
 function m.cleanEnvConfig()
     local EnvConfig = fsutil.join(WORKDIR, globals.builddir, 'env.lua')
-    fs.remove(fs.path(EnvConfig))
+    fs.remove(EnvConfig)
 end
 
 function m.createEnvConfig(arch, rebuild)
@@ -59,7 +59,7 @@ function m.createEnvConfig(arch, rebuild)
         local config = readEnvConfig()
         if config.arch == arch
             and (not console_cp or config.console_cp == console_cp)
-            and config.toolspath and fs.exists(fs.path(config.toolspath))
+            and config.toolspath and fs.exists(config.toolspath)
         then
             env = config.env
             prefix = config.prefix

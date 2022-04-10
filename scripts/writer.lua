@@ -767,13 +767,13 @@ end
 function writer:generate(force)
     local builddir = fsutil.join(WORKDIR, globals.builddir)
     local ninja_script = fsutil.join(builddir, "build.ninja")
-    if not force and fs.exists(fs.path(ninja_script)) then
+    if not force and fs.exists(ninja_script) then
         return
     end
     local context = self
     cc = require("compiler." .. globals.compiler)
     context.cc = cc
-    fs.create_directories(fs.path(builddir))
+    fs.create_directories(builddir)
 
     local ninja = require "ninja_writer"(ninja_script)
 

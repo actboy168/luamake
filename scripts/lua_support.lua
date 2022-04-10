@@ -6,8 +6,6 @@ local inited_rule = false
 local inited_version = {}
 
 local function copy_dir(from, to)
-    from = fs.path(from)
-    to = fs.path(to)
     fs.create_directories(to)
     for file in fs.pairs(from) do
         if not fs.is_directory(file) then
@@ -52,7 +50,7 @@ local function init_version(context, luadir, luaversion)
     end
     inited_version[luaversion] = true
     local ninja = context.ninja
-    lua_def(fs.path(package.procdir) / "tools" / luaversion)
+    lua_def(fsutil.join(package.procdir, "tools", luaversion))
     local libname
     if globals.compiler == 'msvc' then
         libname = luadir.."/lua-"..globals.arch..".lib"

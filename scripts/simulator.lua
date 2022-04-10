@@ -250,7 +250,7 @@ end
 
 function mainSimulator:import(path)
     local fullpath = fsutil.normalize(self.workdir, path)
-    if fs.is_directory(fs.path(fullpath)) then
+    if fs.is_directory(fullpath) then
         fullpath = fsutil.join(fullpath, "make.lua")
     end
     if isVisited(fullpath) then

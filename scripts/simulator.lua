@@ -90,12 +90,6 @@ function api:path(value)
     return pathutil.create(value)
 end
 
---TODO 去掉这个特殊处理
-function mainSimulator:variable(name, value)
-    assert(type(name) == "string", "Name is not a string.")
-    writer:add_target { 'variable', name, value }
-end
-
 local alias = {
     exe = "executable",
     dll = "shared_library",

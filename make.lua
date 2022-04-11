@@ -1,10 +1,13 @@
 local lm = require 'luamake'
-
 local isWindows = lm.os == 'windows'
+
+if lm.prebuilt == nil then
+    print("Please use `" .. (isWindows and [[.\compile\install.bat]] or [[./compile/install.sh]]) .. "`.")
+    return
+end
+
 local exe = isWindows and ".exe" or ""
 local dll = isWindows and ".dll" or ".so"
-
-lm:variable("luamake", "luamake")
 
 lm.LUAMAKE = "copy_luamake"
 lm.EXE_NAME = "luamake"

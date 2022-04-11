@@ -11,6 +11,7 @@ local function create(path)
 end
 
 local function path_normalize(base, path)
+    path = tostring(path)
     if path:sub(1, 1) ~= "$" and not fs.path(path):is_absolute() then
         path = fsutil.relative(fsutil.join(base, path), WORKDIR)
     end

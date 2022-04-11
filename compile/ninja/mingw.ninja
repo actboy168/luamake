@@ -35,8 +35,10 @@ build $obj/source_bee/subprocess_win.obj: cxx_source_bee $
     3rd/bee.lua/bee/subprocess/subprocess_win.cpp
 build $obj/source_bee/simplethread_win.obj: cxx_source_bee $
     3rd/bee.lua/bee/thread/simplethread_win.cpp
-build $obj/source_bee/file_helper.obj: cxx_source_bee $
-    3rd/bee.lua/bee/utility/file_helper.cpp
+build $obj/source_bee/file_handle.obj: cxx_source_bee $
+    3rd/bee.lua/bee/utility/file_handle.cpp
+build $obj/source_bee/file_handle_win.obj: cxx_source_bee $
+    3rd/bee.lua/bee/utility/file_handle_win.cpp
 build $obj/source_bee/module_version_win.obj: cxx_source_bee $
     3rd/bee.lua/bee/utility/module_version_win.cpp
 build $obj/source_bee/path_helper.obj: cxx_source_bee $
@@ -144,29 +146,29 @@ build $bin/luamake.exe: link_luamake $obj/source_bootstrap/utf8_crt.obj $
     $obj/source_bee/socket.obj $obj/source_bee/format.obj $
     $obj/source_bee/os.obj $obj/source_bee/version_win.obj $
     $obj/source_bee/subprocess_win.obj $obj/source_bee/simplethread_win.obj $
-    $obj/source_bee/file_helper.obj $obj/source_bee/module_version_win.obj $
-    $obj/source_bee/path_helper.obj $obj/source_bee/unicode_win.obj $
-    $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
-    $obj/source_bee/lua_platform.obj $obj/source_bee/lua_serialization.obj $
-    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
-    $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
-    $obj/source_bee/lua_unicode.obj $obj/source_lua/lapi.obj $
-    $obj/source_lua/lauxlib.obj $obj/source_lua/lbaselib.obj $
-    $obj/source_lua/lcode.obj $obj/source_lua/lcorolib.obj $
-    $obj/source_lua/lctype.obj $obj/source_lua/ldblib.obj $
-    $obj/source_lua/ldebug.obj $obj/source_lua/ldo.obj $
-    $obj/source_lua/ldump.obj $obj/source_lua/lfunc.obj $
-    $obj/source_lua/lgc.obj $obj/source_lua/linit.obj $
-    $obj/source_lua/liolib.obj $obj/source_lua/llex.obj $
-    $obj/source_lua/lmathlib.obj $obj/source_lua/lmem.obj $
-    $obj/source_lua/loadlib.obj $obj/source_lua/lobject.obj $
-    $obj/source_lua/lopcodes.obj $obj/source_lua/loslib.obj $
-    $obj/source_lua/lparser.obj $obj/source_lua/lstate.obj $
-    $obj/source_lua/lstring.obj $obj/source_lua/lstrlib.obj $
-    $obj/source_lua/ltable.obj $obj/source_lua/ltablib.obj $
-    $obj/source_lua/ltm.obj $obj/source_lua/lundump.obj $
-    $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
-    $obj/source_lua/lzio.obj
+    $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_win.obj $
+    $obj/source_bee/module_version_win.obj $obj/source_bee/path_helper.obj $
+    $obj/source_bee/unicode_win.obj $obj/source_bee/lua_filesystem.obj $
+    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
+    $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
+    $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $
+    $obj/source_bee/lua_time.obj $obj/source_bee/lua_unicode.obj $
+    $obj/source_lua/lapi.obj $obj/source_lua/lauxlib.obj $
+    $obj/source_lua/lbaselib.obj $obj/source_lua/lcode.obj $
+    $obj/source_lua/lcorolib.obj $obj/source_lua/lctype.obj $
+    $obj/source_lua/ldblib.obj $obj/source_lua/ldebug.obj $
+    $obj/source_lua/ldo.obj $obj/source_lua/ldump.obj $
+    $obj/source_lua/lfunc.obj $obj/source_lua/lgc.obj $
+    $obj/source_lua/linit.obj $obj/source_lua/liolib.obj $
+    $obj/source_lua/llex.obj $obj/source_lua/lmathlib.obj $
+    $obj/source_lua/lmem.obj $obj/source_lua/loadlib.obj $
+    $obj/source_lua/lobject.obj $obj/source_lua/lopcodes.obj $
+    $obj/source_lua/loslib.obj $obj/source_lua/lparser.obj $
+    $obj/source_lua/lstate.obj $obj/source_lua/lstring.obj $
+    $obj/source_lua/lstrlib.obj $obj/source_lua/ltable.obj $
+    $obj/source_lua/ltablib.obj $obj/source_lua/ltm.obj $
+    $obj/source_lua/lundump.obj $obj/source_lua/lutf8lib.obj $
+    $obj/source_lua/lvm.obj $obj/source_lua/lzio.obj
 rule copy
   command = sh -c "cp -fv $in$input $out 1>/dev/null"
   description = Copy $in$input $out

@@ -158,12 +158,22 @@ rule copy
 build $bin/main.lua: copy | $bin/luamake
   input = 3rd/bee.lua/bootstrap/main.lua
 rule build_test
-  command = $bin/luamake 3rd/bee.lua/test/test.lua
-build $builddir/_/test: build_test | $bin/luamake copy_script
+  command = $bin/luamake 3rd/bee.lua/test/test.lua --touch $out
+  description = Run test.
   pool = console
+build $obj/test.stamp: build_test 3rd/bee.lua/test/console.lua $
+    3rd/bee.lua/test/glibc-version.lua 3rd/bee.lua/test/ltest/coverage.lua $
+    3rd/bee.lua/test/ltest/ltest.lua 3rd/bee.lua/test/ltest/stringify.lua $
+    3rd/bee.lua/test/ltest/undump.lua 3rd/bee.lua/test/shell.lua $
+    3rd/bee.lua/test/test.lua 3rd/bee.lua/test/test_filesystem.lua $
+    3rd/bee.lua/test/test_filewatch.lua 3rd/bee.lua/test/test_lua.lua $
+    3rd/bee.lua/test/test_serialization.lua $
+    3rd/bee.lua/test/test_socket.lua 3rd/bee.lua/test/test_subprocess.lua $
+    3rd/bee.lua/test/test_thread.lua 3rd/bee.lua/test/test_time.lua | $
+    $bin/luamake copy_script
 build luamake: copy | $bin/luamake
   input = $bin/luamake
 build copy_script: phony $bin/main.lua
-build test: phony $builddir/_/test
+build test: phony $obj/test.stamp
 build copy_luamake: phony luamake
 default test copy_luamake

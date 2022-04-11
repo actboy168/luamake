@@ -560,7 +560,6 @@ function GEN.build(context, name, attribute)
     local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local pool =  init_single(attribute, 'pool')
     local implicit_input = getImplicitInput(context, name, attribute)
 
     for i = 1, #input do
@@ -604,10 +603,12 @@ function GEN.build(context, name, attribute)
     else
         outname = output
     end
-    ninja:rule('build_'..name, table.concat(command, " "))
+    ninja:rule('build_'..name, table.concat(command, " "), {
+        pool = init_single(attribute, 'pool'),
+        description = init_single(attribute, 'description'),
+    })
     ninja:build(outname, input, {
         implicit_inputs = implicit_input,
-        variables = { pool = pool },
     })
     if not tmpName then
         ninja:phony(name, outname)

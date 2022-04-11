@@ -798,7 +798,9 @@ function writer:generate(force)
         ninja:variable("cc", compiler)
     end
 
-    if not arguments.args.prebuilt then
+    if arguments.args.prebuilt then
+        ninja:variable("luamake", "luamake")
+    else
         ninja:variable("luamake", get_luamake())
         ninja:rule('configure', '$luamake init ' .. configure_args(), { generator = 1 })
         ninja:build("$builddir/build.ninja", scripts)
@@ -809,9 +811,6 @@ function writer:generate(force)
         local name = target[2]
         if rule == "default" then
             GEN.default(context, name)
-        elseif rule == "variable" then
-            local value = target[3]
-            ninja:variable(name, value)
         else
             if not target.loaded then
                 loadtarget(context, target)

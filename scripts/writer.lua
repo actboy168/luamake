@@ -146,14 +146,6 @@ local function update_warnings(flags, warnings)
     end
 end
 
-local function init_workdir(attribute)
-    local attr = attribute.workdir
-    if type(attr) == 'table' then
-        attribute.workdir = attr[#attr]
-    end
-    return assert(attribute.workdir)
-end
-
 local function init_single(attribute, attr_name, default)
     local attr = attribute[attr_name]
     if type(attr) == 'table' then
@@ -162,6 +154,15 @@ local function init_single(attribute, attr_name, default)
         attribute[attr_name] = default
     end
     return attribute[attr_name]
+end
+
+local function init_rootdir(attribute)
+    local attr = attribute.workdir
+    if type(attr) == 'table' then
+        attribute.workdir = attr[#attr]
+    end
+    local workdir = assert(attribute.workdir)
+    return fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
 end
 
 local function array_remove(t, k)
@@ -287,8 +288,7 @@ local function generate(context, rule, name, attribute)
     end
 
     local ninja = context.ninja
-    local workdir = init_workdir(attribute)
-    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
+    local rootdir = init_rootdir(attribute)
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_sources(rootdir, attribute.sources)
     local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
@@ -514,8 +514,7 @@ end
 
 function GEN.phony(context, name, attribute)
     local ninja = context.ninja
-    local workdir = init_workdir(attribute)
-    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
+    local rootdir = init_rootdir(attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
@@ -556,8 +555,7 @@ function GEN.build(context, name, attribute)
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
-    local workdir = init_workdir(attribute)
-    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
+    local rootdir = init_rootdir(attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
@@ -623,8 +621,7 @@ function GEN.copy(context, name, attribute)
         return
     end
     local ninja = context.ninja
-    local workdir = init_workdir(attribute)
-    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
+    local rootdir = init_rootdir(attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)

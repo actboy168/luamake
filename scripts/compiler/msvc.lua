@@ -40,6 +40,9 @@ local cl = {
         ['c17'] = '/std:c17',
     },
     define = function (macro)
+        if macro == "" then
+            return
+        end
         return "/D" .. macro
     end,
     undef = function (macro)

@@ -41,16 +41,19 @@ local function init_single(attribute, attr_name, default)
 end
 
 local function get_sources(attribute)
-    local attr = attribute.workdir
-    if type(attr) == 'table' then
-        attribute.workdir = attr[#attr]
-    end
-    local workdir = assert(attribute.workdir)
-    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
     local sources = attribute.sources
     if type(sources) ~= "table" then
         return {}
     end
+    local workdir = attribute.workdir
+    local rootdir = attribute.rootdir
+    if type(workdir) == 'table' then
+        workdir = workdir[#workdir]
+    end
+    if type(rootdir) == 'table' then
+        rootdir = rootdir[#rootdir]
+    end
+    rootdir = fsutil.normalize(workdir, rootdir or '.')
     local result = glob(rootdir, sources)
     for i, r in ipairs(result) do
         result[i] = fsutil.relative(r, WORKDIR)

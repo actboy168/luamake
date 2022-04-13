@@ -102,51 +102,13 @@ for to, from in pairs(alias) do
     api[to] = api[from]
 end
 
-local lstandard; lstandard = {
-    _G = lstandard,
-    _VERSION = _VERSION,
-    assert = assert,
-    collectgarbage = collectgarbage,
-    coroutine = coroutine,
-    debug = debug,
-    dofile = dofile,
-    error = error,
-    getmetatable = getmetatable,
-    io = io,
-    ipairs = ipairs,
-    load = load,
-    loadfile = loadfile,
-    math = math,
-    next = next,
-    os = os,
-    package = package,
-    pairs = pairs,
-    pcall = pcall,
-    print = print,
-    rawequal = rawequal,
-    rawget = rawget,
-    rawset = rawset,
-    require = require,
-    select = select,
-    setmetatable = setmetatable,
-    string = string,
-    table = table,
-    tonumber = tonumber,
-    tostring = tostring,
-    type = type,
-    xpcall = xpcall,
-    rawlen = rawlen,
-    utf8 = utf8,
-    warn = warn,
-}
-
 local mainMt = {}
 function mainMt:__index(k)
     local v = globals[k]
     if v ~= nil then
         return v
     end
-    return lstandard[k]
+    return api[k]
 end
 function mainMt:__newindex(k, v)
     if arguments.args[k] ~= nil then
@@ -158,21 +120,8 @@ function mainMt:__pairs()
     return pairs(globals)
 end
 
-local function initSimulator(sim, mt)
-    for k, v in pairs(api) do
-        sim[k] = function (p1, p2)
-            if p2 == nil then
-                return v(sim, p1)
-            end
-            return v(sim, p2)
-        end
-    end
-    setmetatable(sim, mt)
-    return sim
-end
-
 do
-    initSimulator(mainSimulator, mainMt)
+    setmetatable(mainSimulator, mainMt)
 end
 
 local function createSubSimulator(parentSimulator)
@@ -207,7 +156,7 @@ local function createSubSimulator(parentSimulator)
             return newk, newv
         end, self
     end
-    return initSimulator({}, subMt)
+    return setmetatable({}, subMt)
 end
 
 local function openfile(name, mode)

@@ -52,100 +52,6 @@ local function tbl_insert(t, pos, a)
     end
 end
 
-local function pushTable(t, b)
-    if type(b) == 'string' then
-        t[#t+1] = b
-    elseif type(b) == 'userdata' then
-        t[#t+1] = b
-    elseif type(b) == 'table' then
-        if getmetatable(b) ~= nil then
-            t[#t+1] = b
-        else
-            for k, e in pairs(b) do
-                if type(k) == "string" then
-                    if t[k] == nil then
-                        t[k] = {}
-                    end
-                    pushTable(t[k], e)
-                end
-            end
-            for _, e in ipairs(b) do
-                pushTable(t, e)
-            end
-        end
-    end
-    return t
-end
-
-local function mergeTable(a, b)
-    for k, v in pairs(b) do
-        if type(k) == "string" then
-            local ov = a[k]
-            if type(ov) == "table" then
-                pushTable(ov, v)
-            elseif not ov then
-                local t = {}
-                pushTable(t, v)
-                a[k] = t
-            else
-                local t = {}
-                pushTable(t, ov)
-                pushTable(t, v)
-                a[k] = t
-            end
-        end
-    end
-    for _, v in ipairs(b) do
-        pushTable(a, v)
-    end
-    return a
-end
-
-local function reslovePlatformSpecific(a, b)
-    local t = {}
-    mergeTable(t, a)
-    mergeTable(t, b)
-    if t[globals.os] then
-        mergeTable(t, t[globals.os])
-    end
-    if t[globals.compiler] then
-        mergeTable(t, t[globals.compiler])
-    end
-    if t.mingw and globals.os == "windows" and globals.compiler == "gcc" then
-        mergeTable(t, t.mingw)
-    end
-    return t
-end
-
-local function update_warnings(flags, warnings)
-    if not warnings then
-        flags[#flags+1] = cc.warnings["on"]
-        return
-    end
-
-    warnings = reslovePlatformSpecific({}, warnings)
-    local error = nil
-    local level = 'on'
-    for _, v in ipairs(warnings) do
-        if v == 'error' then
-            error = true
-        elseif cc.warnings[v] then
-            level = v
-        end
-    end
-    flags[#flags+1] = cc.warnings[level]
-    if error then
-        flags[#flags+1] = cc.warnings.error
-    end
-
-    local disable = warnings.disable
-    if disable then
-        for _, v in ipairs(disable) do
-            flags[#flags+1] = cc.disable_warning(v)
-        end
-    end
-end
-
 local function init_single(attribute, attr_name, default)
     local attr = attribute[attr_name]
     if type(attr) == 'table' then
@@ -163,6 +69,137 @@ local function init_rootdir(attribute)
     end
     local workdir = assert(attribute.workdir)
     return fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
+end
+
+local PlatformAttribute <const> = 0
+local PlatformPath <const> = 1
+
+local ATTRIBUTE <const> = {
+    -- os
+    windows  = PlatformAttribute,
+    linux    = PlatformAttribute,
+    macos    = PlatformAttribute,
+    ios      = PlatformAttribute,
+    android  = PlatformAttribute,
+    -- cc
+    msvc     = PlatformAttribute,
+    gcc      = PlatformAttribute,
+    clang    = PlatformAttribute,
+    mingw    = PlatformAttribute,
+    emcc     = PlatformAttribute,
+    -- path
+    includes = PlatformPath,
+    linkdirs = PlatformPath,
+    input    = PlatformPath,
+    output   = PlatformPath,
+}
+
+local function push_string(t, a)
+    if type(a) == 'string' then
+        t[#t+1] = a
+    elseif type(a) == 'userdata' then
+        t[#t+1] = a
+    elseif type(a) == 'table' then
+        if getmetatable(a) ~= nil then
+            t[#t+1] = a
+        else
+            for _, e in ipairs(a) do
+                push_string(t, e)
+            end
+        end
+    end
+    return t
+end
+
+local function push_path(t, a, root)
+    if type(a) == 'string' then
+        t[#t+1] = pathutil.normalize(root, a)
+    elseif type(a) == 'userdata' then
+        t[#t+1] = pathutil.normalize(root, a)
+    elseif type(a) == 'table' then
+        if getmetatable(a) ~= nil then
+            t[#t+1] = pathutil.normalize(root, a)
+        else
+            for _, e in ipairs(a) do
+                push_path(t, e, root)
+            end
+        end
+    end
+    return t
+end
+
+local function merge_table(root, t, a)
+    for k, v in pairs(a) do
+        if type(k) ~= "string" then
+            goto continue
+        end
+        if ATTRIBUTE[k] == PlatformAttribute then
+            goto continue
+        end
+        t[k] = t[k] or {}
+        if ATTRIBUTE[k] == PlatformPath then
+            push_path(t[k], v, root)
+        else
+            push_string(t[k], v)
+        end
+        if #t[k] == 0 then
+            t[k] = nil
+        end
+        ::continue::
+    end
+    for _, v in ipairs(a) do
+        push_string(t, v)
+    end
+    return t
+end
+
+local function reslove_table(root, t, a)
+    merge_table(root, t, a)
+    if a[globals.os] then
+        merge_table(root, t, a[globals.os])
+    end
+    if a[globals.compiler] then
+        merge_table(root, t, a[globals.compiler])
+    end
+    if a.mingw and globals.os == "windows" and globals.compiler == "gcc" then
+        merge_table(root, t, a.mingw)
+    end
+end
+
+local function normalize_rootdir(workdir, rootdir)
+    if type(rootdir) == 'table' then
+        rootdir = rootdir[#rootdir]
+    end
+    return fsutil.normalize(workdir, rootdir or '.')
+end
+local function reslove_attributes(g, loc)
+    local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
+    local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
+
+    local r = {}
+    reslove_table(g_rootdir, r, g)
+    reslove_table(l_rootdir, r, loc)
+    return r
+end
+
+local function update_warnings(flags, warnings)
+    if not warnings then
+        flags[#flags+1] = cc.warnings["on"]
+        return
+    end
+    local error = nil
+    local level = 'on'
+    for _, v in ipairs(warnings) do
+        if v == 'error' then
+            error = true
+        elseif cc.warnings[v] then
+            level = v
+        end
+    end
+    flags[#flags+1] = cc.warnings[level]
+    if error then
+        flags[#flags+1] = cc.warnings.error
+    end
 end
 
 local function array_remove(t, k)
@@ -195,7 +232,7 @@ local function update_flags(context, flags, attribute, name, rootdir, rule)
 
     if attribute.includes then
         for _, inc in ipairs(attribute.includes) do
-            flags[#flags+1] = cc.includedir(pathutil.normalize(rootdir, inc))
+            flags[#flags+1] = cc.includedir(inc)
         end
     end
 
@@ -241,7 +278,7 @@ local function update_ldflags(context, ldflags, attribute, name, rootdir)
     end
     if attribute.linkdirs then
         for _, linkdir in ipairs(attribute.linkdirs) do
-            ldflags[#ldflags+1] = cc.linkdir(pathutil.normalize(rootdir, linkdir))
+            ldflags[#ldflags+1] = cc.linkdir(linkdir)
         end
     end
     if attribute.ldflags then
@@ -288,8 +325,8 @@ local function generate(context, rule, name, attribute)
     end
 
     local ninja = context.ninja
-    local rootdir = init_rootdir(attribute)
     local bindir = init_single(attribute, 'bindir', globals.bindir)
+    local rootdir = init_rootdir(attribute)
     local sources = get_sources(rootdir, attribute.sources)
     local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
     local implicit_input = {}
@@ -358,7 +395,7 @@ local function generate(context, rule, name, attribute)
         end
         if attribute.linkdirs then
             for _, linkdir in ipairs(attribute.linkdirs) do
-                ldflags[#ldflags+1] = cc.linkdir(pathutil.normalize(rootdir, linkdir))
+                ldflags[#ldflags+1] = cc.linkdir(linkdir)
             end
         end
         if attribute.ldflags then
@@ -514,18 +551,15 @@ end
 
 function GEN.phony(context, name, attribute)
     local ninja = context.ninja
-    local rootdir = init_rootdir(attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
-    for i = 1, #input do
-        input[i] = pathutil.normalize(rootdir, input[i])
-    end
+
     local n = #input
     for i = 1, #implicit_input do
         input[n+i] = implicit_input[i]
     end
-    output = get_sources(rootdir, output)
+
     if name then
         if #output == 0 then
             ninja:phony(name, input)
@@ -559,13 +593,6 @@ function GEN.build(context, name, attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
-
-    for i = 1, #input do
-        input[i] = pathutil.normalize(rootdir, input[i])
-    end
-    for i = 1, #output do
-        output[i] = pathutil.normalize(rootdir, output[i])
-    end
 
     local command = {}
     local function push(v)
@@ -621,7 +648,6 @@ function GEN.copy(context, name, attribute)
         return
     end
     local ninja = context.ninja
-    local rootdir = init_rootdir(attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
@@ -643,20 +669,6 @@ function GEN.copy(context, name, attribute)
         })
     end
 
-    for i = 1, #input do
-        local v = input[i]
-        if type(v) == 'string' and v:sub(1,1) == '@' then
-            v =  v:sub(2)
-        end
-        input[i] = pathutil.normalize(rootdir, v)
-    end
-    for i = 1, #output do
-        local v = output[i]
-        if type(v) == 'string' and v:sub(1,1) == '@' then
-            v =  v:sub(2)
-        end
-        output[i] = pathutil.normalize(rootdir, v)
-    end
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
 
     if #implicit_input == 0 then
@@ -686,7 +698,7 @@ local function loadtarget(context, target)
     local name = target[2]
     local local_attribute = target[3]
     local global_attribute = target[4]
-    local res = reslovePlatformSpecific(global_attribute, local_attribute)
+    local res = reslove_attributes(global_attribute, local_attribute)
     target.loaded = true
     if GEN[rule] then
         GEN[rule](context, name, res)

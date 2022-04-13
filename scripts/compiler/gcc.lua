@@ -25,6 +25,7 @@ local gcc = {
         error = "-Werror",
     },
     cxx = {
+        [nil] = '',
         ['c++11'] = '-std=c++11',
         ['c++14'] = '-std=c++14',
         ['c++17'] = '-std=c++17',
@@ -33,6 +34,7 @@ local gcc = {
         ['c++latest'] = '-std=c++2a',
     },
     c = {
+        [nil] = '',
         ['c89'] = '',
         ['c99'] = '-std=c99',
         ['c11'] = '-std=c11',

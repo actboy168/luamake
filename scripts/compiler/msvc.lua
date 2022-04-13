@@ -26,6 +26,7 @@ local cl = {
         error = "/WX",
     },
     cxx = {
+        [nil] = '',
         ['c++11'] = '/std:c++11',
         ['c++14'] = '/std:c++14',
         ['c++17'] = '/std:c++17',
@@ -34,6 +35,7 @@ local cl = {
         ['c++latest'] = '/std:c++latest',
     },
     c = {
+        [nil] = '',
         ['c89'] = '',
         ['c99'] = '',
         ['c11'] = '/std:c11',

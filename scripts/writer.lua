@@ -45,15 +45,7 @@ local function get_sources(attribute)
     if type(sources) ~= "table" then
         return {}
     end
-    local workdir = attribute.workdir
     local rootdir = attribute.rootdir
-    if type(workdir) == 'table' then
-        workdir = workdir[#workdir]
-    end
-    if type(rootdir) == 'table' then
-        rootdir = rootdir[#rootdir]
-    end
-    rootdir = fsutil.normalize(workdir, rootdir or '.')
     local result = glob(rootdir, sources)
     for i, r in ipairs(result) do
         result[i] = fsutil.relative(r, WORKDIR)
@@ -201,6 +193,8 @@ local function reslove_attributes(g, loc)
     for _, v in ipairs(loc) do
         push_mix(r, v, l_rootdir)
     end
+    r.workdir = g.workdir
+    r.rootdir = l_rootdir
     return r
 end
 

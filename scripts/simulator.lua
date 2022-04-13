@@ -114,7 +114,7 @@ function mainMt:__newindex(k, v)
     if arguments.args[k] ~= nil then
         return
     end
-    globals[k] = pathutil.accept(self.workdir, v)
+    globals[k] = pathutil.accept(globals.workdir, v)
 end
 function mainMt:__pairs()
     return pairs(globals)
@@ -124,14 +124,14 @@ do
     setmetatable(mainSimulator, mainMt)
 end
 
-local function createSubSimulator(parentSimulator)
+local function createSubSimulator(parentSimulator, workdir)
     local subMt = {}
     subMt.__index = parentSimulator
     function subMt:__newindex(k, v)
         if arguments.args[k] ~= nil then
             return
         end
-        v = pathutil.accept(self.workdir, v)
+        v = pathutil.accept(workdir, v)
         rawset(self, k, v)
     end
     function subMt:__pairs()
@@ -156,7 +156,7 @@ local function createSubSimulator(parentSimulator)
             return newk, newv
         end, self
     end
-    return setmetatable({}, subMt)
+    return setmetatable({workdir=workdir}, subMt)
 end
 
 local function openfile(name, mode)
@@ -177,7 +177,6 @@ local function isVisited(path)
 end
 
 local function importfile(simulator, rootdir, filename)
-    simulator.workdir = rootdir
     sandbox {
         rootdir = rootdir,
         builddir = globals.builddir,
@@ -191,7 +190,7 @@ local function importfile(simulator, rootdir, filename)
     }
 end
 
-function mainSimulator:import(path)
+function api:import(path)
     local fullpath = fsutil.normalize(self.workdir, path)
     if fs.is_directory(fullpath) then
         fullpath = fsutil.join(fullpath, "make.lua")
@@ -201,7 +200,8 @@ function mainSimulator:import(path)
     end
     local rootdir = fsutil.parent_path(fullpath)
     local filename = fsutil.filename(fullpath)
-    importfile(createSubSimulator(self), rootdir, filename)
+    local subSimulator = createSubSimulator(self, rootdir)
+    importfile(subSimulator, rootdir, filename)
 end
 
 local function import(path)
@@ -210,6 +210,7 @@ local function import(path)
     if isVisited(fullpath) then
         return
     end
+    globals.workdir = WORKDIR
     importfile(mainSimulator, WORKDIR, path)
 end
 

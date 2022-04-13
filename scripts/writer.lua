@@ -30,7 +30,24 @@ local function fmtpath(p)
     return p:gsub('\\', '/')
 end
 
-local function get_sources(rootdir, sources)
+local function init_single(attribute, attr_name, default)
+    local attr = attribute[attr_name]
+    if type(attr) == 'table' then
+        attribute[attr_name] = attr[#attr]
+    elseif attr == nil then
+        attribute[attr_name] = default
+    end
+    return attribute[attr_name]
+end
+
+local function get_sources(attribute)
+    local attr = attribute.workdir
+    if type(attr) == 'table' then
+        attribute.workdir = attr[#attr]
+    end
+    local workdir = assert(attribute.workdir)
+    local rootdir = fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
+    local sources = attribute.sources
     if type(sources) ~= "table" then
         return {}
     end
@@ -50,25 +67,6 @@ local function tbl_insert(t, pos, a)
     for i = 1, #a do
         table.insert(t, pos+i-1, a[i])
     end
-end
-
-local function init_single(attribute, attr_name, default)
-    local attr = attribute[attr_name]
-    if type(attr) == 'table' then
-        attribute[attr_name] = attr[#attr]
-    elseif attr == nil then
-        attribute[attr_name] = default
-    end
-    return attribute[attr_name]
-end
-
-local function init_rootdir(attribute)
-    local attr = attribute.workdir
-    if type(attr) == 'table' then
-        attribute.workdir = attr[#attr]
-    end
-    local workdir = assert(attribute.workdir)
-    return fsutil.normalize(workdir, init_single(attribute, 'rootdir', '.'))
 end
 
 local PlatformAttribute <const> = 0
@@ -108,7 +106,6 @@ local function push_string(t, a)
             end
         end
     end
-    return t
 end
 
 local function push_path(t, a, root)
@@ -125,7 +122,28 @@ local function push_path(t, a, root)
             end
         end
     end
-    return t
+end
+
+local function push_mix(t, a, root)
+    if type(a) == 'string' then
+        if a:sub(1,1) == '@' then
+            t[#t+1] = pathutil.normalize(root, a:sub(2))
+        else
+            t[#t+1] = a:gsub("@{([^}]*)}", function (s)
+                return pathutil.normalize(root, s)
+            end)
+        end
+    elseif type(a) == 'userdata' then
+        t[#t+1] = pathutil.normalize(root, a)
+    elseif type(a) == 'table' then
+        if getmetatable(a) ~= nil then
+            t[#t+1] = pathutil.normalize(root, a)
+        else
+            for _, e in ipairs(a) do
+                push_mix(t, e, root)
+            end
+        end
+    end
 end
 
 local function merge_table(root, t, a)
@@ -146,9 +164,6 @@ local function merge_table(root, t, a)
             t[k] = nil
         end
         ::continue::
-    end
-    for _, v in ipairs(a) do
-        push_string(t, v)
     end
     return t
 end
@@ -172,6 +187,7 @@ local function normalize_rootdir(workdir, rootdir)
     end
     return fsutil.normalize(workdir, rootdir or '.')
 end
+
 local function reslove_attributes(g, loc)
     local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
     local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
@@ -179,6 +195,9 @@ local function reslove_attributes(g, loc)
     local r = {}
     reslove_table(g_rootdir, r, g)
     reslove_table(l_rootdir, r, loc)
+    for _, v in ipairs(loc) do
+        push_mix(r, v, l_rootdir)
+    end
     return r
 end
 
@@ -212,7 +231,7 @@ local function array_remove(t, k)
     return false
 end
 
-local function update_flags(context, flags, attribute, name, rootdir, rule)
+local function update_flags(context, flags, attribute, name, rule)
     local optimize = init_single(attribute, 'optimize', (attribute.mode == "debug" and "off" or "speed"))
     local defines = attribute.defines or {}
 
@@ -268,7 +287,7 @@ local function update_flags(context, flags, attribute, name, rootdir, rule)
     end
 end
 
-local function update_ldflags(context, ldflags, attribute, name, rootdir)
+local function update_ldflags(context, ldflags, attribute, name)
     tbl_append(ldflags, cc.ldflags)
 
     if attribute.links then
@@ -294,7 +313,7 @@ local function update_ldflags(context, ldflags, attribute, name, rootdir)
             end
         end
     end
-    
+
     cc.update_ldflags(context, ldflags, attribute, name)
 end
 
@@ -326,8 +345,7 @@ local function generate(context, rule, name, attribute)
 
     local ninja = context.ninja
     local bindir = init_single(attribute, 'bindir', globals.bindir)
-    local rootdir = init_rootdir(attribute)
-    local sources = get_sources(rootdir, attribute.sources)
+    local sources = get_sources(attribute)
     local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
     local implicit_input = {}
 
@@ -355,7 +373,7 @@ local function generate(context, rule, name, attribute)
     end
 
     local flags =  {}
-    update_flags(context, flags, attribute, name, rootdir, rule)
+    update_flags(context, flags, attribute, name, rule)
 
     local fin_flags = table.concat(flags, " ")
     for _, source in ipairs(sources) do
@@ -444,7 +462,7 @@ local function generate(context, rule, name, attribute)
     if bindir == globals.bindir then
         bindir = "$bin"
     end
-    update_ldflags(context, ldflags, attribute, name, rootdir)
+    update_ldflags(context, ldflags, attribute, name)
 
     local fin_ldflags = table.concat(ldflags, " ")
     if rule == "shared_library" then
@@ -589,38 +607,14 @@ function GEN.build(context, name, attribute)
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
-    local rootdir = init_rootdir(attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
 
     local command = {}
-    local function push(v)
-        command[#command+1] = fsutil.quotearg(v)
+    for i, v in ipairs(attribute) do
+        command[i] = fsutil.quotearg(v)
     end
-    local function push_command(t)
-        for _, v in ipairs(t) do
-            if type(v) == 'table' then
-                if getmetatable(v) == nil then
-                    push_command(v)
-                else
-                    push(pathutil.normalize(rootdir, tostring(v)))
-                end
-            elseif type(v) == 'userdata' then
-                push(pathutil.normalize(rootdir, tostring(v)))
-            elseif type(v) == 'string' then
-                if v:sub(1,1) == '@' then
-                    push(pathutil.normalize(rootdir, v:sub(2)))
-                else
-                    v = v:gsub("@{([^}]*)}", function (s)
-                        return pathutil.normalize(rootdir, s)
-                    end)
-                    push(v)
-                end
-            end
-        end
-    end
-    push_command(attribute)
 
     local outname
     if #output == 0 then

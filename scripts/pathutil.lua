@@ -3,10 +3,10 @@ local fsutil = require "fsutil"
 
 local mt = {}
 
-local function create(path)
+local function create(path, accepted)
     return setmetatable({
         value = path,
-        accepted = false,
+        accepted = accepted,
     }, mt)
 end
 
@@ -31,16 +31,15 @@ local function accept(base, path)
     return path
 end
 
-local function normalize(base, path)
+local function tostring(base, path)
     if mt == getmetatable(path) then
         if not path.accepted then
             path.value = path_normalize(base, path.value)
             path.accepted = true
         end
-    else
-        path = path_normalize(base, path)
+        return path.value
     end
-    return path
+    return path_normalize(base, path)
 end
 
 function mt:__tostring()
@@ -50,16 +49,16 @@ end
 
 function mt:__concat(rhs)
     local path = self.value .. rhs
-    return create(path)
+    return create(path, self.accepted)
 end
 
 function mt:__div(rhs)
     local path = fsutil.join(self.value, rhs)
-    return create(path)
+    return create(path, self.accepted)
 end
 
 return {
     create = create,
-    normalize = normalize,
+    tostring = tostring,
     accept = accept,
 }

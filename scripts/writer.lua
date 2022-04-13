@@ -105,12 +105,12 @@ end
 
 local function push_path(t, a, root)
     if type(a) == 'string' then
-        t[#t+1] = pathutil.normalize(root, a)
+        t[#t+1] = pathutil.tostring(root, a)
     elseif type(a) == 'userdata' then
-        t[#t+1] = pathutil.normalize(root, a)
+        t[#t+1] = pathutil.tostring(root, a)
     elseif type(a) == 'table' then
         if getmetatable(a) ~= nil then
-            t[#t+1] = pathutil.normalize(root, a)
+            t[#t+1] = pathutil.tostring(root, a)
         else
             for _, e in ipairs(a) do
                 push_path(t, e, root)
@@ -122,17 +122,17 @@ end
 local function push_mix(t, a, root)
     if type(a) == 'string' then
         if a:sub(1,1) == '@' then
-            t[#t+1] = pathutil.normalize(root, a:sub(2))
+            t[#t+1] = pathutil.tostring(root, a:sub(2))
         else
             t[#t+1] = a:gsub("@{([^}]*)}", function (s)
-                return pathutil.normalize(root, s)
+                return pathutil.tostring(root, s)
             end)
         end
     elseif type(a) == 'userdata' then
-        t[#t+1] = pathutil.normalize(root, a)
+        t[#t+1] = pathutil.tostring(root, a)
     elseif type(a) == 'table' then
         if getmetatable(a) ~= nil then
-            t[#t+1] = pathutil.normalize(root, a)
+            t[#t+1] = pathutil.tostring(root, a)
         else
             for _, e in ipairs(a) do
                 push_mix(t, e, root)
@@ -178,7 +178,11 @@ end
 
 local function normalize_rootdir(workdir, rootdir)
     if type(rootdir) == 'table' then
-        rootdir = rootdir[#rootdir]
+        if getmetatable(rootdir) == nil then
+            rootdir = rootdir[#rootdir]
+        else
+            rootdir = tostring(rootdir)
+        end
     end
     return fsutil.normalize(workdir, rootdir or '.')
 end

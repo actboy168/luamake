@@ -5,7 +5,7 @@ cc = clang
 luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
-    -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/3rd/lua $
+    -fvisibility=hidden -mmacosx-version-min=10.15 -I3rd/bee.lua/3rd/lua $
     -I3rd/bee.lua/3rd/lua-seri -DNDEBUG -Wunguarded-availability -o $out -c $
     $in
   description = Compile C   $out
@@ -15,7 +15,7 @@ build $obj/source_bee/lua-seri.obj: c_source_bee $
     3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/bee/nonstd $
+    -fvisibility=hidden -mmacosx-version-min=10.15 -I3rd/bee.lua/bee/nonstd $
     -I3rd/bee.lua -DBEE_INLINE -DNDEBUG -Wunguarded-availability -o $out -c $
     $in
   description = Compile C++ $out
@@ -47,7 +47,7 @@ build $obj/source_bee/path_helper-1.obj: cxx_source_bee $
     3rd/bee.lua/bee/utility/path_helper.mm
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/3rd/lua $
+    -fvisibility=hidden -mmacosx-version-min=10.15 -I3rd/bee.lua/3rd/lua $
     -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua $
     -DBEE_INLINE -DBEE_STATIC -DNDEBUG -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
@@ -71,7 +71,7 @@ build $obj/source_bee/lua_time.obj: cxx_source_bee_1 $
     3rd/bee.lua/binding/lua_time.cpp
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
-    -mmacosx-version-min=10.12 -DLUA_USE_MACOSX -DNDEBUG $
+    -mmacosx-version-min=10.15 -DLUA_USE_MACOSX -DNDEBUG $
     -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   deps = gcc
@@ -115,7 +115,7 @@ build $obj/source_lua/lvm.obj: c_source_lua 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/source_lua/lzio.obj: c_source_lua 3rd/bee.lua/3rd/lua/lzio.c
 rule cxx_source_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -fvisibility=hidden -mmacosx-version-min=10.12 -I3rd/bee.lua/3rd/lua $
+    -fvisibility=hidden -mmacosx-version-min=10.15 -I3rd/bee.lua/3rd/lua $
     -I3rd/bee.lua -DLUA_USE_MACOSX -DNDEBUG -Wunguarded-availability -o $
     $out -c $in
   description = Compile C++ $out

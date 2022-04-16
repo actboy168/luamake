@@ -5,7 +5,7 @@ cc = gcc
 luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
-    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri -D_WIN32_WINNT=0x0601 $
+    -I3rd/bee.lua/3rd/lua-seri -I$builddir/lua54 -D_WIN32_WINNT=0x0601 $
     -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
@@ -14,62 +14,67 @@ build $obj/source_bee/lua-seri.obj: c_source_bee $
     3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DBEE_INLINE $
-    -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -I3rd/bee.lua/bee/nonstd -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/error.obj: cxx_source_bee 3rd/bee.lua/bee/error.cpp
-build $obj/source_bee/fsevent_win.obj: cxx_source_bee $
-    3rd/bee.lua/bee/fsevent/fsevent_win.cpp
-build $obj/source_bee/endpoint.obj: cxx_source_bee $
-    3rd/bee.lua/bee/net/endpoint.cpp
-build $obj/source_bee/socket.obj: cxx_source_bee $
-    3rd/bee.lua/bee/net/socket.cpp
 build $obj/source_bee/format.obj: cxx_source_bee $
     3rd/bee.lua/bee/nonstd/fmt/format.cc
 build $obj/source_bee/os.obj: cxx_source_bee 3rd/bee.lua/bee/nonstd/fmt/os.cc
-build $obj/source_bee/version_win.obj: cxx_source_bee $
-    3rd/bee.lua/bee/platform/version_win.cpp
-build $obj/source_bee/subprocess_win.obj: cxx_source_bee $
-    3rd/bee.lua/bee/subprocess/subprocess_win.cpp
-build $obj/source_bee/simplethread_win.obj: cxx_source_bee $
-    3rd/bee.lua/bee/thread/simplethread_win.cpp
-build $obj/source_bee/file_handle.obj: cxx_source_bee $
-    3rd/bee.lua/bee/utility/file_handle.cpp
-build $obj/source_bee/file_handle_win.obj: cxx_source_bee $
-    3rd/bee.lua/bee/utility/file_handle_win.cpp
-build $obj/source_bee/module_version_win.obj: cxx_source_bee $
-    3rd/bee.lua/bee/utility/module_version_win.cpp
-build $obj/source_bee/path_helper.obj: cxx_source_bee $
-    3rd/bee.lua/bee/utility/path_helper.cpp
-build $obj/source_bee/unicode_win.obj: cxx_source_bee $
-    3rd/bee.lua/bee/utility/unicode_win.cpp
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua/3rd/lua-seri $
-    -I3rd/bee.lua/bee/nonstd -I3rd/bee.lua -DBEE_INLINE -DBEE_STATIC $
-    -D_WIN32_WINNT=0x0601 -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
+    -I3rd/bee.lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/lua_filesystem.obj: cxx_source_bee_1 $
+build $obj/source_bee/error.obj: cxx_source_bee_1 3rd/bee.lua/bee/error.cpp
+build $obj/source_bee/fsevent_win.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/fsevent/fsevent_win.cpp
+build $obj/source_bee/endpoint.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/net/endpoint.cpp
+build $obj/source_bee/socket.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/net/socket.cpp
+build $obj/source_bee/version_win.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/platform/version_win.cpp
+build $obj/source_bee/subprocess_win.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/subprocess/subprocess_win.cpp
+build $obj/source_bee/simplethread_win.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/thread/simplethread_win.cpp
+build $obj/source_bee/file_handle.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/utility/file_handle.cpp
+build $obj/source_bee/file_handle_win.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/utility/file_handle_win.cpp
+build $obj/source_bee/module_version_win.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/utility/module_version_win.cpp
+build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/utility/path_helper.cpp
+build $obj/source_bee/unicode_win.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/utility/unicode_win.cpp
+rule cxx_source_bee_2
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
+    -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua -I$builddir/lua54 $
+    -D_WIN32_WINNT=0x0601 -DBEE_STATIC -D_CRT_SECURE_NO_WARNINGS -DNDEBUG $
+    -o $out -c $in
+  description = Compile C++ $out
+  deps = gcc
+  depfile = $out.d
+build $obj/source_bee/lua_filesystem.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_filesystem.cpp
-build $obj/source_bee/lua_filewatch.obj: cxx_source_bee_1 $
+build $obj/source_bee/lua_filewatch.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_filewatch.cpp
-build $obj/source_bee/lua_platform.obj: cxx_source_bee_1 $
+build $obj/source_bee/lua_platform.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_platform.cpp
-build $obj/source_bee/lua_serialization.obj: cxx_source_bee_1 $
+build $obj/source_bee/lua_serialization.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_serialization.cpp
-build $obj/source_bee/lua_socket.obj: cxx_source_bee_1 $
+build $obj/source_bee/lua_socket.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_socket.cpp
-build $obj/source_bee/lua_subprocess.obj: cxx_source_bee_1 $
+build $obj/source_bee/lua_subprocess.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_subprocess.cpp
-build $obj/source_bee/lua_thread.obj: cxx_source_bee_1 $
+build $obj/source_bee/lua_thread.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_thread.cpp
-build $obj/source_bee/lua_time.obj: cxx_source_bee_1 $
+build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_time.cpp
-build $obj/source_bee/lua_unicode.obj: cxx_source_bee_1 $
+build $obj/source_bee/lua_unicode.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_unicode.cpp
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
@@ -141,10 +146,10 @@ rule link_luamake
   description = Link    Exe $out
 build $bin/luamake.exe: link_luamake $obj/source_bootstrap/utf8_crt.obj $
     $obj/source_bootstrap/main.obj $obj/source_bootstrap/progdir.obj $
-    $obj/source_bee/lua-seri.obj $obj/source_bee/error.obj $
+    $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
+    $obj/source_bee/os.obj $obj/source_bee/error.obj $
     $obj/source_bee/fsevent_win.obj $obj/source_bee/endpoint.obj $
-    $obj/source_bee/socket.obj $obj/source_bee/format.obj $
-    $obj/source_bee/os.obj $obj/source_bee/version_win.obj $
+    $obj/source_bee/socket.obj $obj/source_bee/version_win.obj $
     $obj/source_bee/subprocess_win.obj $obj/source_bee/simplethread_win.obj $
     $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_win.obj $
     $obj/source_bee/module_version_win.obj $obj/source_bee/path_helper.obj $

@@ -803,12 +803,9 @@ local STATEMENT <const> = {
     default = true,
 }
 
-function writer:generate(force)
+function writer:generate()
     local builddir = fsutil.join(WORKDIR, globals.builddir)
     local ninja_script = fsutil.join(builddir, "build.ninja")
-    if not force and fs.exists(ninja_script) then
-        return
-    end
     local context = self
     cc = require("compiler." .. globals.compiler)
     context.cc = cc

@@ -38,8 +38,18 @@ local function init()
     sim.import(arguments.f)
 end
 
-local function generate(force)
-    sim.generate(force)
+local function compdb()
+    if globals.compile_commands then
+        local compile_commands = globals.compile_commands:gsub("$(%w+)", {
+            builddir = globals.builddir,
+        })
+        ninja {"-t", "compdb", ">", compile_commands.."/compile_commands.json" }
+    end
+end
+
+local function generate()
+    sim.generate()
+    compdb()
 end
 
 local function make()
@@ -57,11 +67,6 @@ end
 
 local function clean()
     ninja {"-t", "clean"}
-end
-
-local function compdb()
-    ninja {"-t", "compdb", ">", "build/compile_commands.json"
-    }
 end
 
 if globals.perf then
@@ -94,16 +99,11 @@ if globals.perf then
         local _ <close> = perf "clean"
         return clean()
     end
-    local function perf_compdb()
-        local _ <close> = perf "compdb"
-        return compdb()
-    end
     return {
         init = perf_init,
         generate = perf_generate,
         make = perf_make,
         clean = perf_clean,
-        compdb = perf_compdb,
     }
 end
 
@@ -112,5 +112,4 @@ return {
     generate = generate,
     make = make,
     clean = clean,
-    compdb = compdb,
 }

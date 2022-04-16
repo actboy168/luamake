@@ -87,12 +87,16 @@ end
 return function (context, rule, name, attribute)
     local luaversion = attribute.luaversion or "lua54"
     local includes = attribute.includes or {}
-    includes[#includes+1] = "$builddir/"..luaversion
+    if globals.prebuilt then
+        includes[#includes+1] = "tools/"..luaversion
+    else
+        includes[#includes+1] = "$builddir/"..luaversion
+        copy_dir(
+            fsutil.join(package.procdir, "tools", luaversion),
+            fsutil.join(WORKDIR, globals.builddir, luaversion)
+        )
+    end
     attribute.includes = includes
-    copy_dir(
-        fsutil.join(package.procdir, "tools", luaversion),
-        fsutil.join(WORKDIR, globals.builddir, luaversion)
-    )
     if rule == "shared_library"  and globals.os == "windows" then
         local luadir = "$builddir/"..luaversion
         init_rule(context)

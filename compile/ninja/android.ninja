@@ -5,8 +5,8 @@ cc = gcc
 luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
-    -fvisibility=hidden -I3rd/bee.lua/3rd/lua-seri -I$builddir/lua54 $
-    -DNDEBUG -o $out -c $in
+    -fvisibility=hidden -I3rd/bee.lua/3rd/lua-seri -Itools/lua54 -DNDEBUG $
+    -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -49,7 +49,7 @@ build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
 rule cxx_source_bee_2
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
     -fvisibility=hidden -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua $
-    -I$builddir/lua54 -DBEE_STATIC -DNDEBUG -o $out -c $in
+    -Itools/lua54 -DBEE_STATIC -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d

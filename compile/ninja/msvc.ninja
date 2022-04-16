@@ -5,7 +5,7 @@ luamake = luamake
 rule c_source_bee
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /permissive- /O2 /GL /Zc:inline /W3 /WX /MD /I3rd/bee.lua/3rd/lua-seri $
-    /I$builddir/lua54 /D_WIN32_WINNT=0x0601 /DNDEBUG 
+    /Itools/lua54 /D_WIN32_WINNT=0x0601 /DNDEBUG 
   description = Compile C   $out
   deps = msvc
 build $obj/source_bee/lua-seri.obj: c_source_bee $
@@ -51,7 +51,7 @@ build $obj/source_bee/unicode_win.obj: cxx_source_bee_1 $
 rule cxx_source_bee_2
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /permissive- /O2 /GL /Zc:inline /W3 /WX /MD /I3rd/bee.lua/3rd/lua-seri $
-    /I3rd/bee.lua /I$builddir/lua54 /D_WIN32_WINNT=0x0601 /DBEE_STATIC $
+    /I3rd/bee.lua /Itools/lua54 /D_WIN32_WINNT=0x0601 /DBEE_STATIC $
     /D_CRT_SECURE_NO_WARNINGS /DNDEBUG /std:c++17
   description = Compile C++ $out
   deps = msvc

@@ -37,7 +37,7 @@ end
 
 function fsutil.normalize(...)
     local path = fsutil.join(...)
-    local hasRoot = (not isWindows and path:sub(1, 1) == "/")
+    local hasRoot = path:sub(1, 1) == "/"
     local stack = normalize(path)
     if hasRoot then
         return '/' .. table.concat(stack, '/')

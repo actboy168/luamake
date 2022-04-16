@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
+DIR=$(cd `dirname $0`/..; pwd)
 
 case "`uname`" in
   MSYS_NT*|MINGW64_NT*|Windows_NT*)
-    ninja -f compile/ninja/mingw.ninja
+    ninja -f $DIR/compile/ninja/mingw.ninja
     ;;
   Linux)
     case "`uname -o`" in
       Android)
-        ninja -f compile/ninja/android.ninja
+        ninja -f $DIR/compile/ninja/android.ninja
         ;;
       *)
-        ninja -f compile/ninja/linux.ninja
+        ninja -f $DIR/compile/ninja/linux.ninja
         ;;
     esac
     ;;
   Darwin)
-    ninja -f compile/ninja/macos.ninja
+    ninja -f $DIR/compile/ninja/macos.ninja
     ;;
   *)
     echo "Unknown OS $OS"
@@ -30,8 +31,7 @@ fi
 
 write_profile()
 {
-    work_path=$(pwd)
-    grep -sq "luamake" $1 || echo -e "\nalias luamake=$work_path/luamake" >> $1
+    grep -sq "luamake" $1 || echo -e "\nalias luamake=$DIR/luamake" >> $1
 }
 
 include () {

@@ -823,7 +823,7 @@ function writer:generate(force)
     context.ninja = ninja
 
     if globals.compiler == "msvc" then
-        if not arguments.args.prebuilt then
+        if not globals.prebuilt then
             local msvc = require "msvc_util"
             msvc.createEnvConfig(globals.arch, arguments.what == "rebuild")
             ninja:variable("msvc_deps_prefix", msvc.getPrefix())
@@ -837,7 +837,7 @@ function writer:generate(force)
         ninja:variable("cc", compiler)
     end
 
-    if arguments.args.prebuilt then
+    if globals.prebuilt then
         ninja:variable("luamake", "luamake")
     else
         ninja:variable("luamake", get_luamake())

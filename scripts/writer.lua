@@ -9,6 +9,7 @@ local cc
 
 local writer = {loaded={}}
 local loaded = writer.loaded
+local statements = {}
 local targets = {}
 local scripts = {}
 local mark_scripts = {}
@@ -727,8 +728,12 @@ function writer:has(name)
     return targets[name] ~= nil
 end
 
+function writer:add_statement(t)
+    statements[#statements+1] = t
+end
+
 function writer:add_target(t)
-    targets[#targets+1] = t
+    statements[#statements+1] = t
     local name = t[2]
     if name then
         targets[name] = t
@@ -768,6 +773,10 @@ local function configure_args()
     end
     return table.concat(s, " ")
 end
+
+local STATEMENT <const> = {
+    default = true,
+}
 
 function writer:generate(force)
     local builddir = fsutil.join(WORKDIR, globals.builddir)
@@ -811,14 +820,13 @@ function writer:generate(force)
         ninja:build("$builddir/build.ninja", scripts)
     end
 
-    for _, target in ipairs(targets) do
-        local rule = target[1]
-        local name = target[2]
-        if rule == "default" then
-            GEN.default(context, name)
+    for _, statement in ipairs(statements) do
+        local rule = statement[1]
+        if STATEMENT[rule] then
+            GEN[rule](context, table.unpack(statement, 2))
         else
-            if not target.loaded then
-                loadtarget(context, target)
+            if not statement.loaded then
+                loadtarget(context, statement)
             end
         end
     end

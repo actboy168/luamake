@@ -69,7 +69,7 @@ function api:copy(name)
 end
 function api:default(attribute)
     if self == mainSimulator then
-        writer:add_target {'default', attribute}
+        writer:add_statement {'default', attribute}
     end
 end
 function api:phony(name)

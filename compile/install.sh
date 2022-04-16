@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
-DIR=$(cd `dirname $0`; pwd)
+DIR=$(cd `dirname $0`/..; pwd)
 
 case "`uname`" in
   MSYS_NT*|MINGW64_NT*|Windows_NT*)
-    ninja -f $DIR/ninja/mingw.ninja
+    ninja -f $DIR/compile/ninja/mingw.ninja
     ;;
   Linux)
     case "`uname -o`" in
       Android)
-        ninja -f $DIR/ninja/android.ninja
+        ninja -f $DIR/compile/ninja/android.ninja
         ;;
       *)
-        ninja -f $DIR/ninja/linux.ninja
+        ninja -f $DIR/compile/ninja/linux.ninja
         ;;
     esac
     ;;
   Darwin)
-    ninja -f $DIR/ninja/macos.ninja
+    ninja -f $DIR/compile/ninja/macos.ninja
     ;;
   *)
     echo "Unknown OS $OS"

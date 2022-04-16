@@ -59,6 +59,11 @@ local function clean()
     ninja {"-t", "clean"}
 end
 
+local function compdb()
+    ninja {"-t", "compdb", ">", "build/compile_commands.json"
+    }
+end
+
 if globals.perf then
     local monotonic = require 'bee.time'.monotonic
     local perf_status = {}
@@ -89,11 +94,16 @@ if globals.perf then
         local _ <close> = perf "clean"
         return clean()
     end
+    local function perf_compdb()
+        local _ <close> = perf "compdb"
+        return compdb()
+    end
     return {
         init = perf_init,
         generate = perf_generate,
         make = perf_make,
         clean = perf_clean,
+        compdb = perf_compdb,
     }
 end
 
@@ -102,4 +112,5 @@ return {
     generate = generate,
     make = make,
     clean = clean,
+    compdb = compdb,
 }

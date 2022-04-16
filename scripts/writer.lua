@@ -9,6 +9,7 @@ local cc
 
 local writer = {loaded={}}
 local loaded = writer.loaded
+local loaded_rule = {}
 local statements = {}
 local targets = {}
 local scripts = {}
@@ -603,6 +604,24 @@ function GEN.phony(context, name, attribute)
     end
 end
 
+function GEN.rule(context, name, attribute)
+    assert(loaded_rule[name] == nil, ("rule `%s`: redefinition."):format(name))
+    loaded_rule[name] = true
+
+    local ninja = context.ninja
+    local command = {}
+    for i, v in ipairs(attribute) do
+        command[i] = fsutil.quotearg(v)
+    end
+    local kwargs = {}
+    for k, v in pairs(attribute) do
+        if type(k) == "string" then
+            kwargs[k] = v[#v]
+        end
+    end
+    ninja:rule(name, table.concat(command, " "), kwargs)
+end
+
 function GEN.build(context, name, attribute)
     local tmpName = not name
     name = name or generateTargetName()
@@ -612,10 +631,20 @@ function GEN.build(context, name, attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
+    local rule = init_single(attribute, 'rule')
 
-    local command = {}
-    for i, v in ipairs(attribute) do
-        command[i] = fsutil.quotearg(v)
+    if rule then
+        assert(loaded_rule[rule], ("unknown rule `%s`"):format(rule))
+        ninja:set_rule(rule)
+    else
+        local command = {}
+        for i, v in ipairs(attribute) do
+            command[i] = fsutil.quotearg(v)
+        end
+        ninja:rule('build_'..name, table.concat(command, " "), {
+            pool = init_single(attribute, 'pool'),
+            description = init_single(attribute, 'description'),
+        })
     end
 
     local outname
@@ -624,10 +653,6 @@ function GEN.build(context, name, attribute)
     else
         outname = output
     end
-    ninja:rule('build_'..name, table.concat(command, " "), {
-        pool = init_single(attribute, 'pool'),
-        description = init_single(attribute, 'description'),
-    })
     ninja:build(outname, input, {
         implicit_inputs = implicit_input,
     })

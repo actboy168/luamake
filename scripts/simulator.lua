@@ -89,6 +89,12 @@ end
 function api:path(value)
     return pathutil.create(value)
 end
+function api:rule(name)
+    assert(type(name) == "string", "Name is not a string.")
+    return function (attribute)
+        writer:add_target { 'rule', name, attribute, self }
+    end
+end
 
 local alias = {
     exe = "executable",

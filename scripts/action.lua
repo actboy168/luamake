@@ -3,11 +3,11 @@ local sp = require 'bee.subprocess'
 local sim = require 'simulator'
 local arguments = require "arguments"
 
-local function ninja(args)
+local function spawn_ninja(args)
     local option = {
         "ninja", "-f",  globals.builddir .. "/build.ninja",
         args,
-        stdout = true,
+        stdout = args.stdout or true,
         stderr = "stdout",
         searchPath = true,
     }
@@ -21,7 +21,11 @@ local function ninja(args)
         option[1] = {'cmd', '/c', 'ninja'}
     end
 
-    local process = assert(sp.spawn(option))
+    return assert(sp.spawn(option))
+end
+
+local function ninja(args)
+    local process = spawn_ninja(args)
     for line in process.stdout:lines() do
         io.write(line, "\n")
         io.flush()
@@ -43,7 +47,12 @@ local function compdb()
         local compile_commands = globals.compile_commands:gsub("$(%w+)", {
             builddir = globals.builddir,
         })
-        ninja {"-t", "compdb", ">", compile_commands.."/compile_commands.json" }
+        local f <close> = assert(io.open(compile_commands.."/compile_commands.json", "wb"))
+        local process = spawn_ninja {
+            "-t", "compdb",
+            stdout = f
+        }
+        assert(process:wait() == 0)
     end
 end
 

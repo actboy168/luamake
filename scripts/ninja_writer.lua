@@ -31,7 +31,7 @@ return function (filename)
         ninja:rule(name, command, kwargs)
     end
     function m:set_rule(name)
-        last_rule = name
+        last_rule = name:gsub('[^%w_]', '_')
     end
     function m:build_obj(output, inputs, args)
         output = fsutil.join(fsutil.parent_path(output), fsutil.stem(output))

@@ -67,7 +67,8 @@ local function tbl_insert(t, pos, a)
 end
 
 local PlatformAttribute <const> = 0
-local PlatformPath <const> = 1
+local PlatformPath      <const> = 1
+local PlatformArgs      <const> = 2
 
 local ATTRIBUTE <const> = {
     -- os
@@ -87,6 +88,9 @@ local ATTRIBUTE <const> = {
     linkdirs = PlatformPath,
     input    = PlatformPath,
     output   = PlatformPath,
+    script   = PlatformPath,
+    -- other
+    args     = PlatformArgs,
 }
 
 local function push_string(t, a)
@@ -143,6 +147,12 @@ local function push_mix(t, a, root)
     end
 end
 
+local function push_args(r, t, root)
+    for _, v in ipairs(t) do
+        push_mix(r, v, root)
+    end
+end
+
 local function merge_table(root, t, a)
     for k, v in pairs(a) do
         if type(k) ~= "string" then
@@ -154,6 +164,8 @@ local function merge_table(root, t, a)
         t[k] = t[k] or {}
         if ATTRIBUTE[k] == PlatformPath then
             push_path(t[k], v, root)
+        elseif ATTRIBUTE[k] == PlatformArgs then
+            push_args(t[k], v, root)
         else
             push_string(t[k], v)
         end
@@ -196,9 +208,8 @@ local function reslove_attributes(g, loc)
     local r = {}
     reslove_table(g_rootdir, r, g)
     reslove_table(l_rootdir, r, loc)
-    for _, v in ipairs(loc) do
-        push_mix(r, v, l_rootdir)
-    end
+    --TODO: remove it
+    push_args(r, loc, l_rootdir)
     r.workdir = g.workdir
     r.rootdir = l_rootdir
     return r
@@ -622,6 +633,51 @@ function GEN.rule(context, name, attribute)
     ninja:rule(name, table.concat(command, " "), kwargs)
 end
 
+function GEN.runlua(context, name, attribute)
+    local tmpName = not name
+    name = name or generateTargetName()
+    assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
+
+    local ninja = context.ninja
+    local input = attribute.input or {}
+    local output = attribute.output or {}
+    local implicit_input = getImplicitInput(context, name, attribute)
+    local script = init_single(attribute, 'script')
+
+    assert(script, ("`%s`: need attribute `script`."):format(name))
+
+    local command = {}
+    for i, v in ipairs(attribute.args) do
+        command[i] = fsutil.quotearg(v)
+    end
+    command = table.concat(command, " ")
+
+    implicit_input[#implicit_input+1] = script
+
+    ninja:rule('runlua', "$luamake lua $script "..command, {
+        description = "lua $script "..command
+    })
+
+    local outname
+    if #output == 0 then
+        outname = '$builddir/_/' .. name
+    else
+        outname = output
+    end
+    ninja:build(outname, input, {
+        variables = {
+            script = script,
+        },
+        implicit_inputs = implicit_input,
+    })
+    if not tmpName then
+        ninja:phony(name, outname)
+        loaded[name] = {
+            implicit_input = name,
+        }
+    end
+end
+
 function GEN.build(context, name, attribute)
     local tmpName = not name
     name = name or generateTargetName()
@@ -641,10 +697,7 @@ function GEN.build(context, name, attribute)
         for i, v in ipairs(attribute) do
             command[i] = fsutil.quotearg(v)
         end
-        ninja:rule('build_'..name, table.concat(command, " "), {
-            pool = init_single(attribute, 'pool'),
-            description = init_single(attribute, 'description'),
-        })
+        ninja:rule('build_'..name, table.concat(command, " "))
     end
 
     local outname

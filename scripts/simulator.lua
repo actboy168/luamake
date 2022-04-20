@@ -67,6 +67,16 @@ function api:copy(name)
         writer:add_target { 'copy', name, attribute, self }
     end
 end
+function api:runlua(name)
+    if type(name) == "table" then
+        writer:add_target { 'runlua', nil, name, self }
+        return
+    end
+    assert(type(name) == "string", "Name is not a string.")
+    return function (attribute)
+        writer:add_target { 'runlua', name, attribute, self }
+    end
+end
 function api:default(attribute)
     if self == mainSimulator then
         writer:add_statement {'default', attribute}

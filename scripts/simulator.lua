@@ -102,7 +102,7 @@ end
 function api:rule(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'rule', name, attribute, self }
+        writer:add_statement { 'rule', name, attribute, self }
     end
 end
 

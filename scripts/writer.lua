@@ -615,11 +615,12 @@ function GEN.phony(context, name, attribute)
     end
 end
 
-function GEN.rule(context, name, attribute)
+function GEN.rule(context, name, local_attribute, global_attribute)
     assert(loaded_rule[name] == nil, ("rule `%s`: redefinition."):format(name))
     loaded_rule[name] = true
 
     local ninja = context.ninja
+    local attribute = reslove_attributes(global_attribute, local_attribute)
     local command = {}
     for i, v in ipairs(attribute) do
         command[i] = fsutil.quotearg(v)
@@ -854,6 +855,7 @@ end
 
 local STATEMENT <const> = {
     default = true,
+    rule = true,
 }
 
 function writer:generate()

@@ -4,7 +4,14 @@
             "discard-returns"
         ],
         "severity": {
-            "redefined-local": "Warning"
+            "redefined-local": "Warning",
+            "unused-vararg": "Warning",
+            "unused-function": "Warning",
+            "unused-local": "Warning",
+            "unused-label": "Warning",
+            "code-after-break": "Warning",
+            "empty-block": "Warning",
+            "trailing-space": "Warning"
         }
     },
     "completion": {

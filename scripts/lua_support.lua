@@ -70,7 +70,7 @@ local function init_version(context, luadir, luaversion)
     ninja:build(libname, luadir.."/lua.def")
 end
 
-local function windows_deps(context, name, attribute, luaversion)
+local function windows_deps(_, name, attribute, luaversion)
     local ldflags = attribute.ldflags or {}
     local deps = attribute.deps or {}
     if globals.compiler == "msvc" then

@@ -96,9 +96,9 @@ if globals.perf then
         local _ <close> = perf "init"
         return init()
     end
-    local function perf_generate(...)
+    local function perf_generate()
         local _ <close> = perf "generate"
-        return generate(...)
+        return generate()
     end
     local function perf_make()
         local _ <close> = perf "make"

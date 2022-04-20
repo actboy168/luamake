@@ -643,21 +643,24 @@ function GEN.runlua(context, name, attribute)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_input = getImplicitInput(context, name, attribute)
-    local script = init_single(attribute, 'script')
-
-    assert(script, ("`%s`: need attribute `script`."):format(name))
-
-    local command = {}
-    for i, v in ipairs(attribute.args) do
-        command[i] = fsutil.quotearg(v)
-    end
-    command = table.concat(command, " ")
-
+    local script = assert(init_single(attribute, 'script'), ("`%s`: need attribute `script`."):format(name))
     implicit_input[#implicit_input+1] = script
 
-    ninja:rule('runlua', "$luamake lua $script "..command, {
-        description = "lua $script "..command
-    })
+    if attribute.args then
+        local command = {}
+        for i, v in ipairs(attribute.args) do
+            command[i] = fsutil.quotearg(v)
+        end
+        command = table.concat(command, " ")
+        ninja:rule('runlua', "$luamake lua $script "..command, {
+            description = "lua $script "..command
+        })
+    else
+        ninja:rule('runlua', "$luamake lua $script", {
+            description = "lua $script"
+        })
+    end
+
 
     local outname
     if #output == 0 then

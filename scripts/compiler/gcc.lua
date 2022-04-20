@@ -63,13 +63,13 @@ local gcc = {
     end
 }
 
-function gcc.update_flags(context, flags, attribute)
+function gcc.update_flags(flags, attribute)
     if attribute.mode == 'debug' then
         flags[#flags+1] = '-g'
     end
 end
 
-function gcc.update_ldflags(context, ldflags, attribute)
+function gcc.update_ldflags(ldflags, attribute)
     if globals.os == "android" then
         --TODO android不支持static crt
         ldflags[#ldflags+1] = "-lstdc++"

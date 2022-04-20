@@ -8,7 +8,7 @@ local function shell(command)
     return r
 end
 
-local function update_target(context, flags, attribute)
+local function update_target(flags, attribute)
     local target = attribute.target
     if not target then
         assert(globals.hostos ~= "windows")
@@ -52,14 +52,14 @@ local function update_target(context, flags, attribute)
     attribute.__target = target
 end
 
-function clang.update_flags(context, flags, attribute)
-    if attribute.crt == 'dynamic' then
-        --TODO
-    end
+function clang.update_flags(flags, attribute)
+    --TODO
+    --if attribute.crt == 'dynamic' then
+    --end
     if attribute.mode == 'debug' then
         flags[#flags+1] = '-g'
     end
-    update_target(context, flags, attribute)
+    update_target(flags, attribute)
     if attribute.__target then
         flags[#flags+1] = "-target"
         flags[#flags+1] = attribute.__target
@@ -76,7 +76,7 @@ function clang.update_flags(context, flags, attribute)
     end
 end
 
-function clang.update_ldflags(context, ldflags, attribute)
+function clang.update_ldflags(ldflags, attribute)
     if attribute.frameworks then
         for _, framework in ipairs(attribute.frameworks) do
             ldflags[#ldflags+1] = "-framework"

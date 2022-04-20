@@ -1,6 +1,6 @@
 local emcc = require 'compiler.gcc'
 
-function emcc.update_ldflags(context, ldflags, attribute)
+function emcc.update_ldflags(ldflags, _)
     ldflags[#ldflags+1] = '-s'
     ldflags[#ldflags+1] = 'WASM=1'
 end

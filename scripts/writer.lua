@@ -234,7 +234,7 @@ local function array_remove(t, k)
     return false
 end
 
-local function update_flags(context, flags, attribute, name, rule)
+local function update_flags(flags, attribute, name, rule)
     local optimize = init_single(attribute, 'optimize', (attribute.mode == "debug" and "off" or "speed"))
     local defines = attribute.defines or {}
 
@@ -250,7 +250,7 @@ local function update_flags(context, flags, attribute, name, rule)
             flags[#flags+1] = "-fPIC"
         end
     end
-    cc.update_flags(context, flags, attribute, name)
+    cc.update_flags(flags, attribute, name)
 
     if attribute.includes then
         for _, inc in ipairs(attribute.includes) do
@@ -317,7 +317,7 @@ local function update_ldflags(context, ldflags, attribute, name)
         end
     end
 
-    cc.update_ldflags(context, ldflags, attribute, name)
+    cc.update_ldflags(ldflags, attribute, name)
 end
 
 local function generate(context, rule, name, attribute)
@@ -376,7 +376,7 @@ local function generate(context, rule, name, attribute)
     end
 
     local flags =  {}
-    update_flags(context, flags, attribute, name, rule)
+    update_flags(flags, attribute, name, rule)
 
     local fin_flags = table.concat(flags, " ")
     for _, source in ipairs(sources) do

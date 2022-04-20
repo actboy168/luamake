@@ -808,7 +808,6 @@ function writer:generate()
     local ninja_script = fsutil.join(builddir, "build.ninja")
     local context = self
     cc = require("compiler." .. globals.compiler)
-    context.cc = cc
     fs.create_directories(builddir)
 
     local ninja = require "ninja_writer"(ninja_script)
@@ -826,7 +825,6 @@ function writer:generate()
             ninja:variable("msvc_deps_prefix", msvc.getPrefix())
         end
     else
-        assert(globals.compiler=="gcc" or globals.compiler=="clang" or globals.compiler=="emcc")
         local compiler = globals.cc or globals.compiler
         if globals.hostshell == "cmd" then
             compiler = 'cmd /c '..compiler

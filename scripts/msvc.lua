@@ -113,7 +113,7 @@ local function vsdevcmd(winsdk, arch, f)
         args[#args+1] = ('-winsdk=%s'):format(winsdk)
     end
     local process = assert(sp.spawn {
-        args, '&', 'set',
+        args, '&&', 'set',
         stderr = true,
         stdout = true,
         searchPath = true,

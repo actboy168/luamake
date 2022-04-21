@@ -195,7 +195,7 @@ local function normalize_rootdir(workdir, rootdir)
         if getmetatable(rootdir) == nil then
             rootdir = rootdir[#rootdir]
         else
-            rootdir = tostring(rootdir)
+            return tostring(rootdir)
         end
     end
     return fsutil.normalize(workdir, rootdir or '.')

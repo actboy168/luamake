@@ -211,13 +211,14 @@ rule c_lua54
 build $obj/lua54/forward_lua.obj: c_lua54 3rd/bee.lua/bootstrap/forward_lua.c
 rule link_lua54
   command = cl /nologo @$out.rsp /link $obj/luamake.lib /DEBUG:NONE /LTCG $
-    /out:$out /DLL /IMPLIB:$obj/lua54/lua54.lib
+    /out:$out /DLL /IMPLIB:$implib
   description = Link    Dll $out
   restat = 1
   rspfile = $out.rsp
   rspfile_content = $in_newline
 build $bin/lua54.dll | $obj/lua54/lua54.lib: link_lua54 $
     $obj/lua54/forward_lua.obj | forward_lua $bin/luamake.exe
+  implib = $obj/lua54/lua54.lib
 build tools/lua54.dll: copy | $obj/lua54/lua54.lib $bin/lua54.dll
   input = $bin/lua54.dll
 build luamake: phony $bin/luamake.exe

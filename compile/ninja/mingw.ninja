@@ -4,7 +4,7 @@ obj = $builddir/obj
 cc = gcc
 luamake = luamake
 rule c_source_bee
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
     -I3rd/bee.lua/3rd/lua-seri -Itools/lua54 -D_WIN32_WINNT=0x0601 -DNDEBUG $
     -o $out -c $in
   description = Compile C   $out
@@ -77,7 +77,7 @@ build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
 build $obj/source_bee/lua_unicode.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_unicode.cpp
 rule c_source_lua
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
     -D_WIN32_WINNT=0x0601 -DLUA_BUILD_AS_DLL -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
@@ -120,7 +120,7 @@ build $obj/source_lua/lutf8lib.obj: c_source_lua $
 build $obj/source_lua/lvm.obj: c_source_lua 3rd/bee.lua/3rd/lua/lvm.c
 build $obj/source_lua/lzio.obj: c_source_lua 3rd/bee.lua/3rd/lua/lzio.c
 rule c_source_bootstrap
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
     -I3rd/bee.lua/3rd/lua -I3rd/bee.lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $
     $out -c $in
   description = Compile C   $out
@@ -205,7 +205,7 @@ build 3rd/bee.lua/bootstrap/forward_lua.h: runlua $
     copy_luamake 3rd/bee.lua/bootstrap/forward_lua.lua
   script = 3rd/bee.lua/bootstrap/forward_lua.lua
 rule c_lua54
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
     -I3rd/bee.lua/bootstrap -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc

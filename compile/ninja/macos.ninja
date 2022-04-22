@@ -4,7 +4,7 @@ obj = $builddir/obj
 cc = clang
 luamake = luamake
 rule c_source_bee
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
     -fvisibility=hidden -mmacosx-version-min=10.15 $
     -I3rd/bee.lua/3rd/lua-seri -Itools/lua54 -DNDEBUG $
     -Wunguarded-availability -o $out -c $in
@@ -76,7 +76,7 @@ build $obj/source_bee/lua_thread.obj: cxx_source_bee_2 $
 build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_time.cpp
 rule c_source_lua
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Werror $
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
     -mmacosx-version-min=10.15 -DLUA_USE_MACOSX -DNDEBUG $
     -Wunguarded-availability -o $out -c $in
   description = Compile C   $out

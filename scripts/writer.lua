@@ -490,6 +490,9 @@ local function generate(context, rule, name, attribute)
             ninja:build(binname, input, {
                 implicit_inputs = implicit_input,
                 implicit_outputs = lib,
+                variables = {
+                    implib = lib,
+                },
             })
         elseif globals.os == "windows" then
             binname = bindir.."/"..name..".dll"

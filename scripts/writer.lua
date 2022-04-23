@@ -876,7 +876,7 @@ end
 function writer:add_target(rule, global_attribute, local_attribute, name)
     self:add_statement(rule, global_attribute, local_attribute, name)
     if name then
-        targets[name] = true
+        targets[name] = statements[#statements]
     end
 end
 

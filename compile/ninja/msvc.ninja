@@ -172,8 +172,8 @@ build $bin/luamake.exe: link_luamake $obj/source_bootstrap/utf8_crt.obj $
     $obj/source_lua/lundump.obj $obj/source_lua/lutf8lib.obj $
     $obj/source_lua/lvm.obj $obj/source_lua/lzio.obj
 rule copy
-  command = powershell -NonInteractive -Command Copy-Item -Path $in$input $
-    -Destination $out | Out-Null
+  command = powershell -NonInteractive -Command Copy-Item -Path '$in$input' $
+    -Destination '$out' | Out-Null
   description = Copy $in$input $out
   restat = 1
 build $bin/main.lua: copy | $bin/luamake.exe

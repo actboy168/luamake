@@ -362,7 +362,7 @@ local function generate(context, rule, name, attribute)
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_sources(attribute)
     local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
-    local implicit_input = {}
+    local implicit_inputs = {}
 
     init_single(attribute, 'mode', 'release')
     init_single(attribute, 'crt', 'dynamic')
@@ -469,7 +469,7 @@ local function generate(context, rule, name, attribute)
             if t.input then
                 tbl_append(input, t.input)
             end
-            implicit_input[#implicit_input+1] = t.implicit_input
+            implicit_inputs[#implicit_inputs+1] = t.implicit_inputs
         end
     end
     assert(#input > 0, ("`%s`: no source files found."):format(name))
@@ -488,9 +488,9 @@ local function generate(context, rule, name, attribute)
             binname = bindir.."/"..basename..".dll"
             local lib = ('$obj/%s/%s.lib'):format(name, basename)
             target.input = {lib}
-            target.implicit_input = binname
+            target.implicit_inputs = binname
             ninja:build(binname, input, {
-                implicit_inputs = implicit_input,
+                implicit_inputs = implicit_inputs,
                 implicit_outputs = lib,
                 variables = {
                     implib = lib,
@@ -500,7 +500,7 @@ local function generate(context, rule, name, attribute)
             binname = bindir.."/"..basename..".dll"
             target.input = {binname}
             ninja:build(binname, input, {
-                implicit_inputs = implicit_input,
+                implicit_inputs = implicit_inputs,
             })
         else
             if globals.compiler == "emcc" then
@@ -508,9 +508,9 @@ local function generate(context, rule, name, attribute)
             else
                 binname = bindir.."/"..basename..".so"
             end
-            target.implicit_input = binname
+            target.implicit_inputs = binname
             ninja:build(binname, input, {
-                implicit_inputs = implicit_input,
+                implicit_inputs = implicit_inputs,
             })
         end
     elseif rule == "executable" then
@@ -521,10 +521,10 @@ local function generate(context, rule, name, attribute)
         else
             binname = bindir.."/"..basename
         end
-        target.implicit_input = binname
+        target.implicit_inputs = binname
         cc.rule_exe(ninja, name, fin_ldflags)
         ninja:build(binname, input, {
-            implicit_inputs = implicit_input,
+            implicit_inputs = implicit_inputs,
         })
     elseif rule == "static_library" then
         if globals.os == "windows" then
@@ -535,7 +535,7 @@ local function generate(context, rule, name, attribute)
         target.input = {binname}
         cc.rule_lib(ninja, name)
         ninja:build(binname, input, {
-            implicit_inputs = implicit_input,
+            implicit_inputs = implicit_inputs,
         })
     end
     ninja:phony(name, binname)
@@ -549,23 +549,23 @@ local function generateTargetName()
     return ("__target_0x%08x__"):format(NAMEIDX)
 end
 
-local function addImplicitInput(context, implicit_input, name, dep)
+local function addImplicitInput(context, implicit_inputs, name, dep)
     local target = context:load(dep)
     assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
     if target.input then
-        tbl_append(implicit_input, target.input)
+        tbl_append(implicit_inputs, target.input)
     end
-    implicit_input[#implicit_input+1] = target.implicit_input
+    implicit_inputs[#implicit_inputs+1] = target.implicit_inputs
 end
 
 local function getImplicitInput(context, name, attribute)
-    local implicit_input = {}
+    local implicit_inputs = {}
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            addImplicitInput(context, implicit_input, name, dep)
+            addImplicitInput(context, implicit_inputs, name, dep)
         end
     end
-    return implicit_input
+    return implicit_inputs
 end
 
 function GEN.default(context, attribute)
@@ -591,11 +591,11 @@ function GEN.phony(context, name, attribute)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_input = getImplicitInput(context, name, attribute)
+    local implicit_inputs = getImplicitInput(context, name, attribute)
 
     local n = #input
-    for i = 1, #implicit_input do
-        input[n+i] = implicit_input[i]
+    for i = 1, #implicit_inputs do
+        input[n+i] = implicit_inputs[i]
     end
 
     if name then
@@ -608,7 +608,7 @@ function GEN.phony(context, name, attribute)
             end
         end
         loaded[name] = {
-            implicit_input = name,
+            implicit_inputs = name,
         }
     else
         if #output == 0 then
@@ -648,9 +648,9 @@ function GEN.runlua(context, name, attribute)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_input = getImplicitInput(context, name, attribute)
+    local implicit_inputs = getImplicitInput(context, name, attribute)
     local script = assert(init_single(attribute, 'script'), ("`%s`: need attribute `script`."):format(name))
-    implicit_input[#implicit_input+1] = script
+    implicit_inputs[#implicit_inputs+1] = script
 
     if attribute.args then
         local command = {}
@@ -678,12 +678,12 @@ function GEN.runlua(context, name, attribute)
         variables = {
             script = script,
         },
-        implicit_inputs = implicit_input,
+        implicit_inputs = implicit_inputs,
     })
     if not tmpName then
         ninja:phony(name, outname)
         loaded[name] = {
-            implicit_input = name,
+            implicit_inputs = name,
         }
     end
 end
@@ -696,7 +696,7 @@ function GEN.build(context, name, attribute)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_input = getImplicitInput(context, name, attribute)
+    local implicit_inputs = getImplicitInput(context, name, attribute)
     local rule = init_single(attribute, 'rule')
 
     if rule then
@@ -717,12 +717,12 @@ function GEN.build(context, name, attribute)
         outname = output
     end
     ninja:build(outname, input, {
-        implicit_inputs = implicit_input,
+        implicit_inputs = implicit_inputs,
     })
     if not tmpName then
         ninja:phony(name, outname)
         loaded[name] = {
-            implicit_input = name,
+            implicit_inputs = name,
         }
     end
 end
@@ -734,7 +734,7 @@ function GEN.copy(context, name, attribute)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_input = getImplicitInput(context, name, attribute)
+    local implicit_inputs = getImplicitInput(context, name, attribute)
 
     if globals.hostshell == "cmd" then
         ninja:rule('copy', "powershell -NonInteractive -Command Copy-Item -Path $in$input -Destination $out | Out-Null", {
@@ -755,14 +755,14 @@ function GEN.copy(context, name, attribute)
 
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
 
-    if #implicit_input == 0 then
+    if #implicit_inputs == 0 then
         for i = 1, #input do
             ninja:build(output[i], input[i])
         end
     else
         for i = 1, #input do
             ninja:build(output[i], nil, {
-                implicit_inputs = implicit_input,
+                implicit_inputs = implicit_inputs,
                 variables = { input = input[i] },
             })
         end
@@ -772,7 +772,7 @@ function GEN.copy(context, name, attribute)
         assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:phony(name, output)
         loaded[name] = {
-            implicit_input = name,
+            implicit_inputs = name,
         }
     end
 end

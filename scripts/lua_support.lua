@@ -60,7 +60,7 @@ local function init_version(context, luadir, luaversion)
     else
         libname = luadir.."/liblua.a"
         context.loaded["__"..luaversion.."__"] = {
-            implicit_input = {libname},
+            implicit_inputs = {libname},
             ldflags = {
                 "-L"..luadir,
                 "-llua",

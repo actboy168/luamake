@@ -554,7 +554,13 @@ local function getImplicitInputs(context, name, attribute)
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
             local target = context:load(dep)
-            assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
+            if not target then
+                if name then
+                    error(("`%s`: deps `%s` undefine."):format(name, dep))
+                else
+                    error(("deps `%s` undefine."):format(dep))
+                end
+            end
             if target.input then
                 tbl_append(res, target.input)
             end
@@ -709,17 +715,9 @@ function GEN.build(context, attribute, name)
     end
 end
 
-function GEN.copy(context, attribute, name)
-    if loaded[name] ~= nil then
-        return
-    end
-    local ninja = context.ninja
-    local input = attribute.input or {}
-    local output = attribute.output or {}
-    local implicit_inputs = getImplicitInputs(context, name, attribute)
-
+local function generate_copy(ninja, implicit_inputs, input, output)
     if globals.hostshell == "cmd" then
-        ninja:rule('copy', "powershell -NonInteractive -Command Copy-Item -Path $in$input -Destination $out | Out-Null", {
+        ninja:rule('copy', "powershell -NonInteractive -Command Copy-Item -Path '$in$input' -Destination '$out' | Out-Null", {
             description = 'Copy $in$input $out',
             restat = 1,
         })
@@ -735,8 +733,6 @@ function GEN.copy(context, attribute, name)
         })
     end
 
-    assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
-
     if #implicit_inputs == 0 then
         for i = 1, #input do
             ninja:build(output[i], input[i])
@@ -749,6 +745,82 @@ function GEN.copy(context, attribute, name)
             })
         end
     end
+end
+
+function GEN.copy(context, attribute, name)
+    local ninja = context.ninja
+    local input = attribute.input or {}
+    local output = attribute.output or {}
+    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
+    generate_copy(ninja, implicit_inputs, input, output)
+    if name then
+        assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
+        ninja:phony(name, output)
+        loaded[name] = {
+            implicit_inputs = name,
+        }
+    end
+end
+
+function GEN.msvc_copy_vcrt(context, attribute, name)
+    local ninja = context.ninja
+    local input = {}
+    local output = {}
+    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    init_single(attribute, 'mode', 'release')
+    init_single(attribute, 'arch')
+
+    local msvc = require "msvc"
+    local msvcutil = require "msvc_util"
+    local outputdir = attribute.output[#attribute.output]
+    local archalias = msvcutil.archAlias(attribute.arch)
+
+    local ignore = attribute.mode == "debug" and fs.path "vccorlib140d.dll" or fs.path "vccorlib140.dll"
+    for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.mode)) do
+        local filename = dll:filename()
+        if filename ~= ignore then
+            input[#input+1] = dll
+            output[#output+1] = outputdir / filename
+        end
+    end
+    generate_copy(ninja, implicit_inputs, input, output)
+
+    if name then
+        assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
+        ninja:phony(name, output)
+        loaded[name] = {
+            implicit_inputs = name,
+        }
+    end
+end
+
+function GEN.msvc_copy_ucrt(context, attribute, name)
+    local ninja = context.ninja
+    local input = {}
+    local output = {}
+    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    init_single(attribute, 'mode', 'release')
+    init_single(attribute, 'arch')
+
+    local msvc = require "msvc"
+    local msvcutil = require "msvc_util"
+    local outputdir = attribute.output[#attribute.output]
+    local archalias = msvcutil.archAlias(attribute.arch)
+
+    local redist, bin = msvc.ucrtpath(archalias, attribute.mode)
+    local ignore = attribute.mode == "debug" and fs.path "ucrtbase.dll" or nil
+    for dll in fs.pairs(redist) do
+        local filename = dll:filename()
+        if filename == ignore then
+            input[#input+1] = bin / "ucrtbased.dll"
+            output[#output+1] = outputdir / "ucrtbased.dll"
+        else
+            input[#input+1] = dll
+            output[#output+1] = outputdir / filename
+        end
+    end
+    generate_copy(ninja, implicit_inputs, input, output)
 
     if name then
         assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))

@@ -10,12 +10,16 @@ local ProgramFiles = Is64BitWindows() and 'ProgramFiles(x86)' or 'ProgramFiles'
 local vswhere = os.getenv(ProgramFiles)..'/Microsoft Visual Studio/Installer/vswhere.exe'
 local need = { LIB = true, LIBPATH = true, PATH = true, INCLUDE = true }
 
-local function createfile(filename, content)
-    local f = assert(io.open(filename:string(), 'w'))
+local function writeall(filename, content)
+    local f <close> = assert(io.open(filename, 'w'))
     if content then
         f:write(content)
     end
-    f:close()
+end
+
+local function readall(filename)
+    local f <close> = assert(io.open(filename, 'r'))
+    return f:read "a"
 end
 
 local function strtrim(str)
@@ -43,7 +47,7 @@ local function installpath()
         os.exit(code, true)
     end
     assert(result ~= "", "can't find msvc.")
-    InstallDir = fs.path(result)
+    InstallDir = result
     return InstallDir
 end
 
@@ -104,8 +108,8 @@ local function findwinsdk()
 end
 
 local function vsdevcmd(winsdk, arch, f)
-    local vsvars32 = installpath() / 'Common7' / 'Tools' / 'VsDevCmd.bat'
-    local args = { vsvars32:string() }
+    local vsvars32 = installpath()..'/Common7/Tools/VsDevCmd.bat'
+    local args = { vsvars32 }
     if arch then
         args[#args+1] = ('-arch=%s'):format(arch)
     end
@@ -150,10 +154,10 @@ local function environment(winsdk, arch)
 end
 
 local function prefix(env)
-    local testdir = fs.path(os.tmpname())
+    local testdir = os.tmpname()
     fs.create_directories(testdir)
-    createfile(testdir / 'test.h')
-    createfile(testdir / 'test.c', '#include "test.h"')
+    writeall(testdir..'/test.h')
+    writeall(testdir..'/test.c', '#include "test.h"')
     local process = assert(sp.spawn {
         'cmd', '/c',
         'cl', '/showIncludes', '/nologo', '-c', 'test.c',
@@ -181,42 +185,34 @@ end
 
 local function toolspath()
     local ToolsVersion = (function ()
-        local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCToolsVersion.default.txt'
-        local f = assert(io.open(verfile:string(), 'r'))
-        local r = f:read 'a'
-        f:close()
+        local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt'
+        local r = readall(verfile)
         return strtrim(r)
     end)()
-    return installpath() / 'VC' / 'Tools' / 'MSVC' / ToolsVersion
+    return installpath()..'/VC/Tools/MSVC/'..ToolsVersion
 end
 
 local function vcrtpath(arch, mode)
     local RedistVersion = (function ()
-        local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCRedistVersion.default.txt'
-        local f = assert(io.open(verfile:string(), 'r'))
-        local r = f:read 'a'
-        f:close()
+        local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt'
+        local r = readall(verfile)
         return strtrim(r)
     end)()
     local ToolsVersion = (function ()
-        local verfile = installpath() / 'VC' / 'Auxiliary' / 'Build' / 'Microsoft.VCToolsVersion.default.txt'
-        local f = assert(io.open(verfile:string(), 'r'))
-        local r = f:read 'a'
-        f:close()
+        local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt'
+        local r = readall(verfile)
         return strtrim(r)
     end)()
     local ToolsetVersion = (function ()
-        local verfile = installpath() / 'VC' / 'Tools' / 'MSVC' / ToolsVersion / 'include' / 'yvals_core.h'
-        local f = assert(io.open(verfile:string(), 'r'))
-        local r = f:read 'a'
-        f:close()
+        local verfile = installpath()..'/VC/Tools/MSVC/'..ToolsVersion..'/include/yvals_core.h'
+        local r = readall(verfile)
         return r:match '#define%s+_MSVC_STL_VERSION%s+(%d+)'
     end)()
-    local path = installpath() / 'VC' / 'Redist' / 'MSVC' / RedistVersion
+    local path = installpath()..'/VC/Redist/MSVC/'..RedistVersion
     if mode == "debug" then
-        return path / "debug_nonredist" / arch / ('Microsoft.VC'..ToolsetVersion..'.DebugCRT')
+        return path.."/debug_nonredist/"..arch..'/Microsoft.VC'..ToolsetVersion..'.DebugCRT'
     end
-    return path / arch / ('Microsoft.VC'..ToolsetVersion..'.CRT')
+    return path..'/'..arch..'/Microsoft.VC'..ToolsetVersion..'.CRT'
 end
 
 local function ucrtpath(arch, mode)
@@ -232,7 +228,7 @@ local function ucrtpath(arch, mode)
     local path = fs.path(UniversalCRTSdkDir) / 'Redist'
     local redist, ver
     local function accept(p)
-        local ucrt = p / 'ucrt' / 'DLLs' / arch
+        local ucrt = p / 'ucrt/DLLs' / arch
         if fs.exists(ucrt) then
             local version = 0
             if p ~= path then

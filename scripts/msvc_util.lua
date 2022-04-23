@@ -73,7 +73,7 @@ function m.createEnvConfig(arch, rebuild)
     local s = {}
     s[#s+1] = "return {"
     s[#s+1] = ("arch=%q,"):format(arch)
-    s[#s+1] = ("toolspath=%q,"):format(msvc.toolspath():string())
+    s[#s+1] = ("toolspath=%q,"):format(msvc.toolspath())
     s[#s+1] = ("console_cp=%q,"):format(console_cp)
     if winsdk then
         s[#s+1] = ("winsdk=%q,"):format(winsdk)

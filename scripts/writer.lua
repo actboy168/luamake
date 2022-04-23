@@ -549,28 +549,24 @@ local function generateTargetName()
     return ("__target_0x%08x__"):format(NAMEIDX)
 end
 
-local function addImplicitInput(context, implicit_inputs, name, dep)
-    local target = context:load(dep)
-    assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
-    if target.input then
-        tbl_append(implicit_inputs, target.input)
-    end
-    implicit_inputs[#implicit_inputs+1] = target.implicit_inputs
-end
-
-local function getImplicitInput(context, name, attribute)
-    local implicit_inputs = {}
+local function getImplicitInputs(context, name, attribute)
+    local res = {}
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            addImplicitInput(context, implicit_inputs, name, dep)
+            local target = context:load(dep)
+            assert(target, ("`%s`: deps `%s` undefine."):format(name, dep))
+            if target.input then
+                tbl_append(res, target.input)
+            end
+            res[#res+1] = target.implicit_inputs
         end
     end
-    return implicit_inputs
+    return res
 end
 
 function GEN.default(context, attribute)
     local ninja = context.ninja
-    local implicit_inputs = getImplicitInput(context, 'default', attribute)
+    local implicit_inputs = getImplicitInputs(context, 'default', attribute)
     ninja:default(implicit_inputs)
 end
 
@@ -578,7 +574,7 @@ function GEN.phony(context, attribute, name)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_inputs = getImplicitInput(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(context, name, attribute)
 
     local n = #input
     for i = 1, #implicit_inputs do
@@ -634,7 +630,7 @@ function GEN.runlua(context, attribute, name)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_inputs = getImplicitInput(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(context, name, attribute)
     local script = assert(init_single(attribute, 'script'), ("`%s`: need attribute `script`."):format(name))
     implicit_inputs[#implicit_inputs+1] = script
 
@@ -682,7 +678,7 @@ function GEN.build(context, attribute, name)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_inputs = getImplicitInput(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(context, name, attribute)
     local rule = init_single(attribute, 'rule')
 
     if rule then
@@ -720,7 +716,7 @@ function GEN.copy(context, attribute, name)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_inputs = getImplicitInput(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(context, name, attribute)
 
     if globals.hostshell == "cmd" then
         ninja:rule('copy', "powershell -NonInteractive -Command Copy-Item -Path $in$input -Destination $out | Out-Null", {

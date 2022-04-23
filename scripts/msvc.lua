@@ -225,29 +225,30 @@ local function ucrtpath(arch, mode)
     if not UniversalCRTSdkDir then
         return
     end
-    local path = fs.path(UniversalCRTSdkDir) / 'Redist'
+    local path = UniversalCRTSdkDir..'/Redist'
     local redist, ver
-    local function accept(p)
-        local ucrt = p / 'ucrt/DLLs' / arch
+    local function accept(p, version)
+        local ucrt = p..'/ucrt/DLLs/'..arch
         if fs.exists(ucrt) then
-            local version = 0
-            if p ~= path then
-                version = p:filename():string():gsub('10%.0%.([0-9]+)%.0', '%1')
-                version = tonumber(version)
-            end
             if not ver or ver < version then
                 redist, ver = ucrt, version
             end
         end
     end
-    accept(path)
+    accept(path, 0)
     for p in fs.pairs(path) do
-        accept(p)
+        local version = p:filename():string():gsub('10%.0%.([0-9]+)%.0', '%1')
+        version = tonumber(version)
+        accept(p:string(), version)
     end
     if not redist then
         return
     end
     if mode == "debug" then
+        if ver == 0 then
+            --TODO 不一定合理，但至少比0好
+            ver = 17134
+        end
         return redist, fs.path(UniversalCRTSdkDir) / "bin" / ("10.0.%d.0"):format(ver) / arch / "ucrt"
     end
     return redist

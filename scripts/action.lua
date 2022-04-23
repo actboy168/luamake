@@ -80,14 +80,16 @@ end
 
 if globals.perf then
     local monotonic = require 'bee.time'.monotonic
+    local perf_what
+    local perf_time
     local perf_status = {}
     local function perf_end()
-        local time = monotonic() - perf_status[2]
-        print(("%s: %dms."):format(perf_status[1], time))
+        local time = monotonic() - perf_time
+        print(("%s: %dms."):format(perf_what, time))
     end
     local function perf(what)
-        perf_status[1] = what
-        perf_status[2] = monotonic()
+        perf_what = what
+        perf_time = monotonic()
         return perf_status
     end
     setmetatable(perf_status, {__close = perf_end})

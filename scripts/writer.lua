@@ -332,7 +332,7 @@ local function update_ldflags(context, ldflags, attribute, name)
     cc.update_ldflags(ldflags, attribute, name)
 end
 
-local function generate(context, rule, name, attribute)
+local function generate(context, rule, attribute, name)
     local target = loaded[name]
     local input
     local ldflags
@@ -570,24 +570,11 @@ end
 
 function GEN.default(context, attribute)
     local ninja = context.ninja
-    local default_targets = {}
-    local function add_target(v)
-        if type(v) == "table" then
-            for _, dep in ipairs(v) do
-                if dep then
-                    add_target(dep)
-                end
-            end
-        elseif type(v) == "string" then
-            local dep = v
-            addImplicitInput(context, default_targets, 'default', dep)
-        end
-    end
-    add_target(attribute)
-    ninja:default(default_targets)
+    local implicit_inputs = getImplicitInput(context, 'default', attribute)
+    ninja:default(implicit_inputs)
 end
 
-function GEN.phony(context, name, attribute)
+function GEN.phony(context, attribute, name)
     local ninja = context.ninja
     local input = attribute.input or {}
     local output = attribute.output or {}
@@ -621,12 +608,11 @@ function GEN.phony(context, name, attribute)
     end
 end
 
-function GEN.rule(context, name, local_attribute, global_attribute)
+function GEN.rule(context, attribute, name)
     assert(loaded_rule[name] == nil, ("rule `%s`: redefinition."):format(name))
     loaded_rule[name] = true
 
     local ninja = context.ninja
-    local attribute = reslove_attributes(global_attribute, local_attribute)
     local command = {}
     for i, v in ipairs(attribute) do
         command[i] = fsutil.quotearg(v)
@@ -640,7 +626,7 @@ function GEN.rule(context, name, local_attribute, global_attribute)
     ninja:rule(name, table.concat(command, " "), kwargs)
 end
 
-function GEN.runlua(context, name, attribute)
+function GEN.runlua(context, attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
@@ -688,7 +674,7 @@ function GEN.runlua(context, name, attribute)
     end
 end
 
-function GEN.build(context, name, attribute)
+function GEN.build(context, attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
@@ -727,7 +713,7 @@ function GEN.build(context, name, attribute)
     end
 end
 
-function GEN.copy(context, name, attribute)
+function GEN.copy(context, attribute, name)
     if loaded[name] ~= nil then
         return
     end
@@ -779,15 +765,13 @@ end
 
 local function loadtarget(context, target)
     local rule = target[1]
-    local name = target[2]
-    local local_attribute = target[3]
-    local global_attribute = target[4]
-    local res = reslove_attributes(global_attribute, local_attribute)
+    local attribute = target[2]
+    local name = target[3]
     target.loaded = true
     if GEN[rule] then
-        GEN[rule](context, name, res)
+        GEN[rule](context, attribute, name)
     else
-        generate(context, rule, name, res)
+        generate(context, rule, attribute, name)
     end
     if name == nil then
         return false
@@ -816,15 +800,15 @@ function writer:has(name)
     return targets[name] ~= nil
 end
 
-function writer:add_statement(t)
-    statements[#statements+1] = t
+function writer:add_statement(rule, global_attribute, local_attribute, name)
+    local attribute = reslove_attributes(global_attribute, local_attribute)
+    statements[#statements+1] = {rule, attribute, name}
 end
 
-function writer:add_target(t)
-    statements[#statements+1] = t
-    local name = t[2]
+function writer:add_target(rule, global_attribute, local_attribute, name)
+    self:add_statement(rule, global_attribute, local_attribute, name)
     if name then
-        targets[name] = t
+        targets[name] = true
     end
 end
 

@@ -12,84 +12,84 @@ local api = {}
 function api:source_set(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'source_set', name, attribute, self }
+        writer:add_target('source_set', self, attribute, name)
     end
 end
 function api:shared_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'shared_library', name, attribute, self }
+        writer:add_target('shared_library', self, attribute, name)
     end
 end
 function api:static_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'static_library', name, attribute, self }
+        writer:add_target('static_library', self, attribute, name)
     end
 end
 function api:executable(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'executable', name, attribute, self }
+        writer:add_target('executable', self, attribute, name)
     end
 end
 function api:lua_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         attribute.luaversion = attribute.luaversion or "lua54"
-        writer:add_target { 'shared_library', name, attribute, self }
+        writer:add_target('shared_library', self, attribute, name)
     end
 end
 function api:lua_source(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         attribute.luaversion = attribute.luaversion or "lua54"
-        writer:add_target { 'source_set', name, attribute, self }
+        writer:add_target('source_set', self, attribute, name)
     end
 end
 function api:build(name)
     if type(name) == "table" then
-        writer:add_target { 'build', nil, name, self }
+        writer:add_target('build', self, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'build', name, attribute, self }
+        writer:add_target('build', self, attribute, name)
     end
 end
 function api:copy(name)
     if type(name) == "table" then
-        writer:add_target { 'copy', nil, name, self }
+        writer:add_target('copy', self, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'copy', name, attribute, self }
+        writer:add_target('copy', self, attribute, name)
     end
 end
 function api:runlua(name)
     if type(name) == "table" then
-        writer:add_target { 'runlua', nil, name, self }
+        writer:add_target('runlua', self, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'runlua', name, attribute, self }
+        writer:add_target('runlua', self, attribute, name)
     end
 end
 function api:default(attribute)
     if self == mainSimulator then
-        writer:add_statement {'default', attribute}
+        writer:add_statement('default', self, {deps = attribute})
     end
 end
 function api:phony(name)
     if type(name) == "table" then
-        writer:add_target { 'phony', nil, name, self }
+        writer:add_target('phony', self, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target { 'phony', name, attribute, self }
+        writer:add_target('phony', self, attribute, name)
     end
 end
 function api:has(name)
@@ -102,7 +102,7 @@ end
 function api:rule(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_statement { 'rule', name, attribute, self }
+        writer:add_statement('rule', self, attribute, name)
     end
 end
 

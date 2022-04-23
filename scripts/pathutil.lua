@@ -1,4 +1,3 @@
-local fs = require "bee.filesystem"
 local fsutil = require "fsutil"
 
 local mt = {}
@@ -13,7 +12,7 @@ end
 local function path_normalize(base, path)
     path = tostring(path)
     if path:sub(1, 1) ~= "$" then
-        if not fs.path(path):is_absolute() then
+        if not fsutil.is_absolute(path) then
             path = fsutil.join(base, path)
         end
         path = fsutil.relative(path, WORKDIR)

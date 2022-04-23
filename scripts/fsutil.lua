@@ -1,9 +1,9 @@
-local globals = require "globals"
+local OS = require "bee.platform".OS:lower()
 
 local fsutil = {}
 
-local isWindows <const> = globals.hostos == "windows"
-local isMacOS <const> = globals.hostos == "macos"
+local isWindows <const> = OS == "windows"
+local isMacOS <const> = OS == "macos"
 local PathSpilt <const> = isWindows and '[^/\\]+' or '[^/]+'
 local PathIgnoreCase <const> = isWindows or isMacOS
 
@@ -62,6 +62,31 @@ end
 
 function fsutil.extension(path)
     return path:match "[^/]([.][^./]*)$"
+end
+
+if isWindows then
+    function fsutil.is_absolute(path)
+        if path:match "^%a:[/\\]" then
+            return true
+        end
+        if path:match "^[/\\][/\\][%?%.][/\\]" then
+            return not path:match "^....[/\\]"
+        end
+        if path:match "^[/\\]%?%?[/\\]" then
+            return not path:match "^....[/\\]"
+        end
+        if path:match "^[/\\][/\\][^/\\]" then
+            return true
+        end
+        return false
+    end
+else
+    function fsutil.is_absolute(path)
+        if path:match "^/" then
+            return true
+        end
+        return false
+    end
 end
 
 function fsutil.relative(path, base)

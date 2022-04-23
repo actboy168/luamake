@@ -1,4 +1,3 @@
-local fs = require "bee.filesystem"
 local fsutil = require "fsutil"
 
 local function sandbox_env(env, loadlua, openfile, preload, builddir)
@@ -164,7 +163,7 @@ return function (c)
     local openfile = c.openfile or io.open
     local env = c.env or {}
     local function absolute(name)
-        if fs.path(name):is_absolute() then
+        if fsutil.is_absolute(name) then
             return name
         end
         return fsutil.normalize(c.rootdir, name)

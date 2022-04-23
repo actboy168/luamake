@@ -19,7 +19,7 @@ if RawCommand[arg[1]] then
 else
     local arguments = require "arguments"
     if arguments.C then
-        if fs.path(arguments.C):is_absolute() then
+        if fsutil.is_absolute(arguments.C) then
             WORKDIR = fsutil.normalize(arguments.C)
         else
             WORKDIR = fsutil.normalize(WORKDIR, arguments.C)

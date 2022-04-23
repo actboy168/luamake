@@ -289,6 +289,8 @@ return {
     toolspath = toolspath,
     environment = environment,
     prefix = prefix,
+    vcrtpath = vcrtpath,
+    ucrtpath = ucrtpath,
     copy_vcrt = copy_vcrt,
     copy_ucrt = copy_ucrt,
     findwinsdk = findwinsdk

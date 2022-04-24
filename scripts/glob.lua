@@ -192,9 +192,9 @@ local function glob_match_file(patterns, path)
     return MATCH_FAILED
 end
 
-local function glob_match(patterns, path)
+local function glob_match(patterns, path, status)
     local filename = fsutil.filename(path:string())
-    if fs.is_directory(path) then
+    if status:is_directory() then
         return glob_match_dir(patterns, filename)
     else
         return glob_match_file(patterns, filename)
@@ -205,8 +205,8 @@ local function glob_scan(patterns, dir, result)
     if #patterns == 0 then
         return
     end
-    for path in fs.pairs(dir) do
-        local res, sub = glob_match(patterns, path)
+    for path, status in fs.pairs(dir) do
+        local res, sub = glob_match(patterns, path, status)
         if res == MATCH_PENDING then
             glob_scan(sub, path, result)
         elseif res == MATCH_SUCCESS then

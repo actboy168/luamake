@@ -7,8 +7,8 @@ local inited_version = {}
 
 local function copy_dir(from, to)
     fs.create_directories(to)
-    for file in fs.pairs(from) do
-        if not fs.is_directory(file) then
+    for file, status in fs.pairs(from) do
+        if not status:is_directory() then
             fs.copy_file(file, to / file:filename(), fs.copy_options.update_existing)
         end
     end

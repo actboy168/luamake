@@ -79,35 +79,26 @@ local function clean()
 end
 
 if globals.perf then
-    local monotonic = require 'bee.time'.monotonic
-    local perf_what
-    local perf_time
-    local perf_status = {}
-    local function perf_end()
-        local time = monotonic() - perf_time
-        print(("%s: %dms."):format(perf_what, time))
-    end
-    local function perf(what)
-        perf_what = what
-        perf_time = monotonic()
-        return perf_status
-    end
-    setmetatable(perf_status, {__close = perf_end})
-
+    local perf = require 'perf'
+    local perf_single = perf.single
+    local perf_print = perf.print
     local function perf_init()
-        local _ <close> = perf "init"
+        local _ <close> = perf_single "init"
         return init()
     end
     local function perf_generate()
-        local _ <close> = perf "generate"
-        return generate()
+        do
+            local _ <close> = perf_single "generate"
+            generate()
+        end
+        return perf_print()
     end
     local function perf_make()
-        local _ <close> = perf "make"
+        local _ <close> = perf_single "make"
         return make()
     end
     local function perf_clean()
-        local _ <close> = perf "clean"
+        local _ <close> = perf_single "clean"
         return clean()
     end
     return {

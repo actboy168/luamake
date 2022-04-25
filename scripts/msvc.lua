@@ -74,8 +74,7 @@ local function findwinsdk()
     end
     local function find(dir)
         local max
-        local winsdk = fs.path(dir) / "include"
-        for file in fs.pairs(winsdk) do
+        for file in fs.pairs(dir.."/include") do
             if fs.exists(file / "um" / "winsdkver.h") then
                 local version = file:filename():string()
                 if version:sub(1,3) == "10." then
@@ -249,39 +248,9 @@ local function ucrtpath(arch, mode)
             --TODO 不一定合理，但至少比0好
             ver = 17134
         end
-        return redist, fs.path(UniversalCRTSdkDir) / "bin" / ("10.0.%d.0"):format(ver) / arch / "ucrt"
+        return redist, UniversalCRTSdkDir.."/bin/10.0."..ver..".0/"..arch.."/ucrt"
     end
     return redist
-end
-
-local function copy_vcrt(arch, target, mode)
-    local ignore = mode == "debug" and fs.path "vccorlib140d.dll" or fs.path "vccorlib140.dll"
-    fs.create_directories(target)
-    for dll in fs.pairs(vcrtpath(arch, mode)) do
-        local filename = dll:filename()
-        if filename ~= ignore then
-            fs.copy_file(dll, target / filename, fs.copy_options.overwrite_existing)
-        end
-    end
-end
-
-local function copy_ucrt(arch, target, mode)
-    fs.create_directories(target)
-    if mode == "debug" then
-        local redist, bin = ucrtpath(arch, mode)
-        local ignore = fs.path "ucrtbase.dll"
-        for dll in fs.pairs(redist) do
-            local filename = dll:filename()
-            if filename ~= ignore then
-                fs.copy_file(dll, target / filename, fs.copy_options.overwrite_existing)
-            end
-        end
-        fs.copy_file(bin / "ucrtbased.dll", target / "ucrtbased.dll", fs.copy_options.overwrite_existing)
-    else
-        for dll in fs.pairs(ucrtpath(arch, mode)) do
-            fs.copy_file(dll, target / dll:filename(), fs.copy_options.overwrite_existing)
-        end
-    end
 end
 
 return {
@@ -291,7 +260,5 @@ return {
     prefix = prefix,
     vcrtpath = vcrtpath,
     ucrtpath = ucrtpath,
-    copy_vcrt = copy_vcrt,
-    copy_ucrt = copy_ucrt,
     findwinsdk = findwinsdk
 }

@@ -228,7 +228,6 @@ local function importfile(simulator, rootdir, filename)
         builddir = globals.builddir,
         preload =  {
             luamake = simulator,
-            msvc = (not globals.prebuilt and globals.compiler == 'msvc') and require "msvc" or nil
         },
         openfile = openfile,
         main = filename,

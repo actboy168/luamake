@@ -45,9 +45,6 @@ end
 sandbox {
     rootdir = WORKDIR,
     builddir = globals.builddir,
-    preload = globals.compiler == 'msvc' and {
-        msvc = require "msvc",
-    },
     main = arg[0],
     args = arg,
 }

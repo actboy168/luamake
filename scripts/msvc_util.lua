@@ -103,4 +103,7 @@ function m.archAlias(arch)
     return ArchAlias[arch]
 end
 
+m.vcrtpath = msvc.vcrtpath
+m.ucrtpath = msvc.ucrtpath
+
 return m

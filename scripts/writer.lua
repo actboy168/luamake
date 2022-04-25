@@ -771,15 +771,14 @@ function GEN.msvc_copy_vcrt(context, attribute, name)
     init_single(attribute, 'mode', 'release')
     init_single(attribute, 'arch')
 
-    local msvc = require "msvc"
-    local msvcutil = require "msvc_util"
+    local msvc = require "msvc_util"
     local outputdir = attribute.output[#attribute.output]
-    local archalias = msvcutil.archAlias(attribute.arch)
+    local archalias = msvc.archAlias(attribute.arch)
 
-    local ignore = attribute.mode == "debug" and fs.path "vccorlib140d.dll" or fs.path "vccorlib140.dll"
+    local ignore = attribute.mode == "debug" and "vccorlib140d.dll" or "vccorlib140.dll"
     for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.mode)) do
         local filename = dll:filename()
-        if filename ~= ignore then
+        if filename:string():lower() ~= ignore then
             input[#input+1] = dll
             output[#output+1] = outputdir / filename
         end
@@ -803,18 +802,17 @@ function GEN.msvc_copy_ucrt(context, attribute, name)
     init_single(attribute, 'mode', 'release')
     init_single(attribute, 'arch')
 
-    local msvc = require "msvc"
-    local msvcutil = require "msvc_util"
+    local msvc = require "msvc_util"
     local outputdir = attribute.output[#attribute.output]
-    local archalias = msvcutil.archAlias(attribute.arch)
+    local archalias = msvc.archAlias(attribute.arch)
 
     local redist, bin = msvc.ucrtpath(archalias, attribute.mode)
-    local ignore = attribute.mode == "debug" and fs.path "ucrtbase.dll" or nil
+    local ignore = attribute.mode == "debug" and "ucrtbase.dll" or nil
     for dll in fs.pairs(redist) do
         local filename = dll:filename()
-        if filename == ignore then
-            input[#input+1] = bin / "ucrtbased.dll"
-            output[#output+1] = outputdir / "ucrtbased.dll"
+        if filename:string():lower() == ignore then
+            input[#input+1] = fsutil.join(bin, "ucrtbased.dll")
+            output[#output+1] = fsutil.join(outputdir, "ucrtbased.dll")
         else
             input[#input+1] = dll
             output[#output+1] = outputdir / filename

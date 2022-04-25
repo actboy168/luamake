@@ -376,6 +376,9 @@ local function generate(context, rule, attribute, name)
     init_single(attribute, 'luaversion')
     init_single(attribute, 'basename')
 
+    local default_enable_lto = attribute.mode == 'release' and globals.compiler == 'msvc'
+    init_single(attribute, 'lto', default_enable_lto and "on" or "off")
+
     if attribute.luaversion then
         require "lua_support"(context, rule, name, attribute)
     end

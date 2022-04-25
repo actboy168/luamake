@@ -67,6 +67,10 @@ function gcc.update_flags(flags, attribute)
     if attribute.mode == 'debug' then
         flags[#flags+1] = '-g'
     end
+    if attribute.lto ~= "off" then
+        flags[#flags+1] = "-flto"
+        flags[#flags+1] = "-fno-fat-lto-objects"
+    end
 end
 
 function gcc.update_ldflags(ldflags, attribute)
@@ -83,6 +87,10 @@ function gcc.update_ldflags(ldflags, attribute)
     end
     if attribute.mode == 'release' then
         ldflags[#ldflags+1] = '-s'
+    end
+    if attribute.lto ~= "off" then
+        ldflags[#ldflags+1] = "-flto"
+        ldflags[#ldflags+1] = "-fno-fat-lto-objects"
     end
 end
 

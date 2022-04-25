@@ -15,9 +15,9 @@ local cl = {
     },
     optimize = {
         off      = '/Od',
-        size     = '/O1 /GL /Zc:inline',
-        speed    = '/O2 /GL /Zc:inline',
-        maxspeed = '/Ox /GL /Zc:inline /fp:fast',
+        size     = '/O1 /Zc:inline',
+        speed    = '/O2 /Zc:inline',
+        maxspeed = '/Ox /Zc:inline /fp:fast',
     },
     warnings = {
         off = "/W0",
@@ -76,6 +76,9 @@ function cl.update_flags(flags, attribute, name)
     else
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MD' or '/MT'
     end
+    if attribute.lto ~= "off" then
+        flags[#flags+1] = "/GL"
+    end
 end
 
 function cl.update_ldflags(ldflags, attribute, name)
@@ -84,6 +87,8 @@ function cl.update_ldflags(ldflags, attribute, name)
         ldflags[#ldflags+1] = ('/pdb:$obj/%s.pdb'):format(name)
     else
         ldflags[#ldflags+1] = '/DEBUG:NONE'
+    end
+    if attribute.lto ~= "off" then
         ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
     end
 end

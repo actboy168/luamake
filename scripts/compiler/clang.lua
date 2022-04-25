@@ -59,6 +59,13 @@ function clang.update_flags(flags, attribute)
     if attribute.mode == 'debug' then
         flags[#flags+1] = '-g'
     end
+    if attribute.lto ~= "off" then
+        if attribute.lto == "thin" then
+            flags[#flags+1] = "-flto=thin"
+        else
+            flags[#flags+1] = "-flto"
+        end
+    end
     update_target(flags, attribute)
     if attribute.__target then
         flags[#flags+1] = "-target"
@@ -86,6 +93,13 @@ function clang.update_ldflags(ldflags, attribute)
     ldflags[#ldflags+1] = "-lstdc++"
     if attribute.mode == 'release' then
         ldflags[#ldflags+1] = '-Wl,-S,-x'
+    end
+    if attribute.lto ~= "off" then
+        if attribute.lto == "thin" then
+            ldflags[#ldflags+1] = "-flto=thin"
+        else
+            ldflags[#ldflags+1] = "-flto"
+        end
     end
     if attribute.__target then
         ldflags[#ldflags+1] = "-target"

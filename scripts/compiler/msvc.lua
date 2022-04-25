@@ -89,6 +89,7 @@ function cl.update_ldflags(ldflags, attribute, name)
         ldflags[#ldflags+1] = '/DEBUG:NONE'
     end
     if attribute.lto ~= "off" then
+        ldflags[#ldflags+1] = '/INCREMENTAL:NO'
         ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
     end
 end

@@ -137,7 +137,7 @@ build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
 rule link_luamake
   command = cl /nologo @$out.rsp /link /IMPLIB:$obj/luamake.lib $
     advapi32.lib ws2_32.lib ole32.lib user32.lib version.lib wbemuuid.lib $
-    oleAut32.lib shell32.lib /DEBUG:NONE /LTCG /out:$out
+    oleAut32.lib shell32.lib /DEBUG:NONE /INCREMENTAL:NO /LTCG /out:$out
   description = Link    Exe $out
   rspfile = $out.rsp
   rspfile_content = $in_newline
@@ -210,8 +210,8 @@ rule c_lua54
   deps = msvc
 build $obj/lua54/forward_lua.obj: c_lua54 3rd/bee.lua/bootstrap/forward_lua.c
 rule link_lua54
-  command = cl /nologo @$out.rsp /link $obj/luamake.lib /DEBUG:NONE /LTCG $
-    /out:$out /DLL /IMPLIB:$implib
+  command = cl /nologo @$out.rsp /link $obj/luamake.lib /DEBUG:NONE $
+    /INCREMENTAL:NO /LTCG /out:$out /DLL /IMPLIB:$implib
   description = Link    Dll $out
   restat = 1
   rspfile = $out.rsp

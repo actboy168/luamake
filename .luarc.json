@@ -3,6 +3,16 @@
         "disable": [
             "discard-returns"
         ],
+        "neededFileStatus": {
+            "redefined-local": "Any",
+            "unused-vararg": "Any",
+            "unused-function": "Any",
+            "unused-local": "Any",
+            "unused-label": "Any",
+            "code-after-break": "Any",
+            "empty-block": "Any",
+            "trailing-space": "Any"
+        },
         "severity": {
             "redefined-local": "Warning",
             "unused-vararg": "Warning",

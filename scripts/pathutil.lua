@@ -41,6 +41,10 @@ local function tostring(base, path)
     return path_normalize(base, path)
 end
 
+local function is(path)
+    return mt == getmetatable(path)
+end
+
 function mt:__tostring()
     assert(self.accepted, "Cannot be used before accept.")
     return self.value
@@ -60,4 +64,5 @@ return {
     create = create,
     tostring = tostring,
     accept = accept,
+    is = is,
 }

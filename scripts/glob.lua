@@ -1,5 +1,6 @@
 local fs = require "bee.filesystem"
 local fsutil = require "fsutil"
+local pathutil = require "pathutil"
 local globals = require "globals"
 
 local isWindows <const> = globals.hostos == "windows"
@@ -27,17 +28,30 @@ local function compile(pattern)
     )
 end
 
-local function pattern_compile(res, root, str)
+local function pattern_preprocess(root, pattern)
+    local ispath = pathutil.is(pattern)
+    local value = ispath and pattern.value or pattern
+
     -- compatible
-    str = str:gsub("(%*%*)([^"..PathSeq.."])", "**/*%1")
+    value = value:gsub("(%*%*)([^"..PathSeq.."])", "**/*%1")
 
     local ignore
-    if str:match "^!" then
+    if value:match "^!" then
         ignore = true
-        str = str:sub(2)
+        value = value:sub(2)
     end
+
+    if ispath then
+        pattern.value = value
+    else
+        pattern = value
+    end
+    local path = pathutil.tostring(root, pattern)
+    return path, ignore
+end
+
+local function pattern_compile(res, path, ignore)
     local pattern = {ignore=ignore}
-    local path = fsutil.join(root, str)
     path:gsub('[^'..PathSeq..']+', function (w)
         if w == '..' and #pattern ~= 0 and pattern[#pattern] ~= '..' then
             if pattern[#pattern] == GlobStar then
@@ -110,10 +124,11 @@ local function glob_compile(root, patterns)
     local res = {}
     local files = {}
     for _, pattern in ipairs(patterns) do
-        if pattern:match "^!" or pattern:match "%*" then
-            pattern_compile(res, root, pattern)
+        local path, ignore = pattern_preprocess(root, pattern)
+        if ignore or path:match "%*" then
+            pattern_compile(res, path, ignore)
         else
-            files[#files+1] = fsutil.normalize(root, pattern)
+            files[#files+1] = path
         end
     end
     if #res == 0 then

@@ -30,23 +30,36 @@ end
 
 local function pattern_preprocess(root, pattern)
     local ispath = pathutil.is(pattern)
-    local value = ispath and pattern.value or pattern
+    if ispath and pattern.accepted then
+        local value = pattern.value
+        local ignore
+        if value:match "^!" then
+            ignore = true
+            value = value:sub(2)
+        end
+        return value, ignore
+    end
+
+    local path = ispath and pattern.value or pattern
 
     -- compatible
-    value = value:gsub("(%*%*)([^"..PathSeq.."])", "**/*%1")
+    path = path:gsub("(%*%*)([^"..PathSeq.."])", "**/*%1")
 
     local ignore
-    if value:match "^!" then
+    if path:match "^!" then
         ignore = true
-        value = value:sub(2)
+        path = path:sub(2)
     end
+    path = fsutil.normalize(root, path)
 
     if ispath then
-        pattern.value = value
-    else
-        pattern = value
+        if ignore then
+            pattern.value = "!"..path
+        else
+            pattern.value = path
+        end
+        pattern.accepted = true
     end
-    local path = pathutil.tostring(root, pattern)
     return path, ignore
 end
 

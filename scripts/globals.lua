@@ -1,4 +1,4 @@
-local platform = require "bee.platform"
+local OS = require "bee.platform".os
 local arguments = require "arguments"
 
 local globals = {}
@@ -10,7 +10,7 @@ end
 globals.mode = globals.mode or "release"
 globals.crt = globals.crt or "dynamic"
 
-globals.hostos = globals.hostos or platform.OS:lower()
+globals.hostos = globals.hostos or OS
 globals.hostshell = globals.hostshell or (function()
     if globals.hostos == "windows" then
         if os.getenv "MSYSTEM" then

@@ -1,4 +1,4 @@
-local OS = require "bee.platform".OS:lower()
+local OS = require "bee.platform".os
 
 local fsutil = {}
 

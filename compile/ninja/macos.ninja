@@ -77,48 +77,21 @@ build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
     3rd/bee.lua/binding/lua_time.cpp
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
-    -mmacosx-version-min=10.15 -DLUA_USE_MACOSX -DNDEBUG $
+    -fvisibility=hidden -mmacosx-version-min=10.15 -DNDEBUG $
     -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
-build $obj/source_lua/lapi.obj: c_source_lua 3rd/bee.lua/3rd/lua/lapi.c
-build $obj/source_lua/lauxlib.obj: c_source_lua 3rd/bee.lua/3rd/lua/lauxlib.c
-build $obj/source_lua/lbaselib.obj: c_source_lua $
-    3rd/bee.lua/3rd/lua/lbaselib.c
-build $obj/source_lua/lcode.obj: c_source_lua 3rd/bee.lua/3rd/lua/lcode.c
-build $obj/source_lua/lcorolib.obj: c_source_lua $
-    3rd/bee.lua/3rd/lua/lcorolib.c
-build $obj/source_lua/lctype.obj: c_source_lua 3rd/bee.lua/3rd/lua/lctype.c
-build $obj/source_lua/ldblib.obj: c_source_lua 3rd/bee.lua/3rd/lua/ldblib.c
-build $obj/source_lua/ldebug.obj: c_source_lua 3rd/bee.lua/3rd/lua/ldebug.c
-build $obj/source_lua/ldo.obj: c_source_lua 3rd/bee.lua/3rd/lua/ldo.c
-build $obj/source_lua/ldump.obj: c_source_lua 3rd/bee.lua/3rd/lua/ldump.c
-build $obj/source_lua/lfunc.obj: c_source_lua 3rd/bee.lua/3rd/lua/lfunc.c
-build $obj/source_lua/lgc.obj: c_source_lua 3rd/bee.lua/3rd/lua/lgc.c
-build $obj/source_lua/linit.obj: c_source_lua 3rd/bee.lua/3rd/lua/linit.c
-build $obj/source_lua/liolib.obj: c_source_lua 3rd/bee.lua/3rd/lua/liolib.c
-build $obj/source_lua/llex.obj: c_source_lua 3rd/bee.lua/3rd/lua/llex.c
-build $obj/source_lua/lmathlib.obj: c_source_lua $
-    3rd/bee.lua/3rd/lua/lmathlib.c
-build $obj/source_lua/lmem.obj: c_source_lua 3rd/bee.lua/3rd/lua/lmem.c
-build $obj/source_lua/loadlib.obj: c_source_lua 3rd/bee.lua/3rd/lua/loadlib.c
-build $obj/source_lua/lobject.obj: c_source_lua 3rd/bee.lua/3rd/lua/lobject.c
-build $obj/source_lua/lopcodes.obj: c_source_lua $
-    3rd/bee.lua/3rd/lua/lopcodes.c
-build $obj/source_lua/loslib.obj: c_source_lua 3rd/bee.lua/3rd/lua/loslib.c
-build $obj/source_lua/lparser.obj: c_source_lua 3rd/bee.lua/3rd/lua/lparser.c
-build $obj/source_lua/lstate.obj: c_source_lua 3rd/bee.lua/3rd/lua/lstate.c
-build $obj/source_lua/lstring.obj: c_source_lua 3rd/bee.lua/3rd/lua/lstring.c
-build $obj/source_lua/lstrlib.obj: c_source_lua 3rd/bee.lua/3rd/lua/lstrlib.c
-build $obj/source_lua/ltable.obj: c_source_lua 3rd/bee.lua/3rd/lua/ltable.c
-build $obj/source_lua/ltablib.obj: c_source_lua 3rd/bee.lua/3rd/lua/ltablib.c
-build $obj/source_lua/ltm.obj: c_source_lua 3rd/bee.lua/3rd/lua/ltm.c
-build $obj/source_lua/lundump.obj: c_source_lua 3rd/bee.lua/3rd/lua/lundump.c
-build $obj/source_lua/lutf8lib.obj: c_source_lua $
-    3rd/bee.lua/3rd/lua/lutf8lib.c
-build $obj/source_lua/lvm.obj: c_source_lua 3rd/bee.lua/3rd/lua/lvm.c
-build $obj/source_lua/lzio.obj: c_source_lua 3rd/bee.lua/3rd/lua/lzio.c
+build $obj/source_lua/utf8_crt.obj: c_source_lua $
+    3rd/bee.lua/3rd/lua/utf8_crt.c
+rule c_source_lua_1
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
+    -mmacosx-version-min=10.15 -DMAKE_LIB -DLUA_USE_MACOSX -DNDEBUG $
+    -Wunguarded-availability -o $out -c $in
+  description = Compile C   $out
+  deps = gcc
+  depfile = $out.d
+build $obj/source_lua/onelua.obj: c_source_lua_1 3rd/bee.lua/3rd/lua/onelua.c
 rule cxx_source_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
     -fvisibility=hidden -mmacosx-version-min=10.15 -I3rd/bee.lua/3rd/lua $
@@ -148,23 +121,8 @@ build $bin/luamake: link_luamake $obj/source_bootstrap/main.obj $
     $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
     $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
     $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $
-    $obj/source_bee/lua_time.obj $obj/source_lua/lapi.obj $
-    $obj/source_lua/lauxlib.obj $obj/source_lua/lbaselib.obj $
-    $obj/source_lua/lcode.obj $obj/source_lua/lcorolib.obj $
-    $obj/source_lua/lctype.obj $obj/source_lua/ldblib.obj $
-    $obj/source_lua/ldebug.obj $obj/source_lua/ldo.obj $
-    $obj/source_lua/ldump.obj $obj/source_lua/lfunc.obj $
-    $obj/source_lua/lgc.obj $obj/source_lua/linit.obj $
-    $obj/source_lua/liolib.obj $obj/source_lua/llex.obj $
-    $obj/source_lua/lmathlib.obj $obj/source_lua/lmem.obj $
-    $obj/source_lua/loadlib.obj $obj/source_lua/lobject.obj $
-    $obj/source_lua/lopcodes.obj $obj/source_lua/loslib.obj $
-    $obj/source_lua/lparser.obj $obj/source_lua/lstate.obj $
-    $obj/source_lua/lstring.obj $obj/source_lua/lstrlib.obj $
-    $obj/source_lua/ltable.obj $obj/source_lua/ltablib.obj $
-    $obj/source_lua/ltm.obj $obj/source_lua/lundump.obj $
-    $obj/source_lua/lutf8lib.obj $obj/source_lua/lvm.obj $
-    $obj/source_lua/lzio.obj
+    $obj/source_bee/lua_time.obj $obj/source_lua/utf8_crt.obj $
+    $obj/source_lua/onelua.obj
 rule copy
   command = cp -fv $in$input $out 1>/dev/null
   description = Copy $in$input $out

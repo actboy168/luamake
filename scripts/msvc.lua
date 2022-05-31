@@ -191,6 +191,16 @@ local function toolspath()
     return installpath()..'/VC/Tools/MSVC/'..ToolsVersion
 end
 
+local function binpath(arch)
+    local RedistVersion = (function ()
+        local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt'
+        local r = readall(verfile)
+        return strtrim(r)
+    end)()
+    local host = Is64BitWindows() and "Hostx64" or "Hostx86"
+    return installpath()..'/VC/Tools/MSVC/'..RedistVersion..'/bin/'..host..'/'..arch
+end
+
 local function vcrtpath(arch, mode)
     local RedistVersion = (function ()
         local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt'
@@ -258,6 +268,7 @@ return {
     toolspath = toolspath,
     environment = environment,
     prefix = prefix,
+    binpath = binpath,
     vcrtpath = vcrtpath,
     ucrtpath = ucrtpath,
     findwinsdk = findwinsdk

@@ -832,6 +832,63 @@ function GEN.msvc_copy_ucrt(context, attribute, name)
     end
 end
 
+function GEN.msvc_copydll(context, attribute, name)
+    local ninja = context.ninja
+    local input = {}
+    local output = {}
+    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    init_single(attribute, 'mode', 'release')
+    init_single(attribute, 'arch')
+    init_single(attribute, 'type')
+
+    local msvc = require "msvc_util"
+    local outputdir = attribute.output[#attribute.output]
+    local archalias = msvc.archAlias(attribute.arch)
+
+    if attribute.type == "vcrt" then
+        local ignore = attribute.mode == "debug" and "vccorlib140d.dll" or "vccorlib140.dll"
+        for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.mode)) do
+            local filename = dll:filename()
+            if filename:string():lower() ~= ignore then
+                input[#input+1] = dll
+                output[#output+1] = outputdir / filename
+            end
+        end
+    elseif attribute.type == "ucrt" then
+        local redist, bin = msvc.ucrtpath(archalias, attribute.mode)
+        local ignore = attribute.mode == "debug" and "ucrtbase.dll" or nil
+        for dll in fs.pairs(redist) do
+            local filename = dll:filename()
+            if filename:string():lower() == ignore then
+                input[#input+1] = fsutil.join(bin, "ucrtbased.dll")
+                output[#output+1] = fsutil.join(outputdir, "ucrtbased.dll")
+            else
+                input[#input+1] = dll
+                output[#output+1] = outputdir / filename
+            end
+        end
+    elseif attribute.type == "asan" then
+        local inputdir = msvc.binpath(archalias)
+        local filename = ("clang_rt.asan_%sdynamic-%s.dll"):format(
+            attribute.mode == "debug" and "dbg_" or "",
+            attribute.arch == "x86_64" and "x86_64" or "i386"
+        )
+        input[#input+1] = fsutil.join(inputdir, filename)
+        output[#output+1] = fsutil.join(outputdir, filename)
+    else
+        error("`msvc_copydll` unknown type: " .. attribute.type)
+    end
+    generate_copy(ninja, implicit_inputs, input, output)
+
+    if name then
+        assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
+        ninja:phony(name, output)
+        loaded[name] = {
+            implicit_inputs = name,
+        }
+    end
+end
+
 local function loadtarget(context, target)
     local rule = target[1]
     local attribute = target[2]

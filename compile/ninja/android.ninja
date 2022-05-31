@@ -79,7 +79,7 @@ build $obj/source_lua/utf8_crt.obj: c_source_lua $
     3rd/bee.lua/3rd/lua/utf8_crt.c
 rule c_source_lua_1
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror -DMAKE_LIB $
-    -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
+    -DLUA_USE_LINUX -DNDEBUG -Wno-maybe-uninitialized -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d

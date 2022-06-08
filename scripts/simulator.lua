@@ -107,26 +107,6 @@ function api:rule(name)
 end
 
 if globals.compiler == "msvc" then
-    function api:msvc_copy_vcrt(name)
-        if type(name) == "table" then
-            writer:add_target('msvc_copy_vcrt', self, name)
-            return
-        end
-        assert(type(name) == "string", "Name is not a string.")
-        return function (attribute)
-            writer:add_target('msvc_copy_vcrt', self, attribute, name)
-        end
-    end
-    function api:msvc_copy_ucrt(name)
-        if type(name) == "table" then
-            writer:add_target('msvc_copy_ucrt', self, name)
-            return
-        end
-        assert(type(name) == "string", "Name is not a string.")
-        return function (attribute)
-            writer:add_target('msvc_copy_ucrt', self, attribute, name)
-        end
-    end
     function api:msvc_copydll(name)
         if type(name) == "table" then
             writer:add_target('msvc_copydll', self, name)
@@ -138,12 +118,6 @@ if globals.compiler == "msvc" then
         end
     end
 else
-    function api:msvc_copy_vcrt()
-        return function () end
-    end
-    function api:msvc_copy_ucrt()
-        return function () end
-    end
     function api:msvc_copydll()
         return function () end
     end

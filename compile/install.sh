@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 DIR=$(cd `dirname $0`/..; pwd)
 
 case "`uname`" in
@@ -18,6 +18,9 @@ case "`uname`" in
   Darwin)
     ninja -f $DIR/compile/ninja/macos.ninja
     ;;
+  NetBSD)
+    ninja -f $DIR/compile/ninja/netbsd.ninja
+    ;;
   *)
     echo "Unknown OS $OS"
     exit 1
@@ -35,19 +38,19 @@ write_profile()
 }
 
 include () {
-    [[ -f "$1" ]] && source "$1"
+    [ -f "$1" ] && source "$1"
 }
 
-if   [[ "$SHELL" = */zsh ]]; then
+if   [ "$SHELL" = */zsh ]; then
     include ~/.zshenv
     if [ -d "$ZDOTDIR" ]; then
         write_profile "$ZDOTDIR"/.zshrc
     else
         write_profile ~/.zshrc
     fi
-elif [[ "$SHELL" = */ksh ]]; then
+elif [ "$SHELL" = */ksh ]; then
     write_profile ~/.kshrc
-elif [[ "$SHELL" = */bash ]]; then
+elif [ "$SHELL" = */bash ]; then
     write_profile ~/.bashrc
     if [ "$(uname)" == "Darwin" ]; then
         write_profile ~/.bash_profile

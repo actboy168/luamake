@@ -8,13 +8,21 @@ cd luamake
 git submodule update --init
 ```
 
-msvc
-* compile/install.bat
+- Windows (msvc)
+```
+compile/install.bat
+```
 
-mingw / macos / linux / android
+- Windows (mingw) 
+- MacOS
+- Linux
+- Android
+- NetBSD
 
-* Install ninja
-* compile/install.sh
+```
+Install ninja
+compile/install.sh
+```
 
 ## Quick start
 

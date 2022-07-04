@@ -84,7 +84,6 @@ local ATTRIBUTE <const> = {
     -- path
     includes = PlatformPath,
     linkdirs = PlatformPath,
-    input    = PlatformPath,
     output   = PlatformPath,
     script   = PlatformPath,
     -- other
@@ -579,7 +578,7 @@ end
 
 function GEN.phony(context, attribute, name)
     local ninja = context.ninja
-    local input = attribute.input or {}
+    local input = get_blob(attribute.rootdir, attribute.input)
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(context, name, attribute)
 
@@ -750,7 +749,7 @@ end
 
 function GEN.copy(context, attribute, name)
     local ninja = context.ninja
-    local input = attribute.input or {}
+    local input = get_blob(attribute.rootdir, attribute.input)
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(context, name, attribute)
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))

@@ -40,7 +40,7 @@ local function pattern_preprocess(root, pattern)
         return value, ignore
     end
 
-    local path = ispath and pattern.value or pattern
+    local path = ispath and pattern.value or tostring(pattern)
 
     -- compatible
     path = path:gsub("(%*%*)([^"..PathSeq.."])", "**/*%1")

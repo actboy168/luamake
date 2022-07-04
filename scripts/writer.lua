@@ -42,13 +42,11 @@ local function init_single(attribute, attr_name, default)
     return attribute[attr_name]
 end
 
-local function get_sources(attribute)
-    local sources = attribute.sources
-    if type(sources) ~= "table" then
+local function get_blob(rootdir, lst)
+    if type(lst) ~= "table" then
         return {}
     end
-    local rootdir = attribute.rootdir
-    local result = glob(rootdir, sources)
+    local result = glob(rootdir, lst)
     for i, r in ipairs(result) do
         result[i] = fsutil.relative(r, WORKDIR)
     end
@@ -360,7 +358,7 @@ local function generate(context, rule, attribute, name)
 
     local ninja = context.ninja
     local bindir = init_single(attribute, 'bindir', globals.bindir)
-    local sources = get_sources(attribute)
+    local sources = get_blob(attribute.rootdir, attribute.sources)
     local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
     local implicit_inputs = {}
 
@@ -637,7 +635,7 @@ function GEN.runlua(context, attribute, name)
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
-    local input = attribute.input or {}
+    local input = get_blob(attribute.rootdir, attribute.input)
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(context, name, attribute)
     local script = assert(init_single(attribute, 'script'), ("`%s`: need attribute `script`."):format(name))
@@ -685,7 +683,7 @@ function GEN.build(context, attribute, name)
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
-    local input = attribute.input or {}
+    local input = get_blob(attribute.rootdir, attribute.input)
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(context, name, attribute)
     local rule = init_single(attribute, 'rule')

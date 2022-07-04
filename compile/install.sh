@@ -41,19 +41,25 @@ include () {
     [ -f "$1" ] && source "$1"
 }
 
-if   [ "$SHELL" = */zsh ]; then
+case "$SHELL" in
+  */zsh)
     include ~/.zshenv
     if [ -d "$ZDOTDIR" ]; then
         write_profile "$ZDOTDIR"/.zshrc
     else
         write_profile ~/.zshrc
     fi
-elif [ "$SHELL" = */ksh ]; then
+    ;;
+  */ksh)
     write_profile ~/.kshrc
-elif [ "$SHELL" = */bash ]; then
+    ;;
+  */bash)
     write_profile ~/.bashrc
     if [ "$(uname)" == "Darwin" ]; then
         write_profile ~/.bash_profile
     fi
-else write_profile ~/.profile
-fi
+    ;;
+  *)
+    write_profile ~/.profile
+    ;;
+esac

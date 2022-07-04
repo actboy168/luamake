@@ -4,7 +4,7 @@ if not exist compile\ninja (
 	md compile\ninja
 )
 
-for %%a in (msvc mingw linux macos android netbsd) do (
+for %%a in (msvc mingw linux macos android netbsd freebsd) do (
 	if "%%a" == "msvc" (
 		luamake init -prebuilt -builddir build/msvc -hostos windows
 	) else if "%%a" == "mingw" (

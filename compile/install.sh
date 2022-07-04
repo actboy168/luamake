@@ -21,6 +21,9 @@ case "`uname`" in
   NetBSD)
     ninja -f $DIR/compile/ninja/netbsd.ninja
     ;;
+  FreeBSD)
+    ninja -f $DIR/compile/ninja/freebsd.ninja
+    ;;
   *)
     echo "Unknown OS $OS"
     exit 1
@@ -32,9 +35,14 @@ then
   exit 1
 fi
 
-write_profile()
+write_v1()
 {
     grep -sq "luamake" $1 || echo -e "\nalias luamake=$DIR/luamake" >> $1
+}
+
+write_v2()
+{
+    grep -sq "luamake" $1 || echo -e "\nalias luamake $DIR/luamake" >> $1
 }
 
 include () {
@@ -45,21 +53,24 @@ case "$SHELL" in
   */zsh)
     include ~/.zshenv
     if [ -d "$ZDOTDIR" ]; then
-        write_profile "$ZDOTDIR"/.zshrc
+        write_v1 "$ZDOTDIR"/.zshrc
     else
-        write_profile ~/.zshrc
+        write_v1 ~/.zshrc
     fi
     ;;
   */ksh)
-    write_profile ~/.kshrc
+    write_v1 ~/.kshrc
+    ;;
+  */csh)
+    write_v2 ~/.cshrc
     ;;
   */bash)
-    write_profile ~/.bashrc
+    write_v1 ~/.bashrc
     if [ "$(uname)" == "Darwin" ]; then
-        write_profile ~/.bash_profile
+        write_v1 ~/.bash_profile
     fi
     ;;
   *)
-    write_profile ~/.profile
+    write_v1 ~/.profile
     ;;
 esac

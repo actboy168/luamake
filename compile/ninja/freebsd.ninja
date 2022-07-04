@@ -1,4 +1,4 @@
-builddir = build/netbsd
+builddir = build/freebsd
 bin = $builddir/bin
 obj = $builddir/obj
 cc = gcc

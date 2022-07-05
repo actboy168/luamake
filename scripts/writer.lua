@@ -84,6 +84,7 @@ local ATTRIBUTE <const> = {
     -- path
     includes = PlatformPath,
     linkdirs = PlatformPath,
+    input    = PlatformPath,
     output   = PlatformPath,
     script   = PlatformPath,
     -- other
@@ -578,7 +579,7 @@ end
 
 function GEN.phony(context, attribute, name)
     local ninja = context.ninja
-    local input = get_blob(attribute.rootdir, attribute.input)
+    local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(context, name, attribute)
 
@@ -634,7 +635,12 @@ function GEN.runlua(context, attribute, name)
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
-    local input = get_blob(attribute.rootdir, attribute.input)
+    local input
+    if attribute.inputs then
+        input = get_blob(attribute.rootdir, attribute.inputs)
+    else
+        input = attribute.input or {}
+    end
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(context, name, attribute)
     local script = assert(init_single(attribute, 'script'), ("`%s`: need attribute `script`."):format(name))
@@ -682,7 +688,12 @@ function GEN.build(context, attribute, name)
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
     local ninja = context.ninja
-    local input = get_blob(attribute.rootdir, attribute.input)
+    local input
+    if attribute.inputs then
+        input = get_blob(attribute.rootdir, attribute.inputs)
+    else
+        input = attribute.input or {}
+    end
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(context, name, attribute)
     local rule = init_single(attribute, 'rule')
@@ -749,7 +760,7 @@ end
 
 function GEN.copy(context, attribute, name)
     local ninja = context.ninja
-    local input = get_blob(attribute.rootdir, attribute.input)
+    local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(context, name, attribute)
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))

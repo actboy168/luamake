@@ -28,8 +28,8 @@ rule cxx_source_bee_1
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/error.obj: cxx_source_bee_1 3rd/bee.lua/bee/error.cpp
-build $obj/source_bee/fsevent_linux.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/fsevent/fsevent_linux.cpp
+build $obj/source_bee/filewatch_linux.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/filewatch/filewatch_linux.cpp
 build $obj/source_bee/endpoint.obj: cxx_source_bee_1 $
     3rd/bee.lua/bee/net/endpoint.cpp
 build $obj/source_bee/socket.obj: cxx_source_bee_1 $
@@ -102,7 +102,7 @@ rule link_luamake
 build $bin/luamake: link_luamake $obj/source_bootstrap/main.obj $
     $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/os.obj $
-    $obj/source_bee/error.obj $obj/source_bee/fsevent_linux.obj $
+    $obj/source_bee/error.obj $obj/source_bee/filewatch_linux.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
     $obj/source_bee/subprocess_posix.obj $
     $obj/source_bee/simplethread_posix.obj $obj/source_bee/file_handle.obj $

@@ -1,9 +1,9 @@
-local OS = require "bee.platform".os
+local globals = require "globals"
 
 local fsutil = {}
 
-local isWindows <const> = OS == "windows"
-local isMacOS <const> = OS == "macos"
+local isWindows <const> = globals.hostos == "windows"
+local isMacOS <const> = globals.hostos == "macos"
 local PathSpilt <const> = isWindows and '[^/\\]+' or '[^/]+'
 local PathIgnoreCase <const> = isWindows or isMacOS
 

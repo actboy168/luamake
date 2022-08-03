@@ -52,6 +52,9 @@ local gcc = {
     includedir = function (dir)
         return "-I" .. format_path(dir)
     end,
+    sysincludedir = function (dir)
+        return "-isystem " .. format_path(dir)
+    end,
     link = function (lib)
         return "-l" .. lib
     end,

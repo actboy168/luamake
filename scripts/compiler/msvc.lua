@@ -53,6 +53,9 @@ local cl = {
     includedir = function (dir)
         return "/I" .. format_path(dir)
     end,
+    sysincludedir = function (dir)
+        return "/I" .. format_path(dir)
+    end,
     link = function (lib)
         if lib == "stdc++fs" or lib == "stdc++" then
             return

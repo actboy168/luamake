@@ -83,6 +83,7 @@ local ATTRIBUTE <const> = {
     emcc     = PlatformAttribute,
     -- path
     includes = PlatformPath,
+    sysincludes = PlatformPath,
     linkdirs = PlatformPath,
     input    = PlatformPath,
     output   = PlatformPath,
@@ -265,6 +266,12 @@ local function update_flags(flags, attribute, name, rule)
     if attribute.includes then
         for _, inc in ipairs(attribute.includes) do
             flags[#flags+1] = cc.includedir(inc)
+        end
+    end
+
+    if attribute.sysincludes then
+        for _, inc in ipairs(attribute.sysincludes) do
+            flags[#flags+1] = cc.sysincludedir(inc)
         end
     end
 

@@ -246,7 +246,7 @@ local function array_remove(t, k)
 end
 
 local function update_flags(flags, attribute, name, rule)
-    local optimize = init_single(attribute, 'optimize', (attribute.mode == "debug" and "off" or "speed"))
+    local optimize = init_single(attribute, 'optimize', (attribute.mode == "release" and "speed" or "off"))
     local defines = attribute.defines or {}
 
     tbl_append(flags, cc.flags)
@@ -795,7 +795,7 @@ function GEN.msvc_copydll(context, attribute, name)
     local archalias = msvc.archAlias(attribute.arch)
 
     if attribute.type == "vcrt" then
-        local ignore = attribute.mode == "debug" and "vccorlib140d.dll" or "vccorlib140.dll"
+        local ignore = attribute.mode == "release" and "vccorlib140.dll" or "vccorlib140d.dll"
         for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.mode)) do
             local filename = dll:filename()
             if filename:string():lower() ~= ignore then
@@ -805,21 +805,28 @@ function GEN.msvc_copydll(context, attribute, name)
         end
     elseif attribute.type == "ucrt" then
         local redist, bin = msvc.ucrtpath(archalias, attribute.mode)
-        local ignore = attribute.mode == "debug" and "ucrtbase.dll" or nil
-        for dll in fs.pairs(redist) do
-            local filename = dll:filename()
-            if filename:string():lower() == ignore then
-                input[#input+1] = fsutil.join(bin, "ucrtbased.dll")
-                output[#output+1] = fsutil.join(outputdir, "ucrtbased.dll")
-            else
+        if attribute.mode == "release" then
+            for dll in fs.pairs(redist) do
+                local filename = dll:filename()
                 input[#input+1] = dll
                 output[#output+1] = outputdir / filename
+            end
+        else
+            for dll in fs.pairs(redist) do
+                local filename = dll:filename()
+                if filename:string():lower() == "ucrtbase.dll" then
+                    input[#input+1] = fsutil.join(bin, "ucrtbased.dll")
+                    output[#output+1] = fsutil.join(outputdir, "ucrtbased.dll")
+                else
+                    input[#input+1] = dll
+                    output[#output+1] = outputdir / filename
+                end
             end
         end
     elseif attribute.type == "asan" then
         local inputdir = msvc.binpath(archalias)
         local filename = ("clang_rt.asan_%sdynamic-%s.dll"):format(
-            attribute.mode == "debug" and "dbg_" or "",
+            attribute.mode == "release" and "" or "dbg_",
             attribute.arch == "x86_64" and "x86_64" or "i386"
         )
         input[#input+1] = fsutil.join(inputdir, filename)

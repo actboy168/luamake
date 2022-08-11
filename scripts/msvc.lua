@@ -208,7 +208,7 @@ local function vcrtpath(arch, mode)
         return r:match '#define%s+_MSVC_STL_VERSION%s+(%d+)'
     end)()
     local path = installpath()..'/VC/Redist/MSVC/'..RedistVersion
-    if mode == "debug" then
+    if mode ~= "release" then
         return path.."/debug_nonredist/"..arch..'/Microsoft.VC'..ToolsetVersion..'.DebugCRT'
     end
     return path..'/'..arch..'/Microsoft.VC'..ToolsetVersion..'.CRT'
@@ -243,7 +243,7 @@ local function ucrtpath(arch, mode)
     if not redist then
         return
     end
-    if mode == "debug" then
+    if mode ~= "release" then
         if ver == 0 then
             --TODO 不一定合理，但至少比0好
             ver = 17134

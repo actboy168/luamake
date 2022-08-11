@@ -192,13 +192,8 @@ local function toolspath()
 end
 
 local function binpath(arch)
-    local RedistVersion = (function ()
-        local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt'
-        local r = readall(verfile)
-        return strtrim(r)
-    end)()
     local host = Is64BitWindows() and "Hostx64" or "Hostx86"
-    return installpath()..'/VC/Tools/MSVC/'..RedistVersion..'/bin/'..host..'/'..arch
+    return toolspath()..'/bin/'..host..'/'..arch
 end
 
 local function vcrtpath(arch, mode)
@@ -207,13 +202,8 @@ local function vcrtpath(arch, mode)
         local r = readall(verfile)
         return strtrim(r)
     end)()
-    local ToolsVersion = (function ()
-        local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt'
-        local r = readall(verfile)
-        return strtrim(r)
-    end)()
     local ToolsetVersion = (function ()
-        local verfile = installpath()..'/VC/Tools/MSVC/'..ToolsVersion..'/include/yvals_core.h'
+        local verfile = toolspath()..'/include/yvals_core.h'
         local r = readall(verfile)
         return r:match '#define%s+_MSVC_STL_VERSION%s+(%d+)'
     end)()

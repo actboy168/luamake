@@ -959,7 +959,11 @@ function writer:generate()
         if globals.hostshell == "cmd" then
             compiler = 'cmd /c '..compiler
         end
-        ninja:variable("cc", compiler)
+        if globals.os == "openbsd" and compiler == "gcc" then
+            ninja:variable("cc", "egcc")
+        else
+            ninja:variable("cc", compiler)
+        end
     end
 
     if globals.prebuilt then

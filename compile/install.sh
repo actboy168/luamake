@@ -24,6 +24,9 @@ case "`uname`" in
   FreeBSD)
     ninja -f $DIR/compile/ninja/freebsd.ninja
     ;;
+  OpenBSD)
+    ninja -f $DIR/compile/ninja/openbsd.ninja
+    ;;
   *)
     echo "Unknown OS $OS"
     exit 1

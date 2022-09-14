@@ -19,6 +19,7 @@ compile/install.bat
 - Android
 - NetBSD
 - FreeBSD
+- OpenBSD
 
 ```
 Install ninja

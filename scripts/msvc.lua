@@ -33,20 +33,23 @@ local function installpath()
     end
     local process = assert(sp.spawn {
         vswhere,
+        '-nologo',
         '-latest',
+        --'-prerelease',
         '-utf8',
         '-products', '*',
         '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
         '-property', 'installationPath',
         stdout = true,
+        stderr = "stdout",
     })
     local result = strtrim(process.stdout:read 'a')
     process.stdout:close()
     local code = process:wait()
     if code ~= 0 then
+        print("[vswhere]", result)
         os.exit(code, true)
     end
-    assert(result ~= "", "can't find msvc.")
     InstallDir = result
     return InstallDir
 end

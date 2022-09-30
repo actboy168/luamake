@@ -62,7 +62,11 @@ case "$SHELL" in
     fi
     ;;
   */ksh)
-    write_v1 ~/.kshrc
+    if [ "$(uname)" == "OpenBSD" ]; then
+        write_v1 ~/.profile
+    else
+        write_v1 ~/.kshrc
+    fi
     ;;
   */csh)
     write_v2 ~/.cshrc

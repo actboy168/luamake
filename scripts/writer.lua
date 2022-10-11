@@ -942,6 +942,7 @@ function writer:generate()
 
     local ninja = require "ninja_writer"(ninja_script)
 
+    ninja:variable("ninja_required_version", "1.7")
     ninja:variable("builddir", fmtpath(globals.builddir))
     ninja:variable("bin", fmtpath(globals.bindir))
     ninja:variable("obj", fmtpath(globals.objdir))

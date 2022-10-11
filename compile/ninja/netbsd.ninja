@@ -1,3 +1,4 @@
+ninja_required_version = 1.7
 builddir = build/netbsd
 bin = $builddir/bin
 obj = $builddir/obj

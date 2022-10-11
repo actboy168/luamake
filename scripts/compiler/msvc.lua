@@ -17,7 +17,7 @@ local cl = {
         off      = '/Od',
         size     = '/O1 /Zc:inline',
         speed    = '/O2 /Zc:inline',
-        maxspeed = '/Ox /Zc:inline /fp:fast',
+        maxspeed = '/O2 /Zc:inline /fp:fast',
     },
     warnings = {
         off = "/W0",

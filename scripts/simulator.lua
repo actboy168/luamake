@@ -105,6 +105,20 @@ function api:rule(name)
         writer:add_statement('rule', self, attribute, name)
     end
 end
+function api:required_version(buildVersion)
+    local function parse_version(v)
+        local major, minor = v:match "^(%d+)%.(%d+)"
+        if not major then
+            error(string.format("Invalid version string: `%s`.", v))
+        end
+        return tonumber(major) * 1000 + tonumber(minor)
+    end
+    local luamakeVersion = require "version"
+    if parse_version(luamakeVersion) < parse_version(buildVersion) then
+        print(string.format("luamake version (%s) incompatible with build file required_version (%s).", luamakeVersion, buildVersion))
+        os.exit()
+    end
+end
 
 if globals.compiler == "msvc" then
     function api:msvc_copydll(name)

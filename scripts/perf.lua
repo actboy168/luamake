@@ -1,19 +1,19 @@
 local setmetatable = setmetatable
 
-local monotonic = require 'bee.time'.monotonic
+local gettime = require 'bee.time'.counter
 
 local m = {}
 
 local single_what
 local single_time
 local perf_closeable = setmetatable({}, {__close = function()
-    local time = monotonic() - single_time
-    print(("%s: %dms."):format(single_what, time))
+    local time = gettime() - single_time
+    print(("%s: %.0fms."):format(single_what, time))
 end})
 
 function m.single(what)
     single_what = what
-    single_time = monotonic()
+    single_time = gettime()
     return perf_closeable
 end
 
@@ -29,13 +29,13 @@ function m.stat(what)
     if not closeable then
         totals[what] = 0
         closeable = setmetatable({}, {__close = function()
-            local time = monotonic() - status[what]
+            local time = gettime() - status[what]
             status[what] = nil
             totals[what] = totals[what] + time
         end})
         closeables[what] = closeable
     end
-    status[what] = monotonic()
+    status[what] = gettime()
     return closeable
 end
 
@@ -48,7 +48,7 @@ function m.print()
         return totals[a] < totals[b]
     end)
     for _, k in ipairs(sorted) do
-        print(("%s: %dms."):format(k, totals[k]))
+        print(("%s: %.0fms."):format(k, totals[k]))
     end
 end
 

@@ -1,5 +1,4 @@
 local fs = require "bee.filesystem"
-local fsutil = require "fsutil"
 
 local RawCommand = {
     lua = true,
@@ -17,6 +16,7 @@ WORKDIR = fs.current_path():string()
 if RawCommand[arg[1]] then
     command(arg[1])
 else
+    local fsutil = require "fsutil"
     local arguments = require "arguments"
     if arguments.C then
         if fsutil.is_absolute(arguments.C) then

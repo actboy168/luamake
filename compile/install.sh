@@ -42,8 +42,10 @@ case "$SHELL" in
     ;;
   */bash)
     write_v1 ~/.bashrc
-    if [ "$(uname)" == "Darwin" ]; then
-        write_v1 ~/.bash_profile
+    if [ "$BASH_VERSION" != '' ]; then
+        if [ "$(uname)" == "Darwin" ]; then
+            write_v1 ~/.bash_profile
+        fi
     fi
     ;;
   *)

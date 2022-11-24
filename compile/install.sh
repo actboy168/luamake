@@ -7,6 +7,8 @@ then
   exit 1
 fi
 
+DIR=$(cd `dirname $0`/..; pwd)
+
 write_v1()
 {
     grep -sq "luamake" $1 || echo -e "\nalias luamake=$DIR/luamake" >> $1
@@ -15,6 +17,11 @@ write_v1()
 write_v2()
 {
     grep -sq "luamake" $1 || echo -e "\nalias luamake $DIR/luamake" >> $1
+}
+
+write_v3()
+{
+    grep -sq "luamake" $1 || echo "\nalias luamake=$DIR/luamake" >> $1
 }
 
 include () {
@@ -41,11 +48,13 @@ case "$SHELL" in
     write_v2 ~/.cshrc
     ;;
   */bash)
-    write_v1 ~/.bashrc
     if [ "$BASH_VERSION" != '' ]; then
+        write_v1 ~/.bashrc
         if [ "$(uname)" == "Darwin" ]; then
             write_v1 ~/.bash_profile
         fi
+    else
+        write_v3 ~/.bashrc
     fi
     ;;
   *)

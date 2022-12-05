@@ -158,16 +158,19 @@ end
 local function prefix(env)
     local testdir = os.tmpname()
     fs.create_directories(testdir)
-    writeall(testdir..'/test.h')
-    writeall(testdir..'/test.c', '#include "test.h"')
+    writeall(testdir..'/test.c', '#include <stddef.h>')
+    writeall(testdir..'/build.ninja', [[
+rule showIncludes
+  command = cl /nologo /showIncludes -c $in
+build test: showIncludes test.c
+]])
     local process = assert(sp.spawn {
-        'cmd', '/c',
-        'cl', '/showIncludes', '/nologo', '-c', 'test.c',
+        'ninja',
         searchPath = true,
         env = env,
         cwd = testdir,
         stdout = true,
-        stderr = true,
+        --stderr = "stdout",
     })
     local result
     for line in process.stdout:lines() do
@@ -178,7 +181,6 @@ local function prefix(env)
         end
     end
     process.stdout:close()
-    process.stderr:close()
     process:wait()
     fs.remove_all(testdir)
     assert(result, "can't find msvc.")

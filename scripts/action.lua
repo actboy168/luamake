@@ -1,5 +1,6 @@
 local globals = require "globals"
 local sp = require 'bee.subprocess'
+local fs = require 'bee.filesystem'
 local sim = require 'simulator'
 local arguments = require "arguments"
 
@@ -15,7 +16,7 @@ local function spawn_ninja(args)
         local msvc = require "msvc_util"
         option.env = msvc.getEnv()
         option.env.VS_UNICODE_OUTPUT = false
-        option.env.TMP = globals.builddir
+        option.env.TMP = fs.absolute(globals.builddir):string()
     end
     if globals.hostshell == "cmd" then
         option[1] = {'cmd', '/c', 'ninja'}

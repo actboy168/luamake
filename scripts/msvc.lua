@@ -165,7 +165,7 @@ rule showIncludes
 build test: showIncludes test.c
 ]])
     local process = assert(sp.spawn {
-        'ninja',
+        'cmd', '/c', 'ninja',
         searchPath = true,
         env = env,
         cwd = testdir,

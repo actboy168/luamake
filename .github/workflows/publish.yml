@@ -7,7 +7,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules : recursive
-    - run: .\compile\install.bat
+    - run: .\compile\build.bat
   linux:
     runs-on: ubuntu-18.04
     steps:
@@ -18,7 +18,7 @@ jobs:
     - run: sudo apt-get install -y libreadline-dev ninja-build
     - run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
     - run: sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
-    - run: ./compile/install.sh
+    - run: ./compile/build.sh
   macos:
     runs-on: macos-latest
     steps:
@@ -26,4 +26,4 @@ jobs:
       with:
         submodules : recursive
     - run: brew install ninja
-    - run: ./compile/install.sh
+    - run: ./compile/build.sh

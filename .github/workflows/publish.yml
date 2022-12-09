@@ -8,7 +8,7 @@ jobs:
       with:
         submodules : recursive
     - run: .\compile\build.bat
-    - run: .\luamake.exe
+    - run: .\luamake.exe version
   linux:
     runs-on: ubuntu-18.04
     steps:
@@ -20,7 +20,7 @@ jobs:
     - run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
     - run: sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
     - run: ./compile/build.sh
-    - run: ./luamake
+    - run: ./luamake version
   macos:
     runs-on: macos-latest
     steps:
@@ -29,4 +29,4 @@ jobs:
         submodules : recursive
     - run: brew install ninja
     - run: ./compile/build.sh
-    - run: ./luamake
+    - run: ./luamake version

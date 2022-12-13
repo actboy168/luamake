@@ -176,5 +176,5 @@ build 3rd/bee.lua/bootstrap/forward_lua.c: phony $
     3rd/bee.lua/bootstrap/forward_lua.h
 build lua54: phony $bin/lua54.dll
 build copy_lua54: phony tools/lua54.dll
-build build: phony copy_luamake copy_lua54
-default test build
+build notest: phony copy_luamake copy_lua54
+default test notest

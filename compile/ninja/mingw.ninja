@@ -7,7 +7,7 @@ luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
     -I3rd/bee.lua/3rd/lua-seri -Itools/lua54 -D_WIN32_WINNT=0x0601 -DNDEBUG $
-    /wd4244 -o $out -c $in
+    -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d

@@ -29,8 +29,14 @@ if isWindows then
     }
 end
 
+lm:phony "build" {
+    deps = {
+        "copy_luamake",
+        isWindows and "copy_lua54",
+    }
+}
+
 lm:default {
     "test",
-    "copy_luamake",
-    isWindows and "copy_lua54",
+    "build",
 }

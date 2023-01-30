@@ -380,6 +380,7 @@ local function generate(context, rule, attribute, name)
     init_single(attribute, 'sys')
     init_single(attribute, 'luaversion')
     init_single(attribute, 'basename')
+    init_single(attribute, 'rtti', 'on')
 
     local default_enable_lto = attribute.mode == 'release' and globals.compiler == 'msvc'
     init_single(attribute, 'lto', default_enable_lto and "on" or "off")

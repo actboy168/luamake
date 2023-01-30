@@ -74,6 +74,9 @@ function gcc.update_flags(flags, attribute)
         flags[#flags+1] = "-flto"
         flags[#flags+1] = "-fno-fat-lto-objects"
     end
+    if attribute.rtti == "off" then
+        flags[#flags+1] = "-fno-rtti"
+    end
 end
 
 function gcc.update_ldflags(ldflags, attribute)

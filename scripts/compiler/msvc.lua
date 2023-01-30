@@ -82,6 +82,9 @@ function cl.update_flags(flags, attribute, name)
     if attribute.lto ~= "off" then
         flags[#flags+1] = "/GL"
     end
+    if attribute.rtti == "off" then
+        flags[#flags+1] = "/GR-"
+    end
 end
 
 function cl.update_ldflags(ldflags, attribute, name)

@@ -66,7 +66,7 @@ local gcc = {
     end
 }
 
-function gcc.update_flags(flags, attribute)
+function gcc.update_flags(flags, cflags, cxxflags, attribute, name)
     if attribute.mode == 'debug' then
         flags[#flags+1] = '-g'
     end
@@ -75,7 +75,7 @@ function gcc.update_flags(flags, attribute)
         flags[#flags+1] = "-fno-fat-lto-objects"
     end
     if attribute.rtti == "off" then
-        flags[#flags+1] = "-fno-rtti"
+        cxxflags[#cxxflags+1] = "-fno-rtti"
     end
 end
 
@@ -110,8 +110,7 @@ function gcc.rule_asm(w, name, flags)
     })
 end
 
-function gcc.rule_c(w, name, attribute, flags)
-    local cflags = assert(gcc.c[attribute.c], ("`%s`: unknown std c: `%s`"):format(name, attribute.c))
+function gcc.rule_c(w, name, flags, cflags)
     w:rule('c_'..name, ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(cflags, flags),
     {
@@ -121,8 +120,7 @@ function gcc.rule_c(w, name, attribute, flags)
     })
 end
 
-function gcc.rule_cxx(w, name, attribute, flags)
-    local cxxflags = assert(gcc.cxx[attribute.cxx], ("`%s`: unknown std c++: `%s`"):format(name, attribute.cxx))
+function gcc.rule_cxx(w, name, flags, cxxflags)
     w:rule('cxx_'..name, ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
     :format(cxxflags, flags),
     {

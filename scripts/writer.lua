@@ -245,7 +245,7 @@ local function array_remove(t, k)
     return false
 end
 
-local function update_flags(flags, attribute, name, rule)
+local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
     local optimize = init_single(attribute, 'optimize', (attribute.mode == "release" and "speed" or "off"))
     local defines = attribute.defines or {}
 
@@ -261,7 +261,9 @@ local function update_flags(flags, attribute, name, rule)
             flags[#flags+1] = "-fPIC"
         end
     end
-    cc.update_flags(flags, attribute, name)
+    cflags  [#cflags  +1] = assert(cc.c  [attribute.c],   ("`%s`: unknown std c: `%s`")  :format(name, attribute.c))
+    cxxflags[#cxxflags+1] = assert(cc.cxx[attribute.cxx], ("`%s`: unknown std c++: `%s`"):format(name, attribute.cxx))
+    cc.update_flags(flags, cflags, cxxflags, attribute, name)
 
     if attribute.includes then
         for _, inc in ipairs(attribute.includes) do
@@ -397,10 +399,14 @@ local function generate(context, rule, attribute, name)
         end
     end
 
-    local flags =  {}
-    update_flags(flags, attribute, name, rule)
+    local flags = {}
+    local cflags = {}
+    local cxxflags = {}
+    update_flags(flags, cflags, cxxflags, attribute, name, rule)
 
-    local fin_flags = table.concat(flags, " ")
+    local str_flags = table.concat(flags, " ")
+    local str_cflags = table.concat(cflags, " ")
+    local str_cxxflags = table.concat(cxxflags, " ")
     for _, source in ipairs(sources) do
         local ext = fsutil.extension(source):sub(2):lower()
         local type = file_type[ext]
@@ -410,10 +416,10 @@ local function generate(context, rule, attribute, name)
         end
         local objpath = fsutil.join("$obj", name, fsutil.filename(source))
         if type == "c" then
-            cc.rule_c(ninja, name, attribute, fin_flags)
+            cc.rule_c(ninja, name, str_flags, str_cflags)
             input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif type == "cxx" then
-            cc.rule_cxx(ninja, name, attribute, fin_flags)
+            cc.rule_cxx(ninja, name, str_flags, str_cxxflags)
             input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif globals.os == "windows" and type == "rc" then
             cc.rule_rc(ninja, name)
@@ -422,7 +428,7 @@ local function generate(context, rule, attribute, name)
             if globals.compiler == "msvc" then
                 error "TODO"
             end
-            cc.rule_asm(ninja, name, fin_flags)
+            cc.rule_asm(ninja, name, str_flags)
             input[#input+1] = ninja:build_obj(objpath, source, objargs)
         else
             error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))

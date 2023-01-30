@@ -70,7 +70,7 @@ local cl = {
     end
 }
 
-function cl.update_flags(flags, attribute, name)
+function cl.update_flags(flags, cflags, cxxflags, attribute, name)
     if attribute.mode == 'debug' then
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MDd' or '/MTd'
         flags[#flags+1] = '/FS'
@@ -83,7 +83,7 @@ function cl.update_flags(flags, attribute, name)
         flags[#flags+1] = "/GL"
     end
     if attribute.rtti == "off" then
-        flags[#flags+1] = "/GR-"
+        cxxflags[#cxxflags+1] = "/GR-"
     end
 end
 
@@ -100,8 +100,7 @@ function cl.update_ldflags(ldflags, attribute, name)
     end
 end
 
-function cl.rule_c(w, name, attribute, flags)
-    local cflags = assert(cl.c[attribute.c], ("`%s`: unknown std c: `%s`"):format(name, attribute.c))
+function cl.rule_c(w, name, flags, cflags)
     w:rule('c_'..name, ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
     {
         description = 'Compile C   $out',
@@ -109,8 +108,7 @@ function cl.rule_c(w, name, attribute, flags)
     })
 end
 
-function cl.rule_cxx(w, name, attribute, flags)
-    local cxxflags = assert(cl.cxx[attribute.cxx], ("`%s`: unknown std c++: `%s`"):format(name, attribute.cxx))
+function cl.rule_cxx(w, name, flags, cxxflags)
     w:rule('cxx_'..name, ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
     {
         description = 'Compile C++ $out',

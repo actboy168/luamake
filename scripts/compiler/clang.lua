@@ -52,7 +52,7 @@ local function update_target(flags, attribute)
     attribute.__target = target
 end
 
-function clang.update_flags(flags, attribute)
+function clang.update_flags(flags, cflags, cxxflags, attribute)
     --TODO
     --if attribute.crt == 'dynamic' then
     --end
@@ -65,6 +65,9 @@ function clang.update_flags(flags, attribute)
         else
             flags[#flags+1] = "-flto"
         end
+    end
+    if attribute.rtti == "off" then
+        cxxflags[#cxxflags+1] = "-fno-rtti"
     end
     update_target(flags, attribute)
     if attribute.__target then

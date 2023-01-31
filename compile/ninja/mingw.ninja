@@ -14,8 +14,9 @@ rule c_source_bee
 build $obj/source_bee/lua-seri.obj: c_source_bee $
     3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
-  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -I3rd/bee.lua/bee/nonstd -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
+    -Werror -I3rd/bee.lua/bee/nonstd -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out $
+    -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
@@ -23,8 +24,8 @@ build $obj/source_bee/format.obj: cxx_source_bee $
     3rd/bee.lua/bee/nonstd/fmt/format.cc
 build $obj/source_bee/os.obj: cxx_source_bee 3rd/bee.lua/bee/nonstd/fmt/os.cc
 rule cxx_source_bee_1
-  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -I3rd/bee.lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
+    -Werror -I3rd/bee.lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
@@ -50,8 +51,8 @@ build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
 build $obj/source_bee/unicode_win.obj: cxx_source_bee_1 $
     3rd/bee.lua/bee/utility/unicode_win.cpp
 rule cxx_source_bee_2
-  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua -Itools/lua54 $
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
+    -Werror -I3rd/bee.lua/3rd/lua-seri -I3rd/bee.lua -Itools/lua54 $
     -D_WIN32_WINNT=0x0601 -DBEE_STATIC -D_CRT_SECURE_NO_WARNINGS -DNDEBUG $
     -o $out -c $in
   description = Compile C++ $out
@@ -93,9 +94,9 @@ rule c_source_lua_1
 build $obj/source_lua/linit.obj: c_source_lua_1 3rd/bee.lua/3rd/lua/linit.c
 build $obj/source_lua/onelua.obj: c_source_lua_1 3rd/bee.lua/3rd/lua/onelua.c
 rule cxx_source_bootstrap
-  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -O2 -Wall -Werror $
-    -I3rd/bee.lua/3rd/lua -I3rd/bee.lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $
-    $out -c $in
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
+    -Werror -I3rd/bee.lua/3rd/lua -I3rd/bee.lua -D_WIN32_WINNT=0x0601 $
+    -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d

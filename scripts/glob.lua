@@ -42,9 +42,6 @@ local function pattern_preprocess(root, pattern)
 
     local path = ispath and pattern.value or tostring(pattern)
 
-    -- compatible
-    path = path:gsub("(%*%*)([^"..PathSeq.."])", "**/*%1")
-
     local ignore
     if path:match "^!" then
         ignore = true

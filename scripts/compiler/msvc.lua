@@ -78,9 +78,9 @@ function cl.update_flags(flags, cflags, cxxflags, attribute, name)
         flags[#flags+1] = ('/Fd$obj/%s/'):format(name)
     else
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MD' or '/MT'
-        if attribute.lto ~= "off" then
-            flags[#flags+1] = "/GL"
-        end
+    end
+    if attribute.lto ~= "off" then
+        flags[#flags+1] = "/GL"
     end
     if attribute.rtti == "off" then
         cxxflags[#cxxflags+1] = "/GR-"

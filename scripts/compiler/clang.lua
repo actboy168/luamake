@@ -52,7 +52,7 @@ local function update_target(flags, attribute)
     attribute.__target = target
 end
 
-function clang.update_flags(flags, cflags, cxxflags, attribute)
+function clang.update_flags(flags, _, cxxflags, attribute)
     --TODO
     --if attribute.crt == 'dynamic' then
     --end

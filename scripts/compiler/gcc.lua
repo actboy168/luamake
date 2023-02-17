@@ -66,7 +66,7 @@ local gcc = {
     end
 }
 
-function gcc.update_flags(flags, cflags, cxxflags, attribute, name)
+function gcc.update_flags(flags, _, cxxflags, attribute, _)
     if attribute.mode == 'debug' then
         flags[#flags+1] = '-g'
     end

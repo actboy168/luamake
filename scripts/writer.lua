@@ -665,9 +665,9 @@ function GEN.runlua(context, attribute, name)
         for i, v in ipairs(attribute.args) do
             command[i] = fsutil.quotearg(v)
         end
-        command = table.concat(command, " ")
-        ninja:rule('runlua', "$luamake lua $script "..command, {
-            description = "lua $script "..command
+        local command_str = table.concat(command, " ")
+        ninja:rule('runlua', "$luamake lua $script "..command_str, {
+            description = "lua $script "..command_str
         })
     else
         ninja:rule('runlua', "$luamake lua $script", {

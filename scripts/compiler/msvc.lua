@@ -70,7 +70,7 @@ local cl = {
     end
 }
 
-function cl.update_flags(flags, cflags, cxxflags, attribute, name)
+function cl.update_flags(flags, _, cxxflags, attribute, name)
     if attribute.mode == 'debug' then
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MDd' or '/MTd'
         flags[#flags+1] = '/FS'

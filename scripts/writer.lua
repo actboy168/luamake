@@ -712,26 +712,39 @@ function GEN.build(context, attribute, name)
     local implicit_inputs = getImplicitInputs(context, name, attribute)
     local rule = init_single(attribute, 'rule')
 
-    if rule then
-        assert(loaded_rule[rule], ("unknown rule `%s`"):format(rule))
-        ninja:set_rule(rule)
-    else
-        local command = {}
-        for i, v in ipairs(attribute) do
-            command[i] = fsutil.quotearg(v)
-        end
-        ninja:rule('build_'..name, table.concat(command, " "))
-    end
-
     local outname
     if #output == 0 then
         outname = '$builddir/_/' .. name
     else
         outname = output
     end
-    ninja:build(outname, input, {
-        implicit_inputs = implicit_inputs,
-    })
+
+    if rule then
+        assert(loaded_rule[rule], ("unknown rule `%s`"):format(rule))
+        ninja:set_rule(rule)
+        local command_str; do
+            if attribute.args then
+                local command = {}
+                for i, v in ipairs(attribute.args) do
+                    command[i] = fsutil.quotearg(v)
+                end
+                command_str = table.concat(command, " ")
+            end
+        end
+        ninja:build(outname, input, {
+            implicit_inputs = implicit_inputs,
+            variables = { args = command_str },
+        })
+    else
+        local command = {}
+        for i, v in ipairs(attribute) do
+            command[i] = fsutil.quotearg(v)
+        end
+        ninja:rule('build_'..name, table.concat(command, " "))
+        ninja:build(outname, input, {
+            implicit_inputs = implicit_inputs,
+        })
+    end
     if not tmpName then
         ninja:phony(name, outname)
         loaded[name] = {

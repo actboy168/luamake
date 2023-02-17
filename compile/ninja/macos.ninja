@@ -17,13 +17,15 @@ build $obj/source_bee/lua-seri.obj: c_source_bee $
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -Werror -fvisibility=hidden -mmacosx-version-min=10.15 $
-    -I3rd/bee.lua/bee/nonstd -DNDEBUG -Wunguarded-availability -o $out -c $in
+    -I3rd/bee.lua/bee/nonstd/3rd/fmt/include -DNDEBUG $
+    -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/format.obj: cxx_source_bee $
-    3rd/bee.lua/bee/nonstd/fmt/format.cc
-build $obj/source_bee/os.obj: cxx_source_bee 3rd/bee.lua/bee/nonstd/fmt/os.cc
+    3rd/bee.lua/bee/nonstd/3rd/fmt/src/format.cc
+build $obj/source_bee/os.obj: cxx_source_bee $
+    3rd/bee.lua/bee/nonstd/3rd/fmt/src/os.cc
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -Werror -fvisibility=hidden -mmacosx-version-min=10.15 -I3rd/bee.lua $

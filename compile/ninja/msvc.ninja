@@ -13,13 +13,15 @@ build $obj/source_bee/lua-seri.obj: c_source_bee $
     3rd/bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /I3rd/bee.lua/bee/nonstd $
-    /D_WIN32_WINNT=0x0601 /DNDEBUG /std:c++17 /GR-
+    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL $
+    /I3rd/bee.lua/bee/nonstd/3rd/fmt/include /D_WIN32_WINNT=0x0601 /DNDEBUG $
+    /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
 build $obj/source_bee/format.obj: cxx_source_bee $
-    3rd/bee.lua/bee/nonstd/fmt/format.cc
-build $obj/source_bee/os.obj: cxx_source_bee 3rd/bee.lua/bee/nonstd/fmt/os.cc
+    3rd/bee.lua/bee/nonstd/3rd/fmt/src/format.cc
+build $obj/source_bee/os.obj: cxx_source_bee $
+    3rd/bee.lua/bee/nonstd/3rd/fmt/src/os.cc
 rule cxx_source_bee_1
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /I3rd/bee.lua $
@@ -33,8 +35,10 @@ build $obj/source_bee/endpoint.obj: cxx_source_bee_1 $
     3rd/bee.lua/bee/net/endpoint.cpp
 build $obj/source_bee/socket.obj: cxx_source_bee_1 $
     3rd/bee.lua/bee/net/socket.cpp
+build $obj/source_bee/unicode_win.obj: cxx_source_bee_1 $
+    3rd/bee.lua/bee/platform/win/unicode_win.cpp
 build $obj/source_bee/version_win.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/platform/version_win.cpp
+    3rd/bee.lua/bee/platform/win/version_win.cpp
 build $obj/source_bee/subprocess_win.obj: cxx_source_bee_1 $
     3rd/bee.lua/bee/subprocess/subprocess_win.cpp
 build $obj/source_bee/simplethread_win.obj: cxx_source_bee_1 $
@@ -45,8 +49,6 @@ build $obj/source_bee/file_handle_win.obj: cxx_source_bee_1 $
     3rd/bee.lua/bee/utility/file_handle_win.cpp
 build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
     3rd/bee.lua/bee/utility/path_helper.cpp
-build $obj/source_bee/unicode_win.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/utility/unicode_win.cpp
 rule cxx_source_bee_2
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /I3rd/bee.lua/3rd/lua-seri $
@@ -112,10 +114,10 @@ build $bin/luamake.exe: link_luamake $obj/source_bootstrap/main.obj $
     $obj/source_bee/format.obj $obj/source_bee/os.obj $
     $obj/source_bee/error.obj $obj/source_bee/filewatch_win.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
-    $obj/source_bee/version_win.obj $obj/source_bee/subprocess_win.obj $
-    $obj/source_bee/simplethread_win.obj $obj/source_bee/file_handle.obj $
-    $obj/source_bee/file_handle_win.obj $obj/source_bee/path_helper.obj $
-    $obj/source_bee/unicode_win.obj $obj/source_bee/lua_filesystem.obj $
+    $obj/source_bee/unicode_win.obj $obj/source_bee/version_win.obj $
+    $obj/source_bee/subprocess_win.obj $obj/source_bee/simplethread_win.obj $
+    $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_win.obj $
+    $obj/source_bee/path_helper.obj $obj/source_bee/lua_filesystem.obj $
     $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
     $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
     $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $

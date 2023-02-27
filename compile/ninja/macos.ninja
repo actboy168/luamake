@@ -15,16 +15,14 @@ build $obj/source_bee/lua-seri.obj: c_source_bee $
     bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -Werror -fvisibility=hidden -mmacosx-version-min=10.15 $
-    -Ibee.lua/bee/nonstd/3rd/fmt/include -DNDEBUG -Wunguarded-availability $
-    -o $out -c $in
+    -Werror -fvisibility=hidden -mmacosx-version-min=10.15 -DNDEBUG $
+    -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/format.obj: cxx_source_bee $
-    bee.lua/bee/nonstd/3rd/fmt/src/format.cc
-build $obj/source_bee/os.obj: cxx_source_bee $
-    bee.lua/bee/nonstd/3rd/fmt/src/os.cc
+    bee.lua/bee/nonstd/3rd/format.cc
+build $obj/source_bee/os.obj: cxx_source_bee bee.lua/bee/nonstd/3rd/os.cc
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -Werror -fvisibility=hidden -mmacosx-version-min=10.15 -Ibee.lua $
@@ -50,8 +48,6 @@ build $obj/source_bee/file_handle_posix.obj: cxx_source_bee_1 $
     bee.lua/bee/utility/file_handle_posix.cpp
 build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
     bee.lua/bee/utility/path_helper.cpp
-build $obj/source_bee/path_helper-1.obj: cxx_source_bee_1 $
-    bee.lua/bee/utility/path_helper.mm
 rule cxx_source_bee_2
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -Werror -fvisibility=hidden -mmacosx-version-min=10.15 $
@@ -76,7 +72,6 @@ build $obj/source_bee/lua_thread.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_thread.cpp
 build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_time.cpp
-build $obj/source_bee/luaref.obj: cxx_source_bee_2 bee.lua/binding/luaref.cpp
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
     -fvisibility=hidden -mmacosx-version-min=10.15 -DNDEBUG $
@@ -119,11 +114,10 @@ build $bin/luamake: link_luamake $obj/source_bootstrap/main.obj $
     $obj/source_bee/simplethread_posix.obj $obj/source_bee/file_handle.obj $
     $obj/source_bee/file_handle_osx.obj $
     $obj/source_bee/file_handle_posix.obj $obj/source_bee/path_helper.obj $
-    $obj/source_bee/path_helper-1.obj $obj/source_bee/lua_filesystem.obj $
-    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
-    $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
-    $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $
-    $obj/source_bee/lua_time.obj $obj/source_bee/luaref.obj $
+    $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
+    $obj/source_bee/lua_platform.obj $obj/source_bee/lua_serialization.obj $
+    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
+    $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
     $obj/source_lua/utf8_crt.obj $obj/source_lua/linit.obj $
     $obj/source_lua/onelua.obj
 rule copy

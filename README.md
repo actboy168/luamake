@@ -13,13 +13,7 @@ git submodule update --init
 compile/install.bat
 ```
 
-- Windows (mingw) 
-- MacOS
-- Linux
-- Android
-- NetBSD
-- FreeBSD
-- OpenBSD
+- Windows (mingw) / MacOS / Linux / Android / NetBSD / FreeBSD / OpenBSD
 
 ```
 Install ninja
@@ -68,3 +62,25 @@ Run
 ``` bash
 $ ./build/bin/lua
 ```
+
+## Commands
+
+> luamake
+
+Build your project.
+
+> luamake clean
+
+Clean build output.
+
+> luamake rebuild
+
+Equivalent to `luamake clean && luamake`
+
+> luamake lua [lua filename]
+
+Run lua file.
+
+> luamake test
+
+Equivalent to `luamake lua test.lua`

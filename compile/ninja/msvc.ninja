@@ -5,103 +5,100 @@ obj = $builddir/obj
 luamake = luamake
 rule c_source_bee
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /I3rd/bee.lua/3rd/lua-seri $
+    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Ibee.lua/3rd/lua-seri $
     /Itools/lua54 /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4244 
   description = Compile C   $out
   deps = msvc
 build $obj/source_bee/lua-seri.obj: c_source_bee $
-    3rd/bee.lua/3rd/lua-seri/lua-seri.c
+    bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /permissive- /O2 /Zc:inline /W3 /WX /MD /GL $
-    /I3rd/bee.lua/bee/nonstd/3rd/fmt/include /D_WIN32_WINNT=0x0601 /DNDEBUG $
+    /Ibee.lua/bee/nonstd/3rd/fmt/include /D_WIN32_WINNT=0x0601 /DNDEBUG $
     /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
 build $obj/source_bee/format.obj: cxx_source_bee $
-    3rd/bee.lua/bee/nonstd/3rd/fmt/src/format.cc
+    bee.lua/bee/nonstd/3rd/fmt/src/format.cc
 build $obj/source_bee/os.obj: cxx_source_bee $
-    3rd/bee.lua/bee/nonstd/3rd/fmt/src/os.cc
+    bee.lua/bee/nonstd/3rd/fmt/src/os.cc
 rule cxx_source_bee_1
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /I3rd/bee.lua $
+    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Ibee.lua $
     /D_WIN32_WINNT=0x0601 /DNDEBUG /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
-build $obj/source_bee/error.obj: cxx_source_bee_1 3rd/bee.lua/bee/error.cpp
+build $obj/source_bee/error.obj: cxx_source_bee_1 bee.lua/bee/error.cpp
 build $obj/source_bee/filewatch_win.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/filewatch/filewatch_win.cpp
+    bee.lua/bee/filewatch/filewatch_win.cpp
 build $obj/source_bee/endpoint.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/net/endpoint.cpp
-build $obj/source_bee/socket.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/net/socket.cpp
+    bee.lua/bee/net/endpoint.cpp
+build $obj/source_bee/socket.obj: cxx_source_bee_1 bee.lua/bee/net/socket.cpp
 build $obj/source_bee/unicode_win.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/platform/win/unicode_win.cpp
+    bee.lua/bee/platform/win/unicode_win.cpp
 build $obj/source_bee/version_win.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/platform/win/version_win.cpp
+    bee.lua/bee/platform/win/version_win.cpp
 build $obj/source_bee/subprocess_win.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/subprocess/subprocess_win.cpp
+    bee.lua/bee/subprocess/subprocess_win.cpp
 build $obj/source_bee/simplethread_win.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/thread/simplethread_win.cpp
+    bee.lua/bee/thread/simplethread_win.cpp
 build $obj/source_bee/file_handle.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/utility/file_handle.cpp
+    bee.lua/bee/utility/file_handle.cpp
 build $obj/source_bee/file_handle_win.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/utility/file_handle_win.cpp
+    bee.lua/bee/utility/file_handle_win.cpp
 build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
-    3rd/bee.lua/bee/utility/path_helper.cpp
+    bee.lua/bee/utility/path_helper.cpp
 rule cxx_source_bee_2
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /I3rd/bee.lua/3rd/lua-seri $
-    /I3rd/bee.lua /Itools/lua54 /D_WIN32_WINNT=0x0601 /DBEE_STATIC $
+    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Ibee.lua/3rd/lua-seri $
+    /Ibee.lua /Itools/lua54 /D_WIN32_WINNT=0x0601 /DBEE_STATIC $
     /D_CRT_SECURE_NO_WARNINGS /DNDEBUG /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
 build $obj/source_bee/lua_filesystem.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_filesystem.cpp
+    bee.lua/binding/lua_filesystem.cpp
 build $obj/source_bee/lua_filewatch.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_filewatch.cpp
+    bee.lua/binding/lua_filewatch.cpp
 build $obj/source_bee/lua_platform.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_platform.cpp
+    bee.lua/binding/lua_platform.cpp
 build $obj/source_bee/lua_serialization.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_serialization.cpp
+    bee.lua/binding/lua_serialization.cpp
 build $obj/source_bee/lua_socket.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_socket.cpp
+    bee.lua/binding/lua_socket.cpp
 build $obj/source_bee/lua_subprocess.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_subprocess.cpp
+    bee.lua/binding/lua_subprocess.cpp
 build $obj/source_bee/lua_thread.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_thread.cpp
+    bee.lua/binding/lua_thread.cpp
 build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_time.cpp
+    bee.lua/binding/lua_time.cpp
 build $obj/source_bee/lua_unicode.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/lua_unicode.cpp
-build $obj/source_bee/luaref.obj: cxx_source_bee_2 $
-    3rd/bee.lua/binding/luaref.cpp
+    bee.lua/binding/lua_unicode.cpp
+build $obj/source_bee/luaref.obj: cxx_source_bee_2 bee.lua/binding/luaref.cpp
 rule c_source_lua
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /D_WIN32_WINNT=0x0601 $
     /DNDEBUG 
   description = Compile C   $out
   deps = msvc
-build $obj/source_lua/utf8_crt.obj: c_source_lua $
-    3rd/bee.lua/3rd/lua/utf8_crt.c
+build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
 rule c_source_lua_1
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /D_WIN32_WINNT=0x0601 $
     /DMAKE_LIB /DLUA_BUILD_AS_DLL /DNDEBUG /wd4267 
   description = Compile C   $out
   deps = msvc
-build $obj/source_lua/linit.obj: c_source_lua_1 3rd/bee.lua/3rd/lua/linit.c
-build $obj/source_lua/onelua.obj: c_source_lua_1 3rd/bee.lua/3rd/lua/onelua.c
+build $obj/source_lua/linit.obj: c_source_lua_1 bee.lua/3rd/lua/linit.c
+build $obj/source_lua/onelua.obj: c_source_lua_1 bee.lua/3rd/lua/onelua.c
 rule cxx_source_bootstrap
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /I3rd/bee.lua/3rd/lua $
-    /I3rd/bee.lua /D_WIN32_WINNT=0x0601 /DNDEBUG /std:c++17 /GR-
+    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Ibee.lua/3rd/lua /Ibee.lua $
+    /D_WIN32_WINNT=0x0601 /DNDEBUG /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
 build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
-    3rd/bee.lua/bootstrap/main.cpp
+    bee.lua/bootstrap/main.cpp
 build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
-    3rd/bee.lua/bootstrap/progdir.cpp
+    bee.lua/bootstrap/progdir.cpp
 rule link_luamake
   command = cl /nologo @$out.rsp /link /IMPLIB:$obj/luamake.lib $
     advapi32.lib ws2_32.lib ole32.lib user32.lib version.lib wbemuuid.lib $
@@ -130,38 +127,37 @@ rule copy
   description = Copy $in$input $out
   restat = 1
 build $bin/main.lua: copy | $bin/luamake.exe
-  input = 3rd/bee.lua/bootstrap/main.lua
+  input = bee.lua/bootstrap/main.lua
 rule test
-  command = $bin/luamake.exe 3rd/bee.lua/test/test.lua --touch $out
+  command = $bin/luamake.exe bee.lua/test/test.lua --touch $out
   description = Run test.
   pool = console
-build $obj/test.stamp: test 3rd/bee.lua/test/console.lua $
-    3rd/bee.lua/test/glibc-version.lua 3rd/bee.lua/test/ltest/coverage.lua $
-    3rd/bee.lua/test/ltest/ltest.lua 3rd/bee.lua/test/ltest/stringify.lua $
-    3rd/bee.lua/test/ltest/undump.lua 3rd/bee.lua/test/shell.lua $
-    3rd/bee.lua/test/test.lua 3rd/bee.lua/test/test_filesystem.lua $
-    3rd/bee.lua/test/test_filewatch.lua 3rd/bee.lua/test/test_lua.lua $
-    3rd/bee.lua/test/test_serialization.lua $
-    3rd/bee.lua/test/test_socket.lua 3rd/bee.lua/test/test_subprocess.lua $
-    3rd/bee.lua/test/test_thread.lua 3rd/bee.lua/test/test_time.lua | $
-    $bin/luamake.exe copy_script
+build $obj/test.stamp: test bee.lua/test/console.lua $
+    bee.lua/test/glibc-version.lua bee.lua/test/ltest/coverage.lua $
+    bee.lua/test/ltest/ltest.lua bee.lua/test/ltest/stringify.lua $
+    bee.lua/test/ltest/undump.lua bee.lua/test/shell.lua $
+    bee.lua/test/test.lua bee.lua/test/test_filesystem.lua $
+    bee.lua/test/test_filewatch.lua bee.lua/test/test_lua.lua $
+    bee.lua/test/test_serialization.lua bee.lua/test/test_socket.lua $
+    bee.lua/test/test_subprocess.lua bee.lua/test/test_thread.lua $
+    bee.lua/test/test_time.lua | $bin/luamake.exe copy_script
 build luamake.exe: copy | $bin/luamake.exe
   input = $bin/luamake.exe
 rule runlua
-  command = $luamake lua $script 3rd/bee.lua/3rd/lua $out luamake.exe msvc
-  description = lua $script 3rd/bee.lua/3rd/lua $out luamake.exe msvc
-build 3rd/bee.lua/bootstrap/forward_lua.h: runlua $
-    3rd/bee.lua/bootstrap/forward_lua.lua 3rd/bee.lua/3rd/lua/lua.h $
-    3rd/bee.lua/3rd/lua/lauxlib.h 3rd/bee.lua/3rd/lua/lualib.h | $
-    copy_luamake 3rd/bee.lua/bootstrap/forward_lua.lua
-  script = 3rd/bee.lua/bootstrap/forward_lua.lua
+  command = $luamake lua $script bee.lua/3rd/lua $out luamake.exe msvc
+  description = lua $script bee.lua/3rd/lua $out luamake.exe msvc
+build bee.lua/bootstrap/forward_lua.h: runlua $
+    bee.lua/bootstrap/forward_lua.lua bee.lua/3rd/lua/lua.h $
+    bee.lua/3rd/lua/lauxlib.h bee.lua/3rd/lua/lualib.h | copy_luamake $
+    bee.lua/bootstrap/forward_lua.lua
+  script = bee.lua/bootstrap/forward_lua.lua
 rule c_lua54
   command = cl /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /I3rd/bee.lua/bootstrap $
+    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Ibee.lua/bootstrap $
     /D_WIN32_WINNT=0x0601 /DNDEBUG 
   description = Compile C   $out
   deps = msvc
-build $obj/lua54/forward_lua.obj: c_lua54 3rd/bee.lua/bootstrap/forward_lua.c
+build $obj/lua54/forward_lua.obj: c_lua54 bee.lua/bootstrap/forward_lua.c
 rule link_lua54
   command = cl /nologo @$out.rsp /link $obj/luamake.lib /DEBUG:NONE $
     /INCREMENTAL:NO /LTCG /out:$out /DLL /IMPLIB:$implib
@@ -178,9 +174,8 @@ build luamake: phony $bin/luamake.exe
 build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp
 build copy_luamake: phony luamake.exe
-build forward_lua: phony 3rd/bee.lua/bootstrap/forward_lua.h
-build 3rd/bee.lua/bootstrap/forward_lua.c: phony $
-    3rd/bee.lua/bootstrap/forward_lua.h
+build forward_lua: phony bee.lua/bootstrap/forward_lua.h
+build bee.lua/bootstrap/forward_lua.c: phony bee.lua/bootstrap/forward_lua.h
 build lua54: phony $bin/lua54.dll
 build copy_lua54: phony tools/lua54.dll
 build notest: phony copy_luamake copy_lua54

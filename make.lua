@@ -13,7 +13,7 @@ local dll = isWindows and ".dll" or ".so"
 
 lm.LUAMAKE = "copy_luamake"
 lm.EXE_NAME = "luamake"
-lm:import "3rd/bee.lua/make.lua"
+lm:import "bee.lua/make.lua"
 
 lm:copy "copy_luamake" {
     input = "$bin/luamake"..exe,

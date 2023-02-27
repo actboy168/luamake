@@ -1,6 +1,6 @@
 # luamake
 
-## Build
+## Install
 
 ```bash
 git clone https://github.com/actboy168/luamake
@@ -26,7 +26,27 @@ Install ninja
 compile/install.sh
 ```
 
-## Quick start
+## Useful Build Commands
+
+compile
+```
+compile/build.bat(msvc)
+compile/build.sh (other)
+```
+
+compile and skip test
+```
+compile/build.bat notest(msvc)
+compile/build.sh notest(other)
+```
+
+clean
+```
+compile/build.bat -t clean(msvc)
+compile/build.sh -t clean(other)
+```
+
+## Quick Start
 
 Create file `make.lua`. For example, this is a `make.lua` to compile lua:
 ``` lua

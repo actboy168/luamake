@@ -86,6 +86,12 @@ end
 
 return function (context, rule, name, attribute)
     local luaversion = attribute.luaversion or "lua54"
+    if rule == "shared_library" and globals.os == "windows" then
+        local luadir = "$builddir/"..luaversion
+        init_rule(context)
+        init_version(context, luadir, luaversion)
+        windows_deps(context, name, attribute, luaversion)
+    end
     local includes = attribute.includes or {}
     if globals.prebuilt then
         includes[#includes+1] = "tools/"..luaversion
@@ -97,10 +103,4 @@ return function (context, rule, name, attribute)
         )
     end
     attribute.includes = includes
-    if rule == "shared_library"  and globals.os == "windows" then
-        local luadir = "$builddir/"..luaversion
-        init_rule(context)
-        init_version(context, luadir, luaversion)
-        windows_deps(context, name, attribute, luaversion)
-    end
 end

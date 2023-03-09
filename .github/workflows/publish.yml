@@ -9,8 +9,12 @@ jobs:
         submodules : recursive
     - run: .\compile\build.bat
     - run: .\luamake.exe version
-  linux:
-    runs-on: ubuntu-20.04
+  ubuntu:
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [20.04, 22.04]
+    runs-on: ubuntu-${{ matrix.version }}
     steps:
     - uses: actions/checkout@v3
       with:

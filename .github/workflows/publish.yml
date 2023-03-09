@@ -2,7 +2,11 @@ name: build
 on: push
 jobs:
   windows:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [2019, 2022]
+    runs-on: windows-${{ matrix.version }}
     steps:
     - uses: actions/checkout@v3
       with:
@@ -24,7 +28,11 @@ jobs:
     - run: ./compile/build.sh
     - run: ./luamake version
   macos:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [11, 12]
+    runs-on: macos-${{ matrix.version }}
     steps:
     - uses: actions/checkout@v3
       with:

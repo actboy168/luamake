@@ -22,7 +22,7 @@ end)()
 globals.compiler = globals.compiler or (function()
     if globals.hostshell == "cmd" then
         return "msvc"
-    elseif globals.hostos == "macos" then
+    elseif globals.hostos == "macos" or globals.hostos == "freebsd" then
         return "clang"
     end
     return "gcc"

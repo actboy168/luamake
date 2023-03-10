@@ -2,7 +2,7 @@ ninja_required_version = 1.7
 builddir = build/freebsd
 bin = $builddir/bin
 obj = $builddir/obj
-cc = gcc
+cc = clang
 luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
@@ -24,7 +24,8 @@ build $obj/source_bee/format.obj: cxx_source_bee $
     bee.lua/bee/nonstd/3rd/fmt/format.cc
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -Werror -fvisibility=hidden -Ibee.lua -DNDEBUG -o $out -c $in
+    -Werror -fvisibility=hidden -Ibee.lua -isystem /usr/local/include $
+    -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
@@ -80,7 +81,7 @@ rule c_source_lua
 build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
 rule c_source_lua_1
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror -DMAKE_LIB $
-    -DLUA_USE_LINUX -DNDEBUG -Wno-maybe-uninitialized -o $out -c $in
+    -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -98,8 +99,8 @@ build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
 build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/progdir.cpp
 rule link_luamake
-  command = $cc $in -o $out -lm -Wl,-E -linotify -pthread -Wl,-Bstatic $
-    -lstdc++ -Wl,-Bdynamic -static-libgcc -s
+  command = $cc $in -o $out -lm -Wl,-E -linotify -L/usr/local/lib -pthread $
+    -lstdc++ -Wl,-S,-x
   description = Link    Exe $out
 build $bin/luamake: link_luamake $obj/source_bootstrap/main.obj $
     $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $

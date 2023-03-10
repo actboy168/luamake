@@ -15,13 +15,13 @@ build $obj/source_bee/lua-seri.obj: c_source_bee $
     bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -Werror -fvisibility=hidden -DNDEBUG -fPIC -o $out -c $in
+    -Werror -fvisibility=hidden -Ibee.lua/bee/nonstd/3rd -DNDEBUG -fPIC -o $
+    $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/format.obj: cxx_source_bee $
-    bee.lua/bee/nonstd/3rd/format.cc
-build $obj/source_bee/os.obj: cxx_source_bee bee.lua/bee/nonstd/3rd/os.cc
+    bee.lua/bee/nonstd/3rd/fmt/format.cc
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -Werror -fvisibility=hidden -Ibee.lua -DNDEBUG -fPIC -o $out -c $in
@@ -34,6 +34,8 @@ build $obj/source_bee/filewatch_linux.obj: cxx_source_bee_1 $
 build $obj/source_bee/endpoint.obj: cxx_source_bee_1 $
     bee.lua/bee/net/endpoint.cpp
 build $obj/source_bee/socket.obj: cxx_source_bee_1 bee.lua/bee/net/socket.cpp
+build $obj/source_bee/version.obj: cxx_source_bee_1 $
+    bee.lua/bee/platform/version.cpp
 build $obj/source_bee/subprocess_posix.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/subprocess_posix.cpp
 build $obj/source_bee/simplethread_posix.obj: cxx_source_bee_1 $
@@ -101,9 +103,9 @@ rule link_luamake
   description = Link    Exe $out
 build $bin/luamake: link_luamake $obj/source_bootstrap/main.obj $
     $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $
-    $obj/source_bee/format.obj $obj/source_bee/os.obj $
-    $obj/source_bee/error.obj $obj/source_bee/filewatch_linux.obj $
-    $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
+    $obj/source_bee/format.obj $obj/source_bee/error.obj $
+    $obj/source_bee/filewatch_linux.obj $obj/source_bee/endpoint.obj $
+    $obj/source_bee/socket.obj $obj/source_bee/version.obj $
     $obj/source_bee/subprocess_posix.obj $
     $obj/source_bee/simplethread_posix.obj $obj/source_bee/file_handle.obj $
     $obj/source_bee/file_handle_linux.obj $
@@ -128,11 +130,12 @@ build $obj/test.stamp: test bee.lua/test/console.lua $
     bee.lua/test/glibc-version.lua bee.lua/test/ltest/coverage.lua $
     bee.lua/test/ltest/ltest.lua bee.lua/test/ltest/stringify.lua $
     bee.lua/test/ltest/undump.lua bee.lua/test/shell.lua $
-    bee.lua/test/test.lua bee.lua/test/test_filesystem.lua $
-    bee.lua/test/test_filewatch.lua bee.lua/test/test_lua.lua $
-    bee.lua/test/test_serialization.lua bee.lua/test/test_socket.lua $
-    bee.lua/test/test_subprocess.lua bee.lua/test/test_thread.lua $
-    bee.lua/test/test_time.lua | $bin/luamake copy_script
+    bee.lua/test/supported.lua bee.lua/test/test.lua $
+    bee.lua/test/test_filesystem.lua bee.lua/test/test_filewatch.lua $
+    bee.lua/test/test_lua.lua bee.lua/test/test_serialization.lua $
+    bee.lua/test/test_socket.lua bee.lua/test/test_subprocess.lua $
+    bee.lua/test/test_thread.lua bee.lua/test/test_time.lua | $bin/luamake $
+    copy_script
 build luamake: copy | $bin/luamake
   input = $bin/luamake
 build copy_script: phony $bin/main.lua

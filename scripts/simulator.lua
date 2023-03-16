@@ -260,11 +260,16 @@ local function import(path)
     importfile(mainSimulator, WORKDIR, path)
 end
 
+local function init()
+    writer:init()
+end
+
 local function generate()
     writer:generate()
 end
 
 return  {
+    init = init,
     import = import,
     generate = generate,
 }

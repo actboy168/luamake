@@ -1,7 +1,3 @@
-local open = io.open
-local os_remove = os.remove
-local os_rename = os.rename
-local assert = assert
 local type = type
 local tostring = tostring
 local ipairs = ipairs
@@ -103,12 +99,11 @@ local function findwrap(text, start, count)
 	return wrapafter(text, start + count)
 end
 
-return function (filename)
-	local f = assert(open(filename..".tmp", 'wb'))
+return function ()
+	local buf = {}
 	local w = {}
 	local function write(text)
-		f:write(text)
-		f:write "\n"
+		buf[#buf+1] = text
 	end
 	local function writeline(text)
 		local start
@@ -222,9 +217,8 @@ return function (filename)
 		writeline('default ' .. join(as_list(targets)))
 	end
 	function w:close()
-		f:close()
-		os_remove(filename)
-		os_rename(filename..".tmp", filename)
+		write ""
+		return tconcat(buf, "\n")
 	end
 	return w
 end

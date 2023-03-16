@@ -1,7 +1,10 @@
 local fsutil = require "fsutil"
+local ninja_syntax = require "ninja_syntax"
 
-return function (filename)
-    local ninja = require "ninja_syntax"(filename)
+return function ()
+    local ninja_head = ninja_syntax()
+    local ninja_body = ninja_syntax()
+    local ninja = ninja_head
     local rule_name = {}
     local rule_command = {}
     local obj_name = {}
@@ -10,6 +13,12 @@ return function (filename)
     local default
     local last_rule
     local m = {}
+    function m:switch_head()
+        ninja = ninja_head
+    end
+    function m:switch_body()
+        ninja = ninja_body
+    end
     function m:rule(name, command, kwargs)
         if rule_command[command] then
             last_rule = rule_command[command]
@@ -60,22 +69,36 @@ return function (filename)
     function m:default(targets)
         default = targets
     end
-    function m:close()
+    function m:close(filename)
         for _, out in ipairs(phony) do
             if not build_name[out] then
-                ninja:build(out, 'phony', phony[out])
+                ninja_body:build(out, 'phony', phony[out])
             end
         end
         if default then
-            ninja:default(default)
+            ninja_body:default(default)
         end
-        ninja:close()
+        local f = assert(io.open(filename..".tmp", 'wb'))
+        f:write(ninja_head:close())
+        f:write(ninja_body:close())
+        f:close()
+        os.remove(filename)
+        os.rename(filename..".tmp", filename)
     end
-    m.comment = ninja.comment
-    m.variable = ninja.variable
-    m.pool = ninja.pool
-    m.variable = ninja.variable
-    m.include = ninja.include
-    m.subninja = ninja.subninja
+    function m:comment(...)
+        return ninja:comment(...)
+    end
+    function m:variable(...)
+        return ninja:variable(...)
+    end
+    function m:pool(...)
+        return ninja:pool(...)
+    end
+    function m:include(...)
+        return ninja:include(...)
+    end
+    function m:subninja(...)
+        return ninja:subninja(...)
+    end
     return m
 end

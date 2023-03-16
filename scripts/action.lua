@@ -38,6 +38,7 @@ local function ninja(args)
 end
 
 local function init()
+    sim.init()
     sim.import(arguments.f)
 end
 

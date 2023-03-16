@@ -10,7 +10,6 @@ local cc
 local writer = {loaded={}}
 local loaded = writer.loaded
 local loaded_rule = {}
-local statements = {}
 local targets = {}
 local scripts = {}
 local mark_scripts = {}
@@ -904,13 +903,25 @@ end
 
 function writer:add_statement(rule, global_attribute, local_attribute, name)
     local attribute = reslove_attributes(global_attribute, local_attribute)
-    statements[#statements+1] = {rule, attribute, name}
+    local statement = {rule, attribute, name}
+    local STATEMENT <const> = {
+        default = true,
+        rule = true,
+    }
+    if STATEMENT[rule] then
+        GEN[rule](self, attribute, name)
+    else
+        if not statement.loaded then
+            loadtarget(self, statement)
+        end
+    end
+    return statement
 end
 
 function writer:add_target(rule, global_attribute, local_attribute, name)
-    self:add_statement(rule, global_attribute, local_attribute, name)
+    local statement = self:add_statement(rule, global_attribute, local_attribute, name)
     if name then
-        targets[name] = statements[#statements]
+        targets[name] = statement
     end
 end
 
@@ -948,26 +959,24 @@ local function configure_args()
     return table.concat(s, " ")
 end
 
-local STATEMENT <const> = {
-    default = true,
-    rule = true,
-}
+function writer:init()
+    local ninja = require "ninja_writer"()
+    self.ninja = ninja
+    ninja:switch_body()
+    cc = require("compiler." .. globals.compiler)
+end
 
 function writer:generate()
+    local ninja = self.ninja
+    ninja:switch_head()
     local builddir = fsutil.join(WORKDIR, globals.builddir)
-    local ninja_script = fsutil.join(builddir, "build.ninja")
-    local context = self
-    cc = require("compiler." .. globals.compiler)
     fs.create_directories(builddir)
-
-    local ninja = require "ninja_writer"(ninja_script)
 
     ninja:variable("ninja_required_version", "1.7")
     ninja:variable("builddir", fmtpath(globals.builddir))
     ninja:variable("bin", fmtpath(globals.bindir))
     ninja:variable("obj", fmtpath(globals.objdir))
 
-    context.ninja = ninja
 
     if globals.compiler == "msvc" then
         if not globals.prebuilt then
@@ -995,18 +1004,8 @@ function writer:generate()
         ninja:build("$builddir/build.ninja", scripts)
     end
 
-    for _, statement in ipairs(statements) do
-        local rule = statement[1]
-        if STATEMENT[rule] then
-            GEN[rule](context, table.unpack(statement, 2))
-        else
-            if not statement.loaded then
-                loadtarget(context, statement)
-            end
-        end
-    end
-
-    ninja:close()
+    local ninja_script = fsutil.join(builddir, "build.ninja")
+    ninja:close(ninja_script)
 end
 
 return writer

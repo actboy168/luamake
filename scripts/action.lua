@@ -4,14 +4,11 @@ local fs = require 'bee.filesystem'
 local sim = require 'simulator'
 local arguments = require "arguments"
 
-local function spawn_ninja(args)
-    local option = {
-        "ninja", "-f",  globals.builddir .. "/build.ninja",
-        args,
-        stdout = args.stdout or true,
-        stderr = "stdout",
-        searchPath = true,
-    }
+local function execute(option)
+    local redirect = option.stdout ~= nil
+    option.stdout = option.stdout or true
+    option.stderr = "stdout"
+    option.searchPath = true
     if globals.compiler == 'msvc' then
         local msvc = require "msvc_util"
         option.env = msvc.getEnv()
@@ -19,24 +16,25 @@ local function spawn_ninja(args)
         option.env.TMP = fs.absolute(globals.builddir):string()
     end
     if globals.hostshell == "cmd" then
-        option[1] = {'cmd', '/c', 'ninja'}
+        option[1] = {'cmd', '/c', option[1]}
     end
-
-    return assert(sp.spawn(option))
-end
-
-local function ninja(args)
-    local process = spawn_ninja(args)
-    for line in process.stdout:lines() do
-        io.write(line, "\n")
-        io.flush()
+    local process = assert(sp.spawn(option))
+    if not redirect then
+        for line in process.stdout:lines() do
+            io.write(line, "\n")
+            io.flush()
+        end
+        process.stdout:close()
     end
-    process.stdout:close()
-
     local code = process:wait()
     if code ~= 0 then
         os.exit(code, true)
     end
+end
+
+local function ninja(args)
+    args[1] = { "ninja", "-f",  globals.builddir .. "/build.ninja", args[1] }
+    execute(args)
 end
 
 local function init()
@@ -49,11 +47,10 @@ local function compdb()
             builddir = globals.builddir,
         })
         local f <close> = assert(io.open(compile_commands.."/compile_commands.json", "wb"))
-        local process = spawn_ninja {
+        ninja {
             "-t", "compdb",
             stdout = f
         }
-        assert(process:wait() == 0)
     end
 end
 
@@ -115,4 +112,5 @@ return {
     generate = generate,
     make = make,
     clean = clean,
+    execute = execute,
 }

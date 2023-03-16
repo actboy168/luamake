@@ -11,17 +11,19 @@ end
 local exe = isWindows and ".exe" or ""
 local dll = isWindows and ".dll" or ".so"
 
-lm.LUAMAKE = "copy_luamake"
-lm.EXE_NAME = "luamake"
 lm:import "bee.lua/make.lua"
 
 lm:copy "copy_luamake" {
-    input = "$bin/luamake"..exe,
+    input = "$bin/bootstrap"..exe,
     output = "luamake"..exe,
-    deps = "luamake",
+    deps = "bootstrap",
 }
 
 if isWindows then
+    lm:phony {
+        deps = "copy_luamake",
+        output = "bee.lua/bootstrap/forward_lua.lua"
+    }
     lm:copy "copy_lua54" {
         input = "$bin/lua54"..dll,
         output = "tools/lua54"..dll,

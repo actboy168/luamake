@@ -5,9 +5,8 @@ obj = $builddir/obj
 cc = gcc
 luamake = luamake
 rule c_source_bee
-  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
-    -Ibee.lua/3rd/lua-seri -Itools/lua54 -D_WIN32_WINNT=0x0601 -DNDEBUG -o $
-    $out -c $in
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror -Itools/lua54 $
+    -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -15,13 +14,11 @@ build $obj/source_bee/lua-seri.obj: c_source_bee $
     bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -Werror -Ibee.lua/bee/nonstd/3rd -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out $
-    -c $in
+    -Werror -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/format.obj: cxx_source_bee $
-    bee.lua/bee/nonstd/3rd/fmt/format.cc
+build $obj/source_bee/format.obj: cxx_source_bee bee.lua/3rd/fmt/format.cc
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -Werror -Ibee.lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
@@ -54,9 +51,8 @@ build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
     bee.lua/bee/utility/path_helper.cpp
 rule cxx_source_bee_2
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -Werror -Ibee.lua/3rd/lua-seri -Ibee.lua -Itools/lua54 $
-    -D_WIN32_WINNT=0x0601 -DBEE_STATIC -D_CRT_SECURE_NO_WARNINGS -DNDEBUG $
-    -o $out -c $in
+    -Werror -Ibee.lua -Itools/lua54 -D_WIN32_WINNT=0x0601 -DBEE_STATIC $
+    -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
@@ -105,12 +101,12 @@ build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/main.cpp
 build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/progdir.cpp
-rule link_luamake
-  command = $cc $in -o $out -Wl,--out-implib,$obj/luamake.lib -ladvapi32 $
+rule link_bootstrap
+  command = $cc $in -o $out -Wl,--out-implib,$obj/bootstrap.lib -ladvapi32 $
     -lws2_32 -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lshell32 $
     -lntdll -luuid -lstdc++fs -lstdc++ -s
   description = Link    Exe $out
-build $bin/luamake.exe: link_luamake $obj/source_bootstrap/main.obj $
+build $bin/bootstrap.exe: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/error.obj $
     $obj/source_bee/filewatch_win.obj $obj/source_bee/endpoint.obj $
@@ -129,10 +125,10 @@ rule copy
   command = sh -c "cp -fv $in$input $out 1>/dev/null"
   description = Copy $in$input $out
   restat = 1
-build $bin/main.lua: copy | $bin/luamake.exe
+build $bin/main.lua: copy | $bin/bootstrap.exe
   input = bee.lua/bootstrap/main.lua
 rule test
-  command = $bin/luamake.exe bee.lua/test/test.lua --touch $out
+  command = $bin/bootstrap.exe bee.lua/test/test.lua --touch $out
   description = Run test.
   pool = console
 build $obj/test.stamp: test bee.lua/test/console.lua $
@@ -144,15 +140,13 @@ build $obj/test.stamp: test bee.lua/test/console.lua $
     bee.lua/test/test_lua.lua bee.lua/test/test_serialization.lua $
     bee.lua/test/test_socket.lua bee.lua/test/test_subprocess.lua $
     bee.lua/test/test_thread.lua bee.lua/test/test_time.lua | $
-    $bin/luamake.exe copy_script
-build luamake.exe: copy | $bin/luamake.exe
-  input = $bin/luamake.exe
+    $bin/bootstrap.exe copy_script
 rule runlua
-  command = $luamake lua $script bee.lua/3rd/lua $out luamake.exe gcc
-  description = lua $script bee.lua/3rd/lua $out luamake.exe gcc
+  command = $luamake lua $script bee.lua/3rd/lua $out bootstrap.exe gcc
+  description = lua $script bee.lua/3rd/lua $out bootstrap.exe gcc
 build bee.lua/bootstrap/forward_lua.h: runlua $
     bee.lua/bootstrap/forward_lua.lua bee.lua/3rd/lua/lua.h $
-    bee.lua/3rd/lua/lauxlib.h bee.lua/3rd/lua/lualib.h | copy_luamake $
+    bee.lua/3rd/lua/lauxlib.h bee.lua/3rd/lua/lualib.h | $
     bee.lua/bootstrap/forward_lua.lua
   script = bee.lua/bootstrap/forward_lua.lua
 rule c_lua54
@@ -163,19 +157,22 @@ rule c_lua54
   depfile = $out.d
 build $obj/lua54/forward_lua.obj: c_lua54 bee.lua/bootstrap/forward_lua.c
 rule link_lua54
-  command = $cc --shared $in -o $out $obj/luamake.lib -lstdc++ -s
+  command = $cc --shared $in -o $out $obj/bootstrap.lib -lstdc++ -s
   description = Link    Dll $out
 build $bin/lua54.dll: link_lua54 $obj/lua54/forward_lua.obj | forward_lua $
-    $bin/luamake.exe
+    $bin/bootstrap.exe
+build luamake.exe: copy | $bin/bootstrap.exe
+  input = $bin/bootstrap.exe
 build tools/lua54.dll: copy | $bin/lua54.dll
   input = $bin/lua54.dll
-build luamake: phony $bin/luamake.exe
+build bootstrap: phony $bin/bootstrap.exe
 build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp
-build copy_luamake: phony luamake.exe
 build forward_lua: phony bee.lua/bootstrap/forward_lua.h
 build bee.lua/bootstrap/forward_lua.c: phony bee.lua/bootstrap/forward_lua.h
 build lua54: phony $bin/lua54.dll
+build copy_luamake: phony luamake.exe
+build bee.lua/bootstrap/forward_lua.lua: phony copy_luamake
 build copy_lua54: phony tools/lua54.dll
 build notest: phony copy_luamake copy_lua54
 default test notest

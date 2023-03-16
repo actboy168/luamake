@@ -59,7 +59,7 @@ local function generate()
     compdb()
 end
 
-local function make()
+local function build()
     local options = {}
     for _, opt in ipairs {"h", "v", "j", "k", "l", "n", "d", "t", "w"} do
         if arguments[opt] then
@@ -91,9 +91,9 @@ if globals.perf then
         end
         return perf_print()
     end
-    local function perf_make()
-        local _ <close> = perf_single "make"
-        return make()
+    local function perf_build()
+        local _ <close> = perf_single "build"
+        return build()
     end
     local function perf_clean()
         local _ <close> = perf_single "clean"
@@ -102,7 +102,7 @@ if globals.perf then
     return {
         init = perf_init,
         generate = perf_generate,
-        make = perf_make,
+        build = perf_build,
         clean = perf_clean,
     }
 end
@@ -110,7 +110,7 @@ end
 return {
     init = init,
     generate = generate,
-    make = make,
+    build = build,
     clean = clean,
     execute = execute,
 }

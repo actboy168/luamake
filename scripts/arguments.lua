@@ -1,7 +1,7 @@
 local t = {}
 local arguments = {}
 local targets = {}
-local what = 'make'
+local what = 'build'
 
 local function has_command(cmd)
     local path = package.searchpath("command."..cmd, package.path)

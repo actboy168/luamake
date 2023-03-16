@@ -20,9 +20,29 @@ lm:copy "copy_luamake" {
 }
 
 if isWindows then
-    lm:phony {
+    lm:runlua "forward_lua" {
+        script = "bee.lua/bootstrap/forward_lua.lua",
+        args = {"@bee.lua/3rd/lua/", "$out", "luamake.exe", lm.compiler},
+        input = {
+            "bee.lua/bootstrap/forward_lua.lua",
+            "bee.lua/3rd/lua/lua.h",
+            "bee.lua/3rd/lua/lauxlib.h",
+            "bee.lua/3rd/lua/lualib.h",
+        },
+        output = "bee.lua/bootstrap/forward_lua.h",
         deps = "copy_luamake",
-        output = "bee.lua/bootstrap/forward_lua.lua"
+    }
+    lm:phony {
+        input = "bee.lua/bootstrap/forward_lua.h",
+        output = "bee.lua/bootstrap/forward_lua.c",
+    }
+    lm:shared_library "lua54" {
+        includes = "bee.lua/bootstrap",
+        sources = "bee.lua/bootstrap/forward_lua.c",
+        ldflags = "$obj/bootstrap.lib",
+        deps = {
+            "bootstrap",
+        }
     }
     lm:copy "copy_lua54" {
         input = "$bin/lua54"..dll,

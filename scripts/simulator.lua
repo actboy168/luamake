@@ -12,69 +12,69 @@ local api = {}
 function api:source_set(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target('source_set', self, attribute, name)
+        writer:add_statement('source_set', self, attribute, name)
     end
 end
 function api:shared_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target('shared_library', self, attribute, name)
+        writer:add_statement('shared_library', self, attribute, name)
     end
 end
 function api:static_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target('static_library', self, attribute, name)
+        writer:add_statement('static_library', self, attribute, name)
     end
 end
 function api:executable(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target('executable', self, attribute, name)
+        writer:add_statement('executable', self, attribute, name)
     end
 end
 function api:lua_library(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         attribute.luaversion = attribute.luaversion or "lua54"
-        writer:add_target('shared_library', self, attribute, name)
+        writer:add_statement('shared_library', self, attribute, name)
     end
 end
 function api:lua_source(name)
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
         attribute.luaversion = attribute.luaversion or "lua54"
-        writer:add_target('source_set', self, attribute, name)
+        writer:add_statement('source_set', self, attribute, name)
     end
 end
 function api:build(name)
     if type(name) == "table" then
-        writer:add_target('build', self, name)
+        writer:add_statement('build', self, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target('build', self, attribute, name)
+        writer:add_statement('build', self, attribute, name)
     end
 end
 function api:copy(name)
     if type(name) == "table" then
-        writer:add_target('copy', self, name)
+        writer:add_statement('copy', self, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target('copy', self, attribute, name)
+        writer:add_statement('copy', self, attribute, name)
     end
 end
 function api:runlua(name)
     if type(name) == "table" then
-        writer:add_target('runlua', self, name)
+        writer:add_statement('runlua', self, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target('runlua', self, attribute, name)
+        writer:add_statement('runlua', self, attribute, name)
     end
 end
 function api:default(attribute)
@@ -84,12 +84,12 @@ function api:default(attribute)
 end
 function api:phony(name)
     if type(name) == "table" then
-        writer:add_target('phony', self, name)
+        writer:add_statement('phony', self, name)
         return
     end
     assert(type(name) == "string", "Name is not a string.")
     return function (attribute)
-        writer:add_target('phony', self, attribute, name)
+        writer:add_statement('phony', self, attribute, name)
     end
 end
 function api:has(name)
@@ -123,12 +123,12 @@ end
 if globals.compiler == "msvc" then
     function api:msvc_copydll(name)
         if type(name) == "table" then
-            writer:add_target('msvc_copydll', self, name)
+            writer:add_statement('msvc_copydll', self, name)
             return
         end
         assert(type(name) == "string", "Name is not a string.")
         return function (attribute)
-            writer:add_target('msvc_copydll', self, attribute, name)
+            writer:add_statement('msvc_copydll', self, attribute, name)
         end
     end
 else

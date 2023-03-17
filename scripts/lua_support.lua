@@ -24,12 +24,11 @@ local function init_single(attribute, attr_name, default)
     return attribute[attr_name]
 end
 
-local function init_rule(context)
+local function init_rule(ninja)
     if inited_rule then
         return
     end
     inited_rule = true
-    local ninja = context.ninja
     if globals.compiler == 'msvc' then
         local msvc = require "msvc_util"
         ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(globals.arch)),
@@ -44,22 +43,21 @@ local function init_rule(context)
     end
 end
 
-local function init_version(context, luadir, luaversion)
+local function init_version(ninja, loaded, luadir, luaversion)
     if inited_version[luaversion] then
         return
     end
     inited_version[luaversion] = true
-    local ninja = context.ninja
     lua_def(fsutil.join(package.procdir, "tools", luaversion))
     local libname
     if globals.compiler == 'msvc' then
         libname = luadir.."/lua-"..globals.arch..".lib"
-        context.loaded["__"..luaversion.."__"] = {
+        loaded["__"..luaversion.."__"] = {
             input = {libname}
         }
     else
         libname = luadir.."/liblua.a"
-        context.loaded["__"..luaversion.."__"] = {
+        loaded["__"..luaversion.."__"] = {
             implicit_inputs = {libname},
             ldflags = {
                 "-L"..luadir,
@@ -70,7 +68,7 @@ local function init_version(context, luadir, luaversion)
     ninja:build(libname, luadir.."/lua.def")
 end
 
-local function windows_deps(_, name, attribute, luaversion)
+local function windows_deps(name, attribute, luaversion)
     local ldflags = attribute.ldflags or {}
     local deps = attribute.deps or {}
     if globals.compiler == "msvc" then
@@ -84,13 +82,13 @@ local function windows_deps(_, name, attribute, luaversion)
     attribute.deps = deps
 end
 
-return function (context, rule, name, attribute)
+return function (ninja, loaded, rule, name, attribute)
     local luaversion = attribute.luaversion or "lua54"
     if rule == "shared_library" and globals.os == "windows" then
         local luadir = "$builddir/"..luaversion
-        init_rule(context)
-        init_version(context, luadir, luaversion)
-        windows_deps(context, name, attribute, luaversion)
+        init_rule(ninja)
+        init_version(ninja, loaded, luadir, luaversion)
+        windows_deps(name, attribute, luaversion)
     end
     local includes = attribute.includes or {}
     if globals.prebuilt then

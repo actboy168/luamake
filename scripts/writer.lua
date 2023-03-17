@@ -5,12 +5,12 @@ local fsutil = require "fsutil"
 local glob = require "glob"
 local pathutil = require "pathutil"
 
+local ninja
 local cc
 
-local writer = {loaded={}}
-local loaded = writer.loaded
+local writer = {}
+local loaded = {}
 local loaded_rule = {}
-local targets = {}
 local scripts = {}
 local mark_scripts = {}
 
@@ -308,7 +308,7 @@ local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
     end
 end
 
-local function update_ldflags(context, ldflags, attribute, name)
+local function update_ldflags(ldflags, attribute, name)
     tbl_append(ldflags, cc.ldflags)
 
     if attribute.links then
@@ -327,7 +327,7 @@ local function update_ldflags(context, ldflags, attribute, name)
 
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            local target = context:load(dep)
+            local target = loaded[dep]
             assert(target, ("`%s`: can`t find deps `%s`"):format(name, dep))
             if target.ldflags then
                 tbl_append(ldflags, target.ldflags)
@@ -338,7 +338,7 @@ local function update_ldflags(context, ldflags, attribute, name)
     cc.update_ldflags(ldflags, attribute, name)
 end
 
-local function generate(context, rule, attribute, name)
+local function generate(rule, attribute, name)
     local target = loaded[name]
     local input
     local ldflags
@@ -364,7 +364,6 @@ local function generate(context, rule, attribute, name)
         end
     end
 
-    local ninja = context.ninja
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_blob(attribute.rootdir, attribute.sources)
     local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
@@ -387,7 +386,7 @@ local function generate(context, rule, attribute, name)
     init_single(attribute, 'lto', default_enable_lto and "on" or "off")
 
     if attribute.luaversion then
-        require "lua_support"(context, rule, name, attribute)
+        require "lua_support"(ninja, loaded, rule, name, attribute)
     end
 
     if attribute.deps then
@@ -470,7 +469,7 @@ local function generate(context, rule, attribute, name)
                 table.remove(deps, i)
             else
                 mark[dep] = true
-                local t = context:load(dep)
+                local t = loaded[dep]
                 assert(t, ("`%s`: deps `%s` undefine."):format(name, dep))
                 if t.deps then
                     tbl_insert(deps, i + 1, t.deps)
@@ -479,7 +478,7 @@ local function generate(context, rule, attribute, name)
             end
         end
         for _, dep in ipairs(deps) do
-            local t = context:load(dep)
+            local t = loaded[dep]
             if t.input then
                 tbl_append(input, t.input)
             end
@@ -492,7 +491,7 @@ local function generate(context, rule, attribute, name)
     if bindir == globals.bindir then
         bindir = "$bin"
     end
-    update_ldflags(context, ldflags, attribute, name)
+    update_ldflags(ldflags, attribute, name)
 
     local fin_ldflags = table.concat(ldflags, " ")
     local basename = attribute.basename or name
@@ -557,17 +556,33 @@ end
 
 local GEN = {}
 
+function GEN.source_set(attribute, name)
+    generate("source_set", attribute, name)
+end
+
+function GEN.executable(attribute, name)
+    generate("executable", attribute, name)
+end
+
+function GEN.shared_library(attribute, name)
+    generate("shared_library", attribute, name)
+end
+
+function GEN.static_library(attribute, name)
+    generate("static_library", attribute, name)
+end
+
 local NAMEIDX = 0
 local function generateTargetName()
     NAMEIDX = NAMEIDX + 1
     return ("__target_0x%08x__"):format(NAMEIDX)
 end
 
-local function getImplicitInputs(context, name, attribute)
+local function getImplicitInputs(name, attribute)
     local res = {}
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            local target = context:load(dep)
+            local target = loaded[dep]
             if not target then
                 if name then
                     error(("`%s`: deps `%s` undefine."):format(name, dep))
@@ -584,17 +599,15 @@ local function getImplicitInputs(context, name, attribute)
     return res
 end
 
-function GEN.default(context, attribute)
-    local ninja = context.ninja
-    local implicit_inputs = getImplicitInputs(context, 'default', attribute)
+function GEN.default(attribute)
+    local implicit_inputs = getImplicitInputs('default', attribute)
     ninja:default(implicit_inputs)
 end
 
-function GEN.phony(context, attribute, name)
-    local ninja = context.ninja
+function GEN.phony(attribute, name)
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(name, attribute)
 
     local n = #input
     for i = 1, #implicit_inputs do
@@ -624,11 +637,10 @@ function GEN.phony(context, attribute, name)
     end
 end
 
-function GEN.rule(context, attribute, name)
+function GEN.rule(attribute, name)
     assert(loaded_rule[name] == nil, ("rule `%s`: redefinition."):format(name))
     loaded_rule[name] = true
 
-    local ninja = context.ninja
     local command = {}
     for i, v in ipairs(attribute) do
         command[i] = fsutil.quotearg(v)
@@ -642,12 +654,11 @@ function GEN.rule(context, attribute, name)
     ninja:rule(name, table.concat(command, " "), kwargs)
 end
 
-function GEN.runlua(context, attribute, name)
+function GEN.runlua(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
-    local ninja = context.ninja
     local input
     if attribute.inputs then
         input = get_blob(attribute.rootdir, attribute.inputs)
@@ -655,7 +666,7 @@ function GEN.runlua(context, attribute, name)
         input = attribute.input or {}
     end
     local output = attribute.output or {}
-    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(name, attribute)
     local script = assert(init_single(attribute, 'script'), ("`%s`: need attribute `script`."):format(name))
     implicit_inputs[#implicit_inputs+1] = script
 
@@ -695,12 +706,11 @@ function GEN.runlua(context, attribute, name)
     end
 end
 
-function GEN.build(context, attribute, name)
+function GEN.build(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
 
-    local ninja = context.ninja
     local input
     if attribute.inputs then
         input = get_blob(attribute.rootdir, attribute.inputs)
@@ -708,7 +718,7 @@ function GEN.build(context, attribute, name)
         input = attribute.input or {}
     end
     local output = attribute.output or {}
-    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(name, attribute)
     local rule = init_single(attribute, 'rule')
 
     local outname
@@ -752,7 +762,7 @@ function GEN.build(context, attribute, name)
     end
 end
 
-local function generate_copy(ninja, implicit_inputs, input, output)
+local function generate_copy(implicit_inputs, input, output)
     if globals.hostshell == "cmd" then
         ninja:rule('copy', "powershell -NonInteractive -Command Copy-Item -Path '$in$input' -Destination '$out' | Out-Null", {
             description = 'Copy $in$input $out',
@@ -784,13 +794,12 @@ local function generate_copy(ninja, implicit_inputs, input, output)
     end
 end
 
-function GEN.copy(context, attribute, name)
-    local ninja = context.ninja
+function GEN.copy(attribute, name)
     local input = attribute.input or {}
     local output = attribute.output or {}
-    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(name, attribute)
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
-    generate_copy(ninja, implicit_inputs, input, output)
+    generate_copy(implicit_inputs, input, output)
     if name then
         assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:phony(name, output)
@@ -800,11 +809,10 @@ function GEN.copy(context, attribute, name)
     end
 end
 
-function GEN.msvc_copydll(context, attribute, name)
-    local ninja = context.ninja
+function GEN.msvc_copydll(attribute, name)
     local input = {}
     local output = {}
-    local implicit_inputs = getImplicitInputs(context, name, attribute)
+    local implicit_inputs = getImplicitInputs(name, attribute)
     init_single(attribute, 'mode', 'release')
     init_single(attribute, 'arch')
     init_single(attribute, 'type')
@@ -864,65 +872,13 @@ function GEN.msvc_copydll(context, attribute, name)
     end
 end
 
-local function loadtarget(context, target)
-    local rule = target[1]
-    local attribute = target[2]
-    local name = target[3]
-    target.loaded = true
-    if GEN[rule] then
-        GEN[rule](context, attribute, name)
-    else
-        generate(context, rule, attribute, name)
-    end
-    if name == nil then
-        return false
-    end
-    if loaded[name] == nil then
-        loaded[name] = false
-        return false
-    end
-    return loaded[name]
-end
-
-function writer:load(name)
-    local r = loaded[name]
-    if r ~= nil then
-        return r
-    end
-    local t = targets[name]
-    if not t then
-        loaded[name] = false
-        return false
-    end
-    return loadtarget(self, t)
-end
-
 function writer:has(name)
-    return targets[name] ~= nil
+    return loaded[name] ~= nil
 end
 
 function writer:add_statement(rule, global_attribute, local_attribute, name)
     local attribute = reslove_attributes(global_attribute, local_attribute)
-    local statement = {rule, attribute, name}
-    local STATEMENT <const> = {
-        default = true,
-        rule = true,
-    }
-    if STATEMENT[rule] then
-        GEN[rule](self, attribute, name)
-    else
-        if not statement.loaded then
-            loadtarget(self, statement)
-        end
-    end
-    return statement
-end
-
-function writer:add_target(rule, global_attribute, local_attribute, name)
-    local statement = self:add_statement(rule, global_attribute, local_attribute, name)
-    if name then
-        targets[name] = statement
-    end
+    GEN[rule](attribute, name)
 end
 
 function writer:add_script(p)
@@ -960,14 +916,12 @@ local function configure_args()
 end
 
 function writer:init()
-    local ninja = require "ninja_writer"()
-    self.ninja = ninja
-    ninja:switch_body()
+    ninja = require "ninja_writer"()
     cc = require("compiler." .. globals.compiler)
+    ninja:switch_body()
 end
 
 function writer:generate()
-    local ninja = self.ninja
     ninja:switch_head()
     local builddir = fsutil.join(WORKDIR, globals.builddir)
     fs.create_directories(builddir)

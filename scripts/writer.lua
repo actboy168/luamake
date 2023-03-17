@@ -861,7 +861,7 @@ function GEN.msvc_copydll(attribute, name)
     else
         error("`msvc_copydll` unknown type: " .. attribute.type)
     end
-    generate_copy(ninja, implicit_inputs, input, output)
+    generate_copy(implicit_inputs, input, output)
 
     if name then
         assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))

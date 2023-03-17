@@ -53,9 +53,6 @@ local function update_target(flags, attribute)
 end
 
 function clang.update_flags(flags, _, cxxflags, attribute)
-    --TODO
-    --if attribute.crt == 'dynamic' then
-    --end
     if attribute.mode == 'debug' then
         flags[#flags+1] = '-g'
     end
@@ -93,7 +90,14 @@ function clang.update_ldflags(ldflags, attribute)
             ldflags[#ldflags+1] = framework
         end
     end
-    ldflags[#ldflags+1] = "-lstdc++"
+    if attribute.crt == 'dynamic' then
+        ldflags[#ldflags+1] = "-lstdc++"
+    else
+        ldflags[#ldflags+1] = "-Wl,--push-state,-Bstatic"
+        ldflags[#ldflags+1] = "-lstdc++"
+        ldflags[#ldflags+1] = "-Wl,--pop-state"
+        ldflags[#ldflags+1] = "-static-libgcc"
+    end
     if attribute.mode == 'release' then
         ldflags[#ldflags+1] = '-Wl,-S,-x'
     end

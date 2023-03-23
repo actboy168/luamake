@@ -8,7 +8,7 @@ local pathutil = require "pathutil"
 local ninja
 local cc
 
-local writer = {}
+local m = {}
 local loaded = {}
 local loaded_rule = {}
 local scripts = {}
@@ -235,8 +235,8 @@ local function update_warnings(flags, warnings)
 end
 
 local function array_remove(t, k)
-    for pos, m in ipairs(t) do
-        if m == k then
+    for pos, v in ipairs(t) do
+        if v == k then
             table.remove(t, pos)
             return true
         end
@@ -554,24 +554,6 @@ local function generate(rule, attribute, name)
     ninja:phony(name, binname)
 end
 
-local GEN = {}
-
-function GEN.source_set(attribute, name)
-    generate("source_set", attribute, name)
-end
-
-function GEN.executable(attribute, name)
-    generate("executable", attribute, name)
-end
-
-function GEN.shared_library(attribute, name)
-    generate("shared_library", attribute, name)
-end
-
-function GEN.static_library(attribute, name)
-    generate("static_library", attribute, name)
-end
-
 local NAMEIDX = 0
 local function generateTargetName()
     NAMEIDX = NAMEIDX + 1
@@ -599,12 +581,7 @@ local function getImplicitInputs(name, attribute)
     return res
 end
 
-function GEN.default(attribute)
-    local implicit_inputs = getImplicitInputs('default', attribute)
-    ninja:default(implicit_inputs)
-end
-
-function GEN.phony(attribute, name)
+local function GEN_phony(attribute, name)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
@@ -637,7 +614,7 @@ function GEN.phony(attribute, name)
     end
 end
 
-function GEN.rule(attribute, name)
+local function GEN_rule(attribute, name)
     assert(loaded_rule[name] == nil, ("rule `%s`: redefinition."):format(name))
     loaded_rule[name] = true
 
@@ -654,7 +631,7 @@ function GEN.rule(attribute, name)
     ninja:rule(name, table.concat(command, " "), kwargs)
 end
 
-function GEN.runlua(attribute, name)
+local function GEN_runlua(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
@@ -706,7 +683,7 @@ function GEN.runlua(attribute, name)
     end
 end
 
-function GEN.build(attribute, name)
+local function GEN_build(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
@@ -794,7 +771,7 @@ local function generate_copy(implicit_inputs, input, output)
     end
 end
 
-function GEN.copy(attribute, name)
+local function GEN_copy(attribute, name)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
@@ -809,7 +786,7 @@ function GEN.copy(attribute, name)
     end
 end
 
-function GEN.msvc_copydll(attribute, name)
+local function GEN_msvc_copydll(attribute, name)
     local input = {}
     local output = {}
     local implicit_inputs = getImplicitInputs(name, attribute)
@@ -872,23 +849,6 @@ function GEN.msvc_copydll(attribute, name)
     end
 end
 
-function writer:has(name)
-    return loaded[name] ~= nil
-end
-
-function writer:add_statement(rule, global_attribute, local_attribute, name)
-    local attribute = reslove_attributes(global_attribute, local_attribute)
-    GEN[rule](attribute, name)
-end
-
-function writer:add_script(p)
-    if mark_scripts[p] then
-        return
-    end
-    mark_scripts[p] = true
-    scripts[#scripts+1] = fsutil.relative(p, WORKDIR)
-end
-
 local function get_luamake()
     local proc = arg[-1]
     if proc == "luamake" then
@@ -915,13 +875,25 @@ local function configure_args()
     return table.concat(s, " ")
 end
 
-function writer:init()
+function m.add_script(p)
+    if mark_scripts[p] then
+        return
+    end
+    mark_scripts[p] = true
+    scripts[#scripts+1] = fsutil.relative(p, WORKDIR)
+end
+
+function m.init()
     ninja = require "ninja_writer"()
     cc = require("compiler." .. globals.compiler)
     ninja:switch_body()
 end
 
-function writer:generate()
+function m.default(deps)
+    local implicit_inputs = getImplicitInputs('default', {deps = deps})
+    ninja:default(implicit_inputs)
+end
+function m.generate()
     ninja:switch_head()
     local builddir = fsutil.join(WORKDIR, globals.builddir)
     fs.create_directories(builddir)
@@ -962,4 +934,111 @@ function writer:generate()
     ninja:close(ninja_script)
 end
 
-return writer
+
+local api = {}
+
+local compile_target <const> = {
+    "source_set",
+    "shared_library",
+    "static_library",
+    "executable",
+}
+for _, rule in ipairs(compile_target) do
+    api[rule] = function (global_attribute, name)
+        assert(type(name) == "string", "Name is not a string.")
+        return function (local_attribute)
+            local attribute = reslove_attributes(global_attribute, local_attribute)
+            generate(rule, attribute, name)
+        end
+    end
+    api["lua_"..rule] = function (global_attribute, name)
+        assert(type(name) == "string", "Name is not a string.")
+        return function (local_attribute)
+            local_attribute.luaversion = local_attribute.luaversion or "lua54"
+            local attribute = reslove_attributes(global_attribute, local_attribute)
+            generate(rule, attribute, name)
+        end
+    end
+end
+local alias <const> = {
+    exe = "executable",
+    dll = "shared_library",
+    lib = "static_library",
+    src = "source_set",
+    lua_library = "lua_shared_library",
+    lua_source = "lua_source_set",
+    lua_dll = "lua_shared_library",
+    lua_src = "lua_source_set",
+}
+for to, from in pairs(alias) do
+    api[to] = api[from]
+end
+
+function api.rule(global_attribute, name)
+    assert(type(name) == "string", "Name is not a string.")
+    return function (local_attribute)
+        local attribute = reslove_attributes(global_attribute, local_attribute)
+        GEN_rule(attribute, name)
+    end
+end
+
+local function allow_anonymous_target(genfunc, global_attribute, name)
+    if type(name) == "table" then
+        local attribute = reslove_attributes(global_attribute, name)
+        genfunc(attribute)
+    else
+        assert(type(name) == "string", "Name is not a string.")
+        return function (attribute)
+            attribute = reslove_attributes(global_attribute, attribute)
+            genfunc(attribute, name)
+        end
+    end
+end
+
+function api:build(name)
+    return allow_anonymous_target(GEN_build, self, name)
+end
+function api:copy(name)
+    return allow_anonymous_target(GEN_copy, self, name)
+end
+function api:runlua(name)
+    return allow_anonymous_target(GEN_runlua, self, name)
+end
+function api:phony(name)
+    return allow_anonymous_target(GEN_phony, self, name)
+end
+if globals.compiler == "msvc" then
+    function api:msvc_copydll(name)
+        return allow_anonymous_target(GEN_msvc_copydll, self, name)
+    end
+else
+    function api:msvc_copydll()
+        return function () end
+    end
+end
+
+function api:has(name)
+    assert(type(name) == "string", "Name is not a string.")
+    return loaded[name] ~= nil
+end
+function api:path(value)
+    return pathutil.create(value)
+end
+function api:required_version(buildVersion)
+    local function parse_version(v)
+        local major, minor = v:match "^(%d+)%.(%d+)"
+        if not major then
+            error(string.format("Invalid version string: `%s`.", v))
+        end
+        return tonumber(major) * 1000 + tonumber(minor)
+    end
+    local luamakeVersion = require "version"
+    if parse_version(luamakeVersion) < parse_version(buildVersion) then
+        print(string.format("luamake version (%s) incompatible with build file required_version (%s).", luamakeVersion, buildVersion))
+        os.exit()
+    end
+end
+
+m.api = api
+
+return m

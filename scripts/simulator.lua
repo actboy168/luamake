@@ -6,148 +6,8 @@ local arguments = require "arguments"
 local globals = require "globals"
 local pathutil = require "pathutil"
 
+local api = writer.api
 local mainSimulator = {}
-local api = {}
-
-function api:source_set(name)
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('source_set', self, attribute, name)
-    end
-end
-function api:shared_library(name)
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('shared_library', self, attribute, name)
-    end
-end
-function api:static_library(name)
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('static_library', self, attribute, name)
-    end
-end
-function api:executable(name)
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('executable', self, attribute, name)
-    end
-end
-function api:lua_library(name)
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        attribute.luaversion = attribute.luaversion or "lua54"
-        writer:add_statement('shared_library', self, attribute, name)
-    end
-end
-function api:lua_source(name)
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        attribute.luaversion = attribute.luaversion or "lua54"
-        writer:add_statement('source_set', self, attribute, name)
-    end
-end
-function api:build(name)
-    if type(name) == "table" then
-        writer:add_statement('build', self, name)
-        return
-    end
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('build', self, attribute, name)
-    end
-end
-function api:copy(name)
-    if type(name) == "table" then
-        writer:add_statement('copy', self, name)
-        return
-    end
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('copy', self, attribute, name)
-    end
-end
-function api:runlua(name)
-    if type(name) == "table" then
-        writer:add_statement('runlua', self, name)
-        return
-    end
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('runlua', self, attribute, name)
-    end
-end
-function api:default(attribute)
-    if self == mainSimulator then
-        writer:add_statement('default', self, {deps = attribute})
-    end
-end
-function api:phony(name)
-    if type(name) == "table" then
-        writer:add_statement('phony', self, name)
-        return
-    end
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('phony', self, attribute, name)
-    end
-end
-function api:has(name)
-    assert(type(name) == "string", "Name is not a string.")
-    return writer:has(name)
-end
-function api:path(value)
-    return pathutil.create(value)
-end
-function api:rule(name)
-    assert(type(name) == "string", "Name is not a string.")
-    return function (attribute)
-        writer:add_statement('rule', self, attribute, name)
-    end
-end
-function api:required_version(buildVersion)
-    local function parse_version(v)
-        local major, minor = v:match "^(%d+)%.(%d+)"
-        if not major then
-            error(string.format("Invalid version string: `%s`.", v))
-        end
-        return tonumber(major) * 1000 + tonumber(minor)
-    end
-    local luamakeVersion = require "version"
-    if parse_version(luamakeVersion) < parse_version(buildVersion) then
-        print(string.format("luamake version (%s) incompatible with build file required_version (%s).", luamakeVersion, buildVersion))
-        os.exit()
-    end
-end
-
-if globals.compiler == "msvc" then
-    function api:msvc_copydll(name)
-        if type(name) == "table" then
-            writer:add_statement('msvc_copydll', self, name)
-            return
-        end
-        assert(type(name) == "string", "Name is not a string.")
-        return function (attribute)
-            writer:add_statement('msvc_copydll', self, attribute, name)
-        end
-    end
-else
-    function api:msvc_copydll()
-        return function () end
-    end
-end
-
-local alias = {
-    exe = "executable",
-    dll = "shared_library",
-    lib = "static_library",
-    src = "source_set",
-    lua_dll = "lua_library",
-    lua_src = "lua_source",
-}
-for to, from in pairs(alias) do
-    api[to] = api[from]
-end
 
 local mainMt = {}
 function mainMt:__index(k)
@@ -209,7 +69,7 @@ end
 local function openfile(name, mode)
     local f, err = io.open(name, mode)
     if f and (mode == nil or mode:match "r") then
-        writer:add_script(name)
+        writer.add_script(name)
     end
     return f, err
 end
@@ -250,6 +110,12 @@ function api:import(path)
     importfile(subSimulator, rootdir, filename)
 end
 
+function api:default(attribute)
+    if self == mainSimulator then
+        writer.default(attribute)
+    end
+end
+
 local function import(path)
     path = path or "make.lua"
     local fullpath = fsutil.normalize(WORKDIR, path)
@@ -260,16 +126,8 @@ local function import(path)
     importfile(mainSimulator, WORKDIR, path)
 end
 
-local function init()
-    writer:init()
-end
-
-local function generate()
-    writer:generate()
-end
-
 return  {
-    init = init,
+    init = writer.init,
+    generate = writer.generate,
     import = import,
-    generate = generate,
 }

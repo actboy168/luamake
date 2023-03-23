@@ -97,7 +97,8 @@ build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/progdir.cpp
 rule link_bootstrap
   command = $cc $in -o $out -lm -Wl,-E -linotify -L/usr/local/lib -pthread $
-    -lstdc++ -Wl,-S,-x
+    -Wl,--push-state,-Bstatic -lstdc++ -Wl,--pop-state -static-libgcc $
+    -Wl,-S,-x
   description = Link    Exe $out
 build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $

@@ -889,7 +889,9 @@ function m.init()
     ninja:switch_body()
 end
 
-function m.default(deps)
+function m.default(attribute)
+    local deps = {}
+    push_string(deps, attribute)
     local implicit_inputs = getImplicitInputs('default', {deps = deps})
     ninja:default(implicit_inputs)
 end

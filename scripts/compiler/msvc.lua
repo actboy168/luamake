@@ -1,3 +1,5 @@
+local globals = require "globals"
+
 local function format_path(path)
     if path:match " " then
         return '"'..path..'"'
@@ -79,7 +81,7 @@ function cl.update_flags(flags, _, cxxflags, attribute, name)
     else
         flags[#flags+1] = attribute.crt == 'dynamic' and '/MD' or '/MT'
     end
-    if attribute.lto ~= "off" then
+    if globals.cc ~= "clang-cl" and attribute.lto ~= "off" then
         flags[#flags+1] = "/GL"
     end
     if attribute.rtti == "off" then
@@ -96,12 +98,14 @@ function cl.update_ldflags(ldflags, attribute, name)
     end
     if attribute.lto ~= "off" then
         ldflags[#ldflags+1] = '/INCREMENTAL:NO'
-        ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
+        if globals.cc ~= "clang-cl" then
+            ldflags[#ldflags+1] = '/LTCG' -- TODO: msvc2017 has bug for /LTCG:incremental
+        end
     end
 end
 
 function cl.rule_c(w, name, flags, cflags)
-    w:rule('c_'..name, ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
+    w:rule('c_'..name, ([[$cc /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
     {
         description = 'Compile C   $out',
         deps = 'msvc',
@@ -109,7 +113,7 @@ function cl.rule_c(w, name, flags, cflags)
 end
 
 function cl.rule_cxx(w, name, flags, cxxflags)
-    w:rule('cxx_'..name, ([[cl /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
+    w:rule('cxx_'..name, ([[$cc /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
     {
         description = 'Compile C++ $out',
         deps = 'msvc',
@@ -117,7 +121,7 @@ function cl.rule_cxx(w, name, flags, cxxflags)
 end
 
 function cl.rule_dll(w, name, ldflags)
-    w:rule('link_'..name, ([[cl /nologo @$out.rsp /link %s /out:$out /DLL /IMPLIB:$implib]]):format(ldflags),
+    w:rule('link_'..name, ([[$cc /nologo @$out.rsp /link %s /out:$out /DLL /IMPLIB:$implib]]):format(ldflags),
     {
         description = 'Link    Dll $out',
         rspfile = "$out.rsp",
@@ -127,7 +131,7 @@ function cl.rule_dll(w, name, ldflags)
 end
 
 function cl.rule_exe(w, name, ldflags)
-    w:rule('link_'..name, ([[cl /nologo @$out.rsp /link %s /out:$out]]):format(ldflags),
+    w:rule('link_'..name, ([[$cc /nologo @$out.rsp /link %s /out:$out]]):format(ldflags),
     {
         description = 'Link    Exe $out',
         rspfile = "$out.rsp",

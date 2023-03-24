@@ -11,9 +11,10 @@ local cc
 local m = {}
 local loaded_target = {}
 local loaded_rule = {}
+local loaded_config = {}
 local scripts = {}
 
-local file_type = {
+local file_type <const> = {
     cxx = "cxx",
     cpp = "cxx",
     cc = "cxx",
@@ -206,6 +207,25 @@ local function reslove_attributes(g, loc)
     local r = {}
     reslove_table(g_rootdir, r, g)
     reslove_table(l_rootdir, r, loc)
+    if r.configs then
+        for _, name in ipairs(r.configs) do
+            local config = assert(loaded_config[name], ("can`t find config `%s`"):format(name))
+            for k, v in pairs(config) do
+                if type(k) ~= "string" then
+                    goto continue
+                end
+                if ATTRIBUTE[k] == PlatformAttribute then
+                    goto continue
+                end
+                r[k] = r[k] or {}
+                push_string(r[k], v)
+                if #r[k] == 0 then
+                    r[k] = nil
+                end
+                ::continue::
+            end
+        end
+    end
     --TODO: remove it
     push_args(r, loc, l_rootdir)
     r.workdir = g.workdir
@@ -568,6 +588,11 @@ local function generate_rule(attribute, name)
         end
     end
     ninja:rule(name, table.concat(command, " "), kwargs)
+end
+
+local function generate_config(attribute, name)
+    assert(loaded_config[name] == nil, ("config `%s`: redefinition."):format(name))
+    loaded_config[name] = attribute
 end
 
 local function getImplicitInputs(name, attribute)
@@ -985,6 +1010,14 @@ function api.rule(global_attribute, name)
     return function (local_attribute)
         local attribute = reslove_attributes(global_attribute, local_attribute)
         generate_rule(attribute, name)
+    end
+end
+
+function api.config(global_attribute, name)
+    assert(type(name) == "string", "Name is not a string.")
+    return function (local_attribute)
+        local attribute = reslove_attributes(global_attribute, local_attribute)
+        generate_config(attribute, name)
     end
 end
 

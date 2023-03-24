@@ -9,10 +9,9 @@ local ninja
 local cc
 
 local m = {}
-local loaded = {}
+local loaded_target = {}
 local loaded_rule = {}
 local scripts = {}
-local mark_scripts = {}
 
 local file_type = {
     cxx = "cxx",
@@ -327,7 +326,7 @@ local function update_ldflags(ldflags, attribute, name)
 
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            local target = loaded[dep]
+            local target = loaded_target[dep]
             assert(target, ("`%s`: can`t find deps `%s`"):format(name, dep))
             if target.ldflags then
                 tbl_append(ldflags, target.ldflags)
@@ -339,7 +338,7 @@ local function update_ldflags(ldflags, attribute, name)
 end
 
 local function generate(rule, attribute, name)
-    local target = loaded[name]
+    local target = loaded_target[name]
     local input
     local ldflags
     local deps
@@ -360,7 +359,7 @@ local function generate(rule, attribute, name)
             target = { rule = rule }
             input = {}
             ldflags =  {}
-            loaded[name] = target
+            loaded_target[name] = target
         end
     end
 
@@ -386,7 +385,7 @@ local function generate(rule, attribute, name)
     init_single(attribute, 'lto', default_enable_lto and "on" or "off")
 
     if attribute.luaversion then
-        require "lua_support"(ninja, loaded, rule, name, attribute)
+        require "lua_support"(ninja, loaded_target, rule, name, attribute)
     end
 
     if attribute.deps then
@@ -469,7 +468,7 @@ local function generate(rule, attribute, name)
                 table.remove(deps, i)
             else
                 mark[dep] = true
-                local t = loaded[dep]
+                local t = loaded_target[dep]
                 assert(t, ("`%s`: deps `%s` undefine."):format(name, dep))
                 if t.deps then
                     tbl_insert(deps, i + 1, t.deps)
@@ -478,7 +477,7 @@ local function generate(rule, attribute, name)
             end
         end
         for _, dep in ipairs(deps) do
-            local t = loaded[dep]
+            local t = loaded_target[dep]
             if t.input then
                 tbl_append(input, t.input)
             end
@@ -575,7 +574,7 @@ local function getImplicitInputs(name, attribute)
     local res = {}
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
-            local target = loaded[dep]
+            local target = loaded_target[dep]
             if not target then
                 if name then
                     error(("`%s`: deps `%s` undefine."):format(name, dep))
@@ -619,7 +618,7 @@ function GEN.phony(attribute, name)
                 ninja:phony(out, input)
             end
         end
-        loaded[name] = {
+        loaded_target[name] = {
             implicit_inputs = name,
         }
     else
@@ -636,7 +635,7 @@ end
 function GEN.runlua(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
-    assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
+    assert(loaded_target[name] == nil, ("`%s`: redefinition."):format(name))
 
     local input
     if attribute.inputs then
@@ -679,7 +678,7 @@ function GEN.runlua(attribute, name)
     })
     if not tmpName then
         ninja:phony(name, outname)
-        loaded[name] = {
+        loaded_target[name] = {
             implicit_inputs = name,
         }
     end
@@ -688,7 +687,7 @@ end
 function GEN.build(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
-    assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
+    assert(loaded_target[name] == nil, ("`%s`: redefinition."):format(name))
 
     local input
     if attribute.inputs then
@@ -735,7 +734,7 @@ function GEN.build(attribute, name)
     end
     if not tmpName then
         ninja:phony(name, outname)
-        loaded[name] = {
+        loaded_target[name] = {
             implicit_inputs = name,
         }
     end
@@ -780,9 +779,9 @@ function GEN.copy(attribute, name)
     assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
     generate_copy(implicit_inputs, input, output)
     if name then
-        assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
+        assert(loaded_target[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:phony(name, output)
-        loaded[name] = {
+        loaded_target[name] = {
             implicit_inputs = name,
         }
     end
@@ -846,9 +845,9 @@ function GEN.msvc_copydll(attribute, name)
     generate_copy(implicit_inputs, input, output)
 
     if name then
-        assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
+        assert(loaded_target[name] == nil, ("`%s`: redefinition."):format(name))
         ninja:phony(name, output)
-        loaded[name] = {
+        loaded_target[name] = {
             implicit_inputs = name,
         }
     end
@@ -881,10 +880,10 @@ local function configure_args()
 end
 
 function m.add_script(p)
-    if mark_scripts[p] then
+    if scripts[p] then
         return
     end
-    mark_scripts[p] = true
+    scripts[p] = true
     scripts[#scripts+1] = fsutil.relative(p, WORKDIR)
 end
 
@@ -1006,7 +1005,7 @@ end
 
 function api:has(name)
     assert(type(name) == "string", "Name is not a string.")
-    return loaded[name] ~= nil
+    return loaded_target[name] ~= nil
 end
 function api:path(value)
     return pathutil.create(value)

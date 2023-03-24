@@ -554,10 +554,21 @@ local function generate(rule, attribute, name)
     ninja:phony(name, binname)
 end
 
-local NAMEIDX = 0
-local function generateTargetName()
-    NAMEIDX = NAMEIDX + 1
-    return ("__target_0x%08x__"):format(NAMEIDX)
+local function generate_rule(attribute, name)
+    assert(loaded_rule[name] == nil, ("rule `%s`: redefinition."):format(name))
+    loaded_rule[name] = true
+
+    local command = {}
+    for i, v in ipairs(attribute) do
+        command[i] = fsutil.quotearg(v)
+    end
+    local kwargs = {}
+    for k, v in pairs(attribute) do
+        if type(k) == "string" then
+            kwargs[k] = v[#v]
+        end
+    end
+    ninja:rule(name, table.concat(command, " "), kwargs)
 end
 
 local function getImplicitInputs(name, attribute)
@@ -581,7 +592,15 @@ local function getImplicitInputs(name, attribute)
     return res
 end
 
-local function GEN_phony(attribute, name)
+local GEN = {}
+
+local NAMEIDX = 0
+local function generateTargetName()
+    NAMEIDX = NAMEIDX + 1
+    return ("__target_0x%08x__"):format(NAMEIDX)
+end
+
+function GEN.phony(attribute, name)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
@@ -614,24 +633,7 @@ local function GEN_phony(attribute, name)
     end
 end
 
-local function GEN_rule(attribute, name)
-    assert(loaded_rule[name] == nil, ("rule `%s`: redefinition."):format(name))
-    loaded_rule[name] = true
-
-    local command = {}
-    for i, v in ipairs(attribute) do
-        command[i] = fsutil.quotearg(v)
-    end
-    local kwargs = {}
-    for k, v in pairs(attribute) do
-        if type(k) == "string" then
-            kwargs[k] = v[#v]
-        end
-    end
-    ninja:rule(name, table.concat(command, " "), kwargs)
-end
-
-local function GEN_runlua(attribute, name)
+function GEN.runlua(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
@@ -683,7 +685,7 @@ local function GEN_runlua(attribute, name)
     end
 end
 
-local function GEN_build(attribute, name)
+function GEN.build(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     assert(loaded[name] == nil, ("`%s`: redefinition."):format(name))
@@ -771,7 +773,7 @@ local function generate_copy(implicit_inputs, input, output)
     end
 end
 
-local function GEN_copy(attribute, name)
+function GEN.copy(attribute, name)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
@@ -786,7 +788,10 @@ local function GEN_copy(attribute, name)
     end
 end
 
-local function GEN_msvc_copydll(attribute, name)
+function GEN.msvc_copydll(attribute, name)
+    if globals.compiler ~= "msvc" then
+        return
+    end
     local input = {}
     local output = {}
     local implicit_inputs = getImplicitInputs(name, attribute)
@@ -980,42 +985,22 @@ function api.rule(global_attribute, name)
     assert(type(name) == "string", "Name is not a string.")
     return function (local_attribute)
         local attribute = reslove_attributes(global_attribute, local_attribute)
-        GEN_rule(attribute, name)
+        generate_rule(attribute, name)
     end
 end
 
-local function allow_anonymous_target(genfunc, global_attribute, name)
-    if type(name) == "table" then
-        local attribute = reslove_attributes(global_attribute, name)
-        genfunc(attribute)
-    else
-        assert(type(name) == "string", "Name is not a string.")
-        return function (attribute)
-            attribute = reslove_attributes(global_attribute, attribute)
-            genfunc(attribute, name)
+for rule, genfunc in pairs(GEN) do
+    api[rule] = function (global_attribute, name)
+        if type(name) == "table" then
+            local attribute = reslove_attributes(global_attribute, name)
+            genfunc(attribute)
+        else
+            assert(type(name) == "string", "Name is not a string.")
+            return function (local_attribute)
+                local attribute = reslove_attributes(global_attribute, local_attribute)
+                genfunc(attribute, name)
+            end
         end
-    end
-end
-
-function api:build(name)
-    return allow_anonymous_target(GEN_build, self, name)
-end
-function api:copy(name)
-    return allow_anonymous_target(GEN_copy, self, name)
-end
-function api:runlua(name)
-    return allow_anonymous_target(GEN_runlua, self, name)
-end
-function api:phony(name)
-    return allow_anonymous_target(GEN_phony, self, name)
-end
-if globals.compiler == "msvc" then
-    function api:msvc_copydll(name)
-        return allow_anonymous_target(GEN_msvc_copydll, self, name)
-    end
-else
-    function api:msvc_copydll()
-        return function () end
     end
 end
 

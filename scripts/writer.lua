@@ -991,24 +991,32 @@ for _, rule in ipairs(compile_target) do
             generate(rule, attribute, name)
         end
     end
-    api["lua_"..rule] = function (global_attribute, name)
+end
+
+local lua_compile_target <const> = {
+    lua_exe = "executable",
+    lua_dll = "shared_library",
+    lua_lib = "static_library",
+    lua_src = "source_set",
+}
+for rule, origin_rule in pairs(lua_compile_target) do
+    api[rule] = function (global_attribute, name)
         log.assert(type(name) == "string", "Name is not a string.")
         return function (local_attribute)
             local_attribute.luaversion = local_attribute.luaversion or "lua54"
             local attribute = reslove_attributes(global_attribute, local_attribute)
-            generate(rule, attribute, name)
+            generate(origin_rule, attribute, name)
         end
     end
 end
+
 local alias <const> = {
     exe = "executable",
     dll = "shared_library",
     lib = "static_library",
     src = "source_set",
-    lua_library = "lua_shared_library",
-    lua_source = "lua_source_set",
-    lua_dll = "lua_shared_library",
-    lua_src = "lua_source_set",
+    lua_library = "lua_dll",
+    lua_source = "lua_src",
 }
 for to, from in pairs(alias) do
     api[to] = api[from]

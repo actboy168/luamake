@@ -1,4 +1,5 @@
 local fsutil = require "fsutil"
+local log = require "log"
 
 local function sandbox_env(env, loadlua, openfile, preload, builddir)
     setmetatable(env, {__index=_G})
@@ -52,7 +53,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         end
         local f, err2 = loadlua(path)
         if not f then
-            error(("error loading module '%s' from file '%s':\n\t%s"):format(name, path, err2))
+            log.fatal("error loading module '%s' from file '%s':\n\t%s", name, path, err2)
         end
         return f, path
     end
@@ -67,7 +68,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         name = name:gsub("[^%-]+%-", "")
         local res, err2 =  package.loadlib(path, "luaopen_" .. name)
         if not res then
-            error(("error loading module '%s' from file '%s':\n\t%s"):format(name, path, err2))
+            log.fatal("error loading module '%s' from file '%s':\n\t%s", name, path, err2)
         end
         return res, path
     end
@@ -86,7 +87,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         name = name:gsub("[^%-]+%-", "")
         local res, err2 =  package.loadlib(path, "luaopen_" .. name)
         if not res then
-            error(("error loading module '%s' from file '%s':\n\t%s"):format(name, path, err2))
+            log.fatal("error loading module '%s' from file '%s':\n\t%s", name, path, err2)
         end
         return res, path
     end
@@ -103,7 +104,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
                 msg = msg .. f
             end
         end
-        error(("module '%s' not found:%s"):format(name, msg))
+        log.fatal("module '%s' not found:%s", name, msg)
     end
 
     function env.require(name)
@@ -117,7 +118,9 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         end
         local main, extra = require_load(name)
         debug.setupvalue(main, 1, env)
-        local res = main(name, extra)
+        local _, res = xpcall(main, function(errmsg)
+            log.fatal(errmsg)
+        end, extra)
         if res ~= nil then
             _LOADED[name] = res
         end
@@ -151,7 +154,8 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
     function env.dofile(filename)
         local f, err = loadlua(filename)
         if not f then
-            error(err)
+            log.fatal(err)
+            return
         end
         return f()
     end
@@ -189,8 +193,11 @@ return function (c)
     end
     local main, err = sandbox_loadlua(c.main)
     if not main then
-        error(err, 2)
+        log.fatal(err)
+        return
     end
     debug.setupvalue(main, 1, sandbox_env(env, sandbox_loadlua, sandbox_openfile, c.preload, c.builddir))
-    main(table.unpack(c.args))
+    xpcall(main, function(errmsg)
+        log.fatal(errmsg)
+    end, table.unpack(c.args))
 end

@@ -4,6 +4,7 @@ local globals = require "globals"
 local fsutil = require "fsutil"
 local glob = require "glob"
 local pathutil = require "pathutil"
+local log = require "log"
 
 local ninja
 local cc
@@ -209,7 +210,8 @@ local function reslove_attributes(g, loc)
     reslove_table(l_rootdir, r, loc)
     if r.configs then
         for _, name in ipairs(r.configs) do
-            local config = assert(loaded_config[name], ("can`t find config `%s`"):format(name))
+            log.assert(loaded_config[name], "can`t find config `%s`", name)
+            local config = loaded_config[name]
             for k, v in pairs(config) do
                 if type(k) ~= "string" then
                     goto continue
@@ -279,8 +281,10 @@ local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
             flags[#flags+1] = "-fPIC"
         end
     end
-    cflags  [#cflags  +1] = assert(cc.c  [attribute.c],   ("`%s`: unknown std c: `%s`")  :format(name, attribute.c))
-    cxxflags[#cxxflags+1] = assert(cc.cxx[attribute.cxx], ("`%s`: unknown std c++: `%s`"):format(name, attribute.cxx))
+    log.assert(cc.c  [attribute.c],   "`%s`: unknown std c: `%s`", name, attribute.c)
+    log.assert(cc.cxx[attribute.cxx], "`%s`: unknown std c++: `%s`", name, attribute.cxx)
+    cflags  [#cflags  +1] = cc.c  [attribute.c]
+    cxxflags[#cxxflags+1] = cc.cxx[attribute.cxx]
     cc.update_flags(flags, cflags, cxxflags, attribute, name)
 
     if attribute.includes then
@@ -347,7 +351,7 @@ local function update_ldflags(ldflags, attribute, name)
     if attribute.deps then
         for _, dep in ipairs(attribute.deps) do
             local target = loaded_target[dep]
-            assert(target, ("`%s`: can`t find deps `%s`"):format(name, dep))
+            log.assert(target, "`%s`: can`t find deps `%s`", name, dep)
             if target.ldflags then
                 tbl_append(ldflags, target.ldflags)
             end
@@ -373,7 +377,7 @@ local function generate(rule, attribute, name)
                 target.ldflags = nil
                 target.deps = nil
             else
-                error(("`%s`: redefinition."):format(name))
+                log.fatal("`%s`: redefinition.", name)
             end
         else
             target = { rule = rule }
@@ -448,7 +452,7 @@ local function generate(rule, attribute, name)
             cc.rule_asm(ninja, name, str_flags)
             input[#input+1] = ninja:build_obj(objpath, source, objargs)
         else
-            error(("`%s`: unknown file extension: `%s` in `%s`"):format(name, ext, source))
+            log.fatal("`%s`: unknown file extension: `%s` in `%s`", name, ext, source)
         end
         ::continue::
     end
@@ -489,7 +493,7 @@ local function generate(rule, attribute, name)
             else
                 mark[dep] = true
                 local t = loaded_target[dep]
-                assert(t, ("`%s`: deps `%s` undefine."):format(name, dep))
+                log.assert(t, "`%s`: deps `%s` undefine.", name, dep)
                 if t.deps then
                     tbl_insert(deps, i + 1, t.deps)
                 end
@@ -504,7 +508,7 @@ local function generate(rule, attribute, name)
             implicit_inputs[#implicit_inputs+1] = t.implicit_inputs
         end
     end
-    assert(#input > 0, ("`%s`: no source files found."):format(name))
+    log.assert(#input > 0, "`%s`: no source files found.", name)
 
     local binname
     if bindir == globals.bindir then
@@ -574,7 +578,7 @@ local function generate(rule, attribute, name)
 end
 
 local function generate_rule(attribute, name)
-    assert(loaded_rule[name] == nil, ("rule `%s`: redefinition."):format(name))
+    log.assert(loaded_rule[name] == nil, "rule `%s`: redefinition.", name)
     loaded_rule[name] = true
 
     local command = {}
@@ -591,7 +595,7 @@ local function generate_rule(attribute, name)
 end
 
 local function generate_config(attribute, name)
-    assert(loaded_config[name] == nil, ("config `%s`: redefinition."):format(name))
+    log.assert(loaded_config[name] == nil, "config `%s`: redefinition.", name)
     loaded_config[name] = attribute
 end
 
@@ -602,9 +606,9 @@ local function getImplicitInputs(name, attribute)
             local target = loaded_target[dep]
             if not target then
                 if name then
-                    error(("`%s`: deps `%s` undefine."):format(name, dep))
+                    log.fatal("`%s`: deps `%s` undefine.", name, dep)
                 else
-                    error(("deps `%s` undefine."):format(dep))
+                    log.fatal("deps `%s` undefine.", dep)
                 end
             end
             if target.input then
@@ -648,7 +652,7 @@ function GEN.phony(attribute, name)
         }
     else
         if #output == 0 then
-            error(("`%s`: no output."):format(name))
+            log.fatal("`%s`: no output.", name)
         else
             for _, out in ipairs(output) do
                 ninja:phony(out, input)
@@ -660,7 +664,7 @@ end
 function GEN.runlua(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
-    assert(loaded_target[name] == nil, ("`%s`: redefinition."):format(name))
+    log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
 
     local input
     if attribute.inputs then
@@ -670,7 +674,8 @@ function GEN.runlua(attribute, name)
     end
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    local script = assert(init_single(attribute, 'script'), ("`%s`: need attribute `script`."):format(name))
+    local script = init_single(attribute, 'script')
+    log.assert(script, "`%s`: need attribute `script`.", name)
     implicit_inputs[#implicit_inputs+1] = script
 
     if attribute.args then
@@ -712,7 +717,7 @@ end
 function GEN.build(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
-    assert(loaded_target[name] == nil, ("`%s`: redefinition."):format(name))
+    log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
 
     local input
     if attribute.inputs then
@@ -732,7 +737,7 @@ function GEN.build(attribute, name)
     end
 
     if rule then
-        assert(loaded_rule[rule], ("unknown rule `%s`"):format(rule))
+        log.assert(loaded_rule[rule], "unknown rule `%s`", rule)
         ninja:set_rule(rule)
         local command_str; do
             if attribute.args then
@@ -801,10 +806,10 @@ function GEN.copy(attribute, name)
     local input = attribute.input or {}
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    assert(#input == #output, ("`%s`: The number of input and output must be the same."):format(name))
+    log.assert(#input == #output, "`%s`: The number of input and output must be the same.", name)
     generate_copy(implicit_inputs, input, output)
     if name then
-        assert(loaded_target[name] == nil, ("`%s`: redefinition."):format(name))
+        log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
         ninja:phony(name, output)
         loaded_target[name] = {
             implicit_inputs = name,
@@ -865,12 +870,12 @@ function GEN.msvc_copydll(attribute, name)
         input[#input+1] = fsutil.join(inputdir, filename)
         output[#output+1] = fsutil.join(outputdir, filename)
     else
-        error("`msvc_copydll` unknown type: " .. attribute.type)
+        log.fatal("`msvc_copydll` unknown type: %s", attribute.type)
     end
     generate_copy(implicit_inputs, input, output)
 
     if name then
-        assert(loaded_target[name] == nil, ("`%s`: redefinition."):format(name))
+        log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
         ninja:phony(name, output)
         loaded_target[name] = {
             implicit_inputs = name,
@@ -980,14 +985,14 @@ local compile_target <const> = {
 }
 for _, rule in ipairs(compile_target) do
     api[rule] = function (global_attribute, name)
-        assert(type(name) == "string", "Name is not a string.")
+        log.assert(type(name) == "string", "Name is not a string.")
         return function (local_attribute)
             local attribute = reslove_attributes(global_attribute, local_attribute)
             generate(rule, attribute, name)
         end
     end
     api["lua_"..rule] = function (global_attribute, name)
-        assert(type(name) == "string", "Name is not a string.")
+        log.assert(type(name) == "string", "Name is not a string.")
         return function (local_attribute)
             local_attribute.luaversion = local_attribute.luaversion or "lua54"
             local attribute = reslove_attributes(global_attribute, local_attribute)
@@ -1010,7 +1015,7 @@ for to, from in pairs(alias) do
 end
 
 function api.rule(global_attribute, name)
-    assert(type(name) == "string", "Name is not a string.")
+    log.assert(type(name) == "string", "Name is not a string.")
     return function (local_attribute)
         local attribute = reslove_attributes(global_attribute, local_attribute)
         generate_rule(attribute, name)
@@ -1018,7 +1023,7 @@ function api.rule(global_attribute, name)
 end
 
 function api.config(global_attribute, name)
-    assert(type(name) == "string", "Name is not a string.")
+    log.assert(type(name) == "string", "Name is not a string.")
     return function (local_attribute)
         local attribute = reslove_attributes(global_attribute, local_attribute)
         generate_config(attribute, name)
@@ -1031,7 +1036,7 @@ for rule, genfunc in pairs(GEN) do
             local attribute = reslove_attributes(global_attribute, name)
             genfunc(attribute)
         else
-            assert(type(name) == "string", "Name is not a string.")
+            log.assert(type(name) == "string", "Name is not a string.")
             return function (local_attribute)
                 local attribute = reslove_attributes(global_attribute, local_attribute)
                 genfunc(attribute, name)
@@ -1041,7 +1046,7 @@ for rule, genfunc in pairs(GEN) do
 end
 
 function api:has(name)
-    assert(type(name) == "string", "Name is not a string.")
+    log.assert(type(name) == "string", "Name is not a string.")
     return loaded_target[name] ~= nil
 end
 function api:path(value)
@@ -1051,14 +1056,13 @@ function api:required_version(buildVersion)
     local function parse_version(v)
         local major, minor = v:match "^(%d+)%.(%d+)"
         if not major then
-            error(string.format("Invalid version string: `%s`.", v))
+            log.fatal("Invalid version string: `%s`.", v)
         end
         return tonumber(major) * 1000 + tonumber(minor)
     end
     local luamakeVersion = require "version"
     if parse_version(luamakeVersion) < parse_version(buildVersion) then
-        print(string.format("luamake version (%s) incompatible with build file required_version (%s).", luamakeVersion, buildVersion))
-        os.exit()
+        log.fatal("luamake version (%s) incompatible with build file required_version (%s).", luamakeVersion, buildVersion)
     end
 end
 

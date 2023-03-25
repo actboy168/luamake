@@ -28,7 +28,7 @@ local function execute(option)
     end
     local code = process:wait()
     if code ~= 0 then
-        os.exit(code, true)
+        os.exit(code)
     end
 end
 

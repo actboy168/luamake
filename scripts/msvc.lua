@@ -48,7 +48,7 @@ local function installpath()
     local code = process:wait()
     if code ~= 0 then
         print("[vswhere]", result)
-        os.exit(code, true)
+        os.exit(code)
     end
     InstallDir = result
     return InstallDir
@@ -140,7 +140,7 @@ local function vsdevcmd(winsdk, arch, f)
     if code ~= 0 then
         io.stderr:write("Call `VsDevCmd.bat` error:\n")
         io.stderr:write(err)
-        os.exit(code, true)
+        os.exit(code)
     end
 end
 

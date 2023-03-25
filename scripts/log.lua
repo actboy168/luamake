@@ -82,7 +82,6 @@ local traceback; do
         while true do
             local info = debug.getinfo(depth, "Slntf")
             if not info then
-                s[#s] = nil
                 break
             end
             if info.source:byte(1) == 61 --[['=']] then
@@ -109,8 +108,8 @@ local traceback; do
 end
 
 local function fatal(errmsg)
-    print(traceback(3, errmsg))
-    os.exit()
+    io.stderr:write(traceback(3, errmsg))
+    os.exit(false)
 end
 
 function m.assert(cond, fmt, ...)

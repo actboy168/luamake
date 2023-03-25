@@ -115,9 +115,9 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         if name == 'bee' or name:sub(1,4) == 'bee.' then
             return require(name)
         end
-        local init, extra = require_load(name)
-        debug.setupvalue(init, 1, env)
-        local res = init(name, extra)
+        local main, extra = require_load(name)
+        debug.setupvalue(main, 1, env)
+        local res = main(name, extra)
         if res ~= nil then
             _LOADED[name] = res
         end
@@ -187,10 +187,10 @@ return function (c)
     local function sandbox_openfile(name, mode)
         return openfile(absolute(name), mode)
     end
-    local init, err = sandbox_loadlua(c.main)
-    if not init then
+    local main, err = sandbox_loadlua(c.main)
+    if not main then
         error(err, 2)
     end
-    debug.setupvalue(init, 1, sandbox_env(env, sandbox_loadlua, sandbox_openfile, c.preload, c.builddir))
-    init(table.unpack(c.args))
+    debug.setupvalue(main, 1, sandbox_env(env, sandbox_loadlua, sandbox_openfile, c.preload, c.builddir))
+    main(table.unpack(c.args))
 end

@@ -95,7 +95,7 @@ build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
 build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/progdir.cpp
 rule link_bootstrap
-  command = $cc $in -o $out -lm -ldl -Wl,-E -lstdc++ -s
+  command = $cc $in -o $out -Wl,-E -lm -ldl -lstdc++ -s
   description = Link    Exe $out
 build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $
@@ -122,11 +122,10 @@ rule test
   command = $bin/bootstrap bee.lua/test/test.lua --touch $out
   description = Run test.
   pool = console
-build $obj/test.stamp: test bee.lua/test/console.lua $
-    bee.lua/test/glibc-version.lua bee.lua/test/ltest/coverage.lua $
-    bee.lua/test/ltest/ltest.lua bee.lua/test/ltest/stringify.lua $
-    bee.lua/test/ltest/undump.lua bee.lua/test/shell.lua $
-    bee.lua/test/supported.lua bee.lua/test/test.lua $
+build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
+    bee.lua/test/ltest/coverage.lua bee.lua/test/ltest/ltest.lua $
+    bee.lua/test/ltest/stringify.lua bee.lua/test/ltest/undump.lua $
+    bee.lua/test/shell.lua bee.lua/test/supported.lua bee.lua/test/test.lua $
     bee.lua/test/test_filesystem.lua bee.lua/test/test_filewatch.lua $
     bee.lua/test/test_lua.lua bee.lua/test/test_serialization.lua $
     bee.lua/test/test_socket.lua bee.lua/test/test_subprocess.lua $

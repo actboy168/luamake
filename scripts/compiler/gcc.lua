@@ -84,10 +84,10 @@ function gcc.update_ldflags(ldflags, attribute)
         --TODO android不支持static crt
         ldflags[#ldflags+1] = "-lstdc++"
     elseif attribute.crt == "dynamic" then
-        ldflags[#ldflags+1] = globals.os == "openbsd" and "-lestdc++" or "-lstdc++"
+        ldflags[#ldflags+1] = "-lstdc++"
     else
         ldflags[#ldflags+1] = "-Wl,-Bstatic"
-        ldflags[#ldflags+1] = globals.os == "openbsd" and "-lestdc++" or "-lstdc++"
+        ldflags[#ldflags+1] = "-lstdc++"
         ldflags[#ldflags+1] = "-Wl,-Bdynamic"
         ldflags[#ldflags+1] = "-static-libgcc"
     end

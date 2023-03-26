@@ -2,7 +2,7 @@ ninja_required_version = 1.7
 builddir = build/openbsd
 bin = $builddir/bin
 obj = $builddir/obj
-cc = egcc
+cc = clang
 luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
@@ -78,7 +78,7 @@ rule c_source_lua
 build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
 rule c_source_lua_1
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror -DMAKE_LIB $
-    -DLUA_USE_LINUX -DNDEBUG -Wno-maybe-uninitialized -o $out -c $in
+    -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -97,8 +97,8 @@ build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/progdir.cpp
 rule link_bootstrap
   command = $cc $in -o $out -Wl,-E -lm -l:libinotify.a $
-    -L/usr/local/lib/inotify -pthread -Wl,-Bstatic -lestdc++ -Wl,-Bdynamic $
-    -static-libgcc -s
+    -L/usr/local/lib/inotify -pthread -Wl,--push-state,-Bstatic -lstdc++ $
+    -Wl,--pop-state -static-libgcc -Wl,-S,-x
   description = Link    Exe $out
 build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $

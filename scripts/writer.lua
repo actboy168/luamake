@@ -986,11 +986,7 @@ function m.generate()
         if globals.hostshell == "cmd" then
             compiler = 'cmd /c '..compiler
         end
-        if globals.os == "openbsd" and compiler == "gcc" then
-            ninja:variable("cc", "egcc")
-        else
-            ninja:variable("cc", compiler)
-        end
+        ninja:variable("cc", compiler)
     end
 
     if globals.prebuilt then

@@ -92,6 +92,23 @@ local ATTRIBUTE <const> = {
     args     = PlatformArgs,
 }
 
+local LINK_ATTRIBUTE <const> = {
+    ldflags = true,
+    links = true,
+    linkdirs = true,
+    frameworks = true,
+}
+
+local SKIP_CONFIG_ATTRIBUTE = {
+    rootdir = true,
+    workdir = true,
+}
+for k, v in pairs(ATTRIBUTE) do
+    if v == PlatformAttribute then
+        SKIP_CONFIG_ATTRIBUTE[k] = true
+    end
+end
+
 local function push_string(t, a)
     if type(a) == 'string' then
         t[#t+1] = a
@@ -201,6 +218,37 @@ local function normalize_rootdir(workdir, rootdir)
     return fsutil.normalize(workdir, rootdir or '.')
 end
 
+local function reslove_configs(attributes, configs, link)
+    if not configs then
+        return
+    end
+    local mark = {}
+    for _, name in ipairs(configs) do
+        if not mark[name] then
+            mark[name] = true
+            log.assert(loaded_config[name], "can`t find config `%s`", name)
+            local config = loaded_config[name]
+            for k, v in pairs(config) do
+                if type(k) ~= "string" then
+                    goto continue
+                end
+                if SKIP_CONFIG_ATTRIBUTE[k] then
+                    goto continue
+                end
+                if LINK_ATTRIBUTE[k] ~= link then
+                    goto continue
+                end
+                attributes[k] = attributes[k] or {}
+                push_string(attributes[k], v)
+                if #attributes[k] == 0 then
+                    attributes[k] = nil
+                end
+                ::continue::
+            end
+        end
+    end
+end
+
 local function reslove_attributes(g, loc)
     local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
     local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
@@ -208,26 +256,6 @@ local function reslove_attributes(g, loc)
     local r = {}
     reslove_table(g_rootdir, r, g)
     reslove_table(l_rootdir, r, loc)
-    if r.configs then
-        for _, name in ipairs(r.configs) do
-            log.assert(loaded_config[name], "can`t find config `%s`", name)
-            local config = loaded_config[name]
-            for k, v in pairs(config) do
-                if type(k) ~= "string" then
-                    goto continue
-                end
-                if ATTRIBUTE[k] == PlatformAttribute then
-                    goto continue
-                end
-                r[k] = r[k] or {}
-                push_string(r[k], v)
-                if #r[k] == 0 then
-                    r[k] = nil
-                end
-                ::continue::
-            end
-        end
-    end
     --TODO: remove it
     push_args(r, loc, l_rootdir)
     r.workdir = g.workdir
@@ -362,6 +390,7 @@ local function update_ldflags(ldflags, attribute, name)
 end
 
 local function generate(rule, attribute, name)
+    reslove_configs(attribute, attribute.configs)
     local target = loaded_target[name]
     local input
     local ldflags
@@ -478,10 +507,12 @@ local function generate(rule, attribute, name)
             end
         end
         target.input = input
-        target.ldflags = ldflags
         target.deps = deps
+        target.ldflags = ldflags
         return
     end
+
+    reslove_configs(attribute, attribute.configs, true)
 
     if deps then
         local mark = {[name] = true}

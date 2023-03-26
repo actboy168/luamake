@@ -1,6 +1,5 @@
 local m = {}
 
-
 local traceback; do
     local procdir = "@"..package.procdir
     local function in_procdir(path)

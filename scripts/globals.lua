@@ -22,10 +22,10 @@ end)()
 globals.compiler = globals.compiler or (function()
     if globals.hostshell == "cmd" then
         return "msvc"
-    elseif globals.hostos == "macos" or globals.hostos == "freebsd" or globals.hostos == "openbsd" or globals.hostos == "netbsd" then
-        return "clang"
+    elseif globals.hostos == "linux" or globals.hostos == "windows" then
+        return "gcc"
     end
-    return "gcc"
+    return "clang"
 end)()
 globals.os = globals.os or (function ()
     if globals.compiler == "emcc" then

@@ -812,6 +812,12 @@ local function generate_copy(implicit_inputs, input, output)
             description = 'Copy $in$input $out',
             restat = 1,
         })
+    elseif globals.hostos == "macos" then
+        -- see https://developer.apple.com/documentation/security/updating_mac_software
+        ninja:rule('copy', 'ditto $in$input $out 1>/dev/null', {
+            description = 'Copy $in$input $out',
+            restat = 1,
+        })
     else
         ninja:rule('copy', 'cp -fv $in$input $out 1>/dev/null', {
             description = 'Copy $in$input $out',

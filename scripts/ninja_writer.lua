@@ -16,9 +16,11 @@ return function ()
     function m:switch_head()
         ninja = ninja_head
     end
+
     function m:switch_body()
         ninja = ninja_body
     end
+
     function m:rule(name, command, kwargs)
         if rule_command[command] then
             last_rule = rule_command[command]
@@ -39,9 +41,11 @@ return function ()
         last_rule = name
         ninja:rule(name, command, kwargs)
     end
+
     function m:set_rule(name)
         last_rule = name:gsub('[^%w_]', '_')
     end
+
     function m:build_obj(output, inputs, args)
         output = fsutil.join(fsutil.parent_path(output), fsutil.stem(output))
         local name = output..".obj"
@@ -56,19 +60,23 @@ return function ()
         ninja:build(name, last_rule, inputs, args)
         return name
     end
+
     function m:build(output, inputs, args)
         assert(build_name[output] == nil)
         build_name[output] = true
         ninja:build(output, last_rule, inputs, args)
     end
+
     function m:phony(output, inputs)
         assert(phony[output] == nil)
         phony[output] = inputs
         phony[#phony+1] = output
     end
+
     function m:default(targets)
         default = targets
     end
+
     function m:close(filename)
         for _, out in ipairs(phony) do
             if not build_name[out] then
@@ -85,20 +93,26 @@ return function ()
         os.remove(filename)
         os.rename(filename..".tmp", filename)
     end
+
     function m:comment(...)
         return ninja:comment(...)
     end
+
     function m:variable(...)
         return ninja:variable(...)
     end
+
     function m:pool(...)
         return ninja:pool(...)
     end
+
     function m:include(...)
         return ninja:include(...)
     end
+
     function m:subninja(...)
         return ninja:subninja(...)
     end
+
     return m
 end

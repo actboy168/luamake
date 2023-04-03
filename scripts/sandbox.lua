@@ -2,7 +2,7 @@ local fsutil = require "fsutil"
 local log = require "log"
 
 local function sandbox_env(env, loadlua, openfile, preload, builddir)
-    setmetatable(env, {__index=_G})
+    setmetatable(env, { __index = _G })
 
     local _PRELOAD = {}
     local _LOADED = preload or {}
@@ -32,7 +32,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
                 f:close()
                 return filename
             end
-            err = err .. ("\n\tno file '%s'"):format(filename)
+            err = err..("\n\tno file '%s'"):format(filename)
         end
         return nil, err
     end
@@ -66,7 +66,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         end
         name = name:gsub("%.", "_")
         name = name:gsub("[^%-]+%-", "")
-        local res, err2 =  package.loadlib(path, "luaopen_" .. name)
+        local res, err2 = package.loadlib(path, "luaopen_"..name)
         if not res then
             log.fatal("error loading module '%s' from file '%s':\n\t%s", name, path, err2)
         end
@@ -85,7 +85,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         end
         name = name:gsub("%.", "_")
         name = name:gsub("[^%-]+%-", "")
-        local res, err2 =  package.loadlib(path, "luaopen_" .. name)
+        local res, err2 = package.loadlib(path, "luaopen_"..name)
         if not res then
             log.fatal("error loading module '%s' from file '%s':\n\t%s", name, path, err2)
         end
@@ -101,7 +101,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
             if type(f) == 'function' then
                 return f, extra
             elseif type(f) == 'string' then
-                msg = msg .. f
+                msg = msg..f
             end
         end
         log.fatal("module '%s' not found:%s", name, msg)
@@ -113,12 +113,12 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         if p ~= nil then
             return p
         end
-        if name == 'bee' or name:sub(1,4) == 'bee.' then
+        if name == 'bee' or name:sub(1, 4) == 'bee.' then
             return require(name)
         end
         local main, extra = require_load(name)
         debug.setupvalue(main, 1, env)
-        local _, res = xpcall(main, function(errmsg)
+        local _, res = xpcall(main, function (errmsg)
             log.fatal(errmsg)
         end, extra)
         if res ~= nil then
@@ -173,7 +173,7 @@ return function (c)
         return fsutil.normalize(c.rootdir, name)
     end
     local function sandbox_loadlua(name, mode, ENV)
-        assert (mode == nil or mode == "t")
+        assert(mode == nil or mode == "t")
         local path = absolute(name)
         local f, err = openfile(path, 'r')
         if f then
@@ -184,7 +184,7 @@ return function (c)
             end
             local str = f:read 'a'
             f:close()
-            return load(str, '@' .. path, 't', ENV or env)
+            return load(str, '@'..path, 't', ENV or env)
         end
         return nil, err
     end
@@ -197,7 +197,7 @@ return function (c)
         return
     end
     debug.setupvalue(main, 1, sandbox_env(env, sandbox_loadlua, sandbox_openfile, c.preload, c.builddir))
-    xpcall(main, function(errmsg)
+    xpcall(main, function (errmsg)
         log.fatal(errmsg)
     end, table.unpack(c.args))
 end

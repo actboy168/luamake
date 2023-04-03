@@ -25,7 +25,7 @@ local function normalize(p)
         if w == '..' and #stack ~= 0 and stack[#stack] ~= '..' then
             stack[#stack] = nil
         elseif w ~= '.' then
-            stack[#stack + 1] = w
+            stack[#stack+1] = w
         end
     end)
     return stack
@@ -40,7 +40,7 @@ function fsutil.normalize(...)
     local hasRoot = path:sub(1, 1) == "/"
     local stack = normalize(path)
     if hasRoot then
-        return '/' .. table.concat(stack, '/')
+        return '/'..table.concat(stack, '/')
     elseif #stack == 0 then
         return "."
     else
@@ -99,7 +99,7 @@ function fsutil.relative(path, base)
         table.remove(rpath, 1)
         table.remove(rbase, 1)
     end
-    if #rpath == 0 and #rbase== 0 then
+    if #rpath == 0 and #rbase == 0 then
         return "."
     end
     local s = {}
@@ -126,7 +126,7 @@ function fsutil.quotearg(s)
     local t = {}
     t[#t+1] = '"'
     for i = #s, 1, -1 do
-        local c = s:sub(i,i)
+        local c = s:sub(i, i)
         t[#t+1] = c
         if quote_hit and c == '\\' then
             t[#t+1] = '\\'
@@ -140,8 +140,8 @@ function fsutil.quotearg(s)
     t[#t+1] = '"'
     for i = 1, #t // 2 do
         local tmp = t[i]
-        t[i] = t[#t-i+1]
-        t[#t-i+1] = tmp
+        t[i] = t[#t - i + 1]
+        t[#t - i + 1] = tmp
     end
     return table.concat(t)
 end

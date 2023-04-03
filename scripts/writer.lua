@@ -60,36 +60,36 @@ end
 
 local function tbl_insert(t, pos, a)
     for i = 1, #a do
-        table.insert(t, pos+i-1, a[i])
+        table.insert(t, pos + i - 1, a[i])
     end
 end
 
 local PlatformAttribute <const> = 0
-local PlatformPath      <const> = 1
-local PlatformArgs      <const> = 2
+local PlatformPath <const> = 1
+local PlatformArgs <const> = 2
 
 local ATTRIBUTE <const> = {
     -- os
-    windows  = PlatformAttribute,
-    linux    = PlatformAttribute,
-    macos    = PlatformAttribute,
-    ios      = PlatformAttribute,
-    android  = PlatformAttribute,
+    windows     = PlatformAttribute,
+    linux       = PlatformAttribute,
+    macos       = PlatformAttribute,
+    ios         = PlatformAttribute,
+    android     = PlatformAttribute,
     -- cc
-    msvc     = PlatformAttribute,
-    gcc      = PlatformAttribute,
-    clang    = PlatformAttribute,
-    mingw    = PlatformAttribute,
-    emcc     = PlatformAttribute,
+    msvc        = PlatformAttribute,
+    gcc         = PlatformAttribute,
+    clang       = PlatformAttribute,
+    mingw       = PlatformAttribute,
+    emcc        = PlatformAttribute,
     -- path
-    includes = PlatformPath,
+    includes    = PlatformPath,
     sysincludes = PlatformPath,
-    linkdirs = PlatformPath,
-    input    = PlatformPath,
-    output   = PlatformPath,
-    script   = PlatformPath,
+    linkdirs    = PlatformPath,
+    input       = PlatformPath,
+    output      = PlatformPath,
+    script      = PlatformPath,
     -- other
-    args     = PlatformArgs,
+    args        = PlatformArgs,
 }
 
 local LINK_ATTRIBUTE <const> = {
@@ -143,7 +143,7 @@ end
 
 local function push_mix(t, a, root)
     if type(a) == 'string' then
-        if a:sub(1,1) == '@' then
+        if a:sub(1, 1) == '@' then
             t[#t+1] = pathutil.tostring(root, a:sub(2))
         else
             t[#t+1] = a:gsub("@{([^}]*)}", function (s)
@@ -309,9 +309,9 @@ local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
             flags[#flags+1] = "-fPIC"
         end
     end
-    log.assert(cc.c  [attribute.c],   "`%s`: unknown std c: `%s`", name, attribute.c)
+    log.assert(cc.c[attribute.c], "`%s`: unknown std c: `%s`", name, attribute.c)
     log.assert(cc.cxx[attribute.cxx], "`%s`: unknown std c++: `%s`", name, attribute.cxx)
-    cflags  [#cflags  +1] = cc.c  [attribute.c]
+    cflags[#cflags+1] = cc.c[attribute.c]
     cxxflags[#cxxflags+1] = cc.cxx[attribute.cxx]
     cc.update_flags(flags, cflags, cxxflags, attribute, name)
 
@@ -411,14 +411,14 @@ local function generate(rule, attribute, name)
         else
             target = { rule = rule }
             input = {}
-            ldflags =  {}
+            ldflags = {}
             loaded_target[name] = target
         end
     end
 
     local bindir = init_single(attribute, 'bindir', globals.bindir)
     local sources = get_blob(attribute.rootdir, attribute.sources)
-    local objargs = attribute.objdeps and {implicit_inputs=attribute.objdeps} or nil
+    local objargs = attribute.objdeps and { implicit_inputs = attribute.objdeps } or nil
     local implicit_inputs = {}
 
     init_single(attribute, 'mode', 'release')
@@ -438,7 +438,7 @@ local function generate(rule, attribute, name)
     init_single(attribute, 'lto', default_enable_lto and "on" or "off")
 
     if attribute.luaversion then
-        require "lua_support"(ninja, loaded_target, rule, name, attribute)
+        require "lua_support" (ninja, loaded_target, rule, name, attribute)
     end
 
     if attribute.deps then
@@ -515,7 +515,7 @@ local function generate(rule, attribute, name)
     reslove_configs(attribute, attribute.configs, true)
 
     if deps then
-        local mark = {[name] = true}
+        local mark = { [name] = true }
         local i = 1
         while i <= #deps do
             local dep = deps[i]
@@ -554,7 +554,7 @@ local function generate(rule, attribute, name)
         if globals.compiler == 'msvc' then
             binname = bindir.."/"..basename..".dll"
             local lib = ('$obj/%s/%s.lib'):format(name, basename)
-            target.input = {lib}
+            target.input = { lib }
             target.implicit_inputs = binname
             ninja:build(binname, input, {
                 implicit_inputs = implicit_inputs,
@@ -565,7 +565,7 @@ local function generate(rule, attribute, name)
             })
         elseif globals.os == "windows" then
             binname = bindir.."/"..basename..".dll"
-            target.input = {binname}
+            target.input = { binname }
             ninja:build(binname, input, {
                 implicit_inputs = implicit_inputs,
             })
@@ -582,9 +582,9 @@ local function generate(rule, attribute, name)
         end
     elseif rule == "executable" then
         if globals.compiler == "emcc" then
-            binname = bindir.."/"..basename .. ".js"
+            binname = bindir.."/"..basename..".js"
         elseif globals.os == "windows" then
-            binname = bindir.."/"..basename .. ".exe"
+            binname = bindir.."/"..basename..".exe"
         else
             binname = bindir.."/"..basename
         end
@@ -595,11 +595,11 @@ local function generate(rule, attribute, name)
         })
     elseif rule == "static_library" then
         if globals.os == "windows" then
-            binname = bindir.."/"..basename ..".lib"
+            binname = bindir.."/"..basename..".lib"
         else
-            binname = bindir.."/lib"..basename .. ".a"
+            binname = bindir.."/lib"..basename..".a"
         end
-        target.input = {binname}
+        target.input = { binname }
         cc.rule_lib(ninja, name)
         ninja:build(binname, input, {
             implicit_inputs = implicit_inputs,
@@ -666,7 +666,7 @@ function GEN.phony(attribute, name)
 
     local n = #input
     for i = 1, #implicit_inputs do
-        input[n+i] = implicit_inputs[i]
+        input[n + i] = implicit_inputs[i]
     end
 
     if name then
@@ -727,7 +727,7 @@ function GEN.runlua(attribute, name)
 
     local outname
     if #output == 0 then
-        outname = '$builddir/_/' .. name
+        outname = '$builddir/_/'..name
     else
         outname = output
     end
@@ -762,7 +762,7 @@ function GEN.build(attribute, name)
 
     local outname
     if #output == 0 then
-        outname = '$builddir/_/' .. name
+        outname = '$builddir/_/'..name
     else
         outname = output
     end
@@ -955,17 +955,18 @@ function m.add_script(p)
 end
 
 function m.init()
-    ninja = require "ninja_writer"()
-    cc = require("compiler." .. globals.compiler)
+    ninja = require "ninja_writer" ()
+    cc = require("compiler."..globals.compiler)
     ninja:switch_body()
 end
 
 function m.default(attribute)
     local deps = {}
     push_string(deps, attribute)
-    local implicit_inputs = getImplicitInputs('default', {deps = deps})
+    local implicit_inputs = getImplicitInputs('default', { deps = deps })
     ninja:default(implicit_inputs)
 end
+
 function m.generate()
     ninja:switch_head()
     local builddir = fsutil.join(WORKDIR, globals.builddir)
@@ -999,14 +1000,13 @@ function m.generate()
         ninja:variable("luamake", "luamake")
     else
         ninja:variable("luamake", get_luamake())
-        ninja:rule('configure', '$luamake init ' .. configure_args(), { generator = 1 })
+        ninja:rule('configure', '$luamake init '..configure_args(), { generator = 1 })
         ninja:build("$builddir/build.ninja", scripts)
     end
 
     local ninja_script = fsutil.join(builddir, "build.ninja")
     ninja:close(ninja_script)
 end
-
 
 local api = {}
 
@@ -1090,9 +1090,11 @@ function api:has(name)
     log.assert(type(name) == "string", "Name is not a string.")
     return loaded_target[name] ~= nil
 end
+
 function api:path(value)
     return pathutil.create(value)
 end
+
 function api:required_version(buildVersion)
     local function parse_version(v)
         local major, minor = v:match "^(%d+)%.(%d+)"

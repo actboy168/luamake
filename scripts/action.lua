@@ -16,7 +16,7 @@ local function execute(option)
         option.env.TMP = fs.absolute(globals.builddir):string()
     end
     if globals.hostshell == "cmd" then
-        option[1] = {'cmd', '/c', option[1]}
+        option[1] = { 'cmd', '/c', option[1] }
     end
     local process = assert(sp.spawn(option))
     if not redirect then
@@ -33,7 +33,7 @@ local function execute(option)
 end
 
 local function ninja(args)
-    args[1] = { "ninja", "-f",  globals.builddir .. "/build.ninja", args[1] }
+    args[1] = { "ninja", "-f", globals.builddir.."/build.ninja", args[1] }
     execute(args)
 end
 
@@ -62,7 +62,7 @@ end
 
 local function build()
     local options = {}
-    for _, opt in ipairs {"h", "v", "j", "k", "l", "n", "d", "t", "w"} do
+    for _, opt in ipairs { "h", "v", "j", "k", "l", "n", "d", "t", "w" } do
         if arguments[opt] then
             table.insert(options, {
                 "-"..opt,
@@ -70,11 +70,11 @@ local function build()
             })
         end
     end
-    ninja {arguments.targets, options}
+    ninja { arguments.targets, options }
 end
 
 local function clean()
-    ninja {"-t", "clean"}
+    ninja { "-t", "clean" }
 end
 
 if globals.perf then

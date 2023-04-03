@@ -80,7 +80,7 @@ local function findwinsdk()
         for file in fs.pairs(dir.."/include") do
             if fs.exists(file / "um" / "winsdkver.h") then
                 local version = file:filename():string()
-                if version:sub(1,3) == "10." then
+                if version:sub(1, 3) == "10." then
                     if max then
                         if max < version then
                             max = version

@@ -22,9 +22,9 @@ local cl = {
         maxspeed = '/O2 /Zc:inline /fp:fast',
     },
     warnings = {
-        off = "/W0",
-        on  = "/W3",
-        all = "/W4",
+        off   = "/W0",
+        on    = "/W3",
+        all   = "/W4",
         error = "/WX",
     },
     cxx = {
@@ -47,28 +47,28 @@ local cl = {
         if macro == "" then
             return
         end
-        return "/D" .. macro
+        return "/D"..macro
     end,
     undef = function (macro)
-        return "/U" .. macro
+        return "/U"..macro
     end,
     includedir = function (dir)
-        return "/I" .. format_path(dir)
+        return "/I"..format_path(dir)
     end,
     sysincludedir = function (dir)
-        return "/I" .. format_path(dir)
+        return "/I"..format_path(dir)
     end,
     link = function (lib)
         if lib == "stdc++fs" or lib == "stdc++" then
             return
         end
-        return lib .. ".lib"
+        return lib..".lib"
     end,
     linkdir = function (dir)
-        return "/libpath:" .. format_path(dir)
+        return "/libpath:"..format_path(dir)
     end,
     disable_warning = function (w)
-        return "/wd" .. w
+        return "/wd"..w
     end
 }
 
@@ -106,53 +106,53 @@ end
 
 function cl.rule_c(w, name, flags, cflags)
     w:rule('c_'..name, ([[$cc /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
-    {
-        description = 'Compile C   $out',
-        deps = 'msvc',
-    })
+        {
+            description = 'Compile C   $out',
+            deps = 'msvc',
+        })
 end
 
 function cl.rule_cxx(w, name, flags, cxxflags)
     w:rule('cxx_'..name, ([[$cc /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cxxflags),
-    {
-        description = 'Compile C++ $out',
-        deps = 'msvc',
-    })
+        {
+            description = 'Compile C++ $out',
+            deps = 'msvc',
+        })
 end
 
 function cl.rule_dll(w, name, ldflags)
     w:rule('link_'..name, ([[$cc /nologo @$out.rsp /link %s /out:$out /DLL /IMPLIB:$implib]]):format(ldflags),
-    {
-        description = 'Link    Dll $out',
-        rspfile = "$out.rsp",
-        rspfile_content = "$in_newline",
-        restat = 1,
-    })
+        {
+            description = 'Link    Dll $out',
+            rspfile = "$out.rsp",
+            rspfile_content = "$in_newline",
+            restat = 1,
+        })
 end
 
 function cl.rule_exe(w, name, ldflags)
     w:rule('link_'..name, ([[$cc /nologo @$out.rsp /link %s /out:$out]]):format(ldflags),
-    {
-        description = 'Link    Exe $out',
-        rspfile = "$out.rsp",
-        rspfile_content = "$in_newline",
-    })
+        {
+            description = 'Link    Exe $out',
+            rspfile = "$out.rsp",
+            rspfile_content = "$in_newline",
+        })
 end
 
 function cl.rule_lib(w, name)
     w:rule('link_'..name, [[lib /nologo @$out.rsp /out:$out]],
-    {
-        description = 'Link    Lib $out',
-        rspfile = "$out.rsp",
-        rspfile_content = "$in_newline",
-    })
+        {
+            description = 'Link    Lib $out',
+            rspfile = "$out.rsp",
+            rspfile_content = "$in_newline",
+        })
 end
 
 function cl.rule_rc(w, name)
     w:rule('rc_'..name, [[rc /nologo /fo $out $in]],
-    {
-        description = 'Compile Res $out',
-    })
+        {
+            description = 'Compile Res $out',
+        })
 end
 
 return cl

@@ -6,10 +6,12 @@ local m = {}
 
 local single_what
 local single_time
-local perf_closeable = setmetatable({}, {__close = function()
-    local time = gettime() - single_time
-    print(("%s: %.0fms."):format(single_what, time))
-end})
+local perf_closeable = setmetatable({}, {
+    __close = function ()
+        local time = gettime() - single_time
+        print(("%s: %.0fms."):format(single_what, time))
+    end
+})
 
 function m.single(what)
     single_what = what
@@ -28,11 +30,13 @@ function m.stat(what)
     local closeable = closeables[what]
     if not closeable then
         totals[what] = 0
-        closeable = setmetatable({}, {__close = function()
-            local time = gettime() - status[what]
-            status[what] = nil
-            totals[what] = totals[what] + time
-        end})
+        closeable = setmetatable({}, {
+            __close = function ()
+                local time = gettime() - status[what]
+                status[what] = nil
+                totals[what] = totals[what] + time
+            end
+        })
         closeables[what] = closeable
     end
     status[what] = gettime()

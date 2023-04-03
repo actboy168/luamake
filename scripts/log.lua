@@ -20,7 +20,7 @@ local traceback; do
             if #source <= maxlen then
                 return source:sub(2)
             else
-                return '...' .. source:sub(#source - maxlen + 5)
+                return '...'..source:sub(#source - maxlen + 5)
             end
         else
             local nl = source:find '\n'
@@ -50,7 +50,7 @@ local traceback; do
                 end
                 local res = findfield(value, f, level - 1)
                 if res then
-                    return key .. '.' .. res
+                    return key..'.'..res
                 end
             end
         end
@@ -89,16 +89,16 @@ local traceback; do
             if in_procdir(info.source) then
                 goto continue
             end
-            s[#s + 1] = ('\t%s:'):format(getshortsrc(info.source))
+            s[#s+1] = ('\t%s:'):format(getshortsrc(info.source))
             if info.currentline > 0 then
-                s[#s + 1] = ('%d:'):format(info.currentline)
+                s[#s+1] = ('%d:'):format(info.currentline)
             end
-            s[#s + 1] = " in "
-            s[#s + 1] = pushfuncname(info)
+            s[#s+1] = " in "
+            s[#s+1] = pushfuncname(info)
             if info.istailcall then
-                s[#s + 1] = '\n\t(...tail calls...)'
+                s[#s+1] = '\n\t(...tail calls...)'
             end
-            s[#s + 1] = "\n"
+            s[#s+1] = "\n"
             ::continue::
             depth = depth + 1
         end

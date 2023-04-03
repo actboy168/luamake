@@ -32,14 +32,14 @@ local function init_rule(ninja)
     if globals.compiler == 'msvc' then
         local msvc = require "msvc_util"
         ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(globals.arch)),
-        {
-            description = 'Lua import lib $out'
-        })
+            {
+                description = 'Lua import lib $out'
+            })
     else
         ninja:rule("luadeps", [[dlltool -d $in -l $out]],
-        {
-            description = 'Lua import lib $out'
-        })
+            {
+                description = 'Lua import lib $out'
+            })
     end
 end
 
@@ -53,12 +53,12 @@ local function init_version(ninja, loaded, luadir, luaversion)
     if globals.compiler == 'msvc' then
         libname = luadir.."/lua-"..globals.arch..".lib"
         loaded["__"..luaversion.."__"] = {
-            input = {libname}
+            input = { libname }
         }
     else
         libname = luadir.."/liblua.a"
         loaded["__"..luaversion.."__"] = {
-            implicit_inputs = {libname},
+            implicit_inputs = { libname },
             ldflags = {
                 "-L"..luadir,
                 "-llua",
@@ -74,7 +74,7 @@ local function windows_deps(name, attribute, luaversion)
     if globals.compiler == "msvc" then
         local export_luaopen = init_single(attribute, "export_luaopen", "on")
         if export_luaopen ~= "off" then
-            ldflags[#ldflags+1] = "/EXPORT:luaopen_" .. name
+            ldflags[#ldflags+1] = "/EXPORT:luaopen_"..name
         end
     end
     deps[#deps+1] = "__"..luaversion.."__"

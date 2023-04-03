@@ -6,7 +6,7 @@ local function parse(folder)
     for line in io.lines(folder.."/lua.h") do
         local verstr = line:match "^%s*#%s*define%s*LUA_VERSION_NUM%s*([0-9]+)%s*$"
         if verstr then
-            version = tostring(tonumber(verstr:sub(1, -3))) .. tostring(tonumber(verstr:sub(-2, -1)))
+            version = tostring(tonumber(verstr:sub(1, -3)))..tostring(tonumber(verstr:sub(-2, -1)))
         end
         local api = line:match "^%s*LUA_API[%w%s%*_]+%(([%w_]+)%)"
         if api then
@@ -30,7 +30,7 @@ local function parse(folder)
 end
 
 return function (path)
-    local output = path.. "/lua.def"
+    local output = path.."/lua.def"
     if fs.exists(output) then
         return
     end

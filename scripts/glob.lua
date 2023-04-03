@@ -14,9 +14,9 @@ local MATCH_SKIP <const> = 3
 local GlobStar <const> = 0
 
 local function pattern_copy(t, s)
-    local r = {ignore=t.ignore}
+    local r = { ignore = t.ignore }
     for i = s, #t do
-        r[i-s+1] = t[i]
+        r[i - s + 1] = t[i]
     end
     return r
 end
@@ -61,7 +61,7 @@ local function pattern_preprocess(root, pattern)
 end
 
 local function pattern_compile(res, path, ignore)
-    local pattern = {ignore=ignore}
+    local pattern = { ignore = ignore }
     path:gsub('[^'..PathSeq..']+', function (w)
         if w == '..' and #pattern ~= 0 and pattern[#pattern] ~= '..' then
             if pattern[#pattern] == GlobStar then
@@ -178,8 +178,8 @@ local function glob_compile(root, patterns)
             res[#res+1] = pattern_copy(v, 2)
         end
     end
-    if root:sub(1,1) == '/' then
-        gcd[1] = '/'.. (gcd[1] or '')
+    if root:sub(1, 1) == '/' then
+        gcd[1] = '/'..(gcd[1] or '')
     end
     return fsutil.normalize(table.unpack(gcd)), res, files
 end

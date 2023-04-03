@@ -17,12 +17,14 @@ function mainMt:__index(k)
     end
     return api[k]
 end
+
 function mainMt:__newindex(k, v)
     if arguments.args[k] ~= nil then
         return
     end
     globals[k] = pathutil.accept(globals.workdir, v)
 end
+
 function mainMt:__pairs()
     return pairs(globals)
 end
@@ -41,6 +43,7 @@ local function createSubSimulator(parentSimulator, workdir)
         v = pathutil.accept(workdir, v)
         rawset(self, k, v)
     end
+
     function subMt:__pairs()
         local selfpairs = true
         local mark = {}
@@ -63,7 +66,8 @@ local function createSubSimulator(parentSimulator, workdir)
             return newk, newv
         end, self
     end
-    return setmetatable({workdir=workdir}, subMt)
+
+    return setmetatable({ workdir = workdir }, subMt)
 end
 
 local function openfile(name, mode)
@@ -87,7 +91,7 @@ local function importfile(simulator, rootdir, filename)
     sandbox {
         rootdir = rootdir,
         builddir = globals.builddir,
-        preload =  {
+        preload = {
             luamake = simulator,
         },
         openfile = openfile,
@@ -126,7 +130,7 @@ local function import(path)
     importfile(mainSimulator, WORKDIR, path)
 end
 
-return  {
+return {
     init = writer.init,
     generate = writer.generate,
     import = import,

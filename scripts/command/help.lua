@@ -10,5 +10,5 @@ end
 table.sort(lst)
 
 for _, name in ipairs(lst) do
-    print('\tluamake ' .. name)
+    print('\tluamake '..name)
 end

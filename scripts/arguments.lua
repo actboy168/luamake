@@ -17,7 +17,7 @@ while i <= #arg do
         else
             k = k:sub(2)
         end
-        if arg[i+1] ~= nil and arg[i+1]:sub(1, 1) ~= '-' then
+        if arg[i + 1] ~= nil and arg[i + 1]:sub(1, 1) ~= '-' then
             i = i + 1
             arguments[k] = arg[i]
         else
@@ -36,7 +36,7 @@ end
 
 t.what = what
 t.targets = targets
-for _, opt in ipairs {"C", "f", "h", "v", "j", "k", "l", "n", "d", "t", "w"} do
+for _, opt in ipairs { "C", "f", "h", "v", "j", "k", "l", "n", "d", "t", "w" } do
     t[opt] = arguments[opt]
     arguments[opt] = nil
 end

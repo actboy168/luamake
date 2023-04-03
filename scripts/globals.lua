@@ -10,7 +10,7 @@ globals.mode = globals.mode or "release"
 globals.crt = globals.crt or "dynamic"
 
 globals.hostos = globals.hostos or require "bee.platform".os
-globals.hostshell = globals.hostshell or (function()
+globals.hostshell = globals.hostshell or (function ()
     if globals.hostos == "windows" then
         if os.getenv "MSYSTEM" then
             return "sh"
@@ -19,7 +19,7 @@ globals.hostshell = globals.hostshell or (function()
     end
     return "sh"
 end)()
-globals.compiler = globals.compiler or (function()
+globals.compiler = globals.compiler or (function ()
     if globals.hostshell == "cmd" then
         return "msvc"
     elseif globals.hostos == "linux" or globals.hostos == "windows" then

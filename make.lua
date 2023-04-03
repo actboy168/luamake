@@ -4,7 +4,7 @@ lm:required_version "1.0"
 local isWindows = lm.os == 'windows'
 
 if lm.prebuilt == nil then
-    print("Please use `" .. (isWindows and [[.\compile\install.bat]] or [[./compile/install.sh]]) .. "`.")
+    print("Please use `"..(isWindows and [[.\compile\install.bat]] or [[./compile/install.sh]]).."`.")
     return
 end
 
@@ -22,7 +22,7 @@ lm:copy "copy_luamake" {
 if isWindows then
     lm:runlua "forward_lua" {
         script = "bee.lua/bootstrap/forward_lua.lua",
-        args = {"@bee.lua/3rd/lua/", "$out", "luamake.exe", lm.compiler},
+        args = { "@bee.lua/3rd/lua/", "$out", "luamake.exe", lm.compiler },
         input = {
             "bee.lua/bootstrap/forward_lua.lua",
             "bee.lua/3rd/lua/lua.h",

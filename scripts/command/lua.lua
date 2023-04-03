@@ -25,7 +25,7 @@ local function update_arg()
     table.remove(arg, 1)
 
     local idx = find_exe()
-    arg[idx] = fsutil.quotearg(arg[idx]) .. " lua"
+    arg[idx] = fsutil.quotearg(arg[idx]).." lua"
 end
 
 update_arg()

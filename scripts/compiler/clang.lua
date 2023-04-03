@@ -122,16 +122,16 @@ end
 
 function clang.rule_dll(w, name, ldflags)
     w:rule('link_'..name, ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
-    {
-        description = 'Link    Dll $out'
-    })
+        {
+            description = 'Link    Dll $out'
+        })
 end
 
 function clang.rule_exe(w, name, ldflags)
     w:rule('link_'..name, ([[$cc $in -o $out %s]]):format(ldflags),
-    {
-        description = 'Link    Exe $out'
-    })
+        {
+            description = 'Link    Exe $out'
+        })
 end
 
 return clang

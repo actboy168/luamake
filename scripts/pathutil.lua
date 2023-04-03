@@ -51,7 +51,7 @@ function mt:__tostring()
 end
 
 function mt:__concat(rhs)
-    local path = self.value .. rhs
+    local path = self.value..rhs
     return create(path, self.accepted)
 end
 

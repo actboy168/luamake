@@ -76,7 +76,7 @@ local function nextwrap(text, start, count)
 	if is_even_dollars_before_index(truncd, found) then
 		return start + found - 1
 	end
-	return nextwrap(text, start, found-1)
+	return nextwrap(text, start, found - 1)
 end
 
 local function wrapafter(text, start)
@@ -85,7 +85,7 @@ local function wrapafter(text, start)
 	if is_even_dollars_before_index(text, found) then
 		return found
 	end
-	return wrapafter(text, found+1)
+	return wrapafter(text, found + 1)
 end
 
 local function findwrap(text, start, count)
@@ -141,23 +141,26 @@ return function ()
 		if isblank(value) then return end
 		writeline(key..' = '..value)
 	end
+
 	function w:comment(text)
 		local available = line_width - 2
 		local start = 1
 		local found = findwrap(text, start, available)
 		while found do
-			write('# ' .. substr(text, start, found - 1))
+			write('# '..substr(text, start, found - 1))
 			start = found + 1
 			found = findwrap(text, start, available)
 		end
-		write('# ' .. text)
+		write('# '..text)
 	end
+
 	function w:pool(name, depth)
-		writeline('pool ' .. name)
+		writeline('pool '..name)
 		block_variable('depth', depth)
 	end
+
 	function w:rule(name, command, kwargs)
-		writeline('rule '.. name)
+		writeline('rule '..name)
 		block_variable('command', command)
 		if kwargs then
 			for _, key in ipairs(rule_kwargs) do
@@ -171,8 +174,9 @@ return function ()
 			end
 		end
 	end
+
 	function w:build(outputs, rule, inputs, args)
-		local s = {"build"}
+		local s = { "build" }
 		append_path(s, as_list(outputs))
 		if args and args.implicit_outputs then
 			local t = as_list(args.implicit_outputs)
@@ -205,20 +209,25 @@ return function ()
 			end
 		end
 	end
+
 	function w:include(path, raw)
 		if not raw then path = escape_path(path) end
-		writeline('include ' .. path)
+		writeline('include '..path)
 	end
+
 	function w:subninja(path, raw)
 		if not raw then path = escape_path(path) end
-		writeline('subninja ' .. path)
+		writeline('subninja '..path)
 	end
+
 	function w:default(targets)
-		writeline('default ' .. join(as_list(targets)))
+		writeline('default '..join(as_list(targets)))
 	end
+
 	function w:close()
 		write ""
 		return tconcat(buf, "\n")
 	end
+
 	return w
 end

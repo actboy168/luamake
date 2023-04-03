@@ -121,7 +121,7 @@ build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_lua/utf8_crt.obj $obj/source_lua/linit.obj $
     $obj/source_lua/onelua.obj
 rule copy
-  command = cp -fv $in$input $out 1>/dev/null
+  command = ditto $in$input $out 1>/dev/null
   description = Copy $in$input $out
   restat = 1
 build $bin/main.lua: copy | $bin/bootstrap

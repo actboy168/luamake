@@ -4,7 +4,7 @@ local fsutil = {}
 
 local isWindows <const> = globals.hostos == "windows"
 local isMacOS <const> = globals.hostos == "macos"
-local PathSpilt <const> = isWindows and '[^/\\]+' or '[^/]+'
+local PathSpilt <const> = isWindows and "[^/\\]+" or "[^/]+"
 local PathIgnoreCase <const> = isWindows or isMacOS
 
 local path_equal; do
@@ -22,9 +22,9 @@ end
 local function normalize(p)
     local stack = {}
     p:gsub(PathSpilt, function (w)
-        if w == '..' and #stack ~= 0 and stack[#stack] ~= '..' then
+        if w == ".." and #stack ~= 0 and stack[#stack] ~= ".." then
             stack[#stack] = nil
-        elseif w ~= '.' then
+        elseif w ~= "." then
             stack[#stack+1] = w
         end
     end)
@@ -32,7 +32,7 @@ local function normalize(p)
 end
 
 function fsutil.join(...)
-    return table.concat(table.pack(...), '/')
+    return table.concat(table.pack(...), "/")
 end
 
 function fsutil.normalize(...)
@@ -40,11 +40,11 @@ function fsutil.normalize(...)
     local hasRoot = path:sub(1, 1) == "/"
     local stack = normalize(path)
     if hasRoot then
-        return '/'..table.concat(stack, '/')
+        return "/"..table.concat(stack, "/")
     elseif #stack == 0 then
         return "."
     else
-        return table.concat(stack, '/')
+        return table.concat(stack, "/")
     end
 end
 
@@ -93,7 +93,7 @@ function fsutil.relative(path, base)
     local rpath = normalize(path)
     local rbase = normalize(base)
     if isWindows and not path_equal(rpath[1], rbase[1]) then
-        return table.concat(rpath, '/')
+        return table.concat(rpath, "/")
     end
     while #rpath > 0 and #rbase > 0 and path_equal(rpath[1], rbase[1]) do
         table.remove(rpath, 1)
@@ -104,22 +104,22 @@ function fsutil.relative(path, base)
     end
     local s = {}
     for _ in ipairs(rbase) do
-        s[#s+1] = '..'
+        s[#s+1] = ".."
     end
     for _, e in ipairs(rpath) do
         s[#s+1] = e
     end
-    return table.concat(s, '/')
+    return table.concat(s, "/")
 end
 
 function fsutil.quotearg(s)
     if #s == 0 then
         return '""'
     end
-    if not s:find(' \t\"', 1, true) then
+    if not s:find(" \t\"", 1, true) then
         return s
     end
-    if not s:find('\"\\', 1, true) then
+    if not s:find("\"\\", 1, true) then
         return '"'..s..'"'
     end
     local quote_hit = true
@@ -128,11 +128,11 @@ function fsutil.quotearg(s)
     for i = #s, 1, -1 do
         local c = s:sub(i, i)
         t[#t+1] = c
-        if quote_hit and c == '\\' then
-            t[#t+1] = '\\'
+        if quote_hit and c == "\\" then
+            t[#t+1] = "\\"
         elseif c == '"' then
             quote_hit = true
-            t[#t+1] = '\\'
+            t[#t+1] = "\\"
         else
             quote_hit = false
         end

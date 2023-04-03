@@ -1,7 +1,7 @@
-local writer = require 'writer'
+local writer = require "writer"
 local sandbox = require "sandbox"
-local fs = require 'bee.filesystem'
-local fsutil = require 'fsutil'
+local fs = require "bee.filesystem"
+local fsutil = require "fsutil"
 local arguments = require "arguments"
 local globals = require "globals"
 local pathutil = require "pathutil"

@@ -23,10 +23,10 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
     end
 
     local function searchpath(name, path)
-        local err = ''
-        name = string.gsub(name, '%.', '/')
-        for c in string.gmatch(path, '[^;]+') do
-            local filename = string.gsub(c, '%?', name)
+        local err = ""
+        name = string.gsub(name, "%.", "/")
+        for c in string.gmatch(path, "[^;]+") do
+            local filename = string.gsub(c, "%?", name)
             local f = openfile(filename)
             if f then
                 f:close()
@@ -75,7 +75,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
 
     local function searcher_croot(name)
         assert(type(env.package.cpath) == "string", "'package.cpath' must be a string")
-        if not name:find('.', 1, true) then
+        if not name:find(".", 1, true) then
             return
         end
         local prefix = name:match "^[^%.]+"
@@ -93,14 +93,14 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
     end
 
     local function require_load(name)
-        local msg = ''
+        local msg = ""
         local _SEARCHERS = env.package.searchers
         assert(type(_SEARCHERS) == "table", "'package.searchers' must be a table")
         for _, searcher in ipairs(_SEARCHERS) do
             local f, extra = searcher(name)
-            if type(f) == 'function' then
+            if type(f) == "function" then
                 return f, extra
-            elseif type(f) == 'string' then
+            elseif type(f) == "string" then
                 msg = msg..f
             end
         end
@@ -113,7 +113,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         if p ~= nil then
             return p
         end
-        if name == 'bee' or name:sub(1, 4) == 'bee.' then
+        if name == "bee" or name:sub(1, 4) == "bee." then
             return require(name)
         end
         local main, extra = require_load(name)
@@ -130,13 +130,13 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         return _LOADED[name]
     end
 
-    local ext = package.cpath:match '%.([a-z]+)$'
+    local ext = package.cpath:match "%.([a-z]+)$"
     env.package = {
         config = package.config,
         loaded = _LOADED,
         preload = _PRELOAD,
-        path = '?.lua;?/init.lua',
-        cpath = '?.'..ext..';'..builddir..'/bin/?.'..ext,
+        path = "?.lua;?/init.lua",
+        cpath = "?."..ext..";"..builddir.."/bin/?."..ext,
         searchpath = searchpath,
         loadlib = package.loadlib,
         searchers = {
@@ -175,16 +175,16 @@ return function (c)
     local function sandbox_loadlua(name, mode, ENV)
         assert(mode == nil or mode == "t")
         local path = absolute(name)
-        local f, err = openfile(path, 'r')
+        local f, err = openfile(path, "r")
         if f then
-            if '#' == f:read(1) then
+            if "#" == f:read(1) then
                 f:read "l"
             else
                 f:seek "set"
             end
-            local str = f:read 'a'
+            local str = f:read "a"
             f:close()
-            return load(str, '@'..path, 't', ENV or env)
+            return load(str, "@"..path, "t", ENV or env)
         end
         return nil, err
     end

@@ -20,10 +20,10 @@ local traceback; do
             if #source <= maxlen then
                 return source:sub(2)
             else
-                return '...'..source:sub(#source - maxlen + 5)
+                return "..."..source:sub(#source - maxlen + 5)
             end
         else
-            local nl = source:find '\n'
+            local nl = source:find "\n"
             local string_maxlen <const> = maxlen - 15
             if #source < string_maxlen and nl == nil then
                 return ('[string "%s"]'):format(source)
@@ -40,17 +40,17 @@ local traceback; do
         end
     end
     local function findfield(t, f, level)
-        if level == 0 or type(t) ~= 'table' then
+        if level == 0 or type(t) ~= "table" then
             return
         end
         for key, value in pairs(t) do
-            if type(key) == 'string' and not (level == 2 and key == '_G') then
+            if type(key) == "string" and not (level == 2 and key == "_G") then
                 if value == f then
                     return key
                 end
                 local res = findfield(value, f, level - 1)
                 if res then
-                    return key..'.'..res
+                    return key.."."..res
                 end
             end
         end
@@ -62,14 +62,14 @@ local traceback; do
         local funcname = pushglobalfuncname(info.func)
         if funcname then
             return ("function '%s'"):format(funcname)
-        elseif info.namewhat ~= '' then
+        elseif info.namewhat ~= "" then
             return ("%s '%s'"):format(info.namewhat, info.name)
-        elseif info.what == 'main' then
-            return 'main chunk'
-        elseif info.what ~= 'C' then
-            return ('function <%s:%d>'):format(getshortsrc(info.source), info.linedefined)
+        elseif info.what == "main" then
+            return "main chunk"
+        elseif info.what ~= "C" then
+            return ("function <%s:%d>"):format(getshortsrc(info.source), info.linedefined)
         else
-            return '?'
+            return "?"
         end
     end
     function traceback(level, errmsg)
@@ -89,14 +89,14 @@ local traceback; do
             if in_procdir(info.source) then
                 goto continue
             end
-            s[#s+1] = ('\t%s:'):format(getshortsrc(info.source))
+            s[#s+1] = ("\t%s:"):format(getshortsrc(info.source))
             if info.currentline > 0 then
-                s[#s+1] = ('%d:'):format(info.currentline)
+                s[#s+1] = ("%d:"):format(info.currentline)
             end
             s[#s+1] = " in "
             s[#s+1] = pushfuncname(info)
             if info.istailcall then
-                s[#s+1] = '\n\t(...tail calls...)'
+                s[#s+1] = "\n\t(...tail calls...)"
             end
             s[#s+1] = "\n"
             ::continue::

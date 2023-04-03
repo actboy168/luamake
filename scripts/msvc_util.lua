@@ -1,4 +1,4 @@
-local msvc = require 'msvc'
+local msvc = require "msvc"
 local fs = require "bee.filesystem"
 local fsutil = require "fsutil"
 local globals = require "globals"
@@ -21,17 +21,17 @@ local function getConsoleCP()
 end
 
 local function readEnvConfig()
-    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, 'env.lua')
-    local f <close> = assert(io.open(EnvConfig, 'r'))
-    local data = assert(f:read 'a')
+    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, "env.lua")
+    local f <close> = assert(io.open(EnvConfig, "r"))
+    local data = assert(f:read "a")
     local config = assert(load(data, "t", nil))()
     f:close()
     return config
 end
 
 local function writeEnvConfig(data)
-    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, 'env.lua')
-    local f <close> = assert(io.open(EnvConfig, 'w'))
+    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, "env.lua")
+    local f <close> = assert(io.open(EnvConfig, "w"))
     f:write(data)
 end
 
@@ -44,12 +44,12 @@ local function updateEnvConfig()
 end
 
 function m.hasEnvConfig()
-    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, 'env.lua')
+    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, "env.lua")
     return fs.exists(EnvConfig)
 end
 
 function m.cleanEnvConfig()
-    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, 'env.lua')
+    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, "env.lua")
     fs.remove(EnvConfig)
 end
 
@@ -86,7 +86,7 @@ function m.createEnvConfig(arch, rebuild)
     s[#s+1] = "},"
     s[#s+1] = "}"
     s[#s+1] = ""
-    writeEnvConfig(table.concat(s, '\n'))
+    writeEnvConfig(table.concat(s, "\n"))
 end
 
 function m.getEnv()

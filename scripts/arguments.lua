@@ -1,7 +1,7 @@
 local t = {}
 local arguments = {}
 local targets = {}
-local what = 'build'
+local what = "build"
 
 local function has_command(cmd)
     local path = package.searchpath("command."..cmd, package.path)
@@ -11,13 +11,13 @@ end
 local i = 1
 while i <= #arg do
     local k = arg[i]
-    if k:sub(1, 1) == '-' then
-        if k:sub(2, 2) == '-' then
+    if k:sub(1, 1) == "-" then
+        if k:sub(2, 2) == "-" then
             k = k:sub(3)
         else
             k = k:sub(2)
         end
-        if arg[i + 1] ~= nil and arg[i + 1]:sub(1, 1) ~= '-' then
+        if arg[i + 1] ~= nil and arg[i + 1]:sub(1, 1) ~= "-" then
             i = i + 1
             arguments[k] = arg[i]
         else

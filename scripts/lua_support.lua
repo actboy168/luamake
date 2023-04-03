@@ -16,7 +16,7 @@ end
 
 local function init_single(attribute, attr_name, default)
     local attr = attribute[attr_name]
-    if type(attr) == 'table' then
+    if type(attr) == "table" then
         attribute[attr_name] = attr[#attr]
     elseif attr == nil then
         attribute[attr_name] = default
@@ -29,16 +29,16 @@ local function init_rule(ninja)
         return
     end
     inited_rule = true
-    if globals.compiler == 'msvc' then
+    if globals.compiler == "msvc" then
         local msvc = require "msvc_util"
         ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(globals.arch)),
             {
-                description = 'Lua import lib $out'
+                description = "Lua import lib $out"
             })
     else
         ninja:rule("luadeps", [[dlltool -d $in -l $out]],
             {
-                description = 'Lua import lib $out'
+                description = "Lua import lib $out"
             })
     end
 end
@@ -50,7 +50,7 @@ local function init_version(ninja, loaded, luadir, luaversion)
     inited_version[luaversion] = true
     lua_def(fsutil.join(package.procdir, "tools", luaversion))
     local libname
-    if globals.compiler == 'msvc' then
+    if globals.compiler == "msvc" then
         libname = luadir.."/lua-"..globals.arch..".lib"
         loaded["__"..luaversion.."__"] = {
             input = { libname }

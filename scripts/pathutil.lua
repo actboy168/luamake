@@ -17,7 +17,7 @@ local function path_normalize(base, path)
             path = fsutil.relative(path, WORKDIR)
         end
     end
-    return path:gsub('\\', '/')
+    return path:gsub("\\", "/")
 end
 
 local function accept(base, path)

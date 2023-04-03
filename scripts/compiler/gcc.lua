@@ -1,4 +1,4 @@
-local globals = require 'globals'
+local globals = require "globals"
 
 local function format_path(path)
     if path:match " " then
@@ -13,10 +13,10 @@ local gcc = {
     ldflags = {
     },
     optimize = {
-        off      = '',
-        size     = '-Os',
-        speed    = '-O2',
-        maxspeed = '-O3',
+        off      = "",
+        size     = "-Os",
+        speed    = "-O2",
+        maxspeed = "-O3",
     },
     warnings = {
         off   = "-w",
@@ -25,20 +25,20 @@ local gcc = {
         error = "-Werror",
     },
     cxx = {
-        [''] = '',
-        ['c++11'] = '-std=c++11',
-        ['c++14'] = '-std=c++14',
-        ['c++17'] = '-std=c++17',
-        ['c++20'] = '-std=c++20',
-        ['c++23'] = '-std=c++23',
-        ['c++latest'] = '-std=c++2a',
+        [""] = "",
+        ["c++11"] = "-std=c++11",
+        ["c++14"] = "-std=c++14",
+        ["c++17"] = "-std=c++17",
+        ["c++20"] = "-std=c++20",
+        ["c++23"] = "-std=c++23",
+        ["c++latest"] = "-std=c++2a",
     },
     c = {
-        [''] = '',
-        ['c89'] = '',
-        ['c99'] = '-std=c99',
-        ['c11'] = '-std=c11',
-        ['c17'] = '-std=c17',
+        [""] = "",
+        ["c89"] = "",
+        ["c99"] = "-std=c99",
+        ["c11"] = "-std=c11",
+        ["c17"] = "-std=c17",
     },
     define = function (macro)
         if macro == "" then
@@ -67,8 +67,8 @@ local gcc = {
 }
 
 function gcc.update_flags(flags, _, cxxflags, attribute, _)
-    if attribute.mode == 'debug' then
-        flags[#flags+1] = '-g'
+    if attribute.mode == "debug" then
+        flags[#flags+1] = "-g"
     end
     if attribute.lto ~= "off" then
         flags[#flags+1] = "-flto"
@@ -90,8 +90,8 @@ function gcc.update_ldflags(ldflags, attribute)
         ldflags[#ldflags+1] = "-lstdc++"
         ldflags[#ldflags+1] = "-Wl,-Bdynamic"
     end
-    if attribute.mode == 'release' then
-        ldflags[#ldflags+1] = '-s'
+    if attribute.mode == "release" then
+        ldflags[#ldflags+1] = "-s"
     end
     if attribute.lto ~= "off" then
         ldflags[#ldflags+1] = "-flto"
@@ -100,73 +100,73 @@ function gcc.update_ldflags(ldflags, attribute)
 end
 
 function gcc.rule_asm(w, name, flags)
-    w:rule('asm_'..name, ([[$cc -MMD -MT $out -MF $out.d %s -o $out -c $in]])
+    w:rule("asm_"..name, ([[$cc -MMD -MT $out -MF $out.d %s -o $out -c $in]])
         :format(flags),
         {
-            description = 'Compile ASM $out',
-            deps = 'gcc',
-            depfile = '$out.d'
+            description = "Compile ASM $out",
+            deps = "gcc",
+            depfile = "$out.d"
         })
 end
 
 function gcc.rule_c(w, name, flags, cflags)
-    w:rule('c_'..name, ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
+    w:rule("c_"..name, ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
         :format(cflags, flags),
         {
-            description = 'Compile C   $out',
-            deps = 'gcc',
-            depfile = '$out.d'
+            description = "Compile C   $out",
+            deps = "gcc",
+            depfile = "$out.d"
         })
 end
 
 function gcc.rule_cxx(w, name, flags, cxxflags)
-    w:rule('cxx_'..name, ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
+    w:rule("cxx_"..name, ([[$cc -MMD -MT $out -MF $out.d %s %s -o $out -c $in]])
         :format(cxxflags, flags),
         {
-            description = 'Compile C++ $out',
-            deps = 'gcc',
-            depfile = '$out.d'
+            description = "Compile C++ $out",
+            deps = "gcc",
+            depfile = "$out.d"
         })
 end
 
 function gcc.rule_dll(w, name, ldflags)
-    w:rule('link_'..name, ([[$cc --shared $in -o $out %s]])
+    w:rule("link_"..name, ([[$cc --shared $in -o $out %s]])
         :format(ldflags),
         {
-            description = 'Link    Dll $out'
+            description = "Link    Dll $out"
         })
 end
 
 function gcc.rule_exe(w, name, ldflags)
-    w:rule('link_'..name, ([[$cc $in -o $out %s]])
+    w:rule("link_"..name, ([[$cc $in -o $out %s]])
         :format(ldflags),
         {
-            description = 'Link    Exe $out'
+            description = "Link    Exe $out"
         })
 end
 
 function gcc.rule_lib(w, name)
     if globals.hostos == "windows" then
         -- mingw
-        w:rule('link_'..name, [[sh -c "rm -f $out && ar rcs $out @$out.rsp"]],
+        w:rule("link_"..name, [[sh -c "rm -f $out && ar rcs $out @$out.rsp"]],
             {
-                description = 'Link    Lib $out',
+                description = "Link    Lib $out",
                 rspfile = "$out.rsp",
                 rspfile_content = "$in",
             })
     else
-        w:rule('link_'..name, [[rm -f $out && ar rcs $out $in]],
+        w:rule("link_"..name, [[rm -f $out && ar rcs $out $in]],
             {
-                description = 'Link    Lib $out'
+                description = "Link    Lib $out"
             })
     end
 end
 
 -- mingw only
 function gcc.rule_rc(w, name)
-    w:rule('rc_'..name, [[windres -i $in -o $out]],
+    w:rule("rc_"..name, [[windres -i $in -o $out]],
         {
-            description = 'Compile Res $out',
+            description = "Compile Res $out",
         })
 end
 

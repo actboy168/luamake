@@ -1,7 +1,7 @@
 local globals = require "globals"
-local sp = require 'bee.subprocess'
-local fs = require 'bee.filesystem'
-local sim = require 'simulator'
+local sp = require "bee.subprocess"
+local fs = require "bee.filesystem"
+local sim = require "simulator"
 local arguments = require "arguments"
 
 local function execute(option)
@@ -9,14 +9,14 @@ local function execute(option)
     option.stdout = option.stdout or true
     option.stderr = "stdout"
     option.searchPath = true
-    if globals.compiler == 'msvc' then
+    if globals.compiler == "msvc" then
         local msvc = require "msvc_util"
         option.env = msvc.getEnv()
         option.env.VS_UNICODE_OUTPUT = false
         option.env.TMP = fs.absolute(globals.builddir):string()
     end
     if globals.hostshell == "cmd" then
-        option[1] = { 'cmd', '/c', option[1] }
+        option[1] = { "cmd", "/c", option[1] }
     end
     local process = assert(sp.spawn(option))
     if not redirect then
@@ -78,7 +78,7 @@ local function clean()
 end
 
 if globals.perf then
-    local perf = require 'perf'
+    local perf = require "perf"
     local perf_single = perf.single
     local perf_print = perf.print
     local function perf_init()

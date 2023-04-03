@@ -26,7 +26,7 @@ return function ()
             last_rule = rule_command[command]
             return
         end
-        name = name:gsub('[^%w_]', '_')
+        name = name:gsub("[^%w_]", "_")
         if rule_name[name] then
             local newname = name.."_1"
             local i = 1
@@ -43,7 +43,7 @@ return function ()
     end
 
     function m:set_rule(name)
-        last_rule = name:gsub('[^%w_]', '_')
+        last_rule = name:gsub("[^%w_]", "_")
     end
 
     function m:build_obj(output, inputs, args)
@@ -80,13 +80,13 @@ return function ()
     function m:close(filename)
         for _, out in ipairs(phony) do
             if not build_name[out] then
-                ninja_body:build(out, 'phony', phony[out])
+                ninja_body:build(out, "phony", phony[out])
             end
         end
         if default then
             ninja_body:default(default)
         end
-        local f = assert(io.open(filename..".tmp", 'wb'))
+        local f = assert(io.open(filename..".tmp", "wb"))
         f:write(ninja_head:close())
         f:write(ninja_body:close())
         f:close()

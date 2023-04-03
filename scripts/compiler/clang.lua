@@ -1,9 +1,9 @@
-local clang = require 'compiler.gcc'
-local globals = require 'globals'
+local clang = require "compiler.gcc"
+local globals = require "globals"
 
 local function shell(command)
-    local f = assert(io.popen(command, 'r'))
-    local r = f:read 'l'
+    local f = assert(io.popen(command, "r"))
+    local r = f:read "l"
     f:close()
     return r
 end
@@ -53,8 +53,8 @@ local function update_target(flags, attribute)
 end
 
 function clang.update_flags(flags, _, cxxflags, attribute)
-    if attribute.mode == 'debug' then
-        flags[#flags+1] = '-g'
+    if attribute.mode == "debug" then
+        flags[#flags+1] = "-g"
     end
     if attribute.lto ~= "off" then
         if attribute.lto == "thin" then
@@ -90,15 +90,15 @@ function clang.update_ldflags(ldflags, attribute)
             ldflags[#ldflags+1] = framework
         end
     end
-    if attribute.crt == 'dynamic' then
+    if attribute.crt == "dynamic" then
         ldflags[#ldflags+1] = "-lstdc++"
     else
         ldflags[#ldflags+1] = "-Wl,--push-state,-Bstatic"
         ldflags[#ldflags+1] = "-lstdc++"
         ldflags[#ldflags+1] = "-Wl,--pop-state"
     end
-    if attribute.mode == 'release' then
-        ldflags[#ldflags+1] = '-Wl,-S,-x'
+    if attribute.mode == "release" then
+        ldflags[#ldflags+1] = "-Wl,-S,-x"
     end
     if attribute.lto ~= "off" then
         if attribute.lto == "thin" then
@@ -121,16 +121,16 @@ function clang.update_ldflags(ldflags, attribute)
 end
 
 function clang.rule_dll(w, name, ldflags)
-    w:rule('link_'..name, ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
+    w:rule("link_"..name, ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
         {
-            description = 'Link    Dll $out'
+            description = "Link    Dll $out"
         })
 end
 
 function clang.rule_exe(w, name, ldflags)
-    w:rule('link_'..name, ([[$cc $in -o $out %s]]):format(ldflags),
+    w:rule("link_"..name, ([[$cc $in -o $out %s]]):format(ldflags),
         {
-            description = 'Link    Exe $out'
+            description = "Link    Exe $out"
         })
 end
 

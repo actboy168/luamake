@@ -29,12 +29,12 @@ local file_type <const> = {
 }
 
 local function fmtpath(p)
-    return p:gsub('\\', '/')
+    return p:gsub("\\", "/")
 end
 
 local function init_single(attribute, attr_name, default)
     local attr = attribute[attr_name]
-    if type(attr) == 'table' then
+    if type(attr) == "table" then
         attribute[attr_name] = attr[#attr]
     elseif attr == nil then
         attribute[attr_name] = default
@@ -110,11 +110,11 @@ for k, v in pairs(ATTRIBUTE) do
 end
 
 local function push_string(t, a)
-    if type(a) == 'string' then
+    if type(a) == "string" then
         t[#t+1] = a
-    elseif type(a) == 'userdata' then
+    elseif type(a) == "userdata" then
         t[#t+1] = a
-    elseif type(a) == 'table' then
+    elseif type(a) == "table" then
         if getmetatable(a) ~= nil then
             t[#t+1] = a
         else
@@ -126,11 +126,11 @@ local function push_string(t, a)
 end
 
 local function push_path(t, a, root)
-    if type(a) == 'string' then
+    if type(a) == "string" then
         t[#t+1] = pathutil.tostring(root, a)
-    elseif type(a) == 'userdata' then
+    elseif type(a) == "userdata" then
         t[#t+1] = pathutil.tostring(root, a)
-    elseif type(a) == 'table' then
+    elseif type(a) == "table" then
         if getmetatable(a) ~= nil then
             t[#t+1] = pathutil.tostring(root, a)
         else
@@ -142,17 +142,17 @@ local function push_path(t, a, root)
 end
 
 local function push_mix(t, a, root)
-    if type(a) == 'string' then
-        if a:sub(1, 1) == '@' then
+    if type(a) == "string" then
+        if a:sub(1, 1) == "@" then
             t[#t+1] = pathutil.tostring(root, a:sub(2))
         else
             t[#t+1] = a:gsub("@{([^}]*)}", function (s)
                 return pathutil.tostring(root, s)
             end)
         end
-    elseif type(a) == 'userdata' then
+    elseif type(a) == "userdata" then
         t[#t+1] = pathutil.tostring(root, a)
-    elseif type(a) == 'table' then
+    elseif type(a) == "table" then
         if getmetatable(a) ~= nil then
             t[#t+1] = pathutil.tostring(root, a)
         else
@@ -207,7 +207,7 @@ local function reslove_table(root, t, a)
 end
 
 local function normalize_rootdir(workdir, rootdir)
-    if type(rootdir) == 'table' then
+    if type(rootdir) == "table" then
         if getmetatable(rootdir) == nil then
             rootdir = rootdir[#rootdir]
         else
@@ -215,7 +215,7 @@ local function normalize_rootdir(workdir, rootdir)
             return fsutil.normalize(WORKDIR, tostring(rootdir))
         end
     end
-    return fsutil.normalize(workdir, rootdir or '.')
+    return fsutil.normalize(workdir, rootdir or ".")
 end
 
 local function reslove_configs(attributes, configs, link)
@@ -269,9 +269,9 @@ local function update_warnings(flags, warnings)
         return
     end
     local error = nil
-    local level = 'on'
+    local level = "on"
     for _, v in ipairs(warnings) do
-        if v == 'error' then
+        if v == "error" then
             error = true
         elseif cc.warnings[v] then
             level = v
@@ -294,16 +294,16 @@ local function array_remove(t, k)
 end
 
 local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
-    local optimize = init_single(attribute, 'optimize', (attribute.mode == "release" and "speed" or "off"))
+    local optimize = init_single(attribute, "optimize", (attribute.mode == "release" and "speed" or "off"))
     local defines = attribute.defines or {}
 
     tbl_append(flags, cc.flags)
     flags[#flags+1] = cc.optimize[optimize]
     update_warnings(flags, attribute.warnings)
     if globals.os ~= "windows" then
-        local visibility = init_single(attribute, 'visibility', "hidden")
+        local visibility = init_single(attribute, "visibility", "hidden")
         if visibility ~= "default" then
-            flags[#flags+1] = ('-fvisibility=%s'):format(visibility or 'hidden')
+            flags[#flags+1] = ("-fvisibility=%s"):format(visibility or "hidden")
         end
         if rule == "shared_library" then
             flags[#flags+1] = "-fPIC"
@@ -416,26 +416,26 @@ local function generate(rule, attribute, name)
         end
     end
 
-    local bindir = init_single(attribute, 'bindir', globals.bindir)
+    local bindir = init_single(attribute, "bindir", globals.bindir)
     local sources = get_blob(attribute.rootdir, attribute.sources)
     local objargs = attribute.objdeps and { implicit_inputs = attribute.objdeps } or nil
     local implicit_inputs = {}
 
-    init_single(attribute, 'mode', 'release')
-    init_single(attribute, 'crt', 'dynamic')
-    init_single(attribute, 'c', '')
-    init_single(attribute, 'cxx', '')
-    init_single(attribute, 'visibility')
-    init_single(attribute, 'target')
-    init_single(attribute, 'arch')
-    init_single(attribute, 'vendor')
-    init_single(attribute, 'sys')
-    init_single(attribute, 'luaversion')
-    init_single(attribute, 'basename')
-    init_single(attribute, 'rtti', 'on')
+    init_single(attribute, "mode", "release")
+    init_single(attribute, "crt", "dynamic")
+    init_single(attribute, "c", "")
+    init_single(attribute, "cxx", "")
+    init_single(attribute, "visibility")
+    init_single(attribute, "target")
+    init_single(attribute, "arch")
+    init_single(attribute, "vendor")
+    init_single(attribute, "sys")
+    init_single(attribute, "luaversion")
+    init_single(attribute, "basename")
+    init_single(attribute, "rtti", "on")
 
-    local default_enable_lto = attribute.mode == 'release' and globals.compiler == 'msvc'
-    init_single(attribute, 'lto', default_enable_lto and "on" or "off")
+    local default_enable_lto = attribute.mode == "release" and globals.compiler == "msvc"
+    init_single(attribute, "lto", default_enable_lto and "on" or "off")
 
     if attribute.luaversion then
         require "lua_support" (ninja, loaded_target, rule, name, attribute)
@@ -486,7 +486,7 @@ local function generate(rule, attribute, name)
         ::continue::
     end
 
-    if rule == 'source_set' then
+    if rule == "source_set" then
         if attribute.links then
             for _, link in ipairs(attribute.links) do
                 ldflags[#ldflags+1] = cc.link(link)
@@ -551,9 +551,9 @@ local function generate(rule, attribute, name)
     local basename = attribute.basename or name
     if rule == "shared_library" then
         cc.rule_dll(ninja, name, fin_ldflags)
-        if globals.compiler == 'msvc' then
+        if globals.compiler == "msvc" then
             binname = bindir.."/"..basename..".dll"
-            local lib = ('$obj/%s/%s.lib'):format(name, basename)
+            local lib = ("$obj/%s/%s.lib"):format(name, basename)
             target.input = { lib }
             target.implicit_inputs = binname
             ninja:build(binname, input, {
@@ -705,7 +705,7 @@ function GEN.runlua(attribute, name)
     end
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    local script = init_single(attribute, 'script')
+    local script = init_single(attribute, "script")
     log.assert(script, "`%s`: need attribute `script`.", name)
     implicit_inputs[#implicit_inputs+1] = script
 
@@ -715,11 +715,11 @@ function GEN.runlua(attribute, name)
             command[i] = fsutil.quotearg(v)
         end
         local command_str = table.concat(command, " ")
-        ninja:rule('runlua', "$luamake lua $script "..command_str, {
+        ninja:rule("runlua", "$luamake lua $script "..command_str, {
             description = "lua $script "..command_str
         })
     else
-        ninja:rule('runlua', "$luamake lua $script", {
+        ninja:rule("runlua", "$luamake lua $script", {
             description = "lua $script"
         })
     end
@@ -727,7 +727,7 @@ function GEN.runlua(attribute, name)
 
     local outname
     if #output == 0 then
-        outname = '$builddir/_/'..name
+        outname = "$builddir/_/"..name
     else
         outname = output
     end
@@ -758,11 +758,11 @@ function GEN.build(attribute, name)
     end
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    local rule = init_single(attribute, 'rule')
+    local rule = init_single(attribute, "rule")
 
     local outname
     if #output == 0 then
-        outname = '$builddir/_/'..name
+        outname = "$builddir/_/"..name
     else
         outname = output
     end
@@ -788,7 +788,7 @@ function GEN.build(attribute, name)
         for i, v in ipairs(attribute) do
             command[i] = fsutil.quotearg(v)
         end
-        ninja:rule('build_'..name, table.concat(command, " "))
+        ninja:rule("build_"..name, table.concat(command, " "))
         ninja:build(outname, input, {
             implicit_inputs = implicit_inputs,
         })
@@ -803,24 +803,24 @@ end
 
 local function generate_copy(implicit_inputs, input, output)
     if globals.hostshell == "cmd" then
-        ninja:rule('copy', "powershell -NonInteractive -Command Copy-Item -Path '$in$input' -Destination '$out' | Out-Null", {
-            description = 'Copy $in$input $out',
+        ninja:rule("copy", "powershell -NonInteractive -Command Copy-Item -Path '$in$input' -Destination '$out' | Out-Null", {
+            description = "Copy $in$input $out",
             restat = 1,
         })
     elseif globals.hostos == "windows" then
-        ninja:rule('copy', 'sh -c "cp -fv $in$input $out 1>/dev/null"', {
-            description = 'Copy $in$input $out',
+        ninja:rule("copy", 'sh -c "cp -fv $in$input $out 1>/dev/null"', {
+            description = "Copy $in$input $out",
             restat = 1,
         })
     elseif globals.hostos == "macos" then
         -- see https://developer.apple.com/documentation/security/updating_mac_software
-        ninja:rule('copy', 'ditto $in$input $out 1>/dev/null', {
-            description = 'Copy $in$input $out',
+        ninja:rule("copy", "ditto $in$input $out 1>/dev/null", {
+            description = "Copy $in$input $out",
             restat = 1,
         })
     else
-        ninja:rule('copy', 'cp -fv $in$input $out 1>/dev/null', {
-            description = 'Copy $in$input $out',
+        ninja:rule("copy", "cp -fv $in$input $out 1>/dev/null", {
+            description = "Copy $in$input $out",
             restat = 1,
         })
     end
@@ -861,9 +861,9 @@ function GEN.msvc_copydll(attribute, name)
     local input = {}
     local output = {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    init_single(attribute, 'mode', 'release')
-    init_single(attribute, 'arch')
-    init_single(attribute, 'type')
+    init_single(attribute, "mode", "release")
+    init_single(attribute, "arch")
+    init_single(attribute, "type")
 
     local msvc = require "msvc_util"
     local outputdir = attribute.output[#attribute.output]
@@ -963,7 +963,7 @@ end
 function m.default(attribute)
     local deps = {}
     push_string(deps, attribute)
-    local implicit_inputs = getImplicitInputs('default', { deps = deps })
+    local implicit_inputs = getImplicitInputs("default", { deps = deps })
     ninja:default(implicit_inputs)
 end
 
@@ -991,7 +991,7 @@ function m.generate()
     else
         local compiler = globals.cc or globals.compiler
         if globals.hostshell == "cmd" then
-            compiler = 'cmd /c '..compiler
+            compiler = "cmd /c "..compiler
         end
         ninja:variable("cc", compiler)
     end
@@ -1000,7 +1000,7 @@ function m.generate()
         ninja:variable("luamake", "luamake")
     else
         ninja:variable("luamake", get_luamake())
-        ninja:rule('configure', '$luamake init '..configure_args(), { generator = 1 })
+        ninja:rule("configure", "$luamake init "..configure_args(), { generator = 1 })
         ninja:build("$builddir/build.ninja", scripts)
     end
 

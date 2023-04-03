@@ -10,27 +10,27 @@ local substr = string.sub
 
 local line_width <const> = 78
 local rule_kwargs <const> = {
-	'description',
-	'generator',
-	'pool',
-	'restat',
-	'rspfile',
-	'rspfile_content',
-	'deps',
-	'depfile',
+	"description",
+	"generator",
+	"pool",
+	"restat",
+	"rspfile",
+	"rspfile_content",
+	"deps",
+	"depfile",
 }
 local rule_bool_kwargs <const> = {
-	['generator'] = true,
-	['restat'] = true,
+	["generator"] = true,
+	["restat"] = true,
 }
 
 local function isblank(obj)
-	return obj == nil or (type(obj) == 'string' and strmatch(obj, '^%s*$') ~= nil)
+	return obj == nil or (type(obj) == "string" and strmatch(obj, "^%s*$") ~= nil)
 end
 
 local function as_list_(input, output)
 	if isblank(input) then
-	elseif type(input) == 'table' and getmetatable(input) == nil then
+	elseif type(input) == "table" and getmetatable(input) == nil then
 		for _, item in ipairs(input) do
 			as_list_(item, output)
 		end
@@ -46,7 +46,7 @@ local function as_list(input)
 end
 
 local function escape_path(word)
-	return word:gsub('%$ ', '$$ '):gsub(' ', '$ '):gsub(':', '$:')
+	return word:gsub("%$ ", "$$ "):gsub(" ", "$ "):gsub(":", "$:")
 end
 
 local function append_path(list, t)
@@ -56,13 +56,13 @@ local function append_path(list, t)
 end
 
 local function join(list)
-	return tconcat(list, ' ')
+	return tconcat(list, " ")
 end
 
 local function is_even_dollars_before_index(str, index)
 	local count = 0
 	index = index - 1
-	while index > 1 and substr(str, index, index) == '$' do
+	while index > 1 and substr(str, index, index) == "$" do
 		count = count + 1
 		index = index - 1
 	end
@@ -71,7 +71,7 @@ end
 
 local function nextwrap(text, start, count)
 	local truncd = substr(text, start, start + count - 1)
-	local found = strfind(truncd, '%s+[^%s]*$')
+	local found = strfind(truncd, "%s+[^%s]*$")
 	if found == nil then return end
 	if is_even_dollars_before_index(truncd, found) then
 		return start + found - 1
@@ -80,7 +80,7 @@ local function nextwrap(text, start, count)
 end
 
 local function wrapafter(text, start)
-	local found = strfind(text, '%s+', start)
+	local found = strfind(text, "%s+", start)
 	if found == nil then return end
 	if is_even_dollars_before_index(text, found) then
 		return found
@@ -118,28 +118,28 @@ return function ()
 				write(text)
 				return
 			end
-			write(substr(text, 1, found - 1)..' $')
+			write(substr(text, 1, found - 1).." $")
 			start = found + 1
 		end
-		local leading <const> = '    '
+		local leading <const> = "    "
 		local available <const> = line_width - 4 - 2
 		while #text > start + line_width - 5 do
 			local found = findwrap(text, start, available)
 			if not found then
 				break
 			end
-			write(leading..substr(text, start, found - 1)..' $')
+			write(leading..substr(text, start, found - 1).." $")
 			start = found + 1
 		end
 		write(leading..substr(text, start))
 	end
 	local function block_variable(key, value)
 		if isblank(value) then return end
-		writeline('  '..key..' = '..value)
+		writeline("  "..key.." = "..value)
 	end
 	function w:variable(key, value)
 		if isblank(value) then return end
-		writeline(key..' = '..value)
+		writeline(key.." = "..value)
 	end
 
 	function w:comment(text)
@@ -147,26 +147,26 @@ return function ()
 		local start = 1
 		local found = findwrap(text, start, available)
 		while found do
-			write('# '..substr(text, start, found - 1))
+			write("# "..substr(text, start, found - 1))
 			start = found + 1
 			found = findwrap(text, start, available)
 		end
-		write('# '..text)
+		write("# "..text)
 	end
 
 	function w:pool(name, depth)
-		writeline('pool '..name)
-		block_variable('depth', depth)
+		writeline("pool "..name)
+		block_variable("depth", depth)
 	end
 
 	function w:rule(name, command, kwargs)
-		writeline('rule '..name)
-		block_variable('command', command)
+		writeline("rule "..name)
+		block_variable("command", command)
 		if kwargs then
 			for _, key in ipairs(rule_kwargs) do
 				if kwargs[key] then
 					if rule_bool_kwargs[key] then
-						block_variable(key, '1')
+						block_variable(key, "1")
 					else
 						block_variable(key, kwargs[key])
 					end
@@ -212,16 +212,16 @@ return function ()
 
 	function w:include(path, raw)
 		if not raw then path = escape_path(path) end
-		writeline('include '..path)
+		writeline("include "..path)
 	end
 
 	function w:subninja(path, raw)
 		if not raw then path = escape_path(path) end
-		writeline('subninja '..path)
+		writeline("subninja "..path)
 	end
 
 	function w:default(targets)
-		writeline('default '..join(as_list(targets)))
+		writeline("default "..join(as_list(targets)))
 	end
 
 	function w:close()

@@ -1,24 +1,24 @@
-local sp = require 'bee.subprocess'
-local fs = require 'bee.filesystem'
+local sp = require "bee.subprocess"
+local fs = require "bee.filesystem"
 
 local function Is64BitWindows()
     -- https://docs.microsoft.com/en-us/archive/blogs/david.wang/howto-detect-process-bitness
     return os.getenv "PROCESSOR_ARCHITECTURE" == "AMD64" or os.getenv "PROCESSOR_ARCHITEW6432" == "AMD64"
 end
 
-local ProgramFiles = Is64BitWindows() and 'ProgramFiles(x86)' or 'ProgramFiles'
-local vswhere = os.getenv(ProgramFiles)..'/Microsoft Visual Studio/Installer/vswhere.exe'
+local ProgramFiles = Is64BitWindows() and "ProgramFiles(x86)" or "ProgramFiles"
+local vswhere = os.getenv(ProgramFiles).."/Microsoft Visual Studio/Installer/vswhere.exe"
 local need = { LIB = true, LIBPATH = true, PATH = true, INCLUDE = true }
 
 local function writeall(filename, content)
-    local f <close> = assert(io.open(filename, 'w'))
+    local f <close> = assert(io.open(filename, "w"))
     if content then
         f:write(content)
     end
 end
 
 local function readall(filename)
-    local f <close> = assert(io.open(filename, 'r'))
+    local f <close> = assert(io.open(filename, "r"))
     return f:read "a"
 end
 
@@ -33,17 +33,17 @@ local function installpath()
     end
     local process = assert(sp.spawn {
         vswhere,
-        '-nologo',
-        '-latest',
-        --'-prerelease',
-        '-utf8',
-        '-products', '*',
-        '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-        '-property', 'installationPath',
+        "-nologo",
+        "-latest",
+        --"-prerelease",
+        "-utf8",
+        "-products", "*",
+        "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "-property", "installationPath",
         stdout = true,
         stderr = "stdout",
     })
-    local result = strtrim(process.stdout:read 'a')
+    local result = strtrim(process.stdout:read "a")
     process.stdout:close()
     local code = process:wait()
     if code ~= 0 then
@@ -55,7 +55,7 @@ local function installpath()
 end
 
 local function parse_env(str)
-    local pos = str:find('=')
+    local pos = str:find("=")
     if not pos then
         return
     end
@@ -110,16 +110,16 @@ local function findwinsdk()
 end
 
 local function vsdevcmd(winsdk, arch, f)
-    local vsvars32 = installpath()..'/Common7/Tools/VsDevCmd.bat'
+    local vsvars32 = installpath().."/Common7/Tools/VsDevCmd.bat"
     local args = { vsvars32 }
     if arch then
-        args[#args+1] = ('-arch=%s'):format(arch)
+        args[#args+1] = ("-arch=%s"):format(arch)
     end
     if winsdk then
-        args[#args+1] = ('-winsdk=%s'):format(winsdk)
+        args[#args+1] = ("-winsdk=%s"):format(winsdk)
     end
     local process = assert(sp.spawn {
-        args, '&&', 'set',
+        args, "&&", "set",
         stderr = true,
         stdout = true,
         searchPath = true,
@@ -158,14 +158,14 @@ end
 local function prefix(env)
     local testdir = os.tmpname()
     fs.create_directories(testdir)
-    writeall(testdir..'/test.c', '#include <stddef.h>')
-    writeall(testdir..'/build.ninja', [[
+    writeall(testdir.."/test.c", "#include <stddef.h>")
+    writeall(testdir.."/build.ninja", [[
 rule showIncludes
   command = cl /nologo /showIncludes -c $in
 build test: showIncludes test.c
 ]])
     local process = assert(sp.spawn {
-        'cmd', '/c', 'ninja',
+        "cmd", "/c", "ninja",
         searchPath = true,
         env = env,
         cwd = testdir,
@@ -174,7 +174,7 @@ build test: showIncludes test.c
     })
     local result
     for line in process.stdout:lines() do
-        local m = line:match('[^:]+:[^:]+:')
+        local m = line:match("[^:]+:[^:]+:")
         if m then
             result = m
             break
@@ -189,34 +189,34 @@ end
 
 local function toolspath()
     local ToolsVersion = (function ()
-        local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt'
+        local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt"
         local r = readall(verfile)
         return strtrim(r)
     end)()
-    return installpath()..'/VC/Tools/MSVC/'..ToolsVersion
+    return installpath().."/VC/Tools/MSVC/"..ToolsVersion
 end
 
 local function binpath(arch)
     local host = Is64BitWindows() and "Hostx64" or "Hostx86"
-    return toolspath()..'/bin/'..host..'/'..arch
+    return toolspath().."/bin/"..host.."/"..arch
 end
 
 local function vcrtpath(arch, mode)
     local RedistVersion = (function ()
-        local verfile = installpath()..'/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt'
+        local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt"
         local r = readall(verfile)
         return strtrim(r)
     end)()
     local ToolsetVersion = (function ()
-        local verfile = toolspath()..'/include/yvals_core.h'
+        local verfile = toolspath().."/include/yvals_core.h"
         local r = readall(verfile)
-        return r:match '#define%s+_MSVC_STL_VERSION%s+(%d+)'
+        return r:match "#define%s+_MSVC_STL_VERSION%s+(%d+)"
     end)()
-    local path = installpath()..'/VC/Redist/MSVC/'..RedistVersion
+    local path = installpath().."/VC/Redist/MSVC/"..RedistVersion
     if mode ~= "release" then
-        return path.."/debug_nonredist/"..arch..'/Microsoft.VC'..ToolsetVersion..'.DebugCRT'
+        return path.."/debug_nonredist/"..arch.."/Microsoft.VC"..ToolsetVersion..".DebugCRT"
     end
-    return path..'/'..arch..'/Microsoft.VC'..ToolsetVersion..'.CRT'
+    return path.."/"..arch.."/Microsoft.VC"..ToolsetVersion..".CRT"
 end
 
 local function ucrtpath(arch, mode)
@@ -229,10 +229,10 @@ local function ucrtpath(arch, mode)
     if not UniversalCRTSdkDir then
         return
     end
-    local path = UniversalCRTSdkDir..'/Redist'
+    local path = UniversalCRTSdkDir.."/Redist"
     local redist, ver
     local function accept(p, version)
-        local ucrt = p..'/ucrt/DLLs/'..arch
+        local ucrt = p.."/ucrt/DLLs/"..arch
         if fs.exists(ucrt) then
             if not ver or ver < version then
                 redist, ver = ucrt, version
@@ -241,7 +241,7 @@ local function ucrtpath(arch, mode)
     end
     accept(path, 0)
     for p in fs.pairs(path) do
-        local version = p:filename():string():gsub('10%.0%.([0-9]+)%.0', '%1')
+        local version = p:filename():string():gsub("10%.0%.([0-9]+)%.0", "%1")
         version = tonumber(version)
         accept(p:string(), version)
     end

@@ -4,7 +4,7 @@ local pathutil = require "pathutil"
 local globals = require "globals"
 
 local isWindows <const> = globals.hostos == "windows"
-local PathSeq <const> = isWindows and '/\\' or '/'
+local PathSeq <const> = isWindows and "/\\" or "/"
 
 local MATCH_SUCCESS <const> = 0
 local MATCH_PENDING <const> = 1
@@ -24,7 +24,7 @@ end
 local function compile(pattern)
     return ("^%s$"):format(pattern
         :gsub("[%^%$%(%)%%%.%[%]%+%-%?]", "%%%0")
-        :gsub("%*", '[^'..PathSeq..']*')
+        :gsub("%*", "[^"..PathSeq.."]*")
     )
 end
 
@@ -62,13 +62,13 @@ end
 
 local function pattern_compile(res, path, ignore)
     local pattern = { ignore = ignore }
-    path:gsub('[^'..PathSeq..']+', function (w)
-        if w == '..' and #pattern ~= 0 and pattern[#pattern] ~= '..' then
+    path:gsub("[^"..PathSeq.."]+", function (w)
+        if w == ".." and #pattern ~= 0 and pattern[#pattern] ~= ".." then
             if pattern[#pattern] == GlobStar then
                 error "`**/..` is not a valid glob."
             end
             pattern[#pattern] = nil
-        elseif w ~= '.' then
+        elseif w ~= "." then
             if w == "**" then
                 pattern[#pattern+1] = GlobStar
             else
@@ -178,8 +178,8 @@ local function glob_compile(root, patterns)
             res[#res+1] = pattern_copy(v, 2)
         end
     end
-    if root:sub(1, 1) == '/' then
-        gcd[1] = '/'..(gcd[1] or '')
+    if root:sub(1, 1) == "/" then
+        gcd[1] = "/"..(gcd[1] or "")
     end
     return fsutil.normalize(table.unpack(gcd)), res, files
 end

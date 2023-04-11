@@ -138,11 +138,22 @@ function gcc.rule_dll(w, name, ldflags)
 end
 
 function gcc.rule_exe(w, name, ldflags)
-    w:rule("link_"..name, ([[$cc $in -o $out %s]])
-        :format(ldflags),
-        {
-            description = "Link    Exe $out"
-        })
+    if globals.hostos == "windows" then
+        -- mingw
+        w:rule("link_"..name, ([[sh -c "$cc @$out.rsp -o $out %s"]])
+            :format(ldflags),
+            {
+                description = "Link    Exe $out",
+                rspfile = "$out.rsp",
+                rspfile_content = "$in",
+            })
+    else
+        w:rule("link_"..name, ([[$cc $in -o $out %s]])
+            :format(ldflags),
+            {
+                description = "Link    Exe $out"
+            })
+    end
 end
 
 function gcc.rule_lib(w, name)

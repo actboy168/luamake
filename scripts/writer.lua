@@ -1109,6 +1109,9 @@ function api:required_version(buildVersion)
     end
 end
 
+api.pcall = log.pcall
+api.xpcall = log.xpcall
+
 m.api = api
 
 return m

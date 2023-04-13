@@ -106,9 +106,16 @@ local traceback; do
     end
 end
 
+local protected = false
+
 local function fatal(errmsg)
-    io.stderr:write(traceback(3, errmsg))
-    os.exit(false)
+    errmsg = traceback(3, errmsg)
+    if protected then
+        error { __luamake = errmsg }
+    else
+        io.stderr:write(errmsg)
+        os.exit(false)
+    end
 end
 
 function m.assert(cond, fmt, ...)
@@ -119,6 +126,34 @@ end
 
 function m.fatal(fmt, ...)
     fatal(fmt:format(...))
+end
+
+local function conv_error(err)
+    if type(err) == "table" and err.__luamake then
+        return err.__luamake
+    end
+    return err
+end
+
+function m.pcall(f, ...)
+    protected = true
+    local r = table.pack(pcall(f, ...))
+    protected = false
+    if r[1] then
+        return table.unpack(r, 1, r.n)
+    end
+    local err = r[2]
+    return nil, conv_error(err)
+end
+
+function m.xpcall(f, msgh, ...)
+    local function error_handler(err)
+        return msgh(conv_error(err))
+    end
+    protected = true
+    local r = table.pack(xpcall(f, error_handler, ...))
+    protected = false
+    return table.unpack(r, 1, r.n)
 end
 
 return m

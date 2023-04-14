@@ -35,8 +35,12 @@ build $obj/source_bee/version.obj: cxx_source_bee_1 $
     bee.lua/bee/platform/version.cpp
 build $obj/source_bee/subprocess_posix.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/subprocess_posix.cpp
+build $obj/source_bee/setname.obj: cxx_source_bee_1 $
+    bee.lua/bee/thread/setname.cpp
 build $obj/source_bee/simplethread_posix.obj: cxx_source_bee_1 $
     bee.lua/bee/thread/simplethread_posix.cpp
+build $obj/source_bee/spinlock.obj: cxx_source_bee_1 $
+    bee.lua/bee/thread/spinlock.cpp
 build $obj/source_bee/file_handle.obj: cxx_source_bee_1 $
     bee.lua/bee/utility/file_handle.cpp
 build $obj/source_bee/file_handle_linux.obj: cxx_source_bee_1 $
@@ -102,9 +106,9 @@ build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/format.obj $obj/source_bee/error.obj $
     $obj/source_bee/filewatch_linux.obj $obj/source_bee/endpoint.obj $
     $obj/source_bee/socket.obj $obj/source_bee/version.obj $
-    $obj/source_bee/subprocess_posix.obj $
-    $obj/source_bee/simplethread_posix.obj $obj/source_bee/file_handle.obj $
-    $obj/source_bee/file_handle_linux.obj $
+    $obj/source_bee/subprocess_posix.obj $obj/source_bee/setname.obj $
+    $obj/source_bee/simplethread_posix.obj $obj/source_bee/spinlock.obj $
+    $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_linux.obj $
     $obj/source_bee/file_handle_posix.obj $obj/source_bee/path_helper.obj $
     $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
     $obj/source_bee/lua_platform.obj $obj/source_bee/lua_serialization.obj $

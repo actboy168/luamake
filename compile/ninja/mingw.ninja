@@ -41,8 +41,12 @@ build $obj/source_bee/unlink_win.obj: cxx_source_bee_1 $
     bee.lua/bee/platform/win/unlink_win.cpp
 build $obj/source_bee/subprocess_win.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/subprocess_win.cpp
+build $obj/source_bee/setname.obj: cxx_source_bee_1 $
+    bee.lua/bee/thread/setname.cpp
 build $obj/source_bee/simplethread_win.obj: cxx_source_bee_1 $
     bee.lua/bee/thread/simplethread_win.cpp
+build $obj/source_bee/spinlock.obj: cxx_source_bee_1 $
+    bee.lua/bee/thread/spinlock.cpp
 build $obj/source_bee/file_handle.obj: cxx_source_bee_1 $
     bee.lua/bee/utility/file_handle.cpp
 build $obj/source_bee/file_handle_win.obj: cxx_source_bee_1 $
@@ -102,10 +106,13 @@ build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
 build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/progdir.cpp
 rule link_bootstrap
-  command = $cc $in -o $out -Wl,--out-implib,$obj/bootstrap.lib -ladvapi32 $
-    -lws2_32 -lole32 -luser32 -lversion -lwbemuuid -loleAut32 -lshell32 $
-    -lntdll -luuid -lstdc++fs -lstdc++ -s
+  command = sh -c "$cc @$out.rsp -o $out $
+    -Wl,--out-implib,$obj/bootstrap.lib -ladvapi32 -lws2_32 -lole32 $
+    -luser32 -lversion -lwbemuuid -loleAut32 -lshell32 -lntdll -luuid $
+    -lstdc++fs -lstdc++ -s"
   description = Link    Exe $out
+  rspfile = $out.rsp
+  rspfile_content = $in
 build $bin/bootstrap.exe: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/error.obj $
@@ -113,7 +120,8 @@ build $bin/bootstrap.exe: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/socket.obj $obj/source_bee/version.obj $
     $obj/source_bee/module_version_win.obj $obj/source_bee/unicode_win.obj $
     $obj/source_bee/unlink_win.obj $obj/source_bee/subprocess_win.obj $
-    $obj/source_bee/simplethread_win.obj $obj/source_bee/file_handle.obj $
+    $obj/source_bee/setname.obj $obj/source_bee/simplethread_win.obj $
+    $obj/source_bee/spinlock.obj $obj/source_bee/file_handle.obj $
     $obj/source_bee/file_handle_win.obj $obj/source_bee/path_helper.obj $
     $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
     $obj/source_bee/lua_platform.obj $obj/source_bee/lua_serialization.obj $

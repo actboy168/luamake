@@ -32,7 +32,8 @@ local gcc = {
         ["c++20"] = "-std=c++20",
         ["c++23"] = "-std=c++23",
         ["c++2a"] = "-std=c++2a",
-        ["c++latest"] = "-std=c++2a",
+        ["c++2b"] = "-std=c++2b",
+        ["c++latest"] = "-std=c++2b",
     },
     c = {
         [""] = "",

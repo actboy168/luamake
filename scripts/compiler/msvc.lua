@@ -34,7 +34,8 @@ local cl = {
         ["c++17"] = "/std:c++17",
         ["c++20"] = "/std:c++20",
         ["c++23"] = "/std:c++23",
-        ["c++2a"] = "/std:c++latest",
+        ["c++2a"] = "/std:c++20",
+        ["c++2b"] = "/std:c++latest",
         ["c++latest"] = "/std:c++latest",
     },
     c = {

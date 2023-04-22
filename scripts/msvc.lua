@@ -50,6 +50,10 @@ local function installpath()
         print("[vswhere]", result)
         os.exit(code)
     end
+    if result == '' then
+        print("[vswhere] VisualStudio not found", result)
+        os.exit(false)
+    end
     InstallDir = result
     return InstallDir
 end

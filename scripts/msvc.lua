@@ -35,7 +35,7 @@ local function installpath()
         vswhere,
         "-nologo",
         "-latest",
-        --"-prerelease",
+        "-prerelease",
         "-utf8",
         "-products", "*",
         "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",

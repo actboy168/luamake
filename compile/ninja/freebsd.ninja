@@ -34,6 +34,8 @@ build $obj/source_bee/endpoint.obj: cxx_source_bee_1 $
 build $obj/source_bee/socket.obj: cxx_source_bee_1 bee.lua/bee/net/socket.cpp
 build $obj/source_bee/version.obj: cxx_source_bee_1 $
     bee.lua/bee/platform/version.cpp
+build $obj/source_bee/process_select.obj: cxx_source_bee_1 $
+    bee.lua/bee/subprocess/process_select.cpp
 build $obj/source_bee/subprocess_posix.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/subprocess_posix.cpp
 build $obj/source_bee/setname.obj: cxx_source_bee_1 $
@@ -97,17 +99,15 @@ rule cxx_source_bootstrap
   depfile = $out.d
 build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/main.cpp
-build $obj/source_bootstrap/progdir.obj: cxx_source_bootstrap $
-    bee.lua/bootstrap/progdir.cpp
 rule link_bootstrap
   command = $cc $in -o $out -Wl,-E -lm -linotify -L/usr/local/lib -pthread $
     -Wl,--push-state,-Bstatic -lstdc++ -Wl,--pop-state -Wl,-S,-x
   description = Link    Exe $out
 build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
-    $obj/source_bootstrap/progdir.obj $obj/source_bee/lua-seri.obj $
-    $obj/source_bee/format.obj $obj/source_bee/error.obj $
-    $obj/source_bee/filewatch_bsd.obj $obj/source_bee/endpoint.obj $
-    $obj/source_bee/socket.obj $obj/source_bee/version.obj $
+    $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
+    $obj/source_bee/error.obj $obj/source_bee/filewatch_bsd.obj $
+    $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
+    $obj/source_bee/version.obj $obj/source_bee/process_select.obj $
     $obj/source_bee/subprocess_posix.obj $obj/source_bee/setname.obj $
     $obj/source_bee/simplethread_posix.obj $obj/source_bee/spinlock.obj $
     $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_bsd.obj $

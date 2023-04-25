@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [11, 12]
+        version: [11, 12, 13]
     runs-on: macos-${{ matrix.version }}
     steps:
     - uses: actions/checkout@v3

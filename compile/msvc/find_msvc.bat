@@ -9,7 +9,7 @@ SET ProgramFiles=%ProgramFiles(x86)%
 SET ARCH=x64
 :END
 
-FOR /f "usebackq tokens=*" %%i in (`"%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+FOR /f "usebackq tokens=*" %%i in (`"%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
   SET InstallDir=%%i
 )
 CALL compile\msvc\find_winsdk.bat

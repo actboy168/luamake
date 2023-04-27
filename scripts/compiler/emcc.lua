@@ -1,10 +1,5 @@
 local emcc = require "compiler.gcc"
 
-function emcc.update_ldflags(ldflags, _)
-    ldflags[#ldflags+1] = "-s"
-    ldflags[#ldflags+1] = "WASM=1"
-end
-
 function emcc.rule_dll(w, name, ldflags)
     w:rule("link_"..name, ([[$cc $in -o $out -s SIDE_MODULE=1 %s]])
         :format(ldflags),

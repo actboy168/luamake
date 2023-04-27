@@ -11,7 +11,6 @@ end
 local function update_target(flags, attribute)
     local target = attribute.target
     if not target then
-        assert(globals.hostos ~= "windows")
         local arch = attribute.arch
         local vendor = attribute.vendor
         local sys = attribute.sys
@@ -38,16 +37,17 @@ local function update_target(flags, attribute)
                 return
             end
         end
-        if globals.hostos == "macos" then
+        if globals.os == "macos" then
             arch = arch or shell "uname -m"
             vendor = vendor or "apple"
             sys = sys or "darwin"
-        else
+            target = ("%s-%s-%s"):format(arch, vendor, sys)
+        elseif globals.os == "linux" then
             arch = arch or shell "uname -m"
             vendor = vendor or "pc"
             sys = sys or "linux-gnu"
+            target = ("%s-%s-%s"):format(arch, vendor, sys)
         end
-        target = ("%s-%s-%s"):format(arch, vendor, sys)
     end
     attribute.__target = target
 end

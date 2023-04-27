@@ -34,7 +34,7 @@ globals.os = globals.os or (function ()
     return globals.hostos
 end)()
 globals.arch = globals.arch or (function ()
-    if globals.hostos == "windows" then
+    if globals.os == "windows" then
         if string.packsize "T" == 8 then
             return "x86_64"
         else

@@ -1,4 +1,7 @@
-local emcc = require "compiler.gcc"
+local emcc = require "compiler.clang"
+
+function emcc.update_ldflags()
+end
 
 function emcc.rule_dll(w, name, ldflags)
     w:rule("link_"..name, ([[$cc $in -o $out -s SIDE_MODULE=1 %s]])

@@ -47,6 +47,11 @@ local function update_target(flags, attribute)
             vendor = vendor or "pc"
             sys = sys or "linux-gnu"
             target = ("%s-%s-%s"):format(arch, vendor, sys)
+        elseif globals.os == "emscripten" then
+            arch = arch or "wasm32"
+            vendor = vendor or "unknown"
+            sys = sys or "emscripten"
+            target = ("%s-%s-%s"):format(arch, vendor, sys)
         end
     end
     attribute.__target = target

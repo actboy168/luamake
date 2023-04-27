@@ -29,7 +29,7 @@ globals.compiler = globals.compiler or (function ()
 end)()
 globals.os = globals.os or (function ()
     if globals.compiler == "emcc" then
-        return "browser"
+        return "emscripten"
     end
     return globals.hostos
 end)()

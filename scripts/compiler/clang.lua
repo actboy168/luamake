@@ -126,17 +126,35 @@ function clang.update_ldflags(ldflags, attribute)
 end
 
 function clang.rule_dll(w, name, ldflags)
-    w:rule("link_"..name, ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
-        {
-            description = "Link    Dll $out"
-        })
+    if globals.hostshell == "cmd" then
+        w:rule("link_"..name, ([[$cc --shared @$out.rsp -o $out %s]]):format(ldflags),
+            {
+                description = "Link    Dll $out",
+                rspfile = "$out.rsp",
+                rspfile_content = "$in",
+            })
+    else
+        w:rule("link_"..name, ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
+            {
+                description = "Link    Dll $out"
+            })
+    end
 end
 
 function clang.rule_exe(w, name, ldflags)
-    w:rule("link_"..name, ([[$cc $in -o $out %s]]):format(ldflags),
-        {
-            description = "Link    Exe $out"
-        })
+    if globals.hostshell == "cmd" then
+        w:rule("link_"..name, ([[$cc @$out.rsp -o $out %s]]):format(ldflags),
+            {
+                description = "Link    Exe $out",
+                rspfile = "$out.rsp",
+                rspfile_content = "$in",
+            })
+    else
+        w:rule("link_"..name, ([[$cc $in -o $out %s]]):format(ldflags),
+            {
+                description = "Link    Exe $out"
+            })
+    end
 end
 
 return clang

@@ -201,7 +201,7 @@ local function reslove_table(root, t, a)
     if a[globals.compiler] then
         merge_table(root, t, a[globals.compiler])
     end
-    if a.mingw and globals.os == "windows" and globals.compiler == "gcc" then
+    if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
         merge_table(root, t, a.mingw)
     end
 end
@@ -977,6 +977,9 @@ function m.generate()
     ninja:variable("bin", fmtpath(globals.bindir))
     ninja:variable("obj", fmtpath(globals.objdir))
 
+    if globals.os == "android" and globals.hostos ~= "android" then
+        require "env.init_ndk"
+    end
 
     if globals.compiler == "msvc" then
         if not globals.prebuilt then
@@ -994,6 +997,7 @@ function m.generate()
             compiler = "cmd /c "..compiler
         end
         ninja:variable("cc", compiler)
+        ninja:variable("ar", globals.ar or "ar")
     end
 
     if globals.prebuilt then

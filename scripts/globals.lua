@@ -19,20 +19,24 @@ globals.hostshell = globals.hostshell or (function ()
     end
     return "sh"
 end)()
+globals.os = globals.os or globals.hostos
 globals.compiler = globals.compiler or (function ()
-    if globals.hostshell == "cmd" then
-        return "msvc"
-    elseif globals.hostos == "linux" or globals.hostos == "windows" then
+    if globals.os == "windows" then
+        if globals.hostshell == "cmd" then
+            return "msvc"
+        else
+            return "gcc"
+        end
+    end
+    if globals.os == "linux" then
         return "gcc"
+    end
+    if globals.os == "emscripten" then
+        return "emcc"
     end
     return "clang"
 end)()
-globals.os = globals.os or (function ()
-    if globals.compiler == "emcc" then
-        return "emscripten"
-    end
-    return globals.hostos
-end)()
+
 globals.arch = globals.arch or (function ()
     if globals.os == "windows" then
         if string.packsize "T" == 8 then

@@ -3,6 +3,7 @@ builddir = build/android
 bin = $builddir/bin
 obj = $builddir/obj
 cc = clang
+ar = ar
 luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -Werror $
@@ -37,6 +38,8 @@ build $obj/source_bee/process_select.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/process_select.cpp
 build $obj/source_bee/subprocess_posix.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/subprocess_posix.cpp
+build $obj/source_bee/atomic_semaphore.obj: cxx_source_bee_1 $
+    bee.lua/bee/thread/atomic_semaphore.cpp
 build $obj/source_bee/setname.obj: cxx_source_bee_1 $
     bee.lua/bee/thread/setname.cpp
 build $obj/source_bee/simplethread_posix.obj: cxx_source_bee_1 $
@@ -106,7 +109,8 @@ build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/error.obj $obj/source_bee/filewatch_linux.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
     $obj/source_bee/version.obj $obj/source_bee/process_select.obj $
-    $obj/source_bee/subprocess_posix.obj $obj/source_bee/setname.obj $
+    $obj/source_bee/subprocess_posix.obj $
+    $obj/source_bee/atomic_semaphore.obj $obj/source_bee/setname.obj $
     $obj/source_bee/simplethread_posix.obj $obj/source_bee/spinlock.obj $
     $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_linux.obj $
     $obj/source_bee/file_handle_posix.obj $obj/source_bee/path_helper.obj $

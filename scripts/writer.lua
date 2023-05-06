@@ -671,7 +671,11 @@ function GEN.phony(attribute, name)
 
     if name then
         if #output == 0 then
-            ninja:phony(name, input)
+            if #input == 0 then
+                log.fatal("`%s`: no input.", name)
+            else
+                ninja:phony(name, input)
+            end
         else
             ninja:phony(name, output)
             for _, out in ipairs(output) do

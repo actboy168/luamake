@@ -1,7 +1,7 @@
 local m = {}
 
 local traceback; do
-    local procdir = "@"..package.procdir
+    local procdir = "@"..package.procdir.."/scripts"
     local function in_procdir(path)
         if path:sub(1, #procdir) == procdir then
             return true

@@ -92,7 +92,7 @@ build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
 rule c_source_lua_1
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /DMAKE_LIB $
-    /DLUA_BUILD_AS_DLL /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4267 
+    /DLUA_BUILD_AS_DLL /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4267 /wd4334 
   description = Compile C   $out
   deps = msvc
 build $obj/source_lua/linit.obj: c_source_lua_1 bee.lua/3rd/lua/linit.c

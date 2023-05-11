@@ -904,7 +904,7 @@ function GEN.msvc_copydll(attribute, name)
     init_single(attribute, "arch")
     init_single(attribute, "type")
 
-    local msvc = require "msvc_util"
+    local msvc = require "env.msvc"
     local outputdir = attribute.output[#attribute.output]
     local archalias = msvc.archAlias(attribute.arch)
 
@@ -1017,12 +1017,12 @@ function m.generate()
     ninja:variable("obj", fmtpath(globals.objdir))
 
     if globals.os == "android" and globals.hostos ~= "android" then
-        require "env.init_ndk"
+        require "env.ndk"
     end
 
     if globals.compiler == "msvc" then
         if not globals.prebuilt then
-            local msvc = require "msvc_util"
+            local msvc = require "env.msvc"
             msvc.createEnvConfig(globals.arch, arguments.what == "rebuild")
             ninja:variable("msvc_deps_prefix", globals.cc == "clang-cl"
                 and "Note: including file:"

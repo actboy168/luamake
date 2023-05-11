@@ -4,7 +4,7 @@ local globals = require "globals"
 action.init()
 
 if globals.compiler == "msvc" then
-    local msvc = require "msvc_util"
+    local msvc = require "env.msvc"
     if msvc.hasEnvConfig() then
         action.clean()
         msvc.cleanEnvConfig()

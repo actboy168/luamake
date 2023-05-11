@@ -10,7 +10,7 @@ local function execute(option)
     option.stderr = "stdout"
     option.searchPath = true
     if globals.compiler == "msvc" then
-        local msvc = require "msvc_util"
+        local msvc = require "env.msvc"
         option.env = msvc.getEnv()
         option.env.VS_UNICODE_OUTPUT = false
         option.env.TMP = fs.absolute(globals.builddir):string()

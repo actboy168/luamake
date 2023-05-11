@@ -1,4 +1,4 @@
-local msvc = require "msvc"
+local find_msvc = require "env.find_msvc"
 local fs = require "bee.filesystem"
 local fsutil = require "fsutil"
 local globals = require "globals"
@@ -66,14 +66,14 @@ function m.createEnvConfig(arch, rebuild)
             return
         end
     end
-    local winsdk = msvc.findwinsdk()
-    env = msvc.environment(winsdk, ArchAlias[arch])
-    prefix = msvc.prefix(env)
+    local winsdk = find_msvc.findwinsdk()
+    env = find_msvc.environment(winsdk, ArchAlias[arch])
+    prefix = find_msvc.prefix(env)
 
     local s = {}
     s[#s+1] = "return {"
     s[#s+1] = ("arch=%q,"):format(arch)
-    s[#s+1] = ("toolspath=%q,"):format(msvc.toolspath())
+    s[#s+1] = ("toolspath=%q,"):format(find_msvc.toolspath())
     s[#s+1] = ("console_cp=%q,"):format(console_cp)
     if winsdk then
         s[#s+1] = ("winsdk=%q,"):format(winsdk)
@@ -103,8 +103,8 @@ function m.archAlias(arch)
     return ArchAlias[arch]
 end
 
-m.binpath = msvc.binpath
-m.vcrtpath = msvc.vcrtpath
-m.ucrtpath = msvc.ucrtpath
+m.binpath = find_msvc.binpath
+m.vcrtpath = find_msvc.vcrtpath
+m.ucrtpath = find_msvc.ucrtpath
 
 return m

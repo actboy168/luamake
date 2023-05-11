@@ -30,7 +30,7 @@ local function init_rule(ninja)
     end
     inited_rule = true
     if globals.compiler == "msvc" then
-        local msvc = require "msvc_util"
+        local msvc = require "env.msvc"
         ninja:rule("luadeps", ([[lib /nologo /machine:%s /def:$in /out:$out]]):format(msvc.archAlias(globals.arch)),
             {
                 description = "Lua import lib $out"

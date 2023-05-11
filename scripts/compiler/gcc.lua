@@ -22,7 +22,8 @@ local gcc = {
         off   = "-w",
         on    = "-Wall",
         all   = "-Wall -Wextra",
-        error = "-Werror",
+        error = "-Wall -Werror",
+        strict = "-Wall -Wextra -Werror",
     },
     cxx = {
         [""] = "",

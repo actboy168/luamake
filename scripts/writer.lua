@@ -317,26 +317,6 @@ local function reslove_attributes_nolink(g, loc)
     return r
 end
 
-local function update_warnings(flags, warnings)
-    if not warnings then
-        flags[#flags+1] = cc.warnings["on"]
-        return
-    end
-    local error = nil
-    local level = "on"
-    for _, v in ipairs(warnings) do
-        if v == "error" then
-            error = true
-        elseif cc.warnings[v] then
-            level = v
-        end
-    end
-    flags[#flags+1] = cc.warnings[level]
-    if error then
-        flags[#flags+1] = cc.warnings.error
-    end
-end
-
 local function array_remove(t, k)
     for pos, v in ipairs(t) do
         if v == k then
@@ -353,7 +333,7 @@ local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
 
     tbl_append(flags, cc.flags)
     flags[#flags+1] = cc.optimize[optimize]
-    update_warnings(flags, attribute.warnings)
+    flags[#flags+1] = cc.warnings[attribute.warnings]
     if globals.os ~= "windows" then
         local visibility = init_single(attribute, "visibility", "hidden")
         if visibility ~= "default" then
@@ -487,6 +467,7 @@ local function generate(rule, attribute, name)
     init_single(attribute, "luaversion")
     init_single(attribute, "basename")
     init_single(attribute, "rtti", "on")
+    init_single(attribute, "warnings", "on")
 
     local default_enable_lto = attribute.mode == "release" and globals.compiler == "msvc"
     init_single(attribute, "lto", default_enable_lto and "on" or "off")

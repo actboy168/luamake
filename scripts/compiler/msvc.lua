@@ -25,7 +25,8 @@ local cl = {
         off   = "/W0",
         on    = "/W3",
         all   = "/W4",
-        error = "/WX",
+        error = "/W3 /WX",
+        strict = "/W4 /WX",
     },
     cxx = {
         [""] = "",

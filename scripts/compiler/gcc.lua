@@ -82,10 +82,7 @@ function gcc.update_flags(flags, _, cxxflags, attribute, _)
 end
 
 function gcc.update_ldflags(ldflags, attribute)
-    if globals.os == "android" then
-        --TODO android不支持static crt
-        ldflags[#ldflags+1] = "-lstdc++"
-    elseif attribute.crt == "dynamic" then
+    if attribute.crt == "dynamic" then
         ldflags[#ldflags+1] = "-lstdc++"
     else
         ldflags[#ldflags+1] = "-Wl,-Bstatic"

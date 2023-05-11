@@ -193,6 +193,33 @@ local function merge_table(root, t, a)
     return t
 end
 
+local function merge_table_nolink(root, t, a)
+    for k, v in pairs(a) do
+        if type(k) ~= "string" then
+            goto continue
+        end
+        if ATTRIBUTE[k] == PlatformAttribute then
+            goto continue
+        end
+        if LINK_ATTRIBUTE[k] then
+            goto continue
+        end
+        t[k] = t[k] or {}
+        if ATTRIBUTE[k] == PlatformPath then
+            push_path(t[k], v, root)
+        elseif ATTRIBUTE[k] == PlatformArgs then
+            push_args(t[k], v, root)
+        else
+            push_string(t[k], v)
+        end
+        if #t[k] == 0 then
+            t[k] = nil
+        end
+        ::continue::
+    end
+    return t
+end
+
 local function reslove_table(root, t, a)
     merge_table(root, t, a)
     if a[globals.os] then
@@ -203,6 +230,19 @@ local function reslove_table(root, t, a)
     end
     if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
         merge_table(root, t, a.mingw)
+    end
+end
+
+local function reslove_table_nolink(root, t, a)
+    merge_table_nolink(root, t, a)
+    if a[globals.os] then
+        merge_table_nolink(root, t, a[globals.os])
+    end
+    if a[globals.compiler] then
+        merge_table_nolink(root, t, a[globals.compiler])
+    end
+    if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
+        merge_table_nolink(root, t, a.mingw)
     end
 end
 
@@ -255,6 +295,20 @@ local function reslove_attributes(g, loc)
 
     local r = {}
     reslove_table(g_rootdir, r, g)
+    reslove_table(l_rootdir, r, loc)
+    --TODO: remove it
+    push_args(r, loc, l_rootdir)
+    r.workdir = g.workdir
+    r.rootdir = l_rootdir
+    return r
+end
+
+local function reslove_attributes_nolink(g, loc)
+    local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
+    local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
+
+    local r = {}
+    reslove_table_nolink(g_rootdir, r, g)
     reslove_table(l_rootdir, r, loc)
     --TODO: remove it
     push_args(r, loc, l_rootdir)
@@ -1019,10 +1073,9 @@ end
 local api = {}
 
 local compile_target <const> = {
-    "source_set",
+    "executable",
     "shared_library",
     "static_library",
-    "executable",
 }
 for _, rule in ipairs(compile_target) do
     api[rule] = function (global_attribute, name)
@@ -1038,7 +1091,6 @@ local lua_compile_target <const> = {
     lua_exe = "executable",
     lua_dll = "shared_library",
     lua_lib = "static_library",
-    lua_src = "source_set",
 }
 for rule, origin_rule in pairs(lua_compile_target) do
     api[rule] = function (global_attribute, name)
@@ -1048,6 +1100,23 @@ for rule, origin_rule in pairs(lua_compile_target) do
             local attribute = reslove_attributes(global_attribute, local_attribute)
             generate(origin_rule, attribute, name)
         end
+    end
+end
+
+function api.source_set(global_attribute, name)
+    log.assert(type(name) == "string", "Name is not a string.")
+    return function (local_attribute)
+        local attribute = reslove_attributes_nolink(global_attribute, local_attribute)
+        generate('source_set', attribute, name)
+    end
+end
+
+function api.lua_src(global_attribute, name)
+    log.assert(type(name) == "string", "Name is not a string.")
+    return function (local_attribute)
+        local_attribute.luaversion = local_attribute.luaversion or "lua54"
+        local attribute = reslove_attributes_nolink(global_attribute, local_attribute)
+        generate('source_set', attribute, name)
     end
 end
 

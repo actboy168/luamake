@@ -14,16 +14,6 @@ local function copy_dir(from, to)
     end
 end
 
-local function init_single(attribute, attr_name, default)
-    local attr = attribute[attr_name]
-    if type(attr) == "table" then
-        attribute[attr_name] = attr[#attr]
-    elseif attr == nil then
-        attribute[attr_name] = default
-    end
-    return attribute[attr_name]
-end
-
 local function init_rule(ninja)
     if inited_rule then
         return
@@ -72,8 +62,7 @@ local function windows_deps(name, attribute, luaversion)
     local ldflags = attribute.ldflags or {}
     local deps = attribute.deps or {}
     if globals.compiler == "msvc" then
-        local export_luaopen = init_single(attribute, "export_luaopen", "on")
-        if export_luaopen ~= "off" then
+        if attribute.export_luaopen ~= "off" then
             ldflags[#ldflags+1] = "/EXPORT:luaopen_"..name
         end
     end

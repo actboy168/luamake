@@ -39,7 +39,20 @@ local function init_single(attribute, attr_name, default)
     elseif attr == nil then
         attribute[attr_name] = default
     end
-    return attribute[attr_name]
+end
+
+local function init_enum(attribute, attr_name, default, allow)
+    init_single(attribute, attr_name, default)
+    local v = attribute[attr_name]
+    if allow[v] == nil then
+        local str = {}
+        for k in pairs(allow) do
+            str[#str+1] = "  - "..k
+        end
+        table.sort(str)
+        table.insert(str, 1, ("The value `%s` of attribute `%s` is invalid. Allowed values:"):format(v, attr_name))
+        log.fatal(table.concat(str, "\n"))
+    end
 end
 
 local function get_blob(rootdir, lst)
@@ -328,16 +341,14 @@ local function array_remove(t, k)
 end
 
 local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
-    local optimize = init_single(attribute, "optimize", (attribute.mode == "release" and "speed" or "off"))
     local defines = attribute.defines or {}
 
     tbl_append(flags, cc.flags)
-    flags[#flags+1] = cc.optimize[optimize]
+    flags[#flags+1] = cc.optimize[attribute.optimize]
     flags[#flags+1] = cc.warnings[attribute.warnings]
     if globals.os ~= "windows" then
-        local visibility = init_single(attribute, "visibility", "hidden")
-        if visibility ~= "default" then
-            flags[#flags+1] = ("-fvisibility=%s"):format(visibility or "hidden")
+        if attribute.visibility ~= "default" then
+            flags[#flags+1] = ("-fvisibility=%s"):format(attribute.visibility)
         end
         if rule == "shared_library" then
             flags[#flags+1] = "-fPIC"
@@ -423,6 +434,12 @@ local function update_ldflags(ldflags, attribute, name)
     cc.update_ldflags(ldflags, attribute, name)
 end
 
+local enum_onoff <const> = { on = true, off = true }
+local enum_mode <const> = { release = true, debug = true }
+local enum_crt <const> = { dynamic = true, static = true }
+local enum_visibility <const> = { default = true, hidden = true }
+local enum_luaversion <const> = { [''] = true, lua53 = true, lua54 = true }
+
 local function generate(rule, attribute, name)
     reslove_configs(attribute, attribute.configs)
     local target = loaded_target[name]
@@ -450,29 +467,33 @@ local function generate(rule, attribute, name)
         end
     end
 
-    local bindir = init_single(attribute, "bindir", globals.bindir)
+    init_single(attribute, "bindir", globals.bindir)
+    local bindir = attribute.bindir
     local sources = get_blob(attribute.rootdir, attribute.sources)
     local objargs = attribute.objdeps and { implicit_inputs = attribute.objdeps } or nil
     local implicit_inputs = {}
 
-    init_single(attribute, "mode", "release")
-    init_single(attribute, "crt", "dynamic")
-    init_single(attribute, "c", "")
-    init_single(attribute, "cxx", "")
-    init_single(attribute, "visibility")
+    init_enum(attribute, "mode", "release", enum_mode)
+    init_enum(attribute, "crt", "dynamic", enum_crt)
+    init_enum(attribute, "c", "", cc.c)
+    init_enum(attribute, "cxx", "", cc.cxx)
+    init_enum(attribute, "warnings", "on", cc.warnings)
+    init_enum(attribute, "rtti", "on", enum_onoff)
+    init_enum(attribute, "visibility", "hidden", enum_visibility)
+    init_enum(attribute, "luaversion", "", enum_luaversion)
+    init_enum(attribute, "optimize", (attribute.mode == "release" and "speed" or "off"), cc.optimize)
+
     init_single(attribute, "target")
     init_single(attribute, "arch")
     init_single(attribute, "vendor")
     init_single(attribute, "sys")
-    init_single(attribute, "luaversion")
     init_single(attribute, "basename")
-    init_single(attribute, "rtti", "on")
-    init_single(attribute, "warnings", "on")
 
     local default_enable_lto = attribute.mode == "release" and globals.compiler == "msvc"
-    init_single(attribute, "lto", default_enable_lto and "on" or "off")
+    init_enum(attribute, "lto", default_enable_lto and "on" or "off", enum_onoff)
 
-    if attribute.luaversion then
+    if attribute.luaversion ~= "" then
+        init_enum(attribute, "export_luaopen", "on", enum_onoff)
         require "lua_support" (ninja, loaded_target, rule, name, attribute)
     end
 
@@ -735,6 +756,9 @@ function GEN.runlua(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
+    init_single(attribute, "script")
+    local script = attribute.script
+    log.assert(script, "`%s`: need attribute `script`.", name)
 
     local input
     if attribute.inputs then
@@ -744,8 +768,6 @@ function GEN.runlua(attribute, name)
     end
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    local script = init_single(attribute, "script")
-    log.assert(script, "`%s`: need attribute `script`.", name)
     implicit_inputs[#implicit_inputs+1] = script
 
     if attribute.args then
@@ -788,6 +810,7 @@ function GEN.build(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
+    init_single(attribute, "rule")
 
     local input
     if attribute.inputs then
@@ -797,7 +820,7 @@ function GEN.build(attribute, name)
     end
     local output = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    local rule = init_single(attribute, "rule")
+    local rule = attribute.rule
 
     local outname
     if #output == 0 then
@@ -893,6 +916,8 @@ function GEN.copy(attribute, name)
     end
 end
 
+local enum_copy_type <const> = { vcrt = true, ucrt = true, asan = true }
+
 function GEN.msvc_copydll(attribute, name)
     if globals.compiler ~= "msvc" then
         return
@@ -900,9 +925,9 @@ function GEN.msvc_copydll(attribute, name)
     local input = {}
     local output = {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    init_single(attribute, "mode", "release")
+    init_enum(attribute, "mode", "release", enum_mode)
+    init_enum(attribute, "type", nil, enum_copy_type)
     init_single(attribute, "arch")
-    init_single(attribute, "type")
 
     local msvc = require "env.msvc"
     local outputdir = attribute.output[#attribute.output]
@@ -945,8 +970,6 @@ function GEN.msvc_copydll(attribute, name)
         )
         input[#input+1] = fsutil.join(inputdir, filename)
         output[#output+1] = fsutil.join(outputdir, filename)
-    else
-        log.fatal("`msvc_copydll` unknown type: %s", attribute.type)
     end
     generate_copy(implicit_inputs, input, output)
 
@@ -1088,7 +1111,7 @@ function api.source_set(global_attribute, name)
     log.assert(type(name) == "string", "Name is not a string.")
     return function (local_attribute)
         local attribute = reslove_attributes_nolink(global_attribute, local_attribute)
-        generate('source_set', attribute, name)
+        generate("source_set", attribute, name)
     end
 end
 
@@ -1097,7 +1120,7 @@ function api.lua_src(global_attribute, name)
     return function (local_attribute)
         local_attribute.luaversion = local_attribute.luaversion or "lua54"
         local attribute = reslove_attributes_nolink(global_attribute, local_attribute)
-        generate('source_set', attribute, name)
+        generate("source_set", attribute, name)
     end
 end
 

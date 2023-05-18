@@ -11,10 +11,10 @@ function emcc.update_flags(flags, _, cxxflags, attribute)
     if attribute.rtti == "off" then
         cxxflags[#cxxflags+1] = "-fno-rtti"
     end
-    if attribute.mode == "release" then
-        flags[#flags+1] = "-g0"
-    else
+    if attribute.mode == "debug" then
         flags[#flags+1] = "-g3"
+    else
+        flags[#flags+1] = "-g0"
     end
 end
 
@@ -26,10 +26,10 @@ function emcc.update_ldflags(ldflags, attribute)
             ldflags[#ldflags+1] = "-flto"
         end
     end
-    if attribute.mode == "release" then
-        ldflags[#ldflags+1] = "-g0"
-    else
+    if attribute.mode == "debug" then
         ldflags[#ldflags+1] = "-g3"
+    else
+        ldflags[#ldflags+1] = "-g0"
     end
 end
 

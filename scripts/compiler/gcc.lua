@@ -90,7 +90,7 @@ function gcc.update_ldflags(ldflags, attribute)
         ldflags[#ldflags+1] = "-lstdc++"
         ldflags[#ldflags+1] = "-Wl,-Bdynamic"
     end
-    if attribute.mode == "release" then
+    if attribute.mode ~= "debug" then
         ldflags[#ldflags+1] = "-s"
     end
     if attribute.lto ~= "off" then

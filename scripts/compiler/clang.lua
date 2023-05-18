@@ -102,7 +102,7 @@ function clang.update_ldflags(ldflags, attribute)
         ldflags[#ldflags+1] = "-lstdc++"
         ldflags[#ldflags+1] = "-Wl,--pop-state"
     end
-    if attribute.mode == "release" then
+    if attribute.mode ~= "debug" then
         ldflags[#ldflags+1] = "-Wl,-S,-x"
     end
     if attribute.lto ~= "off" then

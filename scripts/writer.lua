@@ -372,7 +372,7 @@ local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
         end
     end
 
-    if attribute.mode == "release" then
+    if attribute.mode ~= "debug" then
         defines[#defines+1] = "NDEBUG"
     end
 
@@ -481,7 +481,7 @@ local function generate(rule, attribute, name)
     init_enum(attribute, "rtti", "on", enum_onoff)
     init_enum(attribute, "visibility", "hidden", enum_visibility)
     init_enum(attribute, "luaversion", "", enum_luaversion)
-    init_enum(attribute, "optimize", (attribute.mode == "release" and "speed" or "off"), cc.optimize)
+    init_enum(attribute, "optimize", (attribute.mode == "debug" and "off" or "speed"), cc.optimize)
 
     init_single(attribute, "target")
     init_single(attribute, "arch")
@@ -489,7 +489,7 @@ local function generate(rule, attribute, name)
     init_single(attribute, "sys")
     init_single(attribute, "basename")
 
-    local default_enable_lto = attribute.mode == "release" and globals.compiler == "msvc"
+    local default_enable_lto = attribute.mode ~= "debug" and globals.compiler == "msvc"
     init_enum(attribute, "lto", default_enable_lto and "on" or "off", enum_onoff)
 
     if attribute.luaversion ~= "" then
@@ -934,7 +934,7 @@ function GEN.msvc_copydll(attribute, name)
     local archalias = msvc.archAlias(attribute.arch)
 
     if attribute.type == "vcrt" then
-        local ignore = attribute.mode == "release" and "vccorlib140.dll" or "vccorlib140d.dll"
+        local ignore = attribute.mode == "debug" and "vccorlib140d.dll" or "vccorlib140.dll"
         for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.mode)) do
             local filename = dll:filename()
             if filename:string():lower() ~= ignore then
@@ -944,13 +944,7 @@ function GEN.msvc_copydll(attribute, name)
         end
     elseif attribute.type == "ucrt" then
         local redist, bin = msvc.ucrtpath(archalias, attribute.mode)
-        if attribute.mode == "release" then
-            for dll in fs.pairs(redist) do
-                local filename = dll:filename()
-                input[#input+1] = dll
-                output[#output+1] = outputdir / filename
-            end
-        else
+        if attribute.mode == "debug" then
             for dll in fs.pairs(redist) do
                 local filename = dll:filename()
                 if filename:string():lower() == "ucrtbase.dll" then
@@ -961,11 +955,17 @@ function GEN.msvc_copydll(attribute, name)
                     output[#output+1] = outputdir / filename
                 end
             end
+        else
+            for dll in fs.pairs(redist) do
+                local filename = dll:filename()
+                input[#input+1] = dll
+                output[#output+1] = outputdir / filename
+            end
         end
     elseif attribute.type == "asan" then
         local inputdir = msvc.binpath(archalias)
         local filename = ("clang_rt.asan_%sdynamic-%s.dll"):format(
-            attribute.mode == "release" and "" or "dbg_",
+            attribute.mode == "debug" and "dbg_" or "",
             attribute.arch == "x86_64" and "x86_64" or "i386"
         )
         input[#input+1] = fsutil.join(inputdir, filename)

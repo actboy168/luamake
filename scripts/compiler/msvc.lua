@@ -117,6 +117,13 @@ function cl.update_ldflags(ldflags, attribute, name)
     end
 end
 
+function cl.rule_asm(w, name, _)
+    w:rule("asm_"..name, [[$ml /nologo /Fo $out /c $in]],
+        {
+            description = "Compile ASM $out",
+        })
+end
+
 function cl.rule_c(w, name, flags, cflags)
     w:rule("c_"..name, ([[$cc /nologo /showIncludes -c $in /Fo$out %s %s]]):format(flags, cflags),
         {

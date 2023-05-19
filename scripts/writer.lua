@@ -24,6 +24,7 @@ local file_type <const> = {
     m = "c",
     rc = "rc",
     s = "asm",
+    asm = "asm",
     def = "raw",
     obj = "raw",
 }
@@ -531,9 +532,6 @@ local function generate(rule, attribute, name)
             cc.rule_rc(ninja, name)
             input[#input+1] = ninja:build_obj(objpath, source, objargs)
         elseif type == "asm" then
-            if globals.compiler == "msvc" then
-                error "TODO"
-            end
             cc.rule_asm(ninja, name, str_flags)
             input[#input+1] = ninja:build_obj(objpath, source, objargs)
         else
@@ -1053,6 +1051,7 @@ function m.generate()
             )
         end
         ninja:variable("cc", globals.cc or "cl")
+        ninja:variable("ml", globals.arch == "x86_64" and "ml64" or "ml")
     else
         local compiler = globals.cc or globals.compiler
         if globals.hostshell == "cmd" then

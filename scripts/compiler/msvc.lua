@@ -76,13 +76,23 @@ local cl = {
 }
 
 function cl.update_flags(flags, _, cxxflags, attribute, name)
+    if attribute.crt == "dynamic" then
+        if attribute.optimize == "off" then
+            flags[#flags+1] = "/MDd"
+        else
+            flags[#flags+1] = "/MD"
+        end
+    else
+        if attribute.optimize == "off" then
+            flags[#flags+1] = "/MTd"
+        else
+            flags[#flags+1] = "/MT"
+        end
+    end
     if attribute.mode == "debug" then
-        flags[#flags+1] = attribute.crt == "dynamic" and "/MDd" or "/MTd"
         flags[#flags+1] = "/FS"
         flags[#flags+1] = "/Zi"
         flags[#flags+1] = ("/Fd$obj/%s/"):format(name)
-    else
-        flags[#flags+1] = attribute.crt == "dynamic" and "/MD" or "/MT"
     end
     if globals.cc ~= "clang-cl" and attribute.lto ~= "off" then
         flags[#flags+1] = "/GL"

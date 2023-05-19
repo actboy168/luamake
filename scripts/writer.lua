@@ -934,8 +934,8 @@ function GEN.msvc_copydll(attribute, name)
     local archalias = msvc.archAlias(attribute.arch)
 
     if attribute.type == "vcrt" then
-        local ignore = attribute.mode == "debug" and "vccorlib140d.dll" or "vccorlib140.dll"
-        for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.mode)) do
+        local ignore = attribute.optimize == "off" and "vccorlib140d.dll" or "vccorlib140.dll"
+        for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.optimize)) do
             local filename = dll:filename()
             if filename:string():lower() ~= ignore then
                 input[#input+1] = dll
@@ -943,8 +943,8 @@ function GEN.msvc_copydll(attribute, name)
             end
         end
     elseif attribute.type == "ucrt" then
-        local redist, bin = msvc.ucrtpath(archalias, attribute.mode)
-        if attribute.mode == "debug" then
+        local redist, bin = msvc.ucrtpath(archalias, attribute.optimize)
+        if attribute.optimize == "off" then
             for dll in fs.pairs(redist) do
                 local filename = dll:filename()
                 if filename:string():lower() == "ucrtbase.dll" then
@@ -965,7 +965,7 @@ function GEN.msvc_copydll(attribute, name)
     elseif attribute.type == "asan" then
         local inputdir = msvc.binpath(archalias)
         local filename = ("clang_rt.asan_%sdynamic-%s.dll"):format(
-            attribute.mode == "debug" and "dbg_" or "",
+            attribute.optimize == "off" and "dbg_" or "",
             attribute.arch == "x86_64" and "x86_64" or "i386"
         )
         input[#input+1] = fsutil.join(inputdir, filename)

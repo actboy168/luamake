@@ -205,7 +205,7 @@ local function binpath(arch)
     return toolspath().."/bin/"..host.."/"..arch
 end
 
-local function vcrtpath(arch, mode)
+local function vcrtpath(arch, optimize)
     local RedistVersion = (function ()
         local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt"
         local r = readall(verfile)
@@ -217,13 +217,13 @@ local function vcrtpath(arch, mode)
         return r:match "#define%s+_MSVC_STL_VERSION%s+(%d+)"
     end)()
     local path = installpath().."/VC/Redist/MSVC/"..RedistVersion
-    if mode == "debug" then
+    if optimize == "off" then
         return path.."/debug_nonredist/"..arch.."/Microsoft.VC"..ToolsetVersion..".DebugCRT"
     end
     return path.."/"..arch.."/Microsoft.VC"..ToolsetVersion..".CRT"
 end
 
-local function ucrtpath(arch, mode)
+local function ucrtpath(arch, optimize)
     local UniversalCRTSdkDir
     vsdevcmd(findwinsdk(), arch, function (name, value)
         if name == "UniversalCRTSdkDir" then
@@ -252,7 +252,7 @@ local function ucrtpath(arch, mode)
     if not redist then
         return
     end
-    if mode == "debug" then
+    if optimize == "off" then
         if ver == 0 then
             --TODO 不一定合理，但至少比0好
             ver = 17134

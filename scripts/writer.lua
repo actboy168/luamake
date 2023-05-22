@@ -924,6 +924,7 @@ function GEN.msvc_copydll(attribute, name)
     local output = {}
     local implicit_inputs = getImplicitInputs(name, attribute)
     init_enum(attribute, "mode", "release", enum_mode)
+    init_enum(attribute, "optimize", (attribute.mode == "debug" and "off" or "speed"), cc.optimize)
     init_enum(attribute, "type", nil, enum_copy_type)
     init_single(attribute, "arch")
 

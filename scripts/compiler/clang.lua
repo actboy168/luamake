@@ -47,6 +47,11 @@ local function update_target(flags, attribute)
             vendor = vendor or "pc"
             sys = sys or "linux-gnu"
             target = ("%s-%s-%s"):format(arch, vendor, sys)
+        elseif globals.os == "android" then
+            arch = arch or "aarch64"
+            vendor = vendor or "linux"
+            sys = sys or "android33"
+            target = ("%s-%s-%s"):format(arch, vendor, sys)
         elseif globals.os == "emscripten" then
             arch = arch or "wasm32"
             vendor = vendor or "unknown"

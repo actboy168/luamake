@@ -3,26 +3,27 @@ builddir = build/msvc
 bin = $builddir/bin
 obj = $builddir/obj
 cc = cl
+ml = ml64
 luamake = luamake
 rule c_source_bee
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Itools/lua54 $
-    /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4244 
+    /permissive- /O2 /Zc:inline /W3 /MD /GL /Itools/lua54 $
+    /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4244 /std:c11
   description = Compile C   $out
   deps = msvc
 build $obj/source_bee/lua-seri.obj: c_source_bee $
     bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /D_WIN32_WINNT=0x0601 $
-    /DNDEBUG /std:c++17 /GR-
+    /permissive- /O2 /Zc:inline /W3 /MD /GL /D_WIN32_WINNT=0x0601 /DNDEBUG $
+    /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
 build $obj/source_bee/format.obj: cxx_source_bee bee.lua/3rd/fmt/format.cc
 rule cxx_source_bee_1
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Ibee.lua $
-    /D_WIN32_WINNT=0x0601 /DNDEBUG /std:c++17 /GR-
+    /permissive- /O2 /Zc:inline /W3 /MD /GL /Ibee.lua /D_WIN32_WINNT=0x0601 $
+    /DNDEBUG /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
 build $obj/source_bee/error.obj: cxx_source_bee_1 bee.lua/bee/error.cpp
@@ -59,7 +60,7 @@ build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
     bee.lua/bee/utility/path_helper.cpp
 rule cxx_source_bee_2
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Ibee.lua /Itools/lua54 $
+    /permissive- /O2 /Zc:inline /W3 /MD /GL /Ibee.lua /Itools/lua54 $
     /DBEE_STATIC /D_CRT_SECURE_NO_WARNINGS /D_WIN32_WINNT=0x0601 /DNDEBUG $
     /std:c++17 /GR-
   description = Compile C++ $out
@@ -84,22 +85,27 @@ build $obj/source_bee/lua_unicode.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_unicode.cpp
 rule c_source_lua
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /D_WIN32_WINNT=0x0601 $
-    /DNDEBUG 
+    /permissive- /O2 /Zc:inline /W3 /MD /GL /D_WIN32_WINNT=0x0601 /DNDEBUG $
+    /std:c11
   description = Compile C   $out
   deps = msvc
 build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
+rule asm_source_lua
+  command = $ml /nologo /Fo $out /c $in
+  description = Compile ASM $out
+build $obj/source_lua/fast_setjmp_x86_64.obj: asm_source_lua $
+    bee.lua/3rd/lua/fast_setjmp_x86_64.s
 rule c_source_lua_1
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /DMAKE_LIB $
-    /DLUA_BUILD_AS_DLL /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4267 /wd4334 
+    /permissive- /O2 /Zc:inline /W3 /MD /GL /DMAKE_LIB /DLUA_BUILD_AS_DLL $
+    /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4267 /wd4334 /std:c11
   description = Compile C   $out
   deps = msvc
 build $obj/source_lua/linit.obj: c_source_lua_1 bee.lua/3rd/lua/linit.c
 build $obj/source_lua/onelua.obj: c_source_lua_1 bee.lua/3rd/lua/onelua.c
 rule cxx_source_bootstrap
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /permissive- /O2 /Zc:inline /W3 /WX /MD /GL /Ibee.lua/3rd/lua /Ibee.lua $
+    /permissive- /O2 /Zc:inline /W3 /MD /GL /Ibee.lua/3rd/lua /Ibee.lua $
     /D_WIN32_WINNT=0x0601 /DNDEBUG /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
@@ -128,8 +134,8 @@ build $bin/bootstrap.exe: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
     $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $
     $obj/source_bee/lua_time.obj $obj/source_bee/lua_unicode.obj $
-    $obj/source_lua/utf8_crt.obj $obj/source_lua/linit.obj $
-    $obj/source_lua/onelua.obj
+    $obj/source_lua/utf8_crt.obj $obj/source_lua/fast_setjmp_x86_64.obj $
+    $obj/source_lua/linit.obj $obj/source_lua/onelua.obj
 rule copy
   command = powershell -NonInteractive -Command Copy-Item -Path '$in$input' $
     -Destination '$out' | Out-Null

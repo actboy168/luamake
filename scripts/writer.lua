@@ -317,6 +317,17 @@ local function reslove_attributes(g, loc)
     return r
 end
 
+local function reslove_attributes_local(g, loc)
+    local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
+    local r = {}
+    reslove_table(l_rootdir, r, loc)
+    --TODO: remove it
+    push_args(r, loc, l_rootdir)
+    r.workdir = g.workdir
+    r.rootdir = l_rootdir
+    return r
+end
+
 local function reslove_attributes_nolink(g, loc)
     local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
     local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
@@ -1147,7 +1158,7 @@ end
 function api.config(global_attribute, name)
     log.assert(type(name) == "string", "Name is not a string.")
     return function (local_attribute)
-        local attribute = reslove_attributes(global_attribute, local_attribute)
+        local attribute = reslove_attributes_local(global_attribute, local_attribute)
         generate_config(attribute, name)
     end
 end

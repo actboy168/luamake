@@ -1,6 +1,8 @@
 # luamake
 
-## Install
+## Install Instructions
+
+### 1. Clone repo and submodules
 
 ```bash
 git clone https://github.com/actboy168/luamake
@@ -8,15 +10,20 @@ cd luamake
 git submodule update --init
 ```
 
-- Windows (msvc)
+### 2. Install Ninja
+
+See: [Ninja Build System Pre Build Packages]((https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages))
+
+### 3. Run install script:
+
+#### Windows (msvc):
 ```
 compile/install.bat
 ```
 
-- Windows (mingw) / MacOS / Linux / Android / NetBSD / FreeBSD / OpenBSD
+#### Linux / MacOS / Android / NetBSD / FreeBSD / OpenBSD / Windows (mingw)
 
 ```
-Install ninja
 compile/install.sh
 ```
 

@@ -10,11 +10,7 @@ cd luamake
 git submodule update --init
 ```
 
-### 2. Install Ninja
-
-See: [Ninja Build System Pre Build Packages](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages)
-
-### 3. Run install script:
+### 2. Install:
 
 #### Windows (msvc):
 ```
@@ -22,6 +18,8 @@ compile/install.bat
 ```
 
 #### Linux / MacOS / Android / NetBSD / FreeBSD / OpenBSD / Windows (mingw)
+
+[Install Ninja](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages)
 
 ```
 compile/install.sh

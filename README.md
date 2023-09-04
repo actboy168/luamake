@@ -12,7 +12,7 @@ git submodule update --init
 
 ### 2. Install Ninja
 
-See: [Ninja Build System Pre Build Packages]((https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages))
+See: [Ninja Build System Pre Build Packages](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages)
 
 ### 3. Run install script:
 

@@ -1,63 +1,58 @@
 #!/usr/bin/env sh
 
-sh ./compile/build.sh
-
-if [ "$?" != "0" ]
+if ! sh ./compile/build.sh
 then
   exit 1
 fi
 
-DIR=$(cd `dirname $0`/..; pwd)
+DIR="$(cd "$(dirname "$0")"/.. || exit 1; pwd)"
 
-write_v1()
-{
-    grep -sq "luamake" $1 || echo -e "\nalias luamake=$DIR/luamake" >> $1
-}
-
-write_v2()
-{
-    grep -sq "luamake" $1 || echo -e "\nalias luamake $DIR/luamake" >> $1
-}
-
-write_v3()
-{
-    grep -sq "luamake" $1 || echo "\nalias luamake=$DIR/luamake" >> $1
+write_alias() {
+  if grep -sq "luamake" "$1"
+  then
+    echo "luamake alias already defined in $1"
+  else
+    printf '\nalias luamake="%s"\n' "$DIR/luamake" >> "$1"
+    echo "luamake alias added to $1. (You may need to restart your shell.)"
+  fi
 }
 
 include () {
-    [ -f "$1" ] && source "$1"
+    [ -f "$1" ] && . "$1"
 }
 
 case "$SHELL" in
   */zsh)
     include ~/.zshenv
     if [ -d "$ZDOTDIR" ]; then
-        write_v1 "$ZDOTDIR"/.zshrc
+        write_alias "$ZDOTDIR"/.zshrc
     else
-        write_v1 ~/.zshrc
+        write_alias ~/.zshrc
     fi
     ;;
   */ksh)
-    if [ "$(uname)" == "OpenBSD" ]; then
-        write_v1 ~/.profile
+    if [ "$(uname)" = "OpenBSD" ]; then
+        write_alias ~/.profile
     else
-        write_v1 ~/.kshrc
+        write_alias ~/.kshrc
     fi
     ;;
   */csh)
-    write_v2 ~/.cshrc
+    write_alias ~/.cshrc
     ;;
   */bash)
     if [ "$BASH_VERSION" != '' ]; then
-        write_v1 ~/.bashrc
-        if [ "$(uname)" == "Darwin" ]; then
-            write_v1 ~/.bash_profile
+        write_alias ~/.bashrc
+        if [ "$(uname)" = "Darwin" ]; then
+            write_alias ~/.bash_profile
         fi
     else
-        write_v3 ~/.bashrc
+        write_alias ~/.bashrc
     fi
     ;;
   *)
-    write_v1 ~/.profile
+    write_alias ~/.profile
     ;;
 esac
+
+echo "Done."

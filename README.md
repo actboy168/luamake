@@ -25,7 +25,7 @@ compile/install.bat
 compile/install.sh
 ```
 
-## Useful Build Commands
+### 3. Useful Build Commands
 
 compile
 ```

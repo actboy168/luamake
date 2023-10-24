@@ -67,6 +67,8 @@ build $obj/source_bee/lua_filewatch.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_filewatch.cpp
 build $obj/source_bee/lua_platform.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_platform.cpp
+build $obj/source_bee/lua_select.obj: cxx_source_bee_2 $
+    bee.lua/binding/lua_select.cpp
 build $obj/source_bee/lua_serialization.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_serialization.cpp
 build $obj/source_bee/lua_socket.obj: cxx_source_bee_2 $
@@ -116,11 +118,11 @@ build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_linux.obj $
     $obj/source_bee/file_handle_posix.obj $obj/source_bee/path_helper.obj $
     $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
-    $obj/source_bee/lua_platform.obj $obj/source_bee/lua_serialization.obj $
-    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
-    $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
-    $obj/source_lua/utf8_crt.obj $obj/source_lua/linit.obj $
-    $obj/source_lua/onelua.obj
+    $obj/source_bee/lua_platform.obj $obj/source_bee/lua_select.obj $
+    $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
+    $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $
+    $obj/source_bee/lua_time.obj $obj/source_lua/utf8_crt.obj $
+    $obj/source_lua/linit.obj $obj/source_lua/onelua.obj
 rule copy
   command = cp -fv $in$input $out 1>/dev/null
   description = Copy $in$input $out

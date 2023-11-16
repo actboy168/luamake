@@ -450,7 +450,7 @@ local enum_onoff <const> = { on = true, off = true }
 local enum_mode <const> = { release = true, debug = true }
 local enum_crt <const> = { dynamic = true, static = true }
 local enum_visibility <const> = { default = true, hidden = true }
-local enum_luaversion <const> = { [''] = true, lua53 = true, lua54 = true }
+local enum_luaversion <const> = { [""] = true, lua53 = true, lua54 = true }
 
 local function generate(rule, attribute, name)
     reslove_configs(attribute, attribute.configs)

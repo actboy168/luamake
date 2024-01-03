@@ -138,8 +138,13 @@ function clang.rule_dll(w, name, ldflags)
                 rspfile = "$out.rsp",
                 rspfile_content = "$in",
             })
-    else
+    elseif globals.os == "macos" or globals.os == "ios" then
         w:rule("link_"..name, ([[$cc -dynamiclib -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
+            {
+                description = "Link    Dll $out"
+            })
+    else
+        w:rule("link_"..name, ([[$cc --shared -Wl,-undefined,dynamic_lookup $in -o $out %s]]):format(ldflags),
             {
                 description = "Link    Dll $out"
             })

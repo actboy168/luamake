@@ -31,6 +31,7 @@ function emcc.update_ldflags(ldflags, attribute)
     else
         ldflags[#ldflags+1] = "-g0"
     end
+    ldflags[#ldflags+1] = emcc.optimize[attribute.optimize]
 end
 
 function emcc.rule_dll(w, name, ldflags)

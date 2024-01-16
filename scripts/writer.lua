@@ -93,6 +93,7 @@ local ATTRIBUTE <const> = {
     msvc        = PlatformAttribute,
     gcc         = PlatformAttribute,
     clang       = PlatformAttribute,
+    clang_cl    = PlatformAttribute,
     mingw       = PlatformAttribute,
     emcc        = PlatformAttribute,
     -- path
@@ -245,6 +246,9 @@ local function reslove_table(root, t, a)
     if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
         merge_table(root, t, a.mingw)
     end
+    if a.clang_cl and globals.cc == "clang-cl" then
+        merge_table(root, t, a.clang_cl)
+    end
 end
 
 local function reslove_table_nolink(root, t, a)
@@ -257,6 +261,9 @@ local function reslove_table_nolink(root, t, a)
     end
     if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
         merge_table_nolink(root, t, a.mingw)
+    end
+    if a.clang_cl and globals.cc == "clang-cl" then
+        merge_table(root, t, a.clang_cl)
     end
 end
 

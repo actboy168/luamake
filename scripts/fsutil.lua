@@ -90,6 +90,9 @@ else
 end
 
 function fsutil.relative(path, base)
+    if base:sub(1,1) ~= path:sub(1,1) then
+        return path
+    end
     local rpath = normalize(path)
     local rbase = normalize(base)
     if isWindows and not path_equal(rpath[1], rbase[1]) then

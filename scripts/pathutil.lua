@@ -12,10 +12,7 @@ end
 local function path_normalize(base, path)
     path = tostring(path)
     if path:sub(1, 1) ~= "$" then
-        if not fsutil.is_absolute(path) then
-            path = fsutil.join(base, path)
-            path = fsutil.relative(path, WORKDIR)
-        end
+        path = fsutil.normalize(base, path)
     end
     return path:gsub("\\", "/")
 end

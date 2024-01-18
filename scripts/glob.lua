@@ -62,13 +62,18 @@ end
 
 local function pattern_compile(res, path, ignore)
     local pattern = { ignore = ignore }
+    local hasRoot = path:sub(1, 1) == "/"
     path:gsub("[^"..PathSeq.."]+", function (w)
         if w == ".." and #pattern ~= 0 and pattern[#pattern] ~= ".." then
             if pattern[#pattern] == GlobStar then
                 error "`**/..` is not a valid glob."
             end
             pattern[#pattern] = nil
-        elseif w ~= "." then
+        elseif w == "." then
+            if #pattern == 0 then
+                pattern[1] = "."
+            end
+        else
             if w == "**" then
                 pattern[#pattern+1] = GlobStar
             else
@@ -76,6 +81,9 @@ local function pattern_compile(res, path, ignore)
             end
         end
     end)
+    if hasRoot then
+        pattern[1] = "/" .. (pattern[1] or "")
+    end
     res[#res+1] = pattern
 end
 
@@ -177,9 +185,6 @@ local function glob_compile(root, patterns)
         if v[1] == GlobStar then
             res[#res+1] = pattern_copy(v, 2)
         end
-    end
-    if root:sub(1, 1) == "/" then
-        gcd[1] = "/"..(gcd[1] or "")
     end
     return fsutil.normalize(table.unpack(gcd)), res, files
 end

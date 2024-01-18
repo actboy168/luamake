@@ -101,7 +101,7 @@ local function importfile(simulator, rootdir, filename)
 end
 
 function api:import(path)
-    local fullpath = fsutil.normalize(self.workdir, path)
+    local fullpath = pathutil.tostring(self.workdir, path)
     if fs.is_directory(fullpath) then
         fullpath = fsutil.join(fullpath, "make.lua")
     end

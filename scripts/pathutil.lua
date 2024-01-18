@@ -50,9 +50,14 @@ function mt:__tostring()
     return self.value
 end
 
-function mt:__concat(rhs)
-    local path = self.value..rhs
-    return create(path, self.accepted)
+function mt.__concat(lft, rhs)
+    if type(lft) == "string" then
+        local path = lft..rhs.value
+        return create(path, rhs.accepted)
+    else
+        local path = lft.value..rhs
+        return create(path, lft.accepted)
+    end
 end
 
 function mt:__div(rhs)

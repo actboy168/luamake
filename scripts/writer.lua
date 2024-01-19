@@ -274,10 +274,7 @@ local function normalize_rootdir(workdir, rootdir)
         else
             --TODO
             rootdir = tostring(rootdir)
-            if fsutil.is_absolute(rootdir) then
-                return rootdir
-            end
-            return fsutil.normalize(WORKDIR, rootdir)
+            return fsutil.absolute(WORKDIR, rootdir)
         end
     end
     return fsutil.normalize(workdir, rootdir or ".")

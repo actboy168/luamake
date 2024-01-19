@@ -89,6 +89,13 @@ else
     end
 end
 
+function fsutil.absolute(base, path)
+    if fsutil.is_absolute(path) then
+        return fsutil.normalize(path)
+    end
+    return fsutil.normalize(base, path)
+end
+
 function fsutil.relative(path, base)
     if base:sub(1,1) ~= path:sub(1,1) then
         return path

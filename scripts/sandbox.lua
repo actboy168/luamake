@@ -167,10 +167,7 @@ return function (c)
     local openfile = c.openfile or io.open
     local env = c.env or {}
     local function absolute(name)
-        if fsutil.is_absolute(name) then
-            return name
-        end
-        return fsutil.normalize(c.rootdir, name)
+        return fsutil.absolute(c.rootdir, name)
     end
     local function sandbox_loadlua(name, mode, ENV)
         assert(mode == nil or mode == "t")

@@ -122,7 +122,7 @@ end
 
 local function import(path)
     path = path or "make.lua"
-    local fullpath = fsutil.normalize(WORKDIR, path)
+    local fullpath = fsutil.absolute(WORKDIR, path)
     if isVisited(fullpath) then
         return
     end

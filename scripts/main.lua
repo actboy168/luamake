@@ -19,11 +19,7 @@ else
     local fsutil = require "fsutil"
     local arguments = require "arguments"
     if arguments.C then
-        if fsutil.is_absolute(arguments.C) then
-            WORKDIR = fsutil.normalize(arguments.C)
-        else
-            WORKDIR = fsutil.normalize(WORKDIR, arguments.C)
-        end
+        WORKDIR = fsutil.absolute(WORKDIR, arguments.C)
         fs.current_path(WORKDIR)
     end
     command(arguments.what)

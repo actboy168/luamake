@@ -515,6 +515,10 @@ local function generate(rule, attribute, name)
     local default_enable_lto = attribute.mode ~= "debug" and globals.compiler == "msvc"
     init_enum(attribute, "lto", default_enable_lto and "on" or "off", enum_onoff)
 
+    if globals.compiler == "msvc" then
+        init_enum(attribute, "permissive", "off", enum_onoff)
+    end
+
     if attribute.luaversion ~= "" then
         init_enum(attribute, "export_luaopen", "on", enum_onoff)
         require "lua_support" (ninja, loaded_target, rule, name, attribute)

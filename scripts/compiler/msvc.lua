@@ -11,7 +11,6 @@ local cl = {
     flags = {
         "/EHsc",
         "/Zc:__cplusplus",
-        "/permissive-",
     },
     ldflags = {
     },
@@ -76,6 +75,9 @@ local cl = {
 }
 
 function cl.update_flags(flags, _, cxxflags, attribute, name)
+    if attribute.permissive == "off" then
+        flags[#flags+1] = "/permissive-"
+    end
     if attribute.crt == "dynamic" then
         if attribute.optimize == "off" then
             flags[#flags+1] = "/MDd"

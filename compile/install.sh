@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-if ! sh ./compile/build.sh
+if ! sh ./compile/build.sh $*
 then
   exit 1
 fi

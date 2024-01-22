@@ -1,5 +1,3 @@
-@echo off
-
 call :GetWin10SDKVersion HKLM\SOFTWARE\Wow6432Node
 if errorlevel 1 call :GetWin10SDKVersion HKCU\SOFTWARE\Wow6432Node
 if errorlevel 1 call :GetWin10SDKVersion HKLM\SOFTWARE

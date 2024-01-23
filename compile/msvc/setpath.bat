@@ -1,5 +1,5 @@
 SET setpath=%cd%
-echo %path%|findstr /i %setpath% 1>nul && (goto END)
+echo %path%|findstr /i "%setpath%" 1>nul && (goto END)
 for /F "tokens=1,2*" %%i in ('reg query "HKCU\Environment" /v "Path"') do (
     if "%%i"=="Path" (
         set regpath=%%~k

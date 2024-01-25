@@ -8,7 +8,7 @@ jobs:
         version: [2019, 2022]
     runs-on: windows-${{ matrix.version }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules : recursive
     - run: .\compile\build.bat
@@ -20,7 +20,7 @@ jobs:
         version: [20.04, 22.04]
     runs-on: ubuntu-${{ matrix.version }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules : recursive
     - run: sudo apt-get update
@@ -34,7 +34,7 @@ jobs:
         version: [11, 12, 13]
     runs-on: macos-${{ matrix.version }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules : recursive
     - run: brew install ninja

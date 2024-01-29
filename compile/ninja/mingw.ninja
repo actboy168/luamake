@@ -83,8 +83,8 @@ build $obj/source_bee/lua_thread.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_thread.cpp
 build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_time.cpp
-build $obj/source_bee/lua_unicode.obj: cxx_source_bee_2 $
-    bee.lua/binding/lua_unicode.cpp
+build $obj/source_bee/lua_windows.obj: cxx_source_bee_2 $
+    bee.lua/binding/port/lua_windows.cpp
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
     -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
@@ -132,7 +132,7 @@ build $bin/bootstrap.exe: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
     $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
     $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
-    $obj/source_bee/lua_unicode.obj $obj/source_lua/utf8_crt.obj $
+    $obj/source_bee/lua_windows.obj $obj/source_lua/utf8_crt.obj $
     $obj/source_lua/linit.obj $obj/source_lua/onelua.obj
 rule copy
   command = sh -c "cp -fv $in$input $out 1>/dev/null"

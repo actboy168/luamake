@@ -44,6 +44,8 @@ globals.arch = globals.arch or (function ()
         else
             return "x86"
         end
+    elseif globals.os == "macos" then
+      return require "bee.platform".Arch
     end
 end)()
 globals.builddir = globals.builddir or "build"

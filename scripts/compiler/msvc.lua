@@ -44,6 +44,9 @@ local cl = {
         ["c99"] = "",
         ["c11"] = "/std:c11",
         ["c17"] = "/std:c17",
+        ["c23"] = "/std:clatest",
+        ["c2x"] = "/std:clatest",
+        ["clatest"] = "/std:clatest",
     },
     define = function (macro)
         if macro == "" then

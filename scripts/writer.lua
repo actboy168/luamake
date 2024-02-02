@@ -458,7 +458,7 @@ local enum_onoff <const> = { on = true, off = true }
 local enum_mode <const> = { release = true, debug = true }
 local enum_crt <const> = { dynamic = true, static = true }
 local enum_visibility <const> = { default = true, hidden = true }
-local enum_luaversion <const> = { [""] = true, lua53 = true, lua54 = true }
+local enum_luaversion <const> = { [""] = true, lua53 = true, lua54 = true, lua55 = true }
 
 local function generate(rule, attribute, name)
     reslove_configs(attribute, attribute.configs)
@@ -1122,7 +1122,6 @@ for rule, origin_rule in pairs(lua_compile_target) do
     api[rule] = function (global_attribute, name)
         log.assert(type(name) == "string", "Name is not a string.")
         return function (local_attribute)
-            local_attribute.luaversion = local_attribute.luaversion or "lua54"
             local attribute = reslove_attributes(global_attribute, local_attribute)
             generate(origin_rule, attribute, name)
         end
@@ -1140,7 +1139,6 @@ end
 function api.lua_src(global_attribute, name)
     log.assert(type(name) == "string", "Name is not a string.")
     return function (local_attribute)
-        local_attribute.luaversion = local_attribute.luaversion or "lua54"
         local attribute = reslove_attributes_nolink(global_attribute, local_attribute)
         generate("source_set", attribute, name)
     end

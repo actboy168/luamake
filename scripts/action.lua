@@ -1,7 +1,8 @@
 local globals = require "globals"
 local sp = require "bee.subprocess"
 local fs = require "bee.filesystem"
-local sim = require "simulator"
+local workspace = require "workspace"
+local writer = require "writer"
 local arguments = require "arguments"
 
 local function execute(option)
@@ -38,8 +39,8 @@ local function ninja(args)
 end
 
 local function init()
-    sim.init()
-    sim.import(arguments.f)
+    writer.init()
+    workspace.import(arguments.f)
 end
 
 local function compdb()
@@ -56,7 +57,7 @@ local function compdb()
 end
 
 local function generate()
-    sim.generate()
+    writer.generate()
     compdb()
 end
 

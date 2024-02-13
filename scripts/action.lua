@@ -1,7 +1,6 @@
 local globals = require "globals"
 local sp = require "bee.subprocess"
 local fs = require "bee.filesystem"
-local workspace = require "workspace"
 local writer = require "writer"
 local arguments = require "arguments"
 
@@ -40,7 +39,7 @@ end
 
 local function init()
     writer.init()
-    workspace.import(arguments.f)
+    writer.import(arguments.f)
 end
 
 local function compdb()

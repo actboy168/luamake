@@ -5,6 +5,8 @@ local fsutil = require "fsutil"
 local glob = require "glob"
 local pathutil = require "pathutil"
 local log = require "log"
+local sandbox = require "sandbox"
+local workspace = require "workspace"
 
 local ninja
 local cc
@@ -14,6 +16,7 @@ local loaded_target = {}
 local loaded_rule = {}
 local loaded_config = {}
 local scripts = {}
+local visited = {}
 
 local file_type <const> = {
     cxx = "cxx",
@@ -1029,14 +1032,6 @@ local function configure_args()
     return table.concat(s, " ")
 end
 
-function m.add_script(p)
-    if scripts[p] then
-        return
-    end
-    scripts[p] = true
-    scripts[#scripts+1] = fsutil.relative(p, WORKDIR)
-end
-
 function m.init()
     ninja = require "ninja_writer" ()
     cc = require("compiler."..globals.compiler)
@@ -1212,9 +1207,70 @@ function api:required_version(buildVersion)
     end
 end
 
+local MainWorkspace = workspace.create(globals.workdir, api, globals)
+
+local function openfile(name, mode)
+    local f, err = io.open(name, mode)
+    if f and (mode == nil or mode:match "r") then
+        if not scripts[name] then
+            scripts[name] = true
+            scripts[#scripts+1] = fsutil.relative(name, WORKDIR)
+        end
+    end
+    return f, err
+end
+
+local function is_visited(path)
+    if visited[path] then
+        return true
+    end
+    visited[path] = true
+end
+
+local function importfile(ws, rootdir, filename)
+    sandbox {
+        rootdir = rootdir,
+        builddir = globals.builddir,
+        preload = {
+            luamake = ws,
+        },
+        openfile = openfile,
+        main = filename,
+        args = {}
+    }
+end
+
+function api:import(path)
+    local fullpath = pathutil.tostring(self.workdir, path)
+    if fs.is_directory(fullpath) then
+        fullpath = fsutil.join(fullpath, "make.lua")
+    end
+    if is_visited(fullpath) then
+        return
+    end
+    local rootdir = fsutil.parent_path(fullpath)
+    local filename = fsutil.filename(fullpath)
+    local ws = workspace.create(rootdir, self, {})
+    importfile(ws, rootdir, filename)
+end
+
+function api:default(attribute)
+    if self == MainWorkspace then
+        m.default(attribute)
+    end
+end
+
+function m.import(path)
+    path = path or "make.lua"
+    local fullpath = fsutil.absolute(WORKDIR, path)
+    if is_visited(fullpath) then
+        return
+    end
+    globals.workdir = WORKDIR
+    importfile(MainWorkspace, WORKDIR, path)
+end
+
 api.pcall = log.pcall
 api.xpcall = log.xpcall
-
-m.api = api
 
 return m

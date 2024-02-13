@@ -1038,13 +1038,6 @@ function m.init()
     ninja:switch_body()
 end
 
-function m.default(attribute)
-    local deps = {}
-    push_string(deps, attribute)
-    local implicit_inputs = getImplicitInputs("default", { deps = deps })
-    ninja:default(implicit_inputs)
-end
-
 function m.generate()
     ninja:switch_head()
     local builddir = fsutil.join(WORKDIR, globals.builddir)
@@ -1212,7 +1205,10 @@ local MainWorkspace = workspace.create(globals.workdir, api, globals)
 
 function api:default(attribute)
     if self == MainWorkspace then
-        m.default(attribute)
+        local deps = {}
+        push_string(deps, attribute)
+        local implicit_inputs = getImplicitInputs("default", { deps = deps })
+        ninja:default(implicit_inputs)
     end
 end
 

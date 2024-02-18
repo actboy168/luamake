@@ -123,7 +123,7 @@ function cl.update_ldflags(ldflags, attribute, name)
 end
 
 function cl.rule_asm(w, name, _)
-    w:rule("asm_"..name, [[$ml /nologo /Fo $out /c $in]],
+    w:rule("asm_"..name, [[$ml /nologo /quiet /Fo $out /c $in]],
         {
             description = "Compile ASM $out",
         })

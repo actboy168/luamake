@@ -93,7 +93,7 @@ rule c_source_lua
   deps = msvc
 build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
 rule asm_source_lua
-  command = $ml /nologo /Fo $out /c $in
+  command = $ml /nologo /quiet /Fo $out /c $in
   description = Compile ASM $out
 build $obj/source_lua/fast_setjmp_x86_64.obj: asm_source_lua $
     bee.lua/3rd/lua/fast_setjmp_x86_64.s

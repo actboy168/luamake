@@ -1223,13 +1223,7 @@ local function openfile(name, mode)
     return f, err
 end
 
-local function importfile(ws, fullpath)
-    if visited[fullpath] then
-        return
-    end
-    visited[fullpath] = true
-    local rootdir = fsutil.parent_path(fullpath)
-    local filename = fsutil.filename(fullpath)
+local function importfile(ws, rootdir, filename)
     local subws = ws and workspace.create(rootdir, ws, {}) or MainWorkspace
     sandbox {
         rootdir = rootdir,
@@ -1249,12 +1243,17 @@ function api:import(path)
     if fs.is_directory(fullpath) then
         fullpath = fsutil.join(fullpath, "make.lua")
     end
-    importfile(ws, fullpath)
+    if visited[fullpath] then
+        return
+    end
+    visited[fullpath] = true
+    local rootdir = fsutil.parent_path(fullpath)
+    local filename = fsutil.filename(fullpath)
+    importfile(ws, rootdir, filename)
 end
 
 function m.import(path)
-    local fullpath = fsutil.absolute(WORKDIR, path or "make.lua")
-    importfile(nil, fullpath)
+    importfile(nil, WORKDIR, path or "make.lua")
 end
 
 api.pcall = log.pcall

@@ -8,7 +8,7 @@ luamake = luamake
 rule c_source_bee
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /O2 /Zc:inline /W3 /permissive- /MD /GL /Itools/lua54 $
-    /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4244 /utf-8 /std:c11
+    /D_WIN32_WINNT=0x0601 /DNDEBUG /utf-8 /wd4244 /std:c11
   description = Compile C   $out
   deps = msvc
 build $obj/source_bee/lua-seri.obj: c_source_bee $
@@ -61,7 +61,7 @@ build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
 rule cxx_source_bee_2
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Itools/lua54 $
-    /DBEE_STATIC /D_CRT_SECURE_NO_WARNINGS /D_WIN32_WINNT=0x0601 /DNDEBUG $
+    /D_WIN32_WINNT=0x0601 /DBEE_STATIC /D_CRT_SECURE_NO_WARNINGS /DNDEBUG $
     /utf-8 /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
@@ -99,8 +99,8 @@ build $obj/source_lua/fast_setjmp_x86_64.obj: asm_source_lua $
     bee.lua/3rd/lua/fast_setjmp_x86_64.s
 rule c_source_lua_1
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /DMAKE_LIB /DLUA_BUILD_AS_DLL $
-    /D_WIN32_WINNT=0x0601 /DNDEBUG /wd4267 /wd4334 /utf-8 /std:c11
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /D_WIN32_WINNT=0x0601 $
+    /DMAKE_LIB /DLUA_BUILD_AS_DLL /DNDEBUG /utf-8 /wd4267 /wd4334 /std:c11
   description = Compile C   $out
   deps = msvc
 build $obj/source_lua/linit.obj: c_source_lua_1 bee.lua/3rd/lua/linit.c

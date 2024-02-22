@@ -84,6 +84,7 @@ end
 local PlatformAttribute <const> = 0
 local PlatformPath <const> = 1
 local PlatformArgs <const> = 2
+local PlatformEnum <const> = 3
 
 local ATTRIBUTE <const> = {
     -- os
@@ -111,6 +112,7 @@ local ATTRIBUTE <const> = {
     script      = PlatformPath,
     -- other
     args        = PlatformArgs,
+    mode        = PlatformEnum,
 }
 
 local LINK_ATTRIBUTE <const> = {
@@ -203,6 +205,8 @@ local function merge_table(root, t, a)
             push_path(t[k], v, root)
         elseif ATTRIBUTE[k] == PlatformArgs then
             push_args(t[k], v, root)
+        elseif ATTRIBUTE[k] == PlatformEnum then
+            t[k] = v
         else
             push_string(t[k], v)
         end

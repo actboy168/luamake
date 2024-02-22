@@ -1162,6 +1162,11 @@ function api.config(global_attribute, name)
     end
 end
 
+function api.conf(global_attribute, attribute)
+    local root = normalize_rootdir(global_attribute.workdir, attribute.rootdir or global_attribute.rootdir)
+    reslove_table(root, global_attribute, attribute)
+end
+
 for rule, genfunc in pairs(GEN) do
     api[rule] = function (global_attribute, name)
         if type(name) == "table" then

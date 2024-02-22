@@ -92,6 +92,9 @@ local ATTRIBUTE <const> = {
     macos       = PlatformAttribute,
     ios         = PlatformAttribute,
     android     = PlatformAttribute,
+    freebsd     = PlatformAttribute,
+    openbsd     = PlatformAttribute,
+    netbsd      = PlatformAttribute,
     -- cc
     msvc        = PlatformAttribute,
     gcc         = PlatformAttribute,

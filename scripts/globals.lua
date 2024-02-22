@@ -7,7 +7,6 @@ for k, v in pairs(arguments.args) do
 end
 
 globals.mode = globals.mode or "release"
-globals.crt = globals.crt or "dynamic"
 
 globals.hostos = globals.hostos or require "bee.platform".os
 globals.hostshell = globals.hostshell or (function ()

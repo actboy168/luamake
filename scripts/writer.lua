@@ -14,7 +14,6 @@ local cc
 local m = {}
 local loaded_target = {}
 local loaded_rule = {}
-local loaded_config = {}
 local scripts = {}
 local visited = {}
 
@@ -121,16 +120,6 @@ local LINK_ATTRIBUTE <const> = {
     linkdirs = true,
     frameworks = true,
 }
-
-local SKIP_CONFIG_ATTRIBUTE = {
-    rootdir = true,
-    workdir = true,
-}
-for k, v in pairs(ATTRIBUTE) do
-    if v == PlatformAttribute then
-        SKIP_CONFIG_ATTRIBUTE[k] = true
-    end
-end
 
 local function push_string(t, a)
     if type(a) == "string" then
@@ -290,54 +279,12 @@ local function normalize_rootdir(workdir, rootdir)
     return fsutil.normalize(workdir, rootdir or ".")
 end
 
-local function reslove_configs(attributes, configs, link)
-    if not configs then
-        return
-    end
-    local mark = {}
-    for _, name in ipairs(configs) do
-        if not mark[name] then
-            mark[name] = true
-            log.assert(loaded_config[name], "can`t find config `%s`", name)
-            local config = loaded_config[name]
-            for k, v in pairs(config) do
-                if type(k) ~= "string" then
-                    goto continue
-                end
-                if SKIP_CONFIG_ATTRIBUTE[k] then
-                    goto continue
-                end
-                if LINK_ATTRIBUTE[k] ~= link then
-                    goto continue
-                end
-                attributes[k] = attributes[k] or {}
-                push_string(attributes[k], v)
-                if #attributes[k] == 0 then
-                    attributes[k] = nil
-                end
-                ::continue::
-            end
-        end
-    end
-end
-
 local function reslove_attributes(g, loc)
     local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
     local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
 
     local r = {}
     reslove_table(g_rootdir, r, g)
-    reslove_table(l_rootdir, r, loc)
-    --TODO: remove it
-    push_args(r, loc, l_rootdir)
-    r.workdir = g.workdir
-    r.rootdir = l_rootdir
-    return r
-end
-
-local function reslove_attributes_local(g, loc)
-    local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
-    local r = {}
     reslove_table(l_rootdir, r, loc)
     --TODO: remove it
     push_args(r, loc, l_rootdir)
@@ -471,7 +418,6 @@ local enum_visibility <const> = { default = true, hidden = true }
 local enum_luaversion <const> = { [""] = true, lua53 = true, lua54 = true, lua55 = true }
 
 local function generate(rule, attribute, name)
-    reslove_configs(attribute, attribute.configs)
     local target = loaded_target[name]
     local input
     local ldflags
@@ -599,8 +545,6 @@ local function generate(rule, attribute, name)
         return
     end
 
-    reslove_configs(attribute, attribute.configs, true)
-
     if deps then
         local mark = { [name] = true }
         local i = 1
@@ -710,11 +654,6 @@ local function generate_rule(attribute, name)
         end
     end
     ninja:rule(name, table.concat(command, " "), kwargs)
-end
-
-local function generate_config(attribute, name)
-    log.assert(loaded_config[name] == nil, "config `%s`: redefinition.", name)
-    loaded_config[name] = attribute
 end
 
 local function getImplicitInputs(name, attribute)
@@ -1158,14 +1097,6 @@ function api.rule(global_attribute, name)
     return function (local_attribute)
         local attribute = reslove_attributes(global_attribute, local_attribute)
         generate_rule(attribute, name)
-    end
-end
-
-function api.config(global_attribute, name)
-    log.assert(type(name) == "string", "Name is not a string.")
-    return function (local_attribute)
-        local attribute = reslove_attributes_local(global_attribute, local_attribute)
-        generate_config(attribute, name)
     end
 end
 

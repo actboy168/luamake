@@ -75,10 +75,10 @@ local function tbl_insert(t, pos, a)
 end
 
 local AttributePlatform <const> = 0
-local AttributesPaths <const> = 1
+local AttributePaths <const> = 1
 local AttributeArgs <const> = 2
 local AttributeStrings <const> = 3
-local AttributesPath <const> = 4
+local AttributePath <const> = 4
 
 local ATTRIBUTE <const> = {
     -- os
@@ -98,15 +98,15 @@ local ATTRIBUTE <const> = {
     mingw       = AttributePlatform,
     emcc        = AttributePlatform,
     -- paths
-    includes    = AttributesPaths,
-    sysincludes = AttributesPaths,
-    linkdirs    = AttributesPaths,
-    input       = AttributesPaths,
-    output      = AttributesPaths,
-    inputs      = AttributesPaths,
-    outputs     = AttributesPaths,
+    includes    = AttributePaths,
+    sysincludes = AttributePaths,
+    linkdirs    = AttributePaths,
+    input       = AttributePaths,
+    output      = AttributePaths,
+    inputs      = AttributePaths,
+    outputs     = AttributePaths,
     -- path
-    script      = AttributesPath,
+    script      = AttributePath,
     -- strings
     objdeps     = AttributeStrings,
     defines     = AttributeStrings,
@@ -205,13 +205,13 @@ local function merge_table(root, t, a)
             goto continue
         end
         if ATTRIBUTE[k] == AttributePlatform then
-        elseif ATTRIBUTE[k] == AttributesPaths then
+        elseif ATTRIBUTE[k] == AttributePaths then
             t[k] = t[k] or {}
             push_paths(t[k], v, root)
             if #t[k] == 0 then
                 t[k] = nil
             end
-        elseif ATTRIBUTE[k] == AttributesPath then
+        elseif ATTRIBUTE[k] == AttributePath then
             t[k] = push_path(v, root)
         elseif ATTRIBUTE[k] == AttributeArgs then
             t[k] = t[k] or {}
@@ -242,13 +242,13 @@ local function merge_table_nolink(root, t, a)
             goto continue
         end
         if ATTRIBUTE[k] == AttributePlatform then
-        elseif ATTRIBUTE[k] == AttributesPaths then
+        elseif ATTRIBUTE[k] == AttributePaths then
             t[k] = t[k] or {}
             push_paths(t[k], v, root)
             if #t[k] == 0 then
                 t[k] = nil
             end
-        elseif ATTRIBUTE[k] == AttributesPath then
+        elseif ATTRIBUTE[k] == AttributePath then
             t[k] = push_path(v, root)
         elseif ATTRIBUTE[k] == AttributeArgs then
             t[k] = t[k] or {}

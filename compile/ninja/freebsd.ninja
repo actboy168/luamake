@@ -108,6 +108,14 @@ rule link_bootstrap
   command = $cc $in -o $out -Wl,-E -lm -linotify -L/usr/local/lib -pthread $
     -Wl,--push-state,-Bstatic -lstdc++ -Wl,--pop-state -Wl,-S,-x
   description = Link    Exe $out
+rule copy
+  command = cp -fv $in$input $out 1>/dev/null
+  description = Copy $in$input $out
+  restat = 1
+rule test
+  command = $bin/bootstrap bee.lua/test/test.lua --touch $out
+  description = Run test.
+  pool = console
 build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
     $obj/source_bee/error.obj $obj/source_bee/filewatch_bsd.obj $
@@ -124,16 +132,8 @@ build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $
     $obj/source_bee/lua_time.obj $obj/source_lua/utf8_crt.obj $
     $obj/source_lua/linit.obj $obj/source_lua/onelua.obj
-rule copy
-  command = cp -fv $in$input $out 1>/dev/null
-  description = Copy $in$input $out
-  restat = 1
 build $bin/main.lua: copy | $bin/bootstrap
   input = bee.lua/bootstrap/main.lua
-rule test
-  command = $bin/bootstrap bee.lua/test/test.lua --touch $out
-  description = Run test.
-  pool = console
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/ltest/coverage.lua bee.lua/test/ltest/ltest.lua $
     bee.lua/test/ltest/stringify.lua bee.lua/test/ltest/undump.lua $

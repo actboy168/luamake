@@ -8,8 +8,8 @@ return function ()
     local rule_name = {}
     local rule_command = {}
     local obj_name = {}
-    local build_name = {}
-    local phony = {}
+    local builds = {}
+    local phonys = {}
     local default
     local last_rule
     local m = {}
@@ -62,15 +62,18 @@ return function ()
     end
 
     function m:build(output, inputs, args)
-        assert(build_name[output] == nil)
-        build_name[output] = true
-        ninja:build(output, last_rule, inputs, args)
+        builds[#builds+1] = output
+        builds[output] = {
+            rule = last_rule,
+            inputs = inputs,
+            args = args,
+        }
     end
 
     function m:phony(output, inputs)
-        assert(phony[output] == nil)
-        phony[output] = inputs
-        phony[#phony+1] = output
+        assert(phonys[output] == nil)
+        phonys[output] = inputs
+        phonys[#phonys+1] = output
     end
 
     function m:default(targets)
@@ -78,9 +81,16 @@ return function ()
     end
 
     function m:close(filename)
-        for _, out in ipairs(phony) do
-            if not build_name[out] then
-                ninja_body:build(out, "phony", phony[out])
+        for _, output in ipairs(builds) do
+            local v = builds[output]
+            if not v._written then
+                v._written = true
+                ninja_body:build(output, v.rule, v.inputs, v.args)
+            end
+        end
+        for _, out in ipairs(phonys) do
+            if not builds[out] then
+                ninja_body:build(out, "phony", phonys[out])
             end
         end
         if default then

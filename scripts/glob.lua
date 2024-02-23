@@ -47,7 +47,7 @@ local function pattern_preprocess(root, pattern)
         ignore = true
         path = path:sub(2)
     end
-    path = fsutil.normalize(root, path)
+    path = fsutil.absolute(root, path)
 
     if ispath then
         if ignore then

@@ -66,6 +66,9 @@ end
 
 if isWindows then
     function fsutil.is_absolute(path)
+        if path:match "^%$" then
+            return true
+        end
         if path:match "^%a:[/\\]" then
             return true
         end
@@ -82,6 +85,9 @@ if isWindows then
     end
 else
     function fsutil.is_absolute(path)
+        if path:match "^%$" then
+            return true
+        end
         if path:match "^/" then
             return true
         end

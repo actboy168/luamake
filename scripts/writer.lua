@@ -237,16 +237,19 @@ end
 local function reslove_table(root, t, a)
     merge_table(root, t, a)
     if a[globals.os] then
-        merge_table(root, t, a[globals.os])
+        reslove_table(root, t, a[globals.os])
+    end
+    if a[globals.arch] then
+        reslove_table(root, t, a[globals.arch])
     end
     if a[globals.compiler] then
-        merge_table(root, t, a[globals.compiler])
+        reslove_table(root, t, a[globals.compiler])
     end
     if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
-        merge_table(root, t, a.mingw)
+        reslove_table(root, t, a.mingw)
     end
     if a.clang_cl and globals.cc == "clang-cl" then
-        merge_table(root, t, a.clang_cl)
+        reslove_table(root, t, a.clang_cl)
     end
 end
 

@@ -78,7 +78,8 @@ local AttributePlatform <const> = 0
 local AttributePaths <const> = 1
 local AttributeArgs <const> = 2
 local AttributeStrings <const> = 3
-local AttributePath <const> = 4
+local AttributeGlobs <const> = 4
+local AttributePath <const> = 5
 
 local ATTRIBUTE <const> = {
     -- os
@@ -110,12 +111,13 @@ local ATTRIBUTE <const> = {
     -- strings
     objdeps     = AttributeStrings,
     defines     = AttributeStrings,
-    sources     = AttributeStrings,
     flags       = AttributeStrings,
     ldflags     = AttributeStrings,
     links       = AttributeStrings,
     frameworks  = AttributeStrings,
     deps        = AttributeStrings,
+    -- globs
+    sources     = AttributeGlobs,
     -- args
     args        = AttributeArgs,
 }
@@ -127,75 +129,90 @@ local LINK_ATTRIBUTE <const> = {
     frameworks = true,
 }
 
-local function push_strings(t, a)
-    if type(a) == "string" then
-        t[#t+1] = a
-    elseif type(a) == "userdata" then
-        t[#t+1] = a
-    elseif type(a) == "table" then
-        if getmetatable(a) ~= nil then
-            t[#t+1] = a
+local function push_globs(t, v)
+    local vt = type(v)
+    if vt == "string" then
+        t[#t+1] = v
+    elseif vt == "userdata" then
+        t[#t+1] = v
+    elseif vt == "table" then
+        if getmetatable(v) ~= nil then
+            t[#t+1] = v
         else
-            for _, e in ipairs(a) do
-                push_strings(t, e)
+            for i = 1, #v do
+                push_globs(t, v[i])
             end
         end
     end
 end
 
-local function push_path(a, root)
-    if type(a) == "string" then
-        return pathutil.tostring(root, a)
-    elseif type(a) == "userdata" then
-        return pathutil.tostring(root, a)
-    elseif type(a) == "table" then
-        if getmetatable(a) ~= nil then
-            return pathutil.tostring(root, a)
+local function push_strings(t, v)
+    local vt = type(v)
+    if vt == "string" then
+        t[#t+1] = v
+    elseif vt == "table" then
+        for i = 1, #v do
+            push_strings(t, v[i])
         end
     end
 end
 
-local function push_paths(t, a, root)
-    if type(a) == "string" then
-        t[#t+1] = pathutil.tostring(root, a)
-    elseif type(a) == "userdata" then
-        t[#t+1] = pathutil.tostring(root, a)
-    elseif type(a) == "table" then
-        if getmetatable(a) ~= nil then
-            t[#t+1] = pathutil.tostring(root, a)
+local function push_path(v, root)
+    local vt = type(v)
+    if vt == "string" then
+        return pathutil.tostring(root, v)
+    elseif vt == "userdata" then
+        return pathutil.tostring(root, v)
+    elseif vt == "table" then
+        if getmetatable(v) ~= nil then
+            return pathutil.tostring(root, v)
+        end
+    end
+end
+
+local function push_paths(t, v, root)
+    local vt = type(v)
+    if vt == "string" then
+        t[#t+1] = pathutil.tostring(root, v)
+    elseif vt == "userdata" then
+        t[#t+1] = pathutil.tostring(root, v)
+    elseif vt == "table" then
+        if getmetatable(v) ~= nil then
+            t[#t+1] = pathutil.tostring(root, v)
         else
-            for _, e in ipairs(a) do
-                push_paths(t, e, root)
+            for i = 1, #v do
+                push_paths(t, v[i], root)
             end
         end
     end
 end
 
-local function push_mix(t, a, root)
-    if type(a) == "string" then
-        if a:sub(1, 1) == "@" then
-            t[#t+1] = pathutil.tostring(root, a:sub(2))
+local function push_mix(t, v, root)
+    local vt = type(v)
+    if vt == "string" then
+        if v:sub(1, 1) == "@" then
+            t[#t+1] = pathutil.tostring(root, v:sub(2))
         else
-            t[#t+1] = a:gsub("@{([^}]*)}", function (s)
+            t[#t+1] = v:gsub("@{([^}]*)}", function (s)
                 return pathutil.tostring(root, s)
             end)
         end
-    elseif type(a) == "userdata" then
-        t[#t+1] = pathutil.tostring(root, a)
-    elseif type(a) == "table" then
-        if getmetatable(a) ~= nil then
-            t[#t+1] = pathutil.tostring(root, a)
+    elseif vt == "userdata" then
+        t[#t+1] = pathutil.tostring(root, v)
+    elseif vt == "table" then
+        if getmetatable(v) ~= nil then
+            t[#t+1] = pathutil.tostring(root, v)
         else
-            for _, e in ipairs(a) do
-                push_mix(t, e, root)
+            for i = 1, #v do
+                push_mix(t, v[i], root)
             end
         end
     end
 end
 
-local function push_args(r, t, root)
-    for _, v in ipairs(t) do
-        push_mix(r, v, root)
+local function push_args(t, v, root)
+    for i = 1, #v do
+        push_mix(t, v[i], root)
     end
 end
 
@@ -222,6 +239,12 @@ local function merge_table(root, t, a)
         elseif ATTRIBUTE[k] == AttributeStrings then
             t[k] = t[k] or {}
             push_strings(t[k], v)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
+        elseif ATTRIBUTE[k] == AttributeGlobs then
+            t[k] = t[k] or {}
+            push_globs(t[k], v)
             if #t[k] == 0 then
                 t[k] = nil
             end
@@ -259,6 +282,12 @@ local function merge_table_nolink(root, t, a)
         elseif ATTRIBUTE[k] == AttributeStrings then
             t[k] = t[k] or {}
             push_strings(t[k], v)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
+        elseif ATTRIBUTE[k] == AttributeGlobs then
+            t[k] = t[k] or {}
+            push_globs(t[k], v)
             if #t[k] == 0 then
                 t[k] = nil
             end
@@ -709,8 +738,8 @@ local function generateTargetName()
 end
 
 function GEN.phony(attribute, name)
-    local inputs = attribute.inputs or attribute.input or {}
-    local outputs = attribute.outputs or attribute.output or {}
+    local inputs = attribute.inputs or {}
+    local outputs = attribute.outputs or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
 
     local n = #inputs
@@ -758,7 +787,7 @@ function GEN.runlua(attribute, name)
     else
         input = attribute.input or {}
     end
-    local output = attribute.output or {}
+    local outputs = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
     implicit_inputs[#implicit_inputs+1] = script
 
@@ -779,10 +808,10 @@ function GEN.runlua(attribute, name)
 
 
     local outname
-    if #output == 0 then
+    if #outputs == 0 then
         outname = "$builddir/_/"..name
     else
-        outname = output
+        outname = outputs
     end
     ninja:build(outname, input, {
         variables = {
@@ -809,15 +838,15 @@ function GEN.build(attribute, name)
     else
         input = attribute.input or {}
     end
-    local output = attribute.output or {}
+    local outputs = attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
     local rule = attribute.rule
 
     local outname
-    if #output == 0 then
+    if #outputs == 0 then
         outname = "$builddir/_/"..name
     else
-        outname = output
+        outname = outputs
     end
 
     if rule then
@@ -893,8 +922,8 @@ local function generate_copy(implicit_inputs, input, output)
 end
 
 function GEN.copy(attribute, name)
-    local inputs = attribute.inputs or attribute.input or {}
-    local outputs = attribute.outputs or attribute.output or {}
+    local inputs = attribute.inputs or {}
+    local outputs = attribute.outputs or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
     log.assert(#inputs == #outputs, "`%s`: The number of input and output must be the same.", name)
     generate_copy(implicit_inputs, inputs, outputs)
@@ -921,16 +950,18 @@ function GEN.msvc_copydll(attribute, name)
     init_enum(attribute, "type", nil, enum_copy_type)
 
     local msvc = require "env.msvc"
-    local outputdir = attribute.output[#attribute.output]
     local archalias = msvc.archAlias(attribute.arch)
+    local attributeOutputs = attribute.outputs or attribute.output or {}
 
     if attribute.type == "vcrt" then
         local ignore = attribute.optimize == "off" and "vccorlib140d.dll" or "vccorlib140.dll"
         for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.optimize)) do
             local filename = dll:filename()
             if filename:string():lower() ~= ignore then
-                input[#input+1] = dll
-                output[#output+1] = outputdir / filename
+                for _, outputdir in ipairs(attributeOutputs) do
+                    input[#input+1] = dll
+                    output[#output+1] = outputdir / filename
+                end
             end
         end
     elseif attribute.type == "ucrt" then
@@ -939,18 +970,24 @@ function GEN.msvc_copydll(attribute, name)
             for dll in fs.pairs(redist) do
                 local filename = dll:filename()
                 if filename:string():lower() == "ucrtbase.dll" then
-                    input[#input+1] = fsutil.join(bin, "ucrtbased.dll")
-                    output[#output+1] = fsutil.join(outputdir, "ucrtbased.dll")
+                    for _, outputdir in ipairs(attributeOutputs) do
+                        input[#input+1] = fsutil.join(bin, "ucrtbased.dll")
+                        output[#output+1] = fsutil.join(outputdir, "ucrtbased.dll")
+                    end
                 else
-                    input[#input+1] = dll
-                    output[#output+1] = outputdir / filename
+                    for _, outputdir in ipairs(attributeOutputs) do
+                        input[#input+1] = dll
+                        output[#output+1] = outputdir / filename
+                    end
                 end
             end
         else
             for dll in fs.pairs(redist) do
                 local filename = dll:filename()
-                input[#input+1] = dll
-                output[#output+1] = outputdir / filename
+                for _, outputdir in ipairs(attributeOutputs) do
+                    input[#input+1] = dll
+                    output[#output+1] = outputdir / filename
+                end
             end
         end
     elseif attribute.type == "asan" then
@@ -958,8 +995,10 @@ function GEN.msvc_copydll(attribute, name)
         local filename = ("clang_rt.asan_dynamic-%s.dll"):format(
             attribute.arch == "x86_64" and "x86_64" or "i386"
         )
-        input[#input+1] = fsutil.join(inputdir, filename)
-        output[#output+1] = fsutil.join(outputdir, filename)
+        for _, outputdir in ipairs(attributeOutputs) do
+            input[#input+1] = fsutil.join(inputdir, filename)
+            output[#output+1] = fsutil.join(outputdir, filename)
+        end
     end
     generate_copy(implicit_inputs, input, output)
 

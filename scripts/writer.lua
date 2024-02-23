@@ -709,37 +709,37 @@ local function generateTargetName()
 end
 
 function GEN.phony(attribute, name)
-    local input = attribute.input or {}
-    local output = attribute.output or {}
+    local inputs = attribute.inputs or attribute.input or {}
+    local outputs = attribute.outputs or attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
 
-    local n = #input
+    local n = #inputs
     for i = 1, #implicit_inputs do
-        input[n + i] = implicit_inputs[i]
+        inputs[n + i] = implicit_inputs[i]
     end
 
     if name then
-        if #output == 0 then
-            if #input == 0 then
+        if #outputs == 0 then
+            if #inputs == 0 then
                 log.fatal("`%s`: no input.", name)
             else
-                ninja:phony(name, input)
+                ninja:phony(name, inputs)
             end
         else
-            ninja:phony(name, output)
-            for _, out in ipairs(output) do
-                ninja:phony(out, input)
+            ninja:phony(name, outputs)
+            for _, out in ipairs(outputs) do
+                ninja:phony(out, inputs)
             end
         end
         loaded_target[name] = {
             implicit_inputs = name,
         }
     else
-        if #output == 0 then
+        if #outputs == 0 then
             log.fatal("`%s`: no output.", name)
         else
-            for _, out in ipairs(output) do
-                ninja:phony(out, input)
+            for _, out in ipairs(outputs) do
+                ninja:phony(out, inputs)
             end
         end
     end
@@ -893,14 +893,14 @@ local function generate_copy(implicit_inputs, input, output)
 end
 
 function GEN.copy(attribute, name)
-    local input = attribute.input or {}
-    local output = attribute.output or {}
+    local inputs = attribute.inputs or attribute.input or {}
+    local outputs = attribute.outputs or attribute.output or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
-    log.assert(#input == #output, "`%s`: The number of input and output must be the same.", name)
-    generate_copy(implicit_inputs, input, output)
+    log.assert(#inputs == #outputs, "`%s`: The number of input and output must be the same.", name)
+    generate_copy(implicit_inputs, inputs, outputs)
     if name then
         log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
-        ninja:phony(name, output)
+        ninja:phony(name, outputs)
         loaded_target[name] = {
             implicit_inputs = name,
         }

@@ -14,8 +14,8 @@ local dll = isWindows and ".dll" or ".so"
 lm:import "bee.lua/make.lua"
 
 lm:copy "copy_luamake" {
-    input = "$bin/bootstrap"..exe,
-    output = "luamake"..exe,
+    inputs = "$bin/bootstrap"..exe,
+    outputs = "luamake"..exe,
     deps = "bootstrap",
 }
 
@@ -33,8 +33,8 @@ if isWindows then
         deps = "copy_luamake",
     }
     lm:phony {
-        input = "bee.lua/bootstrap/forward_lua.h",
-        output = "bee.lua/bootstrap/forward_lua.c",
+        inputs = "bee.lua/bootstrap/forward_lua.h",
+        outputs = "bee.lua/bootstrap/forward_lua.c",
     }
     lm:shared_library "lua54" {
         includes = "bee.lua/bootstrap",
@@ -45,8 +45,8 @@ if isWindows then
         }
     }
     lm:copy "copy_lua54" {
-        input = "$bin/lua54"..dll,
-        output = "tools/lua54"..dll,
+        inputs = "$bin/lua54"..dll,
+        outputs = "tools/lua54"..dll,
         deps = "lua54"
     }
 end

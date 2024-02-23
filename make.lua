@@ -23,13 +23,13 @@ if isWindows then
     lm:runlua "forward_lua" {
         script = "bee.lua/bootstrap/forward_lua.lua",
         args = { "@bee.lua/3rd/lua/", "$out", "luamake.exe", lm.compiler },
-        input = {
+        inputs = {
             "bee.lua/bootstrap/forward_lua.lua",
             "bee.lua/3rd/lua/lua.h",
             "bee.lua/3rd/lua/lauxlib.h",
             "bee.lua/3rd/lua/lualib.h",
         },
-        output = "bee.lua/bootstrap/forward_lua.h",
+        outputs = "bee.lua/bootstrap/forward_lua.h",
         deps = "copy_luamake",
     }
     lm:phony {

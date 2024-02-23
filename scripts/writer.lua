@@ -102,9 +102,6 @@ local ATTRIBUTE <const> = {
     includes    = AttributePaths,
     sysincludes = AttributePaths,
     linkdirs    = AttributePaths,
-    input       = AttributePaths,
-    output      = AttributePaths,
-    inputs      = AttributePaths,
     outputs     = AttributePaths,
     -- path
     script      = AttributePath,
@@ -117,6 +114,7 @@ local ATTRIBUTE <const> = {
     frameworks  = AttributeStrings,
     deps        = AttributeStrings,
     -- globs
+    inputs      = AttributeGlobs,
     sources     = AttributeGlobs,
     -- args
     args        = AttributeArgs,
@@ -738,7 +736,7 @@ local function generateTargetName()
 end
 
 function GEN.phony(attribute, name)
-    local inputs = attribute.inputs or {}
+    local inputs = get_blob(attribute.rootdir, attribute.inputs)
     local outputs = attribute.outputs or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
 
@@ -781,15 +779,8 @@ function GEN.runlua(attribute, name)
     local script = attribute.script
     log.assert(script, "`%s`: need attribute `script`.", name)
 
-    local input
-    if attribute.sources then
-        input = get_blob(attribute.rootdir, attribute.sources)
-    elseif attribute.inputs then
-        input = get_blob(attribute.rootdir, attribute.inputs)
-    else
-        input = attribute.input or {}
-    end
-    local outputs = attribute.output or {}
+    local inputs = get_blob(attribute.rootdir, attribute.inputs)
+    local outputs = attribute.outputs or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
     implicit_inputs[#implicit_inputs+1] = script
 
@@ -815,7 +806,7 @@ function GEN.runlua(attribute, name)
     else
         outname = outputs
     end
-    ninja:build(outname, input, {
+    ninja:build(outname, inputs, {
         variables = {
             script = script,
         },
@@ -834,15 +825,8 @@ function GEN.build(attribute, name)
     name = name or generateTargetName()
     log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
 
-    local input
-    if attribute.sources then
-        input = get_blob(attribute.rootdir, attribute.sources)
-    elseif attribute.inputs then
-        input = get_blob(attribute.rootdir, attribute.inputs)
-    else
-        input = attribute.input or {}
-    end
-    local outputs = attribute.output or {}
+    local inputs = get_blob(attribute.rootdir, attribute.inputs)
+    local outputs = attribute.outputs or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
     local rule = attribute.rule
 
@@ -865,7 +849,7 @@ function GEN.build(attribute, name)
                 command_str = table.concat(command, " ")
             end
         end
-        ninja:build(outname, input, {
+        ninja:build(outname, inputs, {
             implicit_inputs = implicit_inputs,
             variables = { args = command_str },
         })
@@ -875,7 +859,7 @@ function GEN.build(attribute, name)
             command[i] = fsutil.quotearg(v)
         end
         ninja:rule("build_"..name, table.concat(command, " "))
-        ninja:build(outname, input, {
+        ninja:build(outname, inputs, {
             implicit_inputs = implicit_inputs,
         })
     end
@@ -928,6 +912,9 @@ end
 function GEN.copy(attribute, name)
     local inputs = attribute.inputs or {}
     local outputs = attribute.outputs or {}
+    for i = 1, #inputs do
+        inputs[i] = pathutil.tostring(attribute.rootdir, inputs[i])
+    end
     local implicit_inputs = getImplicitInputs(name, attribute)
     log.assert(#inputs == #outputs, "`%s`: The number of input and output must be the same.", name)
     generate_copy(implicit_inputs, inputs, outputs)
@@ -955,7 +942,7 @@ function GEN.msvc_copydll(attribute, name)
 
     local msvc = require "env.msvc"
     local archalias = msvc.archAlias(attribute.arch)
-    local attributeOutputs = attribute.outputs or attribute.output or {}
+    local attributeOutputs = attribute.outputs
 
     if attribute.type == "vcrt" then
         local ignore = attribute.optimize == "off" and "vccorlib140d.dll" or "vccorlib140.dll"
@@ -964,7 +951,7 @@ function GEN.msvc_copydll(attribute, name)
             if filename:string():lower() ~= ignore then
                 for _, outputdir in ipairs(attributeOutputs) do
                     input[#input+1] = dll
-                    output[#output+1] = outputdir / filename
+                    output[#output+1] = fsutil.join(outputdir, filename)
                 end
             end
         end
@@ -981,7 +968,7 @@ function GEN.msvc_copydll(attribute, name)
                 else
                     for _, outputdir in ipairs(attributeOutputs) do
                         input[#input+1] = dll
-                        output[#output+1] = outputdir / filename
+                        output[#output+1] = fsutil.join(outputdir, filename)
                     end
                 end
             end
@@ -990,7 +977,7 @@ function GEN.msvc_copydll(attribute, name)
                 local filename = dll:filename()
                 for _, outputdir in ipairs(attributeOutputs) do
                     input[#input+1] = dll
-                    output[#output+1] = outputdir / filename
+                    output[#output+1] = fsutil.join(outputdir, filename)
                 end
             end
         end

@@ -177,9 +177,9 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     $bin/bootstrap.exe copy_script
 build luamake.exe: copy | $bin/bootstrap.exe
   input = $bin/bootstrap.exe
-build bee.lua/bootstrap/forward_lua.h: runlua $
-    bee.lua/bootstrap/forward_lua.lua bee.lua/3rd/lua/lua.h $
-    bee.lua/3rd/lua/lauxlib.h bee.lua/3rd/lua/lualib.h | copy_luamake $
+build bee.lua/bootstrap/forward_lua.h: runlua bee.lua/3rd/lua/lauxlib.h $
+    bee.lua/3rd/lua/lua.h bee.lua/3rd/lua/lualib.h $
+    bee.lua/bootstrap/forward_lua.lua | copy_luamake $
     bee.lua/bootstrap/forward_lua.lua
   script = bee.lua/bootstrap/forward_lua.lua
 build $bin/lua54.dll | $obj/lua54/lua54.lib: link_lua54 $

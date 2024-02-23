@@ -1,5 +1,6 @@
 local arguments = require "arguments"
 local pathutil = require "pathutil"
+local globals = require "globals"
 
 local function create(workdir, parent, attri)
     local mt = {}
@@ -15,6 +16,14 @@ local function create(workdir, parent, attri)
             return
         end
         attri[k] = pathutil.accept(workdir, v)
+    end
+    if globals == attri then
+        function mt:__pairs()
+            return function (_, k)
+                return next(attri, k)
+            end
+        end
+        return setmetatable({ workdir = workdir }, mt)
     end
     function mt:__pairs()
         local selfpairs = true

@@ -35,18 +35,12 @@ local function fmtpath(p)
     return p:gsub("\\", "/")
 end
 
-local function init_single(attribute, attr_name, default)
-    local attr = attribute[attr_name]
-    if type(attr) == "table" then
-        attribute[attr_name] = attr[#attr]
-    elseif attr == nil then
-        attribute[attr_name] = default
-    end
-end
-
 local function init_enum(attribute, attr_name, default, allow)
-    init_single(attribute, attr_name, default)
     local v = attribute[attr_name]
+    if v == nil then
+        attribute[attr_name] = default
+        v = default
+    end
     if allow[v] == nil then
         local str = {}
         for k in pairs(allow) do
@@ -80,38 +74,50 @@ local function tbl_insert(t, pos, a)
     end
 end
 
-local PlatformAttribute <const> = 0
-local PlatformPath <const> = 1
-local PlatformArgs <const> = 2
-local PlatformEnum <const> = 3
+local AttributePlatform <const> = 0
+local AttributesPaths <const> = 1
+local AttributeArgs <const> = 2
+local AttributeStrings <const> = 3
+local AttributesPath <const> = 4
 
 local ATTRIBUTE <const> = {
     -- os
-    windows     = PlatformAttribute,
-    linux       = PlatformAttribute,
-    macos       = PlatformAttribute,
-    ios         = PlatformAttribute,
-    android     = PlatformAttribute,
-    freebsd     = PlatformAttribute,
-    openbsd     = PlatformAttribute,
-    netbsd      = PlatformAttribute,
+    windows     = AttributePlatform,
+    linux       = AttributePlatform,
+    macos       = AttributePlatform,
+    ios         = AttributePlatform,
+    android     = AttributePlatform,
+    freebsd     = AttributePlatform,
+    openbsd     = AttributePlatform,
+    netbsd      = AttributePlatform,
     -- cc
-    msvc        = PlatformAttribute,
-    gcc         = PlatformAttribute,
-    clang       = PlatformAttribute,
-    clang_cl    = PlatformAttribute,
-    mingw       = PlatformAttribute,
-    emcc        = PlatformAttribute,
+    msvc        = AttributePlatform,
+    gcc         = AttributePlatform,
+    clang       = AttributePlatform,
+    clang_cl    = AttributePlatform,
+    mingw       = AttributePlatform,
+    emcc        = AttributePlatform,
+    -- paths
+    includes    = AttributesPaths,
+    sysincludes = AttributesPaths,
+    linkdirs    = AttributesPaths,
+    input       = AttributesPaths,
+    output      = AttributesPaths,
+    inputs      = AttributesPaths,
+    outputs     = AttributesPaths,
     -- path
-    includes    = PlatformPath,
-    sysincludes = PlatformPath,
-    linkdirs    = PlatformPath,
-    input       = PlatformPath,
-    output      = PlatformPath,
-    script      = PlatformPath,
-    -- other
-    args        = PlatformArgs,
-    mode        = PlatformEnum,
+    script      = AttributesPath,
+    -- strings
+    objdeps     = AttributeStrings,
+    defines     = AttributeStrings,
+    sources     = AttributeStrings,
+    flags       = AttributeStrings,
+    ldflags     = AttributeStrings,
+    links       = AttributeStrings,
+    frameworks  = AttributeStrings,
+    deps        = AttributeStrings,
+    -- args
+    args        = AttributeArgs,
 }
 
 local LINK_ATTRIBUTE <const> = {
@@ -121,7 +127,7 @@ local LINK_ATTRIBUTE <const> = {
     frameworks = true,
 }
 
-local function push_string(t, a)
+local function push_strings(t, a)
     if type(a) == "string" then
         t[#t+1] = a
     elseif type(a) == "userdata" then
@@ -131,13 +137,25 @@ local function push_string(t, a)
             t[#t+1] = a
         else
             for _, e in ipairs(a) do
-                push_string(t, e)
+                push_strings(t, e)
             end
         end
     end
 end
 
-local function push_path(t, a, root)
+local function push_path(a, root)
+    if type(a) == "string" then
+        return pathutil.tostring(root, a)
+    elseif type(a) == "userdata" then
+        return pathutil.tostring(root, a)
+    elseif type(a) == "table" then
+        if getmetatable(a) ~= nil then
+            return pathutil.tostring(root, a)
+        end
+    end
+end
+
+local function push_paths(t, a, root)
     if type(a) == "string" then
         t[#t+1] = pathutil.tostring(root, a)
     elseif type(a) == "userdata" then
@@ -147,7 +165,7 @@ local function push_path(t, a, root)
             t[#t+1] = pathutil.tostring(root, a)
         else
             for _, e in ipairs(a) do
-                push_path(t, e, root)
+                push_paths(t, e, root)
             end
         end
     end
@@ -186,21 +204,29 @@ local function merge_table(root, t, a)
         if type(k) ~= "string" then
             goto continue
         end
-        if ATTRIBUTE[k] == PlatformAttribute then
-            goto continue
-        end
-        t[k] = t[k] or {}
-        if ATTRIBUTE[k] == PlatformPath then
-            push_path(t[k], v, root)
-        elseif ATTRIBUTE[k] == PlatformArgs then
+        if ATTRIBUTE[k] == AttributePlatform then
+        elseif ATTRIBUTE[k] == AttributesPaths then
+            t[k] = t[k] or {}
+            push_paths(t[k], v, root)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
+        elseif ATTRIBUTE[k] == AttributesPath then
+            t[k] = push_path(v, root)
+        elseif ATTRIBUTE[k] == AttributeArgs then
+            t[k] = t[k] or {}
             push_args(t[k], v, root)
-        elseif ATTRIBUTE[k] == PlatformEnum then
-            t[k] = v
+            if #t[k] == 0 then
+                t[k] = nil
+            end
+        elseif ATTRIBUTE[k] == AttributeStrings then
+            t[k] = t[k] or {}
+            push_strings(t[k], v)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
         else
-            push_string(t[k], v)
-        end
-        if #t[k] == 0 then
-            t[k] = nil
+            t[k] = v
         end
         ::continue::
     end
@@ -212,22 +238,32 @@ local function merge_table_nolink(root, t, a)
         if type(k) ~= "string" then
             goto continue
         end
-        if ATTRIBUTE[k] == PlatformAttribute then
-            goto continue
-        end
         if LINK_ATTRIBUTE[k] then
             goto continue
         end
-        t[k] = t[k] or {}
-        if ATTRIBUTE[k] == PlatformPath then
-            push_path(t[k], v, root)
-        elseif ATTRIBUTE[k] == PlatformArgs then
+        if ATTRIBUTE[k] == AttributePlatform then
+        elseif ATTRIBUTE[k] == AttributesPaths then
+            t[k] = t[k] or {}
+            push_paths(t[k], v, root)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
+        elseif ATTRIBUTE[k] == AttributesPath then
+            t[k] = push_path(v, root)
+        elseif ATTRIBUTE[k] == AttributeArgs then
+            t[k] = t[k] or {}
             push_args(t[k], v, root)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
+        elseif ATTRIBUTE[k] == AttributeStrings then
+            t[k] = t[k] or {}
+            push_strings(t[k], v)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
         else
-            push_string(t[k], v)
-        end
-        if #t[k] == 0 then
-            t[k] = nil
+            t[k] = v
         end
         ::continue::
     end
@@ -443,7 +479,6 @@ local function generate(rule, attribute, name)
         end
     end
 
-    init_single(attribute, "bindir", globals.bindir)
     local bindir = attribute.bindir
     local sources = get_blob(attribute.rootdir, attribute.sources)
     local objargs = attribute.objdeps and { implicit_inputs = attribute.objdeps } or nil
@@ -458,12 +493,6 @@ local function generate(rule, attribute, name)
     init_enum(attribute, "visibility", "hidden", enum_visibility)
     init_enum(attribute, "luaversion", "", enum_luaversion)
     init_enum(attribute, "optimize", (attribute.mode == "debug" and "off" or "speed"), cc.optimize)
-
-    init_single(attribute, "target")
-    init_single(attribute, "arch")
-    init_single(attribute, "vendor")
-    init_single(attribute, "sys")
-    init_single(attribute, "basename")
 
     local default_enable_lto = attribute.mode ~= "debug" and globals.compiler == "msvc"
     init_enum(attribute, "lto", default_enable_lto and "on" or "off", enum_onoff)
@@ -647,13 +676,7 @@ local function generate_rule(attribute, name)
     for i, v in ipairs(attribute) do
         command[i] = fsutil.quotearg(v)
     end
-    local kwargs = {}
-    for k, v in pairs(attribute) do
-        if type(k) == "string" then
-            kwargs[k] = v[#v]
-        end
-    end
-    ninja:rule(name, table.concat(command, " "), kwargs)
+    ninja:rule(name, table.concat(command, " "), attribute)
 end
 
 local function getImplicitInputs(name, attribute)
@@ -726,7 +749,6 @@ function GEN.runlua(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
-    init_single(attribute, "script")
     local script = attribute.script
     log.assert(script, "`%s`: need attribute `script`.", name)
 
@@ -780,7 +802,6 @@ function GEN.build(attribute, name)
     local tmpName = not name
     name = name or generateTargetName()
     log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
-    init_single(attribute, "rule")
 
     local input
     if attribute.inputs then
@@ -898,7 +919,6 @@ function GEN.msvc_copydll(attribute, name)
     init_enum(attribute, "mode", "release", enum_mode)
     init_enum(attribute, "optimize", (attribute.mode == "debug" and "off" or "speed"), cc.optimize)
     init_enum(attribute, "type", nil, enum_copy_type)
-    init_single(attribute, "arch")
 
     local msvc = require "env.msvc"
     local outputdir = attribute.output[#attribute.output]
@@ -1057,7 +1077,7 @@ for rule, origin_rule in pairs(lua_compile_target) do
         log.assert(type(name) == "string", "Name is not a string.")
         return function (local_attribute)
             local attribute = reslove_attributes(global_attribute, local_attribute)
-            attribute.luaversion = attribute.luaversion or {"lua54"}
+            attribute.luaversion = attribute.luaversion or "lua54"
             generate(origin_rule, attribute, name)
         end
     end
@@ -1075,7 +1095,7 @@ function api.lua_src(global_attribute, name)
     log.assert(type(name) == "string", "Name is not a string.")
     return function (local_attribute)
         local attribute = reslove_attributes_nolink(global_attribute, local_attribute)
-        attribute.luaversion = attribute.luaversion or {"lua54"}
+        attribute.luaversion = attribute.luaversion or "lua54"
         generate("source_set", attribute, name)
     end
 end
@@ -1149,7 +1169,7 @@ local MainWorkspace = workspace.create(globals.workdir, api, globals)
 function api:default(attribute)
     if self == MainWorkspace then
         local deps = {}
-        push_string(deps, attribute)
+        push_strings(deps, attribute)
         local implicit_inputs = getImplicitInputs("default", { deps = deps })
         ninja:default(implicit_inputs)
     end

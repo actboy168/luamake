@@ -782,7 +782,9 @@ function GEN.runlua(attribute, name)
     log.assert(script, "`%s`: need attribute `script`.", name)
 
     local input
-    if attribute.inputs then
+    if attribute.sources then
+        input = get_blob(attribute.rootdir, attribute.sources)
+    elseif attribute.inputs then
         input = get_blob(attribute.rootdir, attribute.inputs)
     else
         input = attribute.input or {}
@@ -833,7 +835,9 @@ function GEN.build(attribute, name)
     log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
 
     local input
-    if attribute.inputs then
+    if attribute.sources then
+        input = get_blob(attribute.rootdir, attribute.sources)
+    elseif attribute.inputs then
         input = get_blob(attribute.rootdir, attribute.inputs)
     else
         input = attribute.input or {}

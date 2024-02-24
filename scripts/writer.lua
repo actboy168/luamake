@@ -703,6 +703,9 @@ local function generate_rule(attribute, name)
     for i, v in ipairs(attribute) do
         command[i] = fsutil.quotearg(v)
     end
+    if attribute.deps then
+        attribute.deps = attribute.deps[#attribute.deps]
+    end
     ninja:rule(name, table.concat(command, " "), attribute)
 end
 

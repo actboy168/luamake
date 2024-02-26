@@ -26,15 +26,12 @@ local function execute(option)
         end
         process.stdout:close()
     end
-    local code = process:wait()
-    if code ~= 0 then
-        os.exit(code)
-    end
+    return process:wait()
 end
 
 local function ninja(args)
     args[1] = { "ninja", "-f", globals.builddir.."/build.ninja", args[1] }
-    execute(args)
+    return execute(args)
 end
 
 local function init()
@@ -70,11 +67,17 @@ local function build()
             })
         end
     end
-    ninja { arguments.targets, options }
+    local code = ninja { arguments.targets, options }
+    if code ~= 0 then
+        os.exit(code)
+    end
 end
 
 local function clean()
-    ninja { "-t", "clean" }
+    local code = ninja { "-t", "clean" }
+    if code ~= 0 then
+        os.exit(code)
+    end
 end
 
 if globals.perf then

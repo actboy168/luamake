@@ -214,7 +214,19 @@ local function create(workdir, parent, attri)
         if arguments.args[k] ~= nil then
             return
         end
-        attri[k] = pathutil.accept(workdir, v)
+        if ATTRIBUTE[k] == AttributePaths then
+            local t = {}
+            push_paths(t, parent[k], parent.workdir)
+            push_paths(t, v, workdir)
+            attri[k] = t
+        elseif ATTRIBUTE[k] == AttributeStrings then
+            local t = {}
+            push_strings(t, parent[k])
+            push_strings(t, v)
+            attri[k] = t
+        else
+            attri[k] = pathutil.accept(workdir, v)
+        end
     end
     if globals == attri then
         function mt:__pairs()

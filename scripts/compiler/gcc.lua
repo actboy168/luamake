@@ -67,9 +67,6 @@ local gcc = {
     linkdir = function (dir)
         return "-L"..format_path(dir)
     end,
-    disable_warning = function (w)
-        return "-Wno-"..w
-    end
 }
 
 function gcc.update_flags(flags, _, cxxflags, attribute, _)

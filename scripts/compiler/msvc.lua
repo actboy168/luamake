@@ -72,9 +72,6 @@ local cl = {
     linkdir = function (dir)
         return "/libpath:"..format_path(dir)
     end,
-    disable_warning = function (w)
-        return "/wd"..w
-    end
 }
 
 function cl.update_flags(flags, _, cxxflags, attribute, name)

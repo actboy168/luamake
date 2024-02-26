@@ -939,7 +939,6 @@ function api:required_version(buildVersion)
     end
 end
 
-
 local MainWorkspace = workspace.create(globals.workdir, api, globals)
 
 function api:default(attribute)

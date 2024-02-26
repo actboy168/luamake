@@ -1,7 +1,7 @@
-local lm = require 'luamake'
+local lm = require "luamake"
 lm:required_version "1.0"
 
-local isWindows = lm.os == 'windows'
+local isWindows = lm.os == "windows"
 
 if lm.prebuilt == nil then
     print("Please use `"..(isWindows and [[.\compile\install.bat]] or [[./compile/install.sh]]).."`.")

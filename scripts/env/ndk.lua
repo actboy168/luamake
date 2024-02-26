@@ -23,7 +23,7 @@ local function find_ndk()
     if globals.hostos == "windows" then
         local LocalAppData = os.getenv "LocalAppData"
         if LocalAppData then
-            local rootdir = LocalAppData:gsub("\\", "/") .. "/Android/Sdk/ndk/"
+            local rootdir = LocalAppData:gsub("\\", "/").."/Android/Sdk/ndk/"
             if fs.exists(rootdir) then
                 local max
                 local max_ver

@@ -82,7 +82,7 @@ local function pattern_compile(res, path, ignore)
         end
     end)
     if hasRoot then
-        pattern[1] = "/" .. (pattern[1] or "")
+        pattern[1] = "/"..(pattern[1] or "")
     end
     res[#res+1] = pattern
 end

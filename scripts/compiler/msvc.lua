@@ -21,10 +21,10 @@ local cl = {
         maxspeed = "/O2 /Zc:inline /fp:fast",
     },
     warnings = {
-        off   = "/W0",
-        on    = "/W3",
-        all   = "/W4",
-        error = "/W3 /WX",
+        off    = "/W0",
+        on     = "/W3",
+        all    = "/W4",
+        error  = "/W3 /WX",
         strict = "/W4 /WX",
     },
     cxx = {

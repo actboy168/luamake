@@ -19,10 +19,10 @@ local gcc = {
         maxspeed = "-O3",
     },
     warnings = {
-        off   = "-w",
-        on    = "-Wall",
-        all   = "-Wall -Wextra",
-        error = "-Wall -Werror",
+        off    = "-w",
+        on     = "-Wall",
+        all    = "-Wall -Wextra",
+        error  = "-Wall -Werror",
         strict = "-Wall -Wextra -Werror",
     },
     cxx = {
@@ -205,9 +205,9 @@ end
 function gcc.rule_rc(w, name)
     if globals.os == "windows" and globals.hostshell == "sh" then
         w:rule("rc_"..name, [[windres -i $in -o $out]],
-        {
-            description = "Compile Res $out",
-        })
+            {
+                description = "Compile Res $out",
+            })
     end
 end
 

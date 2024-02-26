@@ -210,6 +210,7 @@ local function create(workdir, parent, attri)
         end
         return parent[k]
     end
+
     function mt:__newindex(k, v)
         if arguments.args[k] ~= nil then
             return
@@ -228,12 +229,14 @@ local function create(workdir, parent, attri)
             attri[k] = pathutil.accept(workdir, v)
         end
     end
+
     if globals == attri then
         function mt:__pairs()
             return function (_, k)
                 return next(attri, k)
             end
         end
+
         return setmetatable({ workdir = workdir }, mt)
     end
     function mt:__pairs()
@@ -258,6 +261,7 @@ local function create(workdir, parent, attri)
             return newk, newv
         end
     end
+
     return setmetatable({ workdir = workdir }, mt)
 end
 

@@ -103,7 +103,7 @@ function fsutil.absolute(base, path)
 end
 
 function fsutil.relative(path, base)
-    if base:sub(1,1) ~= path:sub(1,1) then
+    if base:sub(1, 1) ~= path:sub(1, 1) then
         return path
     end
     local rpath = normalize(path)

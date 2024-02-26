@@ -950,8 +950,8 @@ function GEN.msvc_copydll(attribute, name)
     if attribute.type == "vcrt" then
         local ignore = attribute.optimize == "off" and "vccorlib140d.dll" or "vccorlib140.dll"
         for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.optimize)) do
-            local filename = dll:filename()
-            if filename:string():lower() ~= ignore then
+            local filename = dll:filename():string()
+            if filename:lower() ~= ignore then
                 for _, outputdir in ipairs(attributeOutputs) do
                     input[#input+1] = dll
                     output[#output+1] = fsutil.join(outputdir, filename)
@@ -962,8 +962,8 @@ function GEN.msvc_copydll(attribute, name)
         local redist, bin = msvc.ucrtpath(archalias, attribute.optimize)
         if attribute.optimize == "off" then
             for dll in fs.pairs(redist) do
-                local filename = dll:filename()
-                if filename:string():lower() == "ucrtbase.dll" then
+                local filename = dll:filename():string()
+                if filename:lower() == "ucrtbase.dll" then
                     for _, outputdir in ipairs(attributeOutputs) do
                         input[#input+1] = fsutil.join(bin, "ucrtbased.dll")
                         output[#output+1] = fsutil.join(outputdir, "ucrtbased.dll")
@@ -977,7 +977,7 @@ function GEN.msvc_copydll(attribute, name)
             end
         else
             for dll in fs.pairs(redist) do
-                local filename = dll:filename()
+                local filename = dll:filename():string()
                 for _, outputdir in ipairs(attributeOutputs) do
                     input[#input+1] = dll
                     output[#output+1] = fsutil.join(outputdir, filename)

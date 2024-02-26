@@ -87,32 +87,32 @@ local function normalize_rootdir(workdir, rootdir)
     return fsutil.normalize(workdir, rootdir or ".")
 end
 
-local function reslove_attributes(g, loc)
+local function resolve_rootdir(g, l)
     local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
-    local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
-
-    local r = {}
-    workspace.push_attributes(r, g, g_rootdir)
-    workspace.push_attributes(r, loc, l_rootdir)
-    --TODO: remove it
-    workspace.push_args(r, loc, l_rootdir)
-    r.workdir = g.workdir
-    r.rootdir = l_rootdir
-    return r
+    local l_rootdir = normalize_rootdir(g.workdir, l.rootdir or g.rootdir)
+    return g_rootdir, l_rootdir
 end
 
-local function reslove_attributes_nolink(g, loc)
-    local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
-    local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
-
-    local r = {}
-    workspace.push_attributes(r, g, g_rootdir, true)
-    workspace.push_attributes(r, loc, l_rootdir)
+local function reslove_attributes(g, l)
+    local g_rootdir, l_rootdir = resolve_rootdir(g, l)
+    local t = {}
+    workspace.push_attributes(t, g, g_rootdir)
+    workspace.push_attributes(t, l, l_rootdir)
     --TODO: remove it
-    workspace.push_args(r, loc, l_rootdir)
-    r.workdir = g.workdir
-    r.rootdir = l_rootdir
-    return r
+    workspace.push_args(t, l, l_rootdir)
+    t.workdir = g.workdir
+    t.rootdir = l_rootdir
+    return t
+end
+
+local function reslove_attributes_nolink(g, l)
+    local g_rootdir, l_rootdir = resolve_rootdir(g, l)
+    local t = {}
+    workspace.push_attributes(t, g, g_rootdir, true)
+    workspace.push_attributes(t, l, l_rootdir)
+    t.workdir = g.workdir
+    t.rootdir = l_rootdir
+    return t
 end
 
 local function array_remove(t, k)
@@ -511,7 +511,7 @@ function GEN.phony(attribute, name)
         }
     else
         if #outputs == 0 then
-            log.fatal("`%s`: no output.", name)
+            log.fatal("no output.")
         else
             for _, out in ipairs(outputs) do
                 ninja:phony(out, inputs)

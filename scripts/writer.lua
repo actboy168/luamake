@@ -74,261 +74,6 @@ local function tbl_insert(t, pos, a)
     end
 end
 
-local AttributePlatform <const> = 0
-local AttributePaths <const> = 1
-local AttributeArgs <const> = 2
-local AttributeStrings <const> = 3
-local AttributeGlobs <const> = 4
-local AttributePath <const> = 5
-
-local ATTRIBUTE <const> = {
-    -- os
-    windows     = AttributePlatform,
-    linux       = AttributePlatform,
-    macos       = AttributePlatform,
-    ios         = AttributePlatform,
-    android     = AttributePlatform,
-    freebsd     = AttributePlatform,
-    openbsd     = AttributePlatform,
-    netbsd      = AttributePlatform,
-    -- cc
-    msvc        = AttributePlatform,
-    gcc         = AttributePlatform,
-    clang       = AttributePlatform,
-    clang_cl    = AttributePlatform,
-    mingw       = AttributePlatform,
-    emcc        = AttributePlatform,
-    -- paths
-    includes    = AttributePaths,
-    sysincludes = AttributePaths,
-    linkdirs    = AttributePaths,
-    outputs     = AttributePaths,
-    -- path
-    script      = AttributePath,
-    -- strings
-    objdeps     = AttributeStrings,
-    defines     = AttributeStrings,
-    flags       = AttributeStrings,
-    ldflags     = AttributeStrings,
-    links       = AttributeStrings,
-    frameworks  = AttributeStrings,
-    deps        = AttributeStrings,
-    -- globs
-    inputs      = AttributeGlobs,
-    sources     = AttributeGlobs,
-    -- args
-    args        = AttributeArgs,
-}
-
-local LINK_ATTRIBUTE <const> = {
-    ldflags = true,
-    links = true,
-    linkdirs = true,
-    frameworks = true,
-}
-
-local function push_globs(t, v)
-    local vt = type(v)
-    if vt == "string" then
-        t[#t+1] = v
-    elseif vt == "userdata" then
-        t[#t+1] = v
-    elseif vt == "table" then
-        if getmetatable(v) ~= nil then
-            t[#t+1] = v
-        else
-            for i = 1, #v do
-                push_globs(t, v[i])
-            end
-        end
-    end
-end
-
-local function push_strings(t, v)
-    local vt = type(v)
-    if vt == "string" then
-        t[#t+1] = v
-    elseif vt == "table" then
-        for i = 1, #v do
-            push_strings(t, v[i])
-        end
-    end
-end
-
-local function push_path(v, root)
-    local vt = type(v)
-    if vt == "string" then
-        return pathutil.tostring(root, v)
-    elseif vt == "userdata" then
-        return pathutil.tostring(root, v)
-    elseif vt == "table" then
-        if getmetatable(v) ~= nil then
-            return pathutil.tostring(root, v)
-        end
-    end
-end
-
-local function push_paths(t, v, root)
-    local vt = type(v)
-    if vt == "string" then
-        t[#t+1] = pathutil.tostring(root, v)
-    elseif vt == "userdata" then
-        t[#t+1] = pathutil.tostring(root, v)
-    elseif vt == "table" then
-        if getmetatable(v) ~= nil then
-            t[#t+1] = pathutil.tostring(root, v)
-        else
-            for i = 1, #v do
-                push_paths(t, v[i], root)
-            end
-        end
-    end
-end
-
-local function push_mix(t, v, root)
-    local vt = type(v)
-    if vt == "string" then
-        if v:sub(1, 1) == "@" then
-            t[#t+1] = pathutil.tostring(root, v:sub(2))
-        else
-            t[#t+1] = v:gsub("@{([^}]*)}", function (s)
-                return pathutil.tostring(root, s)
-            end)
-        end
-    elseif vt == "userdata" then
-        t[#t+1] = pathutil.tostring(root, v)
-    elseif vt == "table" then
-        if getmetatable(v) ~= nil then
-            t[#t+1] = pathutil.tostring(root, v)
-        else
-            for i = 1, #v do
-                push_mix(t, v[i], root)
-            end
-        end
-    end
-end
-
-local function push_args(t, v, root)
-    for i = 1, #v do
-        push_mix(t, v[i], root)
-    end
-end
-
-local function merge_table(root, t, a)
-    for k, v in pairs(a) do
-        if type(k) ~= "string" then
-            goto continue
-        end
-        if ATTRIBUTE[k] == AttributePlatform then
-        elseif ATTRIBUTE[k] == AttributePaths then
-            t[k] = t[k] or {}
-            push_paths(t[k], v, root)
-            if #t[k] == 0 then
-                t[k] = nil
-            end
-        elseif ATTRIBUTE[k] == AttributePath then
-            t[k] = push_path(v, root)
-        elseif ATTRIBUTE[k] == AttributeArgs then
-            t[k] = t[k] or {}
-            push_args(t[k], v, root)
-            if #t[k] == 0 then
-                t[k] = nil
-            end
-        elseif ATTRIBUTE[k] == AttributeStrings then
-            t[k] = t[k] or {}
-            push_strings(t[k], v)
-            if #t[k] == 0 then
-                t[k] = nil
-            end
-        elseif ATTRIBUTE[k] == AttributeGlobs then
-            t[k] = t[k] or {}
-            push_globs(t[k], v)
-            if #t[k] == 0 then
-                t[k] = nil
-            end
-        else
-            t[k] = v
-        end
-        ::continue::
-    end
-    return t
-end
-
-local function merge_table_nolink(root, t, a)
-    for k, v in pairs(a) do
-        if type(k) ~= "string" then
-            goto continue
-        end
-        if LINK_ATTRIBUTE[k] then
-            goto continue
-        end
-        if ATTRIBUTE[k] == AttributePlatform then
-        elseif ATTRIBUTE[k] == AttributePaths then
-            t[k] = t[k] or {}
-            push_paths(t[k], v, root)
-            if #t[k] == 0 then
-                t[k] = nil
-            end
-        elseif ATTRIBUTE[k] == AttributePath then
-            t[k] = push_path(v, root)
-        elseif ATTRIBUTE[k] == AttributeArgs then
-            t[k] = t[k] or {}
-            push_args(t[k], v, root)
-            if #t[k] == 0 then
-                t[k] = nil
-            end
-        elseif ATTRIBUTE[k] == AttributeStrings then
-            t[k] = t[k] or {}
-            push_strings(t[k], v)
-            if #t[k] == 0 then
-                t[k] = nil
-            end
-        elseif ATTRIBUTE[k] == AttributeGlobs then
-            t[k] = t[k] or {}
-            push_globs(t[k], v)
-            if #t[k] == 0 then
-                t[k] = nil
-            end
-        else
-            t[k] = v
-        end
-        ::continue::
-    end
-    return t
-end
-
-local function reslove_table(root, t, a)
-    merge_table(root, t, a)
-    if a[globals.os] then
-        merge_table(root, t, a[globals.os])
-    end
-    if a[globals.compiler] then
-        merge_table(root, t, a[globals.compiler])
-    end
-    if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
-        merge_table(root, t, a.mingw)
-    end
-    if a.clang_cl and globals.cc == "clang-cl" then
-        merge_table(root, t, a.clang_cl)
-    end
-end
-
-local function reslove_table_nolink(root, t, a)
-    merge_table_nolink(root, t, a)
-    if a[globals.os] then
-        merge_table_nolink(root, t, a[globals.os])
-    end
-    if a[globals.compiler] then
-        merge_table_nolink(root, t, a[globals.compiler])
-    end
-    if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
-        merge_table_nolink(root, t, a.mingw)
-    end
-    if a.clang_cl and globals.cc == "clang-cl" then
-        merge_table(root, t, a.clang_cl)
-    end
-end
-
 local function normalize_rootdir(workdir, rootdir)
     if type(rootdir) == "table" then
         if getmetatable(rootdir) == nil then
@@ -347,10 +92,10 @@ local function reslove_attributes(g, loc)
     local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
 
     local r = {}
-    reslove_table(g_rootdir, r, g)
-    reslove_table(l_rootdir, r, loc)
+    workspace.push_attributes(r, g, g_rootdir)
+    workspace.push_attributes(r, loc, l_rootdir)
     --TODO: remove it
-    push_args(r, loc, l_rootdir)
+    workspace.push_args(r, loc, l_rootdir)
     r.workdir = g.workdir
     r.rootdir = l_rootdir
     return r
@@ -361,10 +106,10 @@ local function reslove_attributes_nolink(g, loc)
     local l_rootdir = normalize_rootdir(g.workdir, loc.rootdir or g.rootdir)
 
     local r = {}
-    reslove_table_nolink(g_rootdir, r, g)
-    reslove_table(l_rootdir, r, loc)
+    workspace.push_attributes(r, g, g_rootdir, true)
+    workspace.push_attributes(r, loc, l_rootdir)
     --TODO: remove it
-    push_args(r, loc, l_rootdir)
+    workspace.push_args(r, loc, l_rootdir)
     r.workdir = g.workdir
     r.rootdir = l_rootdir
     return r
@@ -1155,7 +900,7 @@ end
 
 function api.conf(global_attribute, attribute)
     local root = normalize_rootdir(global_attribute.workdir, attribute.rootdir or global_attribute.rootdir)
-    reslove_table(root, global_attribute, attribute)
+    workspace.push_attributes(global_attribute, attribute, root)
 end
 
 for rule, genfunc in pairs(GEN) do
@@ -1202,7 +947,7 @@ local MainWorkspace = workspace.create(globals.workdir, api, globals)
 function api:default(attribute)
     if self == MainWorkspace then
         local deps = {}
-        push_strings(deps, attribute)
+        workspace.push_strings(deps, attribute)
         local implicit_inputs = getImplicitInputs("default", { deps = deps })
         ninja:default(implicit_inputs)
     end

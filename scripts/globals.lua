@@ -8,7 +8,10 @@ end
 
 globals.mode = globals.mode or "release"
 
-globals.hostos = globals.hostos or require "bee.platform".os
+local platform = require "bee.platform"
+globals.hostos = globals.hostos or platform.os
+globals.arch = globals.arch or platform.Arch
+
 globals.hostshell = globals.hostshell or (function ()
     if globals.hostos == "windows" then
         if os.getenv "MSYSTEM" then

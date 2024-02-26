@@ -98,8 +98,6 @@ local function reslove_attributes(g, l)
     local t = {}
     workspace.push_attributes(t, g, g_rootdir)
     workspace.push_attributes(t, l, l_rootdir)
-    --TODO: remove it
-    workspace.push_args(t, l, l_rootdir)
     t.workdir = g.workdir
     t.rootdir = l_rootdir
     return t
@@ -445,7 +443,7 @@ local function generate_rule(attribute, name)
     loaded_rule[name] = true
 
     local command = {}
-    for i, v in ipairs(attribute) do
+    for i, v in ipairs(attribute.args) do
         command[i] = fsutil.quotearg(v)
     end
     if attribute.deps then

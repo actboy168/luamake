@@ -253,5 +253,4 @@ return {
     create = create,
     push_attributes = push_attributes,
     push_strings = push_strings,
-    push_args = push_args,
 }

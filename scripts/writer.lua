@@ -910,7 +910,9 @@ function api.conf(global_attribute, name)
     if type(name) == "table" then
         local local_attribute = name
         local root = normalize_rootdir(global_attribute.workdir, local_attribute.rootdir or global_attribute.rootdir)
-        workspace.resolve_attributes(global_attribute, local_attribute, root)
+        local attribute = {}
+        workspace.resolve_attributes(attribute, local_attribute, root)
+        global_attribute("set", attribute)
     else
         log.assert(type(name) == "string", "Name is not a string.")
         return function (local_attribute)

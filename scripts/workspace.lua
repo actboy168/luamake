@@ -273,6 +273,21 @@ local function create(workdir, parent, attri)
         end
     end
 
+    function mt:__call(_, new_attri)
+        for k, v in pairs(new_attri) do
+            if arguments.args[k] == nil then
+                if ATTRIBUTE[k] == AttributePaths or ATTRIBUTE[k] == AttributeStrings then
+                    local t = {}
+                    push_strings(t, parent[k])
+                    push_strings(t, v)
+                    attri[k] = t
+                else
+                    attri[k] = v
+                end
+            end
+        end
+    end
+
     if globals == attri then
         function mt:__pairs()
             return function (_, k)

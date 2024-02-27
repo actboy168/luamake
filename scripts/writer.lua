@@ -113,6 +113,14 @@ local function reslove_attributes_nolink(g, l)
     return t
 end
 
+local function reslove_args(args)
+    local command = {}
+    for i, v in ipairs(args) do
+        command[i] = fsutil.quotearg(v)
+    end
+    return table.concat(command, " ")
+end
+
 local function array_remove(t, k)
     for pos, v in ipairs(t) do
         if v == k then
@@ -438,20 +446,6 @@ local function generate(rule, attribute, name)
     ninja:phony(name, binname)
 end
 
-local function generate_rule(attribute, name)
-    log.assert(loaded_rule[name] == nil, "rule `%s`: redefinition.", name)
-    loaded_rule[name] = true
-
-    local command = {}
-    for i, v in ipairs(attribute.args) do
-        command[i] = fsutil.quotearg(v)
-    end
-    if attribute.deps then
-        attribute.deps = attribute.deps[#attribute.deps]
-    end
-    ninja:rule(name, table.concat(command, " "), attribute)
-end
-
 local function getImplicitInputs(name, attribute)
     local res = {}
     if attribute.deps then
@@ -531,20 +525,15 @@ function GEN.runlua(attribute, name)
     implicit_inputs[#implicit_inputs+1] = script
 
     if attribute.args then
-        local command = {}
-        for i, v in ipairs(attribute.args) do
-            command[i] = fsutil.quotearg(v)
-        end
-        local command_str = table.concat(command, " ")
-        ninja:rule("runlua", "$luamake lua $script "..command_str, {
-            description = "lua $script "..command_str
+        local command = reslove_args(attribute.args)
+        ninja:rule("runlua", "$luamake lua $script "..command, {
+            description = "lua $script "..command
         })
     else
         ninja:rule("runlua", "$luamake lua $script", {
             description = "lua $script"
         })
     end
-
 
     local outname
     if #outputs == 0 then
@@ -583,25 +572,20 @@ function GEN.build(attribute, name)
         outname = outputs
     end
 
-    local command_str; do
-        if attribute.args then
-            local command = {}
-            for i, v in ipairs(attribute.args) do
-                command[i] = fsutil.quotearg(v)
-            end
-            command_str = table.concat(command, " ")
-        end
-    end
-
     if rule then
         log.assert(loaded_rule[rule], "unknown rule `%s`", rule)
+        local command
+        if attribute.args then
+            command = reslove_args(attribute.args)
+        end
         ninja:set_rule(rule)
         ninja:build(outname, inputs, {
             implicit_inputs = implicit_inputs,
-            variables = { args = command_str },
+            variables = { args = command },
         })
     else
-        ninja:rule("build_"..name, command_str)
+        local command = reslove_args(attribute.args)
+        ninja:rule("build_"..name, command)
         ninja:build(outname, inputs, {
             implicit_inputs = implicit_inputs,
         })
@@ -885,23 +869,11 @@ for to, from in pairs(alias) do
     api[to] = api[from]
 end
 
-function api.rule(global_attribute, name)
-    log.assert(type(name) == "string", "Name is not a string.")
-    return function (local_attribute)
-        local attribute = reslove_attributes(global_attribute, local_attribute)
-        generate_rule(attribute, name)
-    end
-end
-
-function api.conf(global_attribute, attribute)
-    local root = normalize_rootdir(global_attribute.workdir, attribute.rootdir or global_attribute.rootdir)
-    workspace.push_attributes(global_attribute, attribute, root)
-end
-
 for rule, genfunc in pairs(GEN) do
     api[rule] = function (global_attribute, name)
         if type(name) == "table" then
-            local attribute = reslove_attributes(global_attribute, name)
+            local local_attribute = name
+            local attribute = reslove_attributes(global_attribute, local_attribute)
             genfunc(attribute)
         else
             log.assert(type(name) == "string", "Name is not a string.")
@@ -911,6 +883,25 @@ for rule, genfunc in pairs(GEN) do
             end
         end
     end
+end
+
+function api.rule(global_attribute, name)
+    log.assert(type(name) == "string", "Name is not a string.")
+    return function (local_attribute)
+        local attribute = reslove_attributes(global_attribute, local_attribute)
+        log.assert(loaded_rule[name] == nil, "rule `%s`: redefinition.", name)
+        loaded_rule[name] = true
+        if attribute.deps then
+            attribute.deps = attribute.deps[#attribute.deps]
+        end
+        local command = reslove_args(attribute.args)
+        ninja:rule(name, command, attribute)
+    end
+end
+
+function api.conf(global_attribute, attribute)
+    local root = normalize_rootdir(global_attribute.workdir, attribute.rootdir or global_attribute.rootdir)
+    workspace.push_attributes(global_attribute, attribute, root)
 end
 
 function api:has(name)

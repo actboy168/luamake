@@ -87,27 +87,21 @@ local function normalize_rootdir(workdir, rootdir)
     return fsutil.normalize(workdir, rootdir or ".")
 end
 
-local function resolve_rootdir(g, l)
-    local g_rootdir = normalize_rootdir(g.workdir, g.rootdir)
-    local l_rootdir = normalize_rootdir(g.workdir, l.rootdir or g.rootdir)
-    return g_rootdir, l_rootdir
-end
-
 local function reslove_attributes(g, l)
-    local g_rootdir, l_rootdir = resolve_rootdir(g, l)
+    local l_rootdir = normalize_rootdir(g.workdir, l.rootdir or g.rootdir)
     local t = {}
-    workspace.push_attributes(t, g, g_rootdir)
-    workspace.push_attributes(t, l, l_rootdir)
+    workspace.push_attributes(t, g)
+    workspace.resolve_attributes(t, l, l_rootdir)
     t.workdir = g.workdir
     t.rootdir = l_rootdir
     return t
 end
 
 local function reslove_attributes_nolink(g, l)
-    local g_rootdir, l_rootdir = resolve_rootdir(g, l)
+    local l_rootdir = normalize_rootdir(g.workdir, l.rootdir or g.rootdir)
     local t = {}
-    workspace.push_attributes(t, g, g_rootdir, true)
-    workspace.push_attributes(t, l, l_rootdir)
+    workspace.push_attributes(t, g, true)
+    workspace.resolve_attributes(t, l, l_rootdir)
     t.workdir = g.workdir
     t.rootdir = l_rootdir
     return t
@@ -901,7 +895,7 @@ end
 
 function api.conf(global_attribute, attribute)
     local root = normalize_rootdir(global_attribute.workdir, attribute.rootdir or global_attribute.rootdir)
-    workspace.push_attributes(global_attribute, attribute, root)
+    workspace.resolve_attributes(global_attribute, attribute, root)
 end
 
 function api:has(name)

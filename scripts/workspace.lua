@@ -83,7 +83,7 @@ local function push_strings(t, v)
     end
 end
 
-local function push_path(v, root)
+local function path2string(root, v)
     local vt = type(v)
     if vt == "string" then
         return pathutil.tostring(root, v)
@@ -142,12 +142,54 @@ local function push_args(t, v, root)
     end
 end
 
-local function push_table(t, a, root, NOLINK)
+local function push_table(t, a, NOLINK)
     for k, v in pairs(a) do
         if type(k) ~= "string" then
             goto continue
         end
         if NOLINK and LINK_ATTRIBUTE[k] then
+            goto continue
+        end
+        if ATTRIBUTE[k] == AttributePlatform then
+        elseif ATTRIBUTE[k] == AttributePaths or ATTRIBUTE[k] == AttributeArgs or ATTRIBUTE[k] == AttributeStrings then
+            t[k] = t[k] or {}
+            push_strings(t[k], v)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
+        elseif ATTRIBUTE[k] == AttributeGlobs then
+            t[k] = t[k] or {}
+            push_globs(t[k], v)
+            if #t[k] == 0 then
+                t[k] = nil
+            end
+        else
+            t[k] = v
+        end
+        ::continue::
+    end
+    return t
+end
+
+local function push_attributes(t, a, NOLINK)
+    push_table(t, a, NOLINK)
+    if a[globals.os] then
+        push_table(t, a[globals.os], NOLINK)
+    end
+    if a[globals.compiler] then
+        push_table(t, a[globals.compiler], NOLINK)
+    end
+    if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
+        push_table(t, a.mingw, NOLINK)
+    end
+    if a.clang_cl and globals.cc == "clang-cl" then
+        push_table(t, a.clang_cl, NOLINK)
+    end
+end
+
+local function resolve_table(t, a, root)
+    for k, v in pairs(a) do
+        if type(k) ~= "string" then
             goto continue
         end
         if ATTRIBUTE[k] == AttributePlatform then
@@ -158,7 +200,7 @@ local function push_table(t, a, root, NOLINK)
                 t[k] = nil
             end
         elseif ATTRIBUTE[k] == AttributePath then
-            t[k] = push_path(v, root)
+            t[k] = path2string(root, v)
         elseif ATTRIBUTE[k] == AttributeArgs then
             t[k] = t[k] or {}
             push_args(t[k], v, root)
@@ -185,19 +227,19 @@ local function push_table(t, a, root, NOLINK)
     return t
 end
 
-local function push_attributes(t, a, root, NOLINK)
-    push_table(t, a, root, NOLINK)
+local function resolve_attributes(t, a, root)
+    resolve_table(t, a, root)
     if a[globals.os] then
-        push_table(t, a[globals.os], root, NOLINK)
+        resolve_table(t, a[globals.os], root)
     end
     if a[globals.compiler] then
-        push_table(t, a[globals.compiler], root, NOLINK)
+        resolve_table(t, a[globals.compiler], root)
     end
     if a.mingw and globals.os == "windows" and globals.hostshell == "sh" then
-        push_table(t, a.mingw, root, NOLINK)
+        resolve_table(t, a.mingw, root)
     end
     if a.clang_cl and globals.cc == "clang-cl" then
-        push_table(t, a.clang_cl, root, NOLINK)
+        resolve_table(t, a.clang_cl, root)
     end
 end
 
@@ -217,7 +259,7 @@ local function create(workdir, parent, attri)
         end
         if ATTRIBUTE[k] == AttributePaths then
             local t = {}
-            push_paths(t, parent[k], parent.workdir)
+            push_strings(t, parent[k])
             push_paths(t, v, workdir)
             attri[k] = t
         elseif ATTRIBUTE[k] == AttributeStrings then
@@ -268,5 +310,6 @@ end
 return {
     create = create,
     push_attributes = push_attributes,
+    resolve_attributes = resolve_attributes,
     push_strings = push_strings,
 }

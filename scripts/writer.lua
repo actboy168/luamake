@@ -14,6 +14,7 @@ local cc
 local m = {}
 local loaded_target = {}
 local loaded_rule = {}
+local loaded_conf = {}
 local scripts = {}
 local visited = {}
 
@@ -91,6 +92,12 @@ local function reslove_attributes(g, l)
     local l_rootdir = normalize_rootdir(g.workdir, l.rootdir or g.rootdir)
     local t = {}
     workspace.push_attributes(t, g)
+    if l.confs then
+        for _, conf in ipairs(l.confs) do
+            local conf_attribute = log.assert(loaded_conf[conf], "unknown conf `%s`", conf)
+            workspace.push_attributes(t, conf_attribute)
+        end
+    end
     workspace.resolve_attributes(t, l, l_rootdir)
     t.workdir = g.workdir
     t.rootdir = l_rootdir
@@ -101,6 +108,12 @@ local function reslove_attributes_nolink(g, l)
     local l_rootdir = normalize_rootdir(g.workdir, l.rootdir or g.rootdir)
     local t = {}
     workspace.push_attributes(t, g, true)
+    if l.confs then
+        for _, conf in ipairs(l.confs) do
+            local conf_attribute = log.assert(loaded_conf[conf], "unknown conf `%s`", conf)
+            workspace.push_attributes(t, conf_attribute, true)
+        end
+    end
     workspace.resolve_attributes(t, l, l_rootdir)
     t.workdir = g.workdir
     t.rootdir = l_rootdir
@@ -893,9 +906,20 @@ function api.rule(global_attribute, name)
     end
 end
 
-function api.conf(global_attribute, attribute)
-    local root = normalize_rootdir(global_attribute.workdir, attribute.rootdir or global_attribute.rootdir)
-    workspace.resolve_attributes(global_attribute, attribute, root)
+function api.conf(global_attribute, name)
+    if type(name) == "table" then
+        local local_attribute = name
+        local root = normalize_rootdir(global_attribute.workdir, local_attribute.rootdir or global_attribute.rootdir)
+        workspace.resolve_attributes(global_attribute, local_attribute, root)
+    else
+        log.assert(type(name) == "string", "Name is not a string.")
+        return function (local_attribute)
+            local root = normalize_rootdir(global_attribute.workdir, local_attribute.rootdir or global_attribute.rootdir)
+            local attribute = {}
+            workspace.resolve_attributes(attribute, local_attribute, root)
+            loaded_conf[name] = attribute
+        end
+    end
 end
 
 function api:has(name)

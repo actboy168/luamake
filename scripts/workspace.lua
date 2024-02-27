@@ -41,6 +41,7 @@ local ATTRIBUTE <const> = {
     links       = AttributeStrings,
     frameworks  = AttributeStrings,
     deps        = AttributeStrings,
+    confs       = AttributeStrings,
     -- globs
     inputs      = AttributeGlobs,
     sources     = AttributeGlobs,

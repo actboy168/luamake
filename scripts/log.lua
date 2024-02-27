@@ -122,6 +122,7 @@ function m.assert(cond, fmt, ...)
     if not cond then
         fatal(fmt:format(...))
     end
+    return cond
 end
 
 function m.fatal(fmt, ...)

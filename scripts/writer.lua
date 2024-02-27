@@ -583,28 +583,25 @@ function GEN.build(attribute, name)
         outname = outputs
     end
 
+    local command_str; do
+        if attribute.args then
+            local command = {}
+            for i, v in ipairs(attribute.args) do
+                command[i] = fsutil.quotearg(v)
+            end
+            command_str = table.concat(command, " ")
+        end
+    end
+
     if rule then
         log.assert(loaded_rule[rule], "unknown rule `%s`", rule)
         ninja:set_rule(rule)
-        local command_str; do
-            if attribute.args then
-                local command = {}
-                for i, v in ipairs(attribute.args) do
-                    command[i] = fsutil.quotearg(v)
-                end
-                command_str = table.concat(command, " ")
-            end
-        end
         ninja:build(outname, inputs, {
             implicit_inputs = implicit_inputs,
             variables = { args = command_str },
         })
     else
-        local command = {}
-        for i, v in ipairs(attribute) do
-            command[i] = fsutil.quotearg(v)
-        end
-        ninja:rule("build_"..name, table.concat(command, " "))
+        ninja:rule("build_"..name, command_str)
         ninja:build(outname, inputs, {
             implicit_inputs = implicit_inputs,
         })

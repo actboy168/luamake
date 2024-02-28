@@ -135,9 +135,8 @@ build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
 build $bin/main.lua: copy | $bin/bootstrap
   input = bee.lua/bootstrap/main.lua
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
-    bee.lua/test/ltest/coverage.lua bee.lua/test/ltest/ltest.lua $
-    bee.lua/test/ltest/stringify.lua bee.lua/test/ltest/undump.lua $
-    bee.lua/test/shell.lua bee.lua/test/supported.lua bee.lua/test/test.lua $
+    bee.lua/test/ltest.lua bee.lua/test/shell.lua $
+    bee.lua/test/supported.lua bee.lua/test/test.lua $
     bee.lua/test/test_filesystem.lua bee.lua/test/test_filewatch.lua $
     bee.lua/test/test_lua.lua bee.lua/test/test_serialization.lua $
     bee.lua/test/test_socket.lua bee.lua/test/test_subprocess.lua $

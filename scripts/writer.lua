@@ -605,7 +605,7 @@ function GEN.build(attribute, name)
     end
 end
 
-local function generate_copy(implicit_inputs, input, output)
+local function generate_copy(implicit_inputs, inputs, outputs)
     if globals.hostshell == "cmd" then
         ninja:rule("copy", "powershell -NonInteractive -Command Copy-Item -Path '$in$input' -Destination '$out' | Out-Null", {
             description = "Copy $in$input $out",
@@ -630,14 +630,14 @@ local function generate_copy(implicit_inputs, input, output)
     end
 
     if #implicit_inputs == 0 then
-        for i = 1, #input do
-            ninja:build(output[i], input[i])
+        for i = 1, #inputs do
+            ninja:build(outputs[i], inputs[i])
         end
     else
-        for i = 1, #input do
-            ninja:build(output[i], nil, {
+        for i = 1, #inputs do
+            ninja:build(outputs[i], nil, {
                 implicit_inputs = implicit_inputs,
-                variables = { input = input[i] },
+                variables = { input = inputs[i] },
             })
         end
     end
@@ -667,8 +667,8 @@ function GEN.msvc_copydll(attribute, name)
     if globals.compiler ~= "msvc" then
         return
     end
-    local input = {}
-    local output = {}
+    local inputs = {}
+    local outputs = {}
     local implicit_inputs = getImplicitInputs(name, attribute)
     init_enum(attribute, "mode", "release", enum_mode)
     init_enum(attribute, "optimize", (attribute.mode == "debug" and "off" or "speed"), cc.optimize)
@@ -684,8 +684,8 @@ function GEN.msvc_copydll(attribute, name)
             local filename = dll:filename():string()
             if filename:lower() ~= ignore then
                 for _, outputdir in ipairs(attributeOutputs) do
-                    input[#input+1] = dll
-                    output[#output+1] = fsutil.join(outputdir, filename)
+                    inputs[#inputs+1] = dll
+                    outputs[#outputs+1] = fsutil.join(outputdir, filename)
                 end
             end
         end
@@ -696,13 +696,13 @@ function GEN.msvc_copydll(attribute, name)
                 local filename = dll:filename():string()
                 if filename:lower() == "ucrtbase.dll" then
                     for _, outputdir in ipairs(attributeOutputs) do
-                        input[#input+1] = fsutil.join(bin, "ucrtbased.dll")
-                        output[#output+1] = fsutil.join(outputdir, "ucrtbased.dll")
+                        inputs[#inputs+1] = fsutil.join(bin, "ucrtbased.dll")
+                        outputs[#outputs+1] = fsutil.join(outputdir, "ucrtbased.dll")
                     end
                 else
                     for _, outputdir in ipairs(attributeOutputs) do
-                        input[#input+1] = dll
-                        output[#output+1] = fsutil.join(outputdir, filename)
+                        inputs[#inputs+1] = dll
+                        outputs[#outputs+1] = fsutil.join(outputdir, filename)
                     end
                 end
             end
@@ -710,8 +710,8 @@ function GEN.msvc_copydll(attribute, name)
             for dll in fs.pairs(redist) do
                 local filename = dll:filename():string()
                 for _, outputdir in ipairs(attributeOutputs) do
-                    input[#input+1] = dll
-                    output[#output+1] = fsutil.join(outputdir, filename)
+                    inputs[#inputs+1] = dll
+                    outputs[#outputs+1] = fsutil.join(outputdir, filename)
                 end
             end
         end
@@ -721,15 +721,15 @@ function GEN.msvc_copydll(attribute, name)
             attribute.arch == "x86_64" and "x86_64" or "i386"
         )
         for _, outputdir in ipairs(attributeOutputs) do
-            input[#input+1] = fsutil.join(inputdir, filename)
-            output[#output+1] = fsutil.join(outputdir, filename)
+            inputs[#inputs+1] = fsutil.join(inputdir, filename)
+            outputs[#outputs+1] = fsutil.join(outputdir, filename)
         end
     end
-    generate_copy(implicit_inputs, input, output)
+    generate_copy(implicit_inputs, inputs, outputs)
 
     if name then
         log.assert(loaded_target[name] == nil, "`%s`: redefinition.", name)
-        ninja:phony(name, output)
+        ninja:phony(name, outputs)
         loaded_target[name] = {
             implicit_inputs = name,
         }

@@ -47,6 +47,7 @@ local function compdb()
         local f <close> = assert(io.open(compile_commands.."/compile_commands.json", "wb"))
         ninja {
             "-t", "compdb",
+            "-x",
             stdout = f
         }
     end

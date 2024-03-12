@@ -29,33 +29,14 @@ local function compile(pattern)
 end
 
 local function pattern_preprocess(root, pattern)
-    local ispath = pathutil.is(pattern)
-    if ispath and pattern.accepted then
-        local value = pattern.value
-        local ignore
-        if value:match "^!" then
-            ignore = true
-            value = value:sub(2)
-        end
-        return value, ignore
-    end
-
-    local path = ispath and pattern.value or tostring(pattern)
-
+    local ispath, path = pathutil.tovalue(pattern)
     local ignore
     if path:match "^!" then
         ignore = true
         path = path:sub(2)
     end
-    path = fsutil.absolute(root, path)
-
-    if ispath then
-        if ignore then
-            pattern.value = "!"..path
-        else
-            pattern.value = path
-        end
-        pattern.accepted = true
+    if not ispath then
+        path = fsutil.absolute(root, path)
     end
     return path, ignore
 end

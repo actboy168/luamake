@@ -87,12 +87,12 @@ end
 local function path2string(root, v)
     local vt = type(v)
     if vt == "string" then
-        return pathutil.tostring(root, v)
+        return pathutil.tostr(root, v)
     elseif vt == "userdata" then
-        return pathutil.tostring(root, v)
+        return pathutil.tostr(root, v)
     elseif vt == "table" then
         if getmetatable(v) ~= nil then
-            return pathutil.tostring(root, v)
+            return pathutil.tostr(root, v)
         end
     end
 end
@@ -100,12 +100,12 @@ end
 local function push_paths(t, v, root)
     local vt = type(v)
     if vt == "string" then
-        t[#t+1] = pathutil.tostring(root, v)
+        t[#t+1] = pathutil.tostr(root, v)
     elseif vt == "userdata" then
-        t[#t+1] = pathutil.tostring(root, v)
+        t[#t+1] = pathutil.tostr(root, v)
     elseif vt == "table" then
         if getmetatable(v) ~= nil then
-            t[#t+1] = pathutil.tostring(root, v)
+            t[#t+1] = pathutil.tostr(root, v)
         else
             for i = 1, #v do
                 push_paths(t, v[i], root)
@@ -118,17 +118,17 @@ local function push_mix(t, v, root)
     local vt = type(v)
     if vt == "string" then
         if v:sub(1, 1) == "@" then
-            t[#t+1] = pathutil.tostring(root, v:sub(2))
+            t[#t+1] = pathutil.tostr(root, v:sub(2))
         else
             t[#t+1] = v:gsub("@{([^}]*)}", function (s)
-                return pathutil.tostring(root, s)
+                return pathutil.tostr(root, s)
             end)
         end
     elseif vt == "userdata" then
-        t[#t+1] = pathutil.tostring(root, v)
+        t[#t+1] = pathutil.tostr(root, v)
     elseif vt == "table" then
         if getmetatable(v) ~= nil then
-            t[#t+1] = pathutil.tostring(root, v)
+            t[#t+1] = pathutil.tostr(root, v)
         else
             for i = 1, #v do
                 push_mix(t, v[i], root)

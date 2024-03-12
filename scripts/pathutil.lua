@@ -20,8 +20,12 @@ local function path_normalize(base, path)
     return path:gsub("\\", "/")
 end
 
+local function is(path)
+    return mt == getmetatable(path)
+end
+
 local function accept(base, path)
-    if mt == getmetatable(path) then
+    if is(path) then
         if not path.accepted then
             path.value = path_normalize(base, path.value)
             path.accepted = true
@@ -30,24 +34,20 @@ local function accept(base, path)
     return path
 end
 
-local function tostring(base, path)
-    if mt == getmetatable(path) then
-        if not path.accepted then
-            path.value = path_normalize(base, path.value)
-            path.accepted = true
-        end
+local function tostr(base, path)
+    if is(path) then
+        assert(path.accepted, "Cannot be used before accept.")
         return path.value
     end
     return path_normalize(base, path)
 end
 
-local function is(path)
-    return mt == getmetatable(path)
-end
-
-function mt:__tostring()
-    assert(self.accepted, "Cannot be used before accept.")
-    return self.value
+local function tovalue(path)
+    if is(path) then
+        assert(path.accepted, "Cannot be used before accept.")
+        return true, path.value
+    end
+    return false, tostring(path)
 end
 
 function mt.__concat(lft, rhs)
@@ -67,7 +67,7 @@ end
 
 return {
     create = create,
-    tostring = tostring,
+    tostr = tostr,
+    tovalue = tovalue,
     accept = accept,
-    is = is,
 }

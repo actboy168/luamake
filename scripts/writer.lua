@@ -76,16 +76,7 @@ local function tbl_insert(t, pos, a)
 end
 
 local function normalize_rootdir(workdir, rootdir)
-    if type(rootdir) == "table" then
-        if getmetatable(rootdir) == nil then
-            rootdir = rootdir[#rootdir]
-        else
-            --TODO
-            rootdir = tostring(rootdir)
-            return fsutil.absolute(WORKDIR, rootdir)
-        end
-    end
-    return fsutil.normalize(workdir, rootdir or ".")
+    return pathutil.tostr(workdir, rootdir)
 end
 
 local function reslove_attributes(g, l)
@@ -647,7 +638,7 @@ function GEN.copy(attribute, name)
     local inputs = attribute.inputs or {}
     local outputs = attribute.outputs or {}
     for i = 1, #inputs do
-        inputs[i] = pathutil.tostring(attribute.rootdir, inputs[i])
+        inputs[i] = pathutil.tostr(attribute.rootdir, inputs[i])
     end
     local implicit_inputs = getImplicitInputs(name, attribute)
     log.assert(#inputs == #outputs, "`%s`: The number of input and output must be the same.", name)
@@ -985,10 +976,7 @@ end
 
 function api:import(path)
     local ws = self
-    local fullpath = pathutil.tostring(ws.workdir, path)
-    if fs.is_directory(fullpath) then
-        fullpath = fsutil.join(fullpath, "make.lua")
-    end
+    local fullpath = pathutil.tostr(ws.workdir, path)
     if visited[fullpath] then
         return
     end

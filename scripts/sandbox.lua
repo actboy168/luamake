@@ -183,7 +183,7 @@ return function (c)
             f:close()
             return load(str, "@"..path, "t", ENV or env)
         end
-        return nil, err
+        return nil, "Fail to open the file: " .. err
     end
     local function sandbox_openfile(name, mode)
         return openfile(absolute(name), mode)

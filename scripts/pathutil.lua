@@ -2,11 +2,18 @@ local fsutil = require "fsutil"
 
 local mt = {}
 
-local function create(path, accepted)
+local function create_internal(path, accepted)
     return setmetatable({
         value = path,
         accepted = accepted,
     }, mt)
+end
+
+local function create(path)
+    if type(path) == "userdata" then
+        return create_internal(tostring(path), true)
+    end
+    return create_internal(path, nil)
 end
 
 local function path_normalize(base, path)
@@ -53,16 +60,16 @@ end
 function mt.__concat(lft, rhs)
     if type(lft) == "string" then
         local path = lft..rhs.value
-        return create(path, rhs.accepted)
+        return create_internal(path, rhs.accepted)
     else
         local path = lft.value..rhs
-        return create(path, lft.accepted)
+        return create_internal(path, lft.accepted)
     end
 end
 
 function mt:__div(rhs)
     local path = fsutil.join(self.value, rhs)
-    return create(path, self.accepted)
+    return create_internal(path, self.accepted)
 end
 
 return {

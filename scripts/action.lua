@@ -5,8 +5,7 @@ local writer = require "writer"
 local arguments = require "arguments"
 
 local function execute(option)
-    local redirect = option.stdout ~= nil
-    option.stdout = option.stdout or true
+    assert(option.stdout ~= nil)
     option.stderr = "stdout"
     option.searchPath = true
     if globals.compiler == "msvc" then
@@ -19,13 +18,6 @@ local function execute(option)
         option[1] = { "cmd", "/c", option[1] }
     end
     local process = assert(sp.spawn(option))
-    if not redirect then
-        for line in process.stdout:lines() do
-            io.write(line, "\n")
-            io.flush()
-        end
-        process.stdout:close()
-    end
     return process:wait()
 end
 
@@ -46,9 +38,8 @@ local function compdb()
         })
         local f <close> = assert(io.open(compile_commands.."/compile_commands.json", "wb"))
         ninja {
-            "-t", "compdb",
-            "-x",
-            stdout = f
+            "-t", "compdb", "-x",
+            stdout = f,
         }
     end
 end
@@ -68,14 +59,20 @@ local function build()
             })
         end
     end
-    local code = ninja { arguments.targets, options }
+    local code = ninja {
+        arguments.targets, options,
+        stdout = io.stdout,
+    }
     if code ~= 0 then
         os.exit(code)
     end
 end
 
 local function clean()
-    local code = ninja { "-t", "clean" }
+    local code = ninja {
+        "-t", "clean",
+        stdout = io.stdout,
+    }
     if code ~= 0 then
         os.exit(code)
     end

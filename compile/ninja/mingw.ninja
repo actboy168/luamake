@@ -7,7 +7,7 @@ ar = ar
 luamake = luamake
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -Itools/lua54 $
-    -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -D_WIN32_WINNT=0x0602 -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
@@ -15,14 +15,14 @@ build $obj/source_bee/lua-seri.obj: c_source_bee $
     bee.lua/3rd/lua-seri/lua-seri.c
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -D_WIN32_WINNT=0x0602 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/format.obj: cxx_source_bee bee.lua/3rd/fmt/format.cc
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -Ibee.lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -Ibee.lua -D_WIN32_WINNT=0x0602 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
@@ -60,7 +60,7 @@ build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
     bee.lua/bee/utility/path_helper.cpp
 rule cxx_source_bee_2
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -Ibee.lua -Itools/lua54 -D_WIN32_WINNT=0x0601 -DBEE_STATIC $
+    -Ibee.lua -Itools/lua54 -D_WIN32_WINNT=0x0602 -DBEE_STATIC $
     -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
@@ -89,14 +89,14 @@ build $obj/source_bee/lua_windows.obj: cxx_source_bee_2 $
     bee.lua/binding/port/lua_windows.cpp
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -D_WIN32_WINNT=0x0602 -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
 build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
 rule c_source_lua_1
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -D_WIN32_WINNT=0x0601 -DMAKE_LIB -DLUA_BUILD_AS_DLL -DNDEBUG $
+    -D_WIN32_WINNT=0x0602 -DMAKE_LIB -DLUA_BUILD_AS_DLL -DNDEBUG $
     -Wno-maybe-uninitialized -o $out -c $in
   description = Compile C   $out
   deps = gcc
@@ -105,7 +105,7 @@ build $obj/source_lua/linit.obj: c_source_lua_1 bee.lua/3rd/lua/linit.c
 build $obj/source_lua/onelua.obj: c_source_lua_1 bee.lua/3rd/lua/onelua.c
 rule cxx_source_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -Ibee.lua/3rd/lua -Ibee.lua -D_WIN32_WINNT=0x0601 -DNDEBUG -o $out -c $in
+    -Ibee.lua/3rd/lua -Ibee.lua -D_WIN32_WINNT=0x0602 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d

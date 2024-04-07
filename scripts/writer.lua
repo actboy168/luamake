@@ -772,6 +772,9 @@ function m.generate()
     if globals.os == "android" and globals.hostos ~= "android" then
         require "env.ndk"
     end
+    if globals.compiler == "wasi" then
+        require "env.wasi"
+    end
 
     if globals.compiler == "msvc" then
         if not globals.prebuilt then

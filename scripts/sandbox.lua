@@ -119,7 +119,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
         local main, extra = require_load(name)
         debug.setupvalue(main, 1, env)
         local _, res = xpcall(main, function (errmsg)
-            log.fatal(errmsg)
+            log.fatal("%s", errmsg)
         end, extra)
         if res ~= nil then
             _LOADED[name] = res
@@ -154,7 +154,7 @@ local function sandbox_env(env, loadlua, openfile, preload, builddir)
     function env.dofile(filename)
         local f, err = loadlua(filename)
         if not f then
-            log.fatal(err)
+            log.fatal("%s", err)
             return
         end
         return f()
@@ -190,11 +190,11 @@ return function (c)
     end
     local main, err = sandbox_loadlua(c.main)
     if not main then
-        log.fatal(err)
+        log.fatal("%s", err)
         return
     end
     debug.setupvalue(main, 1, sandbox_env(env, sandbox_loadlua, sandbox_openfile, c.preload, c.builddir))
     xpcall(main, function (errmsg)
-        log.fatal(errmsg)
+        log.fatal("%s", errmsg)
     end, table.unpack(c.args))
 end

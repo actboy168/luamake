@@ -1,6 +1,6 @@
 local setmetatable = setmetatable
 
-local gettime = require "bee.time".counter
+local gettime = require "bee.time".monotonic
 
 local m = {}
 

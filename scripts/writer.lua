@@ -728,10 +728,6 @@ function GEN.msvc_copydll(attribute, name)
 end
 
 local function get_luamake()
-    local proc = arg[-1]
-    if proc == "luamake" then
-        return "luamake"
-    end
     return fmtpath(fs.exe_path():string())
 end
 

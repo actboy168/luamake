@@ -84,7 +84,7 @@ build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_time.cpp
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -fvisibility=hidden -mmacosx-version-min=10.15 -DNDEBUG $
+    -fvisibility=hidden -mmacosx-version-min=10.15 -Ibee.lua -DNDEBUG $
     -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   deps = gcc

@@ -5,6 +5,7 @@ local isWindows = lm.os == "windows"
 
 if lm.prebuilt == nil then
     print("Please use `"..(isWindows and [[.\compile\install.bat]] or [[./compile/install.sh]]).."`.")
+    os.exit(false)
     return
 end
 

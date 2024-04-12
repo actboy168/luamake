@@ -81,20 +81,13 @@ build $obj/source_bee/lua_thread.obj: cxx_source_bee_2 $
 build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_time.cpp
 rule c_source_lua
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -fvisibility=hidden -Ibee.lua -DNDEBUG -o $out -c $in
-  description = Compile C   $out
-  deps = gcc
-  depfile = $out.d
-build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
-rule c_source_lua_1
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -DMAKE_LIB $
     -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
-build $obj/source_lua/linit.obj: c_source_lua_1 bee.lua/3rd/lua/linit.c
-build $obj/source_lua/onelua.obj: c_source_lua_1 bee.lua/3rd/lua/onelua.c
+build $obj/source_lua/linit.obj: c_source_lua bee.lua/3rd/lua/linit.c
+build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua/onelua.c
 rule cxx_source_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -Ibee.lua/3rd/lua -Ibee.lua -DLUA_USE_LINUX $
@@ -131,8 +124,7 @@ build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
     $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
     $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
-    $obj/source_lua/utf8_crt.obj $obj/source_lua/linit.obj $
-    $obj/source_lua/onelua.obj
+    $obj/source_lua/linit.obj $obj/source_lua/onelua.obj
 build $bin/main.lua: copy | $bin/bootstrap
   input = bee.lua/bootstrap/main.lua
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $

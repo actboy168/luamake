@@ -87,26 +87,21 @@ build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_time.cpp
 build $obj/source_bee/lua_windows.obj: cxx_source_bee_2 $
     bee.lua/binding/port/lua_windows.cpp
-rule c_source_lua
-  command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /D_WIN32_WINNT=0x0602 $
-    /DNDEBUG /utf-8 /std:c11
-  description = Compile C   $out
-  deps = msvc
-build $obj/source_lua/utf8_crt.obj: c_source_lua bee.lua/3rd/lua/utf8_crt.c
 rule asm_source_lua
   command = $ml /nologo /quiet /Fo $out /c $in
   description = Compile ASM $out
 build $obj/source_lua/fast_setjmp_x86_64.obj: asm_source_lua $
     bee.lua/3rd/lua/fast_setjmp_x86_64.s
-rule c_source_lua_1
+rule c_source_lua
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /O2 /Zc:inline /W3 /permissive- /MD /GL /D_WIN32_WINNT=0x0602 $
     /DMAKE_LIB /DLUA_BUILD_AS_DLL /DNDEBUG /utf-8 /wd4267 /wd4334 /std:c11
   description = Compile C   $out
   deps = msvc
-build $obj/source_lua/linit.obj: c_source_lua_1 bee.lua/3rd/lua/linit.c
-build $obj/source_lua/onelua.obj: c_source_lua_1 bee.lua/3rd/lua/onelua.c
+build $obj/source_lua/linit.obj: c_source_lua bee.lua/3rd/lua/linit.c
+build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua/onelua.c
+build $obj/bee_utf8_crt/bee_utf8_crt.obj: cxx_source_bee_1 $
+    bee.lua/3rd/lua/bee_utf8_crt.cpp
 rule cxx_source_bootstrap
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua /Ibee.lua $
@@ -164,8 +159,8 @@ build $bin/bootstrap.exe: link_bootstrap $obj/source_bootstrap/main.obj $
     $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
     $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $
     $obj/source_bee/lua_time.obj $obj/source_bee/lua_windows.obj $
-    $obj/source_lua/utf8_crt.obj $obj/source_lua/fast_setjmp_x86_64.obj $
-    $obj/source_lua/linit.obj $obj/source_lua/onelua.obj
+    $obj/source_lua/fast_setjmp_x86_64.obj $obj/source_lua/linit.obj $
+    $obj/source_lua/onelua.obj $obj/bee_utf8_crt/bee_utf8_crt.obj
 build $bin/main.lua: copy | $bin/bootstrap.exe
   input = bee.lua/bootstrap/main.lua
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $

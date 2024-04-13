@@ -927,13 +927,13 @@ function api:required_version(buildVersion)
     local function parse_version(v)
         local major, minor = v:match "^(%d+)%.(%d+)"
         if not major then
-            log.fatal("Invalid version string: `%s`.", v)
+            log.fastfail("Invalid version string: `%s`.", v)
         end
         return tonumber(major) * 1000 + tonumber(minor)
     end
     local luamakeVersion = require "version"
     if parse_version(luamakeVersion) < parse_version(buildVersion) then
-        log.fatal("luamake version (%s) incompatible with build file required_version (%s).", luamakeVersion, buildVersion)
+        log.fastfail("luamake version (%s) incompatible with build file required_version (%s).", luamakeVersion, buildVersion)
     end
 end
 

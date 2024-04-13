@@ -129,6 +129,11 @@ function m.fatal(fmt, ...)
     fatal(fmt:format(...))
 end
 
+function m.fastfail(fmt, ...)
+    io.stderr:write("Failed: " .. fmt:format(...))
+    os.exit(false)
+end
+
 local function conv_error(err)
     if type(err) == "table" and err.__luamake then
         return err.__luamake

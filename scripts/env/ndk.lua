@@ -1,4 +1,5 @@
 local globals = require "globals"
+local log = require "log"
 local fs = require "bee.filesystem"
 
 local function parse_version(str)
@@ -41,7 +42,7 @@ local function find_ndk()
             end
         end
     end
-    error "Need to specify NDK path."
+    log.fastfail "Need to specify NDK path."
 end
 
 local HOST_TAG = {

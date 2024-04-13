@@ -27,7 +27,7 @@ globals.compiler = globals.compiler or (function ()
             return "gcc"
         end
     end
-    if globals.os == "linux" then
+    if globals.os == "linux" or globals.os == "netbsd" then
         return "gcc"
     end
     if globals.os == "emscripten" then

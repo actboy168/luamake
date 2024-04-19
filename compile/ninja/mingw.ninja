@@ -38,8 +38,6 @@ build $obj/source_bee/module_version_win.obj: cxx_source_bee_1 $
     bee.lua/bee/platform/win/module_version_win.cpp
 build $obj/source_bee/unicode_win.obj: cxx_source_bee_1 $
     bee.lua/bee/platform/win/unicode_win.cpp
-build $obj/source_bee/unlink_win.obj: cxx_source_bee_1 $
-    bee.lua/bee/platform/win/unlink_win.cpp
 build $obj/source_bee/wtf8_win.obj: cxx_source_bee_1 $
     bee.lua/bee/platform/win/wtf8_win.cpp
 build $obj/source_bee/process_select.obj: cxx_source_bee_1 $
@@ -108,10 +106,14 @@ rule cxx_source_bootstrap
   depfile = $out.d
 build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/main.cpp
+rule rc_bootstrap
+  command = windres -i $in -o $out
+  description = Compile Res $out
+build $obj/bootstrap/bootstrap.obj: rc_bootstrap $
+    bee.lua/bootstrap/bootstrap.rc
 rule link_bootstrap
   command = sh -c "$cc @$out.rsp -o $out $
-    -Wl,--out-implib,$obj/bootstrap.lib -ladvapi32 -lws2_32 -lole32 $
-    -luser32 -lversion -lwbemuuid -loleAut32 -lshell32 -lntdll $
+    -Wl,--out-implib,$obj/bootstrap.lib -lws2_32 -lole32 -luser32 -lversion $
     -lsynchronization -luuid -lstdc++fs -lstdc++ -s"
   description = Link    Exe $out
   rspfile = $out.rsp
@@ -137,12 +139,12 @@ build $obj/lua54/forward_lua.obj: c_lua54 bee.lua/bootstrap/forward_lua.c
 rule link_lua54
   command = $cc --shared $in -o $out $obj/bootstrap.lib -lstdc++ -s
   description = Link    Dll $out
-build $bin/bootstrap.exe: link_bootstrap $obj/source_bootstrap/main.obj $
-    $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
-    $obj/source_bee/error.obj $obj/source_bee/filewatch_win.obj $
-    $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
-    $obj/source_bee/version.obj $obj/source_bee/module_version_win.obj $
-    $obj/source_bee/unicode_win.obj $obj/source_bee/unlink_win.obj $
+build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
+    $obj/source_bootstrap/main.obj $obj/source_bee/lua-seri.obj $
+    $obj/source_bee/format.obj $obj/source_bee/error.obj $
+    $obj/source_bee/filewatch_win.obj $obj/source_bee/endpoint.obj $
+    $obj/source_bee/socket.obj $obj/source_bee/version.obj $
+    $obj/source_bee/module_version_win.obj $obj/source_bee/unicode_win.obj $
     $obj/source_bee/wtf8_win.obj $obj/source_bee/process_select.obj $
     $obj/source_bee/subprocess_win.obj $obj/source_bee/atomic_sync.obj $
     $obj/source_bee/setname.obj $obj/source_bee/simplethread_win.obj $

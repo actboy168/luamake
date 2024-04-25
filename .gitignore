@@ -6,3 +6,4 @@
 /.ninja_log
 /.ninja_deps
 /tools/*/lua.def
+/compile/lua/forward_lua.c

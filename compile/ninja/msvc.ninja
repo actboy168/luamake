@@ -40,6 +40,12 @@ build $obj/source_bee/process_select.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/process_select.cpp
 build $obj/source_bee/subprocess_win.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/subprocess_win.cpp
+build $obj/source_bee/file_handle.obj: cxx_source_bee_1 $
+    bee.lua/bee/sys/file_handle.cpp
+build $obj/source_bee/file_handle_win.obj: cxx_source_bee_1 $
+    bee.lua/bee/sys/file_handle_win.cpp
+build $obj/source_bee/path_win.obj: cxx_source_bee_1 $
+    bee.lua/bee/sys/path_win.cpp
 build $obj/source_bee/atomic_sync.obj: cxx_source_bee_1 $
     bee.lua/bee/thread/atomic_sync.cpp
 build $obj/source_bee/setname.obj: cxx_source_bee_1 $
@@ -48,12 +54,6 @@ build $obj/source_bee/simplethread_win.obj: cxx_source_bee_1 $
     bee.lua/bee/thread/simplethread_win.cpp
 build $obj/source_bee/spinlock.obj: cxx_source_bee_1 $
     bee.lua/bee/thread/spinlock.cpp
-build $obj/source_bee/file_handle.obj: cxx_source_bee_1 $
-    bee.lua/bee/utility/file_handle.cpp
-build $obj/source_bee/file_handle_win.obj: cxx_source_bee_1 $
-    bee.lua/bee/utility/file_handle_win.cpp
-build $obj/source_bee/path_helper.obj: cxx_source_bee_1 $
-    bee.lua/bee/utility/path_helper.cpp
 build $obj/source_bee/version.obj: cxx_source_bee_1 bee.lua/bee/version.cpp
 build $obj/source_bee/afd.obj: cxx_source_bee_1 bee.lua/bee/win/afd/afd.cpp
 build $obj/source_bee/poller.obj: cxx_source_bee_1 $
@@ -169,10 +169,10 @@ build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
     $obj/source_bee/luaref.obj $obj/source_bee/bpoll_win.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
     $obj/source_bee/process_select.obj $obj/source_bee/subprocess_win.obj $
-    $obj/source_bee/atomic_sync.obj $obj/source_bee/setname.obj $
-    $obj/source_bee/simplethread_win.obj $obj/source_bee/spinlock.obj $
     $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_win.obj $
-    $obj/source_bee/path_helper.obj $obj/source_bee/version.obj $
+    $obj/source_bee/path_win.obj $obj/source_bee/atomic_sync.obj $
+    $obj/source_bee/setname.obj $obj/source_bee/simplethread_win.obj $
+    $obj/source_bee/spinlock.obj $obj/source_bee/version.obj $
     $obj/source_bee/afd.obj $obj/source_bee/poller.obj $
     $obj/source_bee/poller_fd.obj $obj/source_bee/module_version.obj $
     $obj/source_bee/unicode.obj $obj/source_bee/wtf8.obj $

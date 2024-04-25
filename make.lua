@@ -10,7 +10,6 @@ if lm.prebuilt == nil then
 end
 
 local exe = isWindows and ".exe" or ""
-local dll = isWindows and ".dll" or ".so"
 
 lm:import "bee.lua/make.lua"
 
@@ -46,8 +45,8 @@ if isWindows then
         }
     }
     lm:copy "copy_lua54" {
-        inputs = "$bin/lua54"..dll,
-        outputs = "tools/lua54"..dll,
+        inputs = "$bin/lua54.dll",
+        outputs = "tools/lua54.dll",
         deps = "lua54"
     }
 end

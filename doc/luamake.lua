@@ -1,9 +1,8 @@
 ---@meta luamake
 
----@class fs.path
 ---@class LmPath
 ---@alias LmStrlist any
----@alias LmValue string | fs.path | LmPath
+---@alias LmValue string | LmPath
 
 ---@class LmTargetAttri
 ---@field builddir string?
@@ -79,7 +78,7 @@ end
 ---
 --- Create an absolute path, base is workdir.
 ---
----@param value string | fs.path
+---@param value string
 ---@return LmPath
 function lm:path(value)
 end

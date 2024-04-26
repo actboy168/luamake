@@ -3,6 +3,7 @@
 ---@class fs.path
 ---@class LmPath
 ---@alias LmStrlist any
+---@alias LmValue string | fs.path | LmPath
 
 ---@class LmTargetAttri
 ---@field builddir string?
@@ -56,27 +57,44 @@
 ---@field compiler string
 ---@field cc string
 ---@field arch string
----@field [any] string | fs.path | LmPath
+---@field [any] LmValue
 local lm = {}
 
+---
+--- Asserts the minimum luamake version required to use.
+---
 ---@param version string
 function lm:required_version(version)
 end
 
----@param path string | fs.path | LmPath
+---
+--- Include a lua file.  
+--- Unlike require, import creates a sandbox where the child can access the father's attribute, but modifying the attribute will not affect the father.  
+--- In addition, import will also change the workdir.
+---
+---@param path LmValue
 function lm:import(path)
 end
 
+---
+--- Create an absolute path, base is workdir.
+---
 ---@param value string | fs.path
 ---@return LmPath
 function lm:path(value)
 end
 
+---
+--- Gets whether a target already exists.
+---
 ---@param name string
 ---@return boolean
 function lm:has(name)
 end
 
+---
+--- Specify default target. If not specified, all targets are default.
+---
 ---@param targets LmStrlist
 function lm:default(targets)
 end
@@ -92,9 +110,27 @@ end
 ---@field deps string?
 ---@field depfile string?
 
+---
+--- Same as the rule in ninja.
+---
 ---@param attribute string
 ---@return fun(attribute: LmRuleAttri)
 function lm:rule(attribute)
+end
+
+---@class LmBuildAttri
+---@field rootdir string?
+---@field deps LmStrlist?
+---@field inputs LmStrlist?
+---@field outputs LmStrlist
+---@field rule string
+
+---
+--- Same as the build in ninja.
+---
+---@param attribute string | LmBuildAttri
+---@return fun(attribute: LmBuildAttri) ?
+function lm:build(attribute)
 end
 
 ---@class LmPhonyAttri
@@ -103,6 +139,9 @@ end
 ---@field inputs LmStrlist?
 ---@field outputs LmStrlist
 
+---
+--- A target that does nothing. Just to resolve dependencies.
+---
 ---@param attribute string | LmPhonyAttri
 ---@return fun(attribute: LmPhonyAttri) ?
 function lm:phony(attribute)
@@ -116,21 +155,12 @@ end
 ---@field script string
 ---@field args LmStrlist?
 
+---
+--- Run a lua script. Equivalent to `luamake lua $script $args`
+---
 ---@param attribute string | LmRunluaAttri
 ---@return fun(attribute: LmRunluaAttri) ?
 function lm:runlua(attribute)
-end
-
----@class LmBuildAttri
----@field rootdir string?
----@field deps LmStrlist?
----@field inputs LmStrlist?
----@field outputs LmStrlist
----@field rule string
-
----@param attribute string | LmBuildAttri
----@return fun(attribute: LmBuildAttri) ?
-function lm:build(attribute)
 end
 
 ---@class LmCopyAttri
@@ -139,6 +169,9 @@ end
 ---@field inputs LmStrlist?
 ---@field outputs LmStrlist
 
+---
+--- Copy files.
+---
 ---@param attribute string | LmCopyAttri
 ---@return fun(attribute: LmCopyAttri) ?
 function lm:copy(attribute)
@@ -151,31 +184,53 @@ end
 ---@field outputs LmStrlist
 ---@field type "vcrt" | "ucrt" | "asan"
 
+---
+--- **msvc-specific**  
+--- Copy msvc runtime files to directory.
+---
 ---@param attribute string | LmMsvcCopyDllAttri
 ---@return fun(attribute: LmMsvcCopyDllAttri) ?
 function lm:msvc_copydll(attribute)
 end
 
+---
+--- Define a attribute set.  
+--- If no name is specified, the attribute set is immediately applied to the current workspace.  
+--- If a name is specified, the confs attribute can apply the attribute set by this name.  
+---
 ---@param attribute string | LmTargetAttri
 ---@return fun(attribute: LmTargetAttri) ?
 function lm:conf(attribute)
 end
 
+---
+--- Compilation target, executable.
+---
 ---@param name string
 ---@return fun(attribute: LmTargetAttri)
 function lm:exe(name)
 end
 
+---
+--- Compilation target, shared library.
+---
 ---@param name string
 ---@return fun(attribute: LmTargetAttri)
 function lm:dll(name)
 end
 
+---
+--- Compilation target, static library.
+---
 ---@param name string
 ---@return fun(attribute: LmTargetAttri)
 function lm:lib(name)
 end
 
+---
+--- Compilation target without link stage.  
+--- Can be depended on by compilation targets with link phases and participate in their link phases.
+---
 ---@param name string
 ---@return fun(attribute: LmTargetAttri)
 function lm:src(name)

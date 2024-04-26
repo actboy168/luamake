@@ -859,8 +859,6 @@ local alias <const> = {
     dll = "shared_library",
     lib = "static_library",
     src = "source_set",
-    lua_library = "lua_dll",
-    lua_source = "lua_src",
 }
 for to, from in pairs(alias) do
     api[to] = api[from]

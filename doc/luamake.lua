@@ -191,7 +191,4 @@ lm.shared_library = lm.dll
 lm.static_library = lm.lib
 lm.source_set = lm.src
 
-lm.lua_library = lm.lua_dll
-lm.lua_source = lm.lua_src
-
 return lm

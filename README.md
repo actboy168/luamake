@@ -29,20 +29,20 @@ compile/install.sh
 
 compile
 ```
-compile/build.bat(msvc)
-compile/build.sh (other)
+msvc > compile/build.bat
+other> compile/build.sh
 ```
 
 compile and skip test
 ```
-compile/build.bat notest(msvc)
-compile/build.sh notest(other)
+msvc > compile/build.bat notest
+other> compile/build.sh notest
 ```
 
 clean
 ```
-compile/build.bat -t clean(msvc)
-compile/build.sh -t clean(other)
+msvc > compile/build.bat -t clean
+other> compile/build.sh -t clean
 ```
 
 ## Quick Start

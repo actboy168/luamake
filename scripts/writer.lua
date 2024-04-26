@@ -939,10 +939,10 @@ end
 
 local MainWorkspace = workspace.create(globals.workdir, api, globals)
 
-function api:default(attribute)
+function api:default(targets)
     if self == MainWorkspace then
         local deps = {}
-        workspace.push_strings(deps, attribute)
+        workspace.push_strings(deps, targets)
         local implicit_inputs = getImplicitInputs("default", { deps = deps })
         ninja:default(implicit_inputs)
     end

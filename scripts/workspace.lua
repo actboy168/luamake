@@ -269,7 +269,7 @@ local function create(workdir, parent, attri)
             push_strings(t, v)
             attri[k] = t
         else
-            attri[k] = pathutil.accept(workdir, v)
+            attri[k] = v
         end
     end
 

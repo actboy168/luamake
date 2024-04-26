@@ -2,18 +2,8 @@ local fsutil = require "fsutil"
 
 local mt = {}
 
-local function create_internal(path, accepted)
-    return setmetatable({
-        value = path,
-        accepted = accepted,
-    }, mt)
-end
-
-local function create(path)
-    if type(path) == "userdata" then
-        return create_internal(tostring(path), true)
-    end
-    return create_internal(path, nil)
+local function create_internal(path)
+    return setmetatable({ value = path }, mt)
 end
 
 local function path_normalize(base, path)
@@ -31,19 +21,17 @@ local function is(path)
     return mt == getmetatable(path)
 end
 
-local function accept(base, path)
-    if is(path) then
-        if not path.accepted then
-            path.value = path_normalize(base, path.value)
-            path.accepted = true
-        end
+local function create(workdir, path)
+    if type(path) == "userdata" then
+        path = tostring(path)
+    else
+        path = path_normalize(workdir, path)
     end
-    return path
+    return create_internal(path)
 end
 
 local function tostr(base, path)
     if is(path) then
-        assert(path.accepted, "Cannot be used before accept.")
         return path.value
     end
     return path_normalize(base, path)
@@ -51,30 +39,23 @@ end
 
 local function tovalue(path)
     if is(path) then
-        assert(path.accepted, "Cannot be used before accept.")
         return true, path.value
     end
     return false, tostring(path)
 end
 
-function mt.__concat(lft, rhs)
+function mt.__concat(lft, rht)
     if type(lft) == "string" then
-        local path = lft..rhs.value
-        return create_internal(path, rhs.accepted)
+        local path = lft..rht.value
+        return create_internal(path)
     else
-        local path = lft.value..rhs
-        return create_internal(path, lft.accepted)
+        local path = lft.value..rht
+        return create_internal(path)
     end
-end
-
-function mt:__div(rhs)
-    local path = fsutil.join(self.value, rhs)
-    return create_internal(path, self.accepted)
 end
 
 return {
     create = create,
     tostr = tostr,
     tovalue = tovalue,
-    accept = accept,
 }

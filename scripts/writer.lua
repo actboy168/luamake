@@ -920,7 +920,7 @@ function api:has(name)
 end
 
 function api:path(value)
-    return pathutil.create(value)
+    return pathutil.create(self.workdir, value)
 end
 
 function api:required_version(buildVersion)

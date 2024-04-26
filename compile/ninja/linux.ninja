@@ -97,17 +97,16 @@ rule c_source_lua
   depfile = $out.d
 build $obj/source_lua/linit.obj: c_source_lua bee.lua/3rd/lua/linit.c
 build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua/onelua.c
-rule cxx_source_bootstrap
+rule cxx_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -Ibee.lua/3rd/lua -Ibee.lua -DLUA_USE_LINUX $
     -DNDEBUG -fPIC -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
-    bee.lua/bootstrap/main.cpp
+build $obj/bootstrap/main.obj: cxx_bootstrap bee.lua/bootstrap/main.cpp
 rule link_bootstrap
-  command = $cc $in -o $out -Wl,-E -static-libgcc -lm -ldl -lstdc++fs $
+  command = $cc $in -o $out -lm -ldl -Wl,-E -static-libgcc -lstdc++fs $
     -pthread -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic -s
   description = Link    Exe $out
 rule copy
@@ -118,7 +117,7 @@ rule test
   command = $bin/bootstrap bee.lua/test/test.lua --touch $out
   description = Run test.
   pool = console
-build $bin/bootstrap: link_bootstrap $obj/source_bootstrap/main.obj $
+build $bin/bootstrap: link_bootstrap $obj/bootstrap/main.obj $
     $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
     $obj/source_bee/error.obj $obj/source_bee/filewatch_linux.obj $
     $obj/source_bee/file.obj $obj/source_bee/luaref.obj $

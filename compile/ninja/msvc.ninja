@@ -117,19 +117,18 @@ rule cxx_bee_utf8_crt
   deps = msvc
 build $obj/bee_utf8_crt/bee_utf8_crt.obj: cxx_bee_utf8_crt $
     bee.lua/3rd/lua/bee_utf8_crt.cpp
-rule cxx_source_bootstrap
-  command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua /Ibee.lua $
-    /D_WIN32_WINNT=0x0602 /DNDEBUG /utf-8 /std:c++17 /GR-
-  description = Compile C++ $out
-  deps = msvc
-build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
-    bee.lua/bootstrap/main.cpp
 rule rc_bootstrap
   command = rc /nologo /fo $out $in
   description = Compile Res $out
 build $obj/bootstrap/bootstrap.obj: rc_bootstrap $
     bee.lua/bootstrap/bootstrap.rc
+rule cxx_bootstrap
+  command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua /Ibee.lua $
+    /D_WIN32_WINNT=0x0602 /DNDEBUG /utf-8 /std:c++17 /GR-
+  description = Compile C++ $out
+  deps = msvc
+build $obj/bootstrap/main.obj: cxx_bootstrap bee.lua/bootstrap/main.cpp
 rule link_bootstrap
   command = $cc /nologo @$out.rsp /link /IMPLIB:$obj/bootstrap.lib $
     ntdll.lib ws2_32.lib ole32.lib user32.lib version.lib $
@@ -163,7 +162,7 @@ rule link_lua54
   rspfile = $out.rsp
   rspfile_content = $in_newline
 build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
-    $obj/source_bootstrap/main.obj $obj/source_bee/lua-seri.obj $
+    $obj/bootstrap/main.obj $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/error.obj $
     $obj/source_bee/filewatch_win.obj $obj/source_bee/file.obj $
     $obj/source_bee/luaref.obj $obj/source_bee/bpoll_win.obj $

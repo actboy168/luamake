@@ -1,4 +1,4 @@
-local clang = require "compiler.gcc"
+local clang = require "compiler.gcc_opt"
 local globals = require "globals"
 
 local function shell(command)

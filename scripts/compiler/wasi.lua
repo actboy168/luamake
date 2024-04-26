@@ -1,4 +1,4 @@
-local wasi = require "compiler.gcc"
+local wasi = require "compiler.gcc_opt"
 local globals = require "globals"
 
 function wasi.update_flags(flags, _, cxxflags, attribute)
@@ -43,10 +43,6 @@ function wasi.update_ldflags(ldflags, attribute)
     ldflags[#ldflags+1] = attribute.target or "wasm32-wasi"
     ldflags[#ldflags+1] = "--sysroot"
     ldflags[#ldflags+1] = globals.WASI_SDK_PATH.."/share/wasi-sysroot"
-end
-
-function wasi.rule_dll(w, name, ldflags)
-    error "TODO"
 end
 
 function wasi.rule_exe(w, name, ldflags)

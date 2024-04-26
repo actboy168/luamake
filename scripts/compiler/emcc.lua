@@ -1,4 +1,4 @@
-local emcc = require "compiler.clang"
+local emcc = require "compiler.gcc_opt"
 
 function emcc.update_flags(flags, _, cxxflags, attribute)
     if attribute.lto ~= "off" then

@@ -1,5 +1,6 @@
 local sp = require "bee.subprocess"
 local fs = require "bee.filesystem"
+local log = require "log"
 
 local function Is64BitWindows()
     -- https://docs.microsoft.com/en-us/archive/blogs/david.wang/howto-detect-process-bitness
@@ -45,14 +46,11 @@ local function installpath()
     })
     local result = strtrim(process.stdout:read "a")
     process.stdout:close()
-    local code = process:wait()
-    if code ~= 0 then
-        print("[vswhere]", result)
-        os.exit(code)
+    if process:wait() ~= 0 then
+        log.fastfail("[vswhere] %s", result)
     end
     if result == "" then
-        print("[vswhere] VisualStudio not found", result)
-        os.exit(false)
+        log.fastfail("[vswhere] VisualStudio not found. %s", result)
     end
     InstallDir = result
     return InstallDir
@@ -140,11 +138,8 @@ local function vsdevcmd(winsdk, arch, f)
     local err = process.stderr:read "a"
     process.stdout:close()
     process.stderr:close()
-    local code = process:wait()
-    if code ~= 0 then
-        io.stderr:write("Call `VsDevCmd.bat` error:\n")
-        io.stderr:write(err)
-        os.exit(code)
+    if process:wait() ~= 0 then
+        log.fastfail("Call `VsDevCmd.bat` error:\n%s", err)
     end
 end
 
@@ -174,21 +169,21 @@ build test: showIncludes test.c
         env = env,
         cwd = testdir,
         stdout = true,
-        --stderr = "stdout",
+        stderr = "stdout",
     })
-    local result
-    for line in process.stdout:lines() do
+    local data = process.stdout:read "a"
+    if process:wait() ~= 0 then
+        log.fastfail("ninja failed: %s", data)
+    end
+    fs.remove_all(testdir)
+
+    for line in data:gmatch "[^\n\r]+" do
         local m = line:match("[^:]+:[^:]+:")
         if m then
-            result = m
-            break
+            return m
         end
     end
-    process.stdout:close()
-    process:wait()
-    fs.remove_all(testdir)
-    assert(result, "can't find msvc.")
-    return result
+    log.fastfail("parse msvc_deps_prefix failed:\n%s", data)
 end
 
 local function toolspath()

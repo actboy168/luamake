@@ -106,5 +106,6 @@ end
 m.binpath = find_msvc.binpath
 m.vcrtpath = find_msvc.vcrtpath
 m.ucrtpath = find_msvc.ucrtpath
+m.llvmpath = find_msvc.llvmpath
 
 return m

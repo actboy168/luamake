@@ -707,10 +707,12 @@ function GEN.msvc_copydll(attribute, name)
             end
         end
     elseif attribute.type == "asan" then
-        local inputdir = msvc.binpath(archalias)
         local filename = ("clang_rt.asan_dynamic-%s.dll"):format(
             attribute.arch == "x86_64" and "x86_64" or "i386"
         )
+        local inputdir = globals.cc == "clang-cl"
+            and msvc.llvmpath()
+            or msvc.binpath(archalias)
         for _, outputdir in ipairs(attributeOutputs) do
             inputs[#inputs+1] = fsutil.join(inputdir, filename)
             outputs[#outputs+1] = fsutil.join(outputdir, filename)

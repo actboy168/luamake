@@ -257,6 +257,14 @@ local function ucrtpath(arch, optimize)
     return redist
 end
 
+local function llvmpath()
+    local path = installpath().."/VC/Tools/Llvm/x64/lib/clang/"
+    for p in fs.pairs(path) do
+        local version = p:filename():string()
+        return path .. version .."/lib/windows/"
+    end
+end
+
 return {
     installpath = installpath,
     toolspath = toolspath,
@@ -265,5 +273,6 @@ return {
     binpath = binpath,
     vcrtpath = vcrtpath,
     ucrtpath = ucrtpath,
-    findwinsdk = findwinsdk
+    findwinsdk = findwinsdk,
+    llvmpath = llvmpath,
 }

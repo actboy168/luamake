@@ -35,6 +35,7 @@ build $obj/source_bee/bpoll_win.obj: cxx_source_bee_1 $
     bee.lua/bee/net/bpoll_win.cpp
 build $obj/source_bee/endpoint.obj: cxx_source_bee_1 $
     bee.lua/bee/net/endpoint.cpp
+build $obj/source_bee/event.obj: cxx_source_bee_1 bee.lua/bee/net/event.cpp
 build $obj/source_bee/socket.obj: cxx_source_bee_1 bee.lua/bee/net/socket.cpp
 build $obj/source_bee/process_select.obj: cxx_source_bee_1 $
     bee.lua/bee/subprocess/process_select.cpp
@@ -72,6 +73,8 @@ rule cxx_source_bee_2
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
+build $obj/source_bee/lua_channel.obj: cxx_source_bee_2 $
+    bee.lua/binding/lua_channel.cpp
 build $obj/source_bee/lua_debugging.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_debugging.cpp
 build $obj/source_bee/lua_epoll.obj: cxx_source_bee_2 $
@@ -113,18 +116,19 @@ rule cxx_bee_utf8_crt
   depfile = $out.d
 build $obj/bee_utf8_crt/bee_utf8_crt.obj: cxx_bee_utf8_crt $
     bee.lua/3rd/lua/bee_utf8_crt.cpp
-rule rc_bootstrap
-  command = windres -i $in -o $out
-  description = Compile Res $out
-build $obj/bootstrap/bootstrap.obj: rc_bootstrap $
-    bee.lua/bootstrap/bootstrap.rc
-rule cxx_bootstrap
+rule cxx_source_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -Ibee.lua/3rd/lua -Ibee.lua -D_WIN32_WINNT=0x0602 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/bootstrap/main.obj: cxx_bootstrap bee.lua/bootstrap/main.cpp
+build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
+    bee.lua/bootstrap/main.cpp
+rule rc_bootstrap
+  command = windres -i $in -o $out
+  description = Compile Res $out
+build $obj/bootstrap/bootstrap.obj: rc_bootstrap $
+    bee.lua/bootstrap/bootstrap.rc
 rule link_bootstrap
   command = sh -c "$cc @$out.rsp -o $out $
     -Wl,--out-implib,$obj/bootstrap.lib -lntdll -lws2_32 -lole32 -luser32 $
@@ -153,11 +157,11 @@ rule link_lua54
   command = $cc --shared $in -o $out -lstdc++ -s
   description = Link    Dll $out
 build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
-    $obj/bootstrap/main.obj $obj/source_bee/lua-seri.obj $
-    $obj/source_bee/format.obj $obj/source_bee/error.obj $
-    $obj/source_bee/filewatch_win.obj $obj/source_bee/file.obj $
-    $obj/source_bee/luaref.obj $obj/source_bee/bpoll_win.obj $
-    $obj/source_bee/endpoint.obj $obj/source_bee/socket.obj $
+    $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
+    $obj/source_bee/error.obj $obj/source_bee/filewatch_win.obj $
+    $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
+    $obj/source_bee/bpoll_win.obj $obj/source_bee/endpoint.obj $
+    $obj/source_bee/event.obj $obj/source_bee/socket.obj $
     $obj/source_bee/process_select.obj $obj/source_bee/subprocess_win.obj $
     $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_win.obj $
     $obj/source_bee/path_win.obj $obj/source_bee/atomic_sync.obj $
@@ -166,25 +170,26 @@ build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
     $obj/source_bee/afd.obj $obj/source_bee/poller.obj $
     $obj/source_bee/poller_fd.obj $obj/source_bee/module_version.obj $
     $obj/source_bee/unicode.obj $obj/source_bee/wtf8.obj $
-    $obj/source_bee/lua_debugging.obj $obj/source_bee/lua_epoll.obj $
-    $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
-    $obj/source_bee/lua_platform.obj $obj/source_bee/lua_select.obj $
-    $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
-    $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_thread.obj $
-    $obj/source_bee/lua_time.obj $obj/source_bee/lua_windows.obj $
-    $obj/source_lua/linit.obj $obj/source_lua/onelua.obj $
+    $obj/source_bee/lua_channel.obj $obj/source_bee/lua_debugging.obj $
+    $obj/source_bee/lua_epoll.obj $obj/source_bee/lua_filesystem.obj $
+    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
+    $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
+    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
+    $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
+    $obj/source_bee/lua_windows.obj $obj/source_lua/linit.obj $
+    $obj/source_lua/onelua.obj $obj/source_bootstrap/main.obj $
     $obj/bee_utf8_crt/bee_utf8_crt.obj
 build $bin/main.lua: copy | $bin/bootstrap.exe
   input = bee.lua/bootstrap/main.lua
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/ltest.lua bee.lua/test/shell.lua $
     bee.lua/test/supported.lua bee.lua/test/test.lua $
-    bee.lua/test/test_epoll.lua bee.lua/test/test_filesystem.lua $
-    bee.lua/test/test_filewatch.lua bee.lua/test/test_lua.lua $
-    bee.lua/test/test_serialization.lua bee.lua/test/test_skip.lua $
-    bee.lua/test/test_socket.lua bee.lua/test/test_subprocess.lua $
-    bee.lua/test/test_thread.lua bee.lua/test/test_time.lua | $
-    $bin/bootstrap.exe copy_script
+    bee.lua/test/test_channel.lua bee.lua/test/test_epoll.lua $
+    bee.lua/test/test_filesystem.lua bee.lua/test/test_filewatch.lua $
+    bee.lua/test/test_lua.lua bee.lua/test/test_serialization.lua $
+    bee.lua/test/test_skip.lua bee.lua/test/test_socket.lua $
+    bee.lua/test/test_subprocess.lua bee.lua/test/test_thread.lua $
+    bee.lua/test/test_time.lua | $bin/bootstrap.exe copy_script
 build luamake.exe: copy | $bin/bootstrap.exe
   input = $bin/bootstrap.exe
 build compile/lua/forward_lua.c: runlua bee.lua/3rd/lua/lauxlib.h $

@@ -24,6 +24,10 @@ compile/install.bat
 ```
 compile/install.sh
 ```
+or
+```
+sudo -s compile/install.sh
+```
 
 ### 3. Useful Build Commands
 

@@ -93,6 +93,8 @@ build $obj/source_bee/lua_socket.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_socket.cpp
 build $obj/source_bee/lua_subprocess.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_subprocess.cpp
+build $obj/source_bee/lua_sys.obj: cxx_source_bee_2 $
+    bee.lua/binding/lua_sys.cpp
 build $obj/source_bee/lua_thread.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_thread.cpp
 build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
@@ -175,10 +177,10 @@ build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
     $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
     $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
     $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
-    $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
-    $obj/source_bee/lua_windows.obj $obj/source_lua/linit.obj $
-    $obj/source_lua/onelua.obj $obj/source_bootstrap/main.obj $
-    $obj/bee_utf8_crt/bee_utf8_crt.obj
+    $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
+    $obj/source_bee/lua_time.obj $obj/source_bee/lua_windows.obj $
+    $obj/source_lua/linit.obj $obj/source_lua/onelua.obj $
+    $obj/source_bootstrap/main.obj $obj/bee_utf8_crt/bee_utf8_crt.obj
 build $bin/main.lua: copy | $bin/bootstrap.exe
   input = bee.lua/bootstrap/main.lua
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
@@ -188,8 +190,9 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/test_filesystem.lua bee.lua/test/test_filewatch.lua $
     bee.lua/test/test_lua.lua bee.lua/test/test_serialization.lua $
     bee.lua/test/test_skip.lua bee.lua/test/test_socket.lua $
-    bee.lua/test/test_subprocess.lua bee.lua/test/test_thread.lua $
-    bee.lua/test/test_time.lua | $bin/bootstrap.exe copy_script
+    bee.lua/test/test_subprocess.lua bee.lua/test/test_sys.lua $
+    bee.lua/test/test_thread.lua bee.lua/test/test_time.lua | $
+    $bin/bootstrap.exe copy_script
 build luamake.exe: copy | $bin/bootstrap.exe
   input = $bin/bootstrap.exe
 build compile/lua/forward_lua.c: runlua bee.lua/3rd/lua/lauxlib.h $

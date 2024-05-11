@@ -1,4 +1,5 @@
 local fs = require "bee.filesystem"
+local sys = require "bee.sys"
 local arguments = require "arguments"
 local globals = require "globals"
 local fsutil = require "fsutil"
@@ -730,7 +731,7 @@ function GEN.msvc_copydll(attribute, name)
 end
 
 local function get_luamake()
-    return fmtpath(fs.exe_path():string())
+    return fmtpath(sys.exe_path():string())
 end
 
 local function configure_args()

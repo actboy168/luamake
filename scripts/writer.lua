@@ -761,7 +761,11 @@ end
 function m.generate()
     ninja:switch_head()
     local builddir = fsutil.join(WORKDIR, globals.builddir)
-    fs.create_directories(builddir)
+    if globals.compiler == "msvc" then
+        fs.create_directories(fsutil.join(builddir, "tmp"))
+    else
+        fs.create_directories(builddir)
+    end
 
     ninja:variable("ninja_required_version", "1.7")
     ninja:variable("builddir", fmtpath(globals.builddir))

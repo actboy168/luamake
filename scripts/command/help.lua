@@ -3,7 +3,7 @@ local fsutil = require "fsutil"
 
 local lst = {}
 for path in fs.pairs(fsutil.join(package.procdir, "scripts", "command")) do
-    if path:equal_extension(".lua") then
+    if path:extension() == ".lua" then
         lst[#lst+1] = path:stem():string()
     end
 end

@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [20.04, 22.04]
+        version: [20.04, 22.04, 24.04]
     runs-on: ubuntu-${{ matrix.version }}
     steps:
     - uses: actions/checkout@v4

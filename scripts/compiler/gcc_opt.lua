@@ -27,24 +27,13 @@ local gcc = {
     },
     cxx = {
         [""] = "",
-        ["c++11"] = "-std=c++11",
-        ["c++14"] = "-std=c++14",
-        ["c++17"] = "-std=c++17",
-        ["c++20"] = "-std=c++20",
-        ["c++23"] = "-std=c++23",
-        ["c++2a"] = "-std=c++2a",
-        ["c++2b"] = "-std=c++2b",
         ["c++latest"] = "-std=c++2b",
+        ["gnu++latest"] = "-std=gnu++2b",
     },
     c = {
         [""] = "",
-        ["c89"] = "",
-        ["c99"] = "-std=c99",
-        ["c11"] = "-std=c11",
-        ["c17"] = "-std=c17",
-        ["c23"] = "-std=c23",
-        ["c2x"] = "-std=c2x",
         ["clatest"] = "-std=c2x",
+        ["gnulatest"] = "-std=gnu2x",
     },
     define = function (macro)
         if macro == "" then
@@ -68,6 +57,18 @@ local gcc = {
         return "-L"..format_path(dir)
     end,
 }
+
+for _, v in ipairs { "c++11", "c++14", "c++17", "c++20", "c++23", "c++2a", "c++2b" } do
+    local g = "gnu"..v:sub(2)
+    gcc.cxx[v] = "-std="..v
+    gcc.cxx[g] = "-std="..g
+end
+
+for _, v in ipairs { "c89", "c99", "c11", "c17", "c23", "c2x" } do
+    local g = "gnu"..v:sub(2)
+    gcc.c[v] = "-std="..v
+    gcc.c[g] = "-std="..g
+end
 
 function gcc.rule_asm(w, name, flags)
     w:rule("asm_"..name, ([[$cc -MMD -MT $out -MF $out.d %s -o $out -c $in]])

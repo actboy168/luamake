@@ -128,7 +128,7 @@ local function vsdevcmd(arch, winsdk, toolset, f)
     if winsdk then
         args[#args+1] = ("-winsdk=%s"):format(winsdk)
     end
-    if winsdk then
+    if toolset then
         args[#args+1] = ("-vcvars_ver=%s"):format(toolset)
     end
     local process = assert(sp.spawn {

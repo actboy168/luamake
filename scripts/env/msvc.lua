@@ -66,7 +66,7 @@ local function parse_env(str)
     return strtrim(str:sub(1, pos - 1)), strtrim(str:sub(pos + 1))
 end
 
-local function findwinsdk()
+local function find_winsdk()
     local function query(command)
         local f = io.popen(command, "r")
         if f then
@@ -113,7 +113,13 @@ local function findwinsdk()
     end
 end
 
-local function vsdevcmd(winsdk, arch, f)
+local function find_toolset()
+    local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt"
+    local r = readall(verfile)
+    return strtrim(r)
+end
+
+local function vsdevcmd(arch, winsdk, toolset, f)
     local vsvars32 = installpath().."/Common7/Tools/VsDevCmd.bat"
     local args = { vsvars32 }
     if arch then
@@ -121,6 +127,9 @@ local function vsdevcmd(winsdk, arch, f)
     end
     if winsdk then
         args[#args+1] = ("-winsdk=%s"):format(winsdk)
+    end
+    if winsdk then
+        args[#args+1] = ("-vcvars_ver=%s"):format(toolset)
     end
     local process = assert(sp.spawn {
         args, "&&", "set",
@@ -145,9 +154,9 @@ local function vsdevcmd(winsdk, arch, f)
     end
 end
 
-local function environment(winsdk, arch)
+local function environment(arch, winsdk, toolset)
     local env = {}
-    vsdevcmd(winsdk, arch, function (name, value)
+    vsdevcmd(arch, winsdk, toolset, function (name, value)
         name = name:upper()
         if need[name] then
             env[name] = value
@@ -188,28 +197,23 @@ build test: showIncludes test.c
     log.fastfail("parse msvc_deps_prefix failed:\n%s", data)
 end
 
-local function toolspath()
-    local ToolsVersion = (function ()
-        local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt"
-        local r = readall(verfile)
-        return strtrim(r)
-    end)()
-    return installpath().."/VC/Tools/MSVC/"..ToolsVersion
+local function toolspath(toolset)
+    return installpath().."/VC/Tools/MSVC/"..toolset
 end
 
-local function binpath(arch)
+local function binpath(arch, toolset)
     local host = Is64BitWindows() and "Hostx64" or "Hostx86"
-    return toolspath().."/bin/"..host.."/"..arch
+    return toolspath(toolset).."/bin/"..host.."/"..arch
 end
 
-local function vcrtpath(arch, optimize)
+local function vcrtpath(arch, optimize, toolset)
     local RedistVersion = (function ()
         local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt"
         local r = readall(verfile)
         return strtrim(r)
     end)()
     local ToolsetVersion = (function ()
-        local verfile = toolspath().."/include/yvals_core.h"
+        local verfile = toolspath(toolset).."/include/yvals_core.h"
         local r = readall(verfile)
         return r:match "#define%s+_MSVC_STL_VERSION%s+(%d+)"
     end)()
@@ -222,7 +226,7 @@ end
 
 local function ucrtpath(arch, optimize)
     local UniversalCRTSdkDir
-    vsdevcmd(findwinsdk(), arch, function (name, value)
+    vsdevcmd(arch, find_winsdk(), find_toolset(), function (name, value)
         if name == "UniversalCRTSdkDir" then
             UniversalCRTSdkDir = value
         end
@@ -323,25 +327,28 @@ function m.createEnvConfig(arch, rebuild)
         local config = readEnvConfig()
         if config.arch == arch
             and (not console_cp or config.console_cp == console_cp)
-            and config.toolspath and fs.exists(config.toolspath)
+            and config.toolset and fs.exists(toolspath(config.toolset))
         then
             env = config.env
             msvc_deps_prefix = config.prefix
             return
         end
     end
-    local winsdk = findwinsdk()
-    env = environment(winsdk, ArchAlias[arch])
+    local winsdk = find_winsdk()
+    local toolset = find_toolset()
+    globals.winsdk = winsdk
+    globals.toolset = toolset
+    env = environment(ArchAlias[arch], winsdk, toolset)
     msvc_deps_prefix = getMsvcDepsPrefix(env)
 
     local s = {}
     s[#s+1] = "return {"
-    s[#s+1] = ("arch=%q,"):format(arch)
-    s[#s+1] = ("toolspath=%q,"):format(toolspath())
     s[#s+1] = ("console_cp=%q,"):format(console_cp)
+    s[#s+1] = ("arch=%q,"):format(arch)
     if winsdk then
         s[#s+1] = ("winsdk=%q,"):format(winsdk)
     end
+    s[#s+1] = ("toolset=%q,"):format(toolset)
     s[#s+1] = ("prefix=%q,"):format(msvc_deps_prefix)
     s[#s+1] = "env={"
     for name, value in pairs(env) do

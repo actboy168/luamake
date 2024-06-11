@@ -14,7 +14,8 @@ FOR /f "usebackq tokens=*" %%i in (`"%ProgramFiles%\Microsoft Visual Studio\Inst
 )
 IF "%InstallDir%" == "" echo "Can not find msvc." && exit 1
 
+CALL compile\msvc\find_toolset.bat
 CALL compile\msvc\find_winsdk.bat
 SET VSCMD_SKIP_SENDTELEMETRY=1
-CALL "%InstallDir%\Common7\Tools\vsdevcmd.bat" -arch=%ARCH% -host_arch=%ARCH% -winsdk=%WindowsSDKVersion% 1>nul
+CALL "%InstallDir%\Common7\Tools\vsdevcmd.bat" -arch=%ARCH% -host_arch=%ARCH% -winsdk=%WindowsSDKVersion% -vcvars_ver=%VCToolsVersion% 1>nul
 :QUIT

@@ -26,6 +26,14 @@ rule cxx_source_bee_1
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
+build $obj/source_bee/handler_win.obj: cxx_source_bee_1 $
+    bee.lua/bee/crash/handler_win.cpp
+build $obj/source_bee/nanoid.obj: cxx_source_bee_1 $
+    bee.lua/bee/crash/nanoid.cpp
+build $obj/source_bee/stacktrace_win.obj: cxx_source_bee_1 $
+    bee.lua/bee/crash/stacktrace_win.cpp
+build $obj/source_bee/unwind_win.obj: cxx_source_bee_1 $
+    bee.lua/bee/crash/unwind_win.cpp
 build $obj/source_bee/error.obj: cxx_source_bee_1 bee.lua/bee/error.cpp
 build $obj/source_bee/filewatch_win.obj: cxx_source_bee_1 $
     bee.lua/bee/filewatch/filewatch_win.cpp
@@ -108,7 +116,6 @@ rule c_source_lua
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
-build $obj/source_lua/linit.obj: c_source_lua bee.lua/3rd/lua/linit.c
 build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua/onelua.c
 rule cxx_bee_utf8_crt
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
@@ -124,6 +131,8 @@ rule cxx_source_bootstrap
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
+build $obj/source_bootstrap/bootstrap_init.obj: cxx_source_bootstrap $
+    bee.lua/bootstrap/bootstrap_init.cpp
 build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/main.cpp
 rule rc_bootstrap
@@ -160,6 +169,8 @@ rule link_lua54
   description = Link    Dll $out
 build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
     $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
+    $obj/source_bee/handler_win.obj $obj/source_bee/nanoid.obj $
+    $obj/source_bee/stacktrace_win.obj $obj/source_bee/unwind_win.obj $
     $obj/source_bee/error.obj $obj/source_bee/filewatch_win.obj $
     $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
     $obj/source_bee/bpoll_win.obj $obj/source_bee/endpoint.obj $
@@ -179,7 +190,7 @@ build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
     $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
     $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
     $obj/source_bee/lua_time.obj $obj/source_bee/lua_windows.obj $
-    $obj/source_lua/linit.obj $obj/source_lua/onelua.obj $
+    $obj/source_lua/onelua.obj $obj/source_bootstrap/bootstrap_init.obj $
     $obj/source_bootstrap/main.obj $obj/bee_utf8_crt/bee_utf8_crt.obj
 build $bin/main.lua: copy | $bin/bootstrap.exe
   input = bee.lua/bootstrap/main.lua

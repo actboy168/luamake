@@ -672,7 +672,7 @@ function GEN.msvc_copydll(attribute, name)
 
     if attribute.type == "vcrt" then
         local ignore = attribute.optimize == "off" and "vccorlib140d.dll" or "vccorlib140.dll"
-        for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.optimize, attribute.toolset)) do
+        for dll in fs.pairs(msvc.vcrtpath(archalias, attribute.optimize, globals.toolset)) do
             local filename = dll:filename():string()
             if filename:lower() ~= ignore then
                 for _, outputdir in ipairs(attributeOutputs) do
@@ -713,7 +713,7 @@ function GEN.msvc_copydll(attribute, name)
         )
         local inputdir = globals.cc == "clang-cl"
             and msvc.llvmpath()
-            or msvc.binpath(archalias, attribute.toolset)
+            or msvc.binpath(archalias, globals.toolset)
         for _, outputdir in ipairs(attributeOutputs) do
             inputs[#inputs+1] = fsutil.join(inputdir, filename)
             outputs[#outputs+1] = fsutil.join(outputdir, filename)

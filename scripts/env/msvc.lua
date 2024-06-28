@@ -115,8 +115,10 @@ end
 
 local function find_toolset()
     local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt"
-    local r = readall(verfile)
-    return strtrim(r)
+    local raw = readall(verfile)
+    local res = strtrim(raw)
+    assert(res, ("`%s` parse failed."):format(raw))
+    return res
 end
 
 local function vsdevcmd(arch, winsdk, toolset, f)

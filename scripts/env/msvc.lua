@@ -301,7 +301,9 @@ local function readEnvConfig()
 end
 
 local function writeEnvConfig(data)
-    local EnvConfig = fsutil.join(WORKDIR, globals.builddir, "env.lua")
+    local builddir = fsutil.join(WORKDIR, globals.builddir)
+    fs.create_directories(builddir)
+    local EnvConfig = fsutil.join(builddir, "env.lua")
     local f <close> = assert(io.open(EnvConfig, "w"))
     f:write(data)
 end

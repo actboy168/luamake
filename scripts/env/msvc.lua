@@ -333,6 +333,8 @@ function m.createEnvConfig(arch, rebuild)
         then
             env = config.env
             msvc_deps_prefix = config.prefix
+            globals.winsdk = config.winsdk
+            globals.toolset = config.toolset
             return
         end
     end

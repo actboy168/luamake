@@ -12,6 +12,7 @@ jobs:
       with:
         submodules : recursive
     - run: .\compile\build.bat notest
+    - run: .\compile\build.bat copy_script
     - run: .\build\msvc\bin\bootstrap.exe .\bee.lua\test\test.lua -v
     - run: .\luamake.exe version
   ubuntu:

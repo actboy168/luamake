@@ -782,7 +782,6 @@ function m.generate()
     if globals.compiler == "msvc" then
         if not globals.prebuilt then
             local msvc = require "env.msvc"
-            msvc.createEnvConfig(globals.arch, arguments.what == "rebuild")
             ninja:variable("msvc_deps_prefix", globals.cc == "clang-cl"
                 and "Note: including file:"
                 or msvc.getPrefix()

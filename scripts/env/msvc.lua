@@ -2,6 +2,7 @@ local fs = require "bee.filesystem"
 local sp = require "bee.subprocess"
 local fsutil = require "fsutil"
 local globals = require "globals"
+local arguments = require "arguments"
 local log = require "log"
 
 local function Is64BitWindows()
@@ -382,5 +383,7 @@ m.binpath = binpath
 m.vcrtpath = vcrtpath
 m.ucrtpath = ucrtpath
 m.llvmpath = llvmpath
+
+m.createEnvConfig(globals.arch, arguments.what == "rebuild")
 
 return m

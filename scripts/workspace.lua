@@ -277,10 +277,14 @@ local function create(workdir, parent, attri)
         for k, v in pairs(new_attri) do
             if arguments.args[k] == nil then
                 if ATTRIBUTE[k] == AttributePaths or ATTRIBUTE[k] == AttributeStrings then
-                    local t = {}
-                    push_strings(t, parent[k])
-                    push_strings(t, v)
-                    attri[k] = t
+                    if attri[k] == nil then
+                        local t = {}
+                        push_strings(t, parent[k])
+                        push_strings(t, v)
+                        attri[k] = t
+                    else
+                        push_strings(attri[k], v)
+                    end
                 else
                     attri[k] = v
                 end

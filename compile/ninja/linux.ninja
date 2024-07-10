@@ -78,6 +78,8 @@ rule cxx_source_bee_2
   depfile = $out.d
 build $obj/source_bee/lua_channel.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_channel.cpp
+build $obj/source_bee/lua_crash.obj: cxx_source_bee_2 $
+    bee.lua/binding/lua_crash.cpp
 build $obj/source_bee/lua_debugging.obj: cxx_source_bee_2 $
     bee.lua/binding/lua_debugging.cpp
 build $obj/source_bee/lua_epoll.obj: cxx_source_bee_2 $
@@ -146,14 +148,15 @@ build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
     $obj/source_bee/path_posix.obj $obj/source_bee/atomic_sync.obj $
     $obj/source_bee/setname.obj $obj/source_bee/simplethread_posix.obj $
     $obj/source_bee/spinlock.obj $obj/source_bee/version.obj $
-    $obj/source_bee/lua_channel.obj $obj/source_bee/lua_debugging.obj $
-    $obj/source_bee/lua_epoll.obj $obj/source_bee/lua_filesystem.obj $
-    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
-    $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
-    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
-    $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
-    $obj/source_bee/lua_time.obj $obj/source_lua/onelua.obj $
-    $obj/source_bootstrap/bootstrap_init.obj $obj/source_bootstrap/main.obj
+    $obj/source_bee/lua_channel.obj $obj/source_bee/lua_crash.obj $
+    $obj/source_bee/lua_debugging.obj $obj/source_bee/lua_epoll.obj $
+    $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
+    $obj/source_bee/lua_platform.obj $obj/source_bee/lua_select.obj $
+    $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
+    $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_sys.obj $
+    $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
+    $obj/source_lua/onelua.obj $obj/source_bootstrap/bootstrap_init.obj $
+    $obj/source_bootstrap/main.obj
 build $bin/main.lua: copy | $bin/bootstrap
   input = bee.lua/bootstrap/main.lua
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $

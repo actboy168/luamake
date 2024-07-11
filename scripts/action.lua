@@ -28,6 +28,9 @@ end
 
 local function init()
     writer.init()
+end
+
+local function import()
     writer.import(arguments.f)
 end
 
@@ -111,6 +114,7 @@ end
 
 return {
     init = init,
+    import = import,
     generate = generate,
     build = build,
     clean = clean,

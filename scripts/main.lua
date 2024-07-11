@@ -4,6 +4,7 @@ local RawCommand = {
     lua = true,
     test = true,
     help = true,
+    shell = true,
 }
 
 local function command(what)

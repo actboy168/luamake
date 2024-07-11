@@ -2,6 +2,7 @@ local action = require "action"
 local globals = require "globals"
 
 action.init()
+action.import()
 
 if globals.compiler == "msvc" then
     local msvc = require "env.msvc"

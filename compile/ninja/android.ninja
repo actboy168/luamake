@@ -5,103 +5,103 @@ obj = $builddir/obj
 cc = clang
 ar = ar
 luamake = luamake
-rule c_source_bee
-  command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
+rule cxx_source_bee
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -Itools/lua54 -DNDEBUG -o $out -c $in
-  description = Compile C   $out
+  description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/lua-seri.obj: c_source_bee $
-    bee.lua/3rd/lua-seri/lua-seri.c
-rule cxx_source_bee
+build $obj/source_bee/lua-seri.obj: cxx_source_bee $
+    bee.lua/3rd/lua-seri/lua-seri.cpp
+rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/format.obj: cxx_source_bee bee.lua/3rd/fmt/format.cc
-rule cxx_source_bee_1
+build $obj/source_bee/format.obj: cxx_source_bee_1 bee.lua/3rd/fmt/format.cc
+rule cxx_source_bee_2
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -Ibee.lua -Ibee.lua/3rd/lua -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/handler_linux.obj: cxx_source_bee_1 $
+build $obj/source_bee/handler_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/crash/handler_linux.cpp
-build $obj/source_bee/nanoid.obj: cxx_source_bee_1 $
+build $obj/source_bee/nanoid.obj: cxx_source_bee_2 $
     bee.lua/bee/crash/nanoid.cpp
-build $obj/source_bee/stacktrace_linux.obj: cxx_source_bee_1 $
+build $obj/source_bee/stacktrace_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/crash/stacktrace_linux.cpp
-build $obj/source_bee/unwind_linux.obj: cxx_source_bee_1 $
+build $obj/source_bee/unwind_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/crash/unwind_linux.cpp
-build $obj/source_bee/error.obj: cxx_source_bee_1 bee.lua/bee/error.cpp
-build $obj/source_bee/filewatch_linux.obj: cxx_source_bee_1 $
+build $obj/source_bee/filewatch_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/filewatch/filewatch_linux.cpp
-build $obj/source_bee/file.obj: cxx_source_bee_1 bee.lua/bee/lua/file.cpp
-build $obj/source_bee/luaref.obj: cxx_source_bee_1 bee.lua/bee/lua/luaref.cpp
-build $obj/source_bee/bpoll_linux.obj: cxx_source_bee_1 $
+build $obj/source_bee/error.obj: cxx_source_bee_2 bee.lua/bee/lua/error.cpp
+build $obj/source_bee/file.obj: cxx_source_bee_2 bee.lua/bee/lua/file.cpp
+build $obj/source_bee/luaref.obj: cxx_source_bee_2 bee.lua/bee/lua/luaref.cpp
+build $obj/source_bee/bpoll_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/net/bpoll_linux.cpp
-build $obj/source_bee/endpoint.obj: cxx_source_bee_1 $
+build $obj/source_bee/endpoint.obj: cxx_source_bee_2 $
     bee.lua/bee/net/endpoint.cpp
-build $obj/source_bee/event.obj: cxx_source_bee_1 bee.lua/bee/net/event.cpp
-build $obj/source_bee/socket.obj: cxx_source_bee_1 bee.lua/bee/net/socket.cpp
-build $obj/source_bee/process_select.obj: cxx_source_bee_1 $
+build $obj/source_bee/event.obj: cxx_source_bee_2 bee.lua/bee/net/event.cpp
+build $obj/source_bee/socket.obj: cxx_source_bee_2 bee.lua/bee/net/socket.cpp
+build $obj/source_bee/process_select.obj: cxx_source_bee_2 $
     bee.lua/bee/subprocess/process_select.cpp
-build $obj/source_bee/subprocess_posix.obj: cxx_source_bee_1 $
+build $obj/source_bee/subprocess_posix.obj: cxx_source_bee_2 $
     bee.lua/bee/subprocess/subprocess_posix.cpp
-build $obj/source_bee/file_handle.obj: cxx_source_bee_1 $
+build $obj/source_bee/file_handle.obj: cxx_source_bee_2 $
     bee.lua/bee/sys/file_handle.cpp
-build $obj/source_bee/file_handle_linux.obj: cxx_source_bee_1 $
+build $obj/source_bee/file_handle_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/sys/file_handle_linux.cpp
-build $obj/source_bee/file_handle_posix.obj: cxx_source_bee_1 $
+build $obj/source_bee/file_handle_posix.obj: cxx_source_bee_2 $
     bee.lua/bee/sys/file_handle_posix.cpp
-build $obj/source_bee/path_linux.obj: cxx_source_bee_1 $
+build $obj/source_bee/path_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/sys/path_linux.cpp
-build $obj/source_bee/path_posix.obj: cxx_source_bee_1 $
+build $obj/source_bee/path_posix.obj: cxx_source_bee_2 $
     bee.lua/bee/sys/path_posix.cpp
-build $obj/source_bee/atomic_sync.obj: cxx_source_bee_1 $
+build $obj/source_bee/atomic_sync.obj: cxx_source_bee_2 $
     bee.lua/bee/thread/atomic_sync.cpp
-build $obj/source_bee/setname.obj: cxx_source_bee_1 $
+build $obj/source_bee/setname.obj: cxx_source_bee_2 $
     bee.lua/bee/thread/setname.cpp
-build $obj/source_bee/simplethread_posix.obj: cxx_source_bee_1 $
+build $obj/source_bee/simplethread_posix.obj: cxx_source_bee_2 $
     bee.lua/bee/thread/simplethread_posix.cpp
-build $obj/source_bee/spinlock.obj: cxx_source_bee_1 $
+build $obj/source_bee/spinlock.obj: cxx_source_bee_2 $
     bee.lua/bee/thread/spinlock.cpp
-build $obj/source_bee/version.obj: cxx_source_bee_1 bee.lua/bee/version.cpp
-rule cxx_source_bee_2
+build $obj/source_bee/version.obj: cxx_source_bee_2 bee.lua/bee/version.cpp
+rule cxx_source_bee_3
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -Ibee.lua -Itools/lua54 -DBEE_STATIC -DNDEBUG -o $
     $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/lua_channel.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_channel.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_channel.cpp
-build $obj/source_bee/lua_crash.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_crash.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_crash.cpp
-build $obj/source_bee/lua_debugging.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_debugging.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_debugging.cpp
-build $obj/source_bee/lua_epoll.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_epoll.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_epoll.cpp
-build $obj/source_bee/lua_filesystem.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_filesystem.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_filesystem.cpp
-build $obj/source_bee/lua_filewatch.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_filewatch.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_filewatch.cpp
-build $obj/source_bee/lua_platform.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_platform.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_platform.cpp
-build $obj/source_bee/lua_select.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_select.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_select.cpp
-build $obj/source_bee/lua_serialization.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_serialization.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_serialization.cpp
-build $obj/source_bee/lua_socket.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_socket.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_socket.cpp
-build $obj/source_bee/lua_subprocess.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_subprocess.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_subprocess.cpp
-build $obj/source_bee/lua_sys.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_sys.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_sys.cpp
-build $obj/source_bee/lua_thread.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_thread.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_thread.cpp
-build $obj/source_bee/lua_time.obj: cxx_source_bee_2 $
+build $obj/source_bee/lua_time.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_time.cpp
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall -DMAKE_LIB $
@@ -135,8 +135,8 @@ rule test
 build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/handler_linux.obj $
     $obj/source_bee/nanoid.obj $obj/source_bee/stacktrace_linux.obj $
-    $obj/source_bee/unwind_linux.obj $obj/source_bee/error.obj $
-    $obj/source_bee/filewatch_linux.obj $obj/source_bee/file.obj $
+    $obj/source_bee/unwind_linux.obj $obj/source_bee/filewatch_linux.obj $
+    $obj/source_bee/error.obj $obj/source_bee/file.obj $
     $obj/source_bee/luaref.obj $obj/source_bee/bpoll_linux.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/event.obj $
     $obj/source_bee/socket.obj $obj/source_bee/process_select.obj $

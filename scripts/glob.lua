@@ -2,6 +2,7 @@ local fs = require "bee.filesystem"
 local fsutil = require "fsutil"
 local pathutil = require "pathutil"
 local globals = require "globals"
+local log = require "log"
 
 local isWindows <const> = globals.hostos == "windows"
 local PathSeq <const> = isWindows and "/\\" or "/"
@@ -31,6 +32,9 @@ end
 local function pattern_preprocess(root, pattern)
     local ispath, path = pathutil.tovalue(pattern)
     local ignore
+    if path:match "^%.%./" then
+        log.fatal("Not supported that source files outside the rootdir: %s", path)
+    end
     if path:match "^!" then
         ignore = true
         path = path:sub(2)

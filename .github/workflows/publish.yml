@@ -25,6 +25,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules : recursive
+    - run: sudo apt update
     - run: sudo apt install -y libreadline-dev ninja-build
     - run: sudo apt install -y binutils-dev libunwind-dev
     - run: ./compile/build.sh

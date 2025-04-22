@@ -33,4 +33,4 @@ case "`uname`" in
 esac
 
 DIR=$(cd `dirname $0`/..; pwd)
-exec ninja -f $DIR/compile/ninja/$OS.ninja $*
+exec ninja -f "$DIR/compile/ninja/$OS.ninja" $*

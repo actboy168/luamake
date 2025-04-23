@@ -5,7 +5,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [2019, 2022, 2025]
+        version: [2022, 2025]
     runs-on: windows-${{ matrix.version }}
     steps:
     - uses: actions/checkout@v4

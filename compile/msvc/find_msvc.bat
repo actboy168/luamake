@@ -19,7 +19,7 @@ SET ARCH=arm64
 
 SET VSWHERE = %ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe
 
-FOR /f "usebackq tokens=*" %%i in (`"%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+FOR /f "usebackq tokens=*" %%i in (`"%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -property installationPath`) do (
   SET InstallDir=%%i
 )
 IF "%InstallDir%" == "" echo "Can not find msvc." && exit 1

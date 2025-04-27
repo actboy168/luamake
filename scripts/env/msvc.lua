@@ -4,12 +4,9 @@ local fsutil = require "fsutil"
 local globals = require "globals"
 local arguments = require "arguments"
 local log = require "log"
+local os_arch = require "os_arch"
 
-local function Is64BitWindows()
-    return require "os_arch" ~= "x86"
-end
-
-local ProgramFiles = Is64BitWindows() and "ProgramFiles(x86)" or "ProgramFiles"
+local ProgramFiles = os_arch ~= "x86" and "ProgramFiles(x86)" or "ProgramFiles"
 local vswhere = os.getenv(ProgramFiles).."/Microsoft Visual Studio/Installer/vswhere.exe"
 local need = { LIB = true, LIBPATH = true, PATH = true, INCLUDE = true }
 
@@ -41,7 +38,6 @@ local function installpath()
         "-prerelease",
         "-utf8",
         "-products", "*",
-        "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
         "-property", "installationPath",
         stdout = true,
         stderr = "stdout",
@@ -204,7 +200,16 @@ local function toolspath(toolset)
 end
 
 local function binpath(arch, toolset)
-    local host = Is64BitWindows() and "Hostx64" or "Hostx86"
+    local host
+    if os_arch == "x86_64" then
+        host = "Hostx64"
+    elseif os_arch == "x86" then
+        host = "Hostx86"
+    elseif os_arch == "arm64" then
+        host = "Hostx64"
+    else
+        error("Cannot detect architecture")
+    end
     return toolspath(toolset).."/bin/"..host.."/"..arch
 end
 
@@ -269,7 +274,7 @@ local function llvmpath()
     local path = installpath().."/VC/Tools/Llvm/x64/lib/clang/"
     for p in fs.pairs(path) do
         local version = p:filename():string()
-        return path .. version .."/lib/windows/"
+        return path..version.."/lib/windows/"
     end
 end
 

@@ -12,9 +12,12 @@ SET HOST_ARCH=x64
 SET ARCH=x64
 GOTO END
 :ARM64
+SET ProgramFiles=%ProgramFiles(x86)%
 SET HOST_ARCH=x64
 SET ARCH=arm64
 :END
+
+SET VSWHERE = %ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe
 
 FOR /f "usebackq tokens=*" %%i in (`"%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
   SET InstallDir=%%i

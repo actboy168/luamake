@@ -788,7 +788,13 @@ function m.generate()
             )
         end
         ninja:variable("cc", globals.cc or "cl")
-        ninja:variable("ml", globals.arch == "x86_64" and "ml64" or "ml")
+        if globals.arch == "x86_64" then
+            ninja:variable("ml", "ml64")
+        elseif globals.arch == "x86" then
+            ninja:variable("ml", "ml")
+        elseif globals.arch == "arm64" then
+            ninja:variable("ml", "armasm64")
+        end
     else
         local compiler = globals.cc or globals.compiler
         if globals.hostshell == "cmd" then

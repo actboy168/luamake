@@ -11,6 +11,8 @@ end
 
 local exe = isWindows and ".exe" or ""
 
+lm.fast_setjmp = "off"
+
 lm:import "bee.lua/make.lua"
 
 lm:copy "copy_luamake" {

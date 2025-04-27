@@ -6,8 +6,7 @@ local arguments = require "arguments"
 local log = require "log"
 
 local function Is64BitWindows()
-    -- https://docs.microsoft.com/en-us/archive/blogs/david.wang/howto-detect-process-bitness
-    return os.getenv "PROCESSOR_ARCHITECTURE" == "AMD64" or os.getenv "PROCESSOR_ARCHITEW6432" == "AMD64"
+    return require "os_arch" ~= "x86"
 end
 
 local ProgramFiles = Is64BitWindows() and "ProgramFiles(x86)" or "ProgramFiles"

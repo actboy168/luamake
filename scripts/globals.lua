@@ -38,11 +38,7 @@ end)()
 
 globals.arch = globals.arch or (function ()
     if globals.os == "windows" then
-        if string.packsize "T" == 8 then
-            return "x86_64"
-        else
-            return "x86"
-        end
+        return require "os_arch"
     end
 end)()
 globals.builddir = globals.builddir or "build"

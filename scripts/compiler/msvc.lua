@@ -120,10 +120,17 @@ function cl.update_ldflags(ldflags, attribute, name)
 end
 
 function cl.rule_asm(w, name, _)
-    w:rule("asm_"..name, [[$ml /nologo /quiet /Fo $out /c $in]],
-        {
-            description = "Compile ASM $out",
-        })
+    if globals.arch == "arm64" then
+        w:rule("asm_"..name, [[$ml -nologo -o $out $in]],
+            {
+                description = "Compile ASM $out",
+            })
+    else
+        w:rule("asm_"..name, [[$ml /nologo /quiet /Fo $out /c $in]],
+            {
+                description = "Compile ASM $out",
+            })
+    end
 end
 
 function cl.rule_c(w, name, flags, cflags)

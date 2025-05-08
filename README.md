@@ -13,13 +13,16 @@ git submodule update --init
 ### 2. Install:
 
 #### Windows (msvc):
+
+* Install Visual Studio
+
 ```
 compile/install.bat
 ```
 
 #### Linux / MacOS / Android / NetBSD / FreeBSD / OpenBSD / Windows (mingw)
 
-[Install Ninja](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages)
+* Install gcc, g++, ninja
 
 ```
 compile/install.sh

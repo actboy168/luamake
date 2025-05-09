@@ -1,7 +1,10 @@
 local wasi = require "compiler.gcc_opt"
 local globals = require "globals"
 
-function wasi.update_flags(flags, _, cxxflags, attribute)
+function wasi.update_flags(flags, cflags, cxxflags, attribute, name)
+    cflags[#cflags+1] = wasi.get_c(name, attribute.c)
+    cxxflags[#cxxflags+1] = wasi.get_cxx(name, attribute.cxx)
+
     if attribute.mode == "debug" then
         flags[#flags+1] = "-g"
     end

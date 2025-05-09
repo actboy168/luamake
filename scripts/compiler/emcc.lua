@@ -1,6 +1,9 @@
 local emcc = require "compiler.gcc_opt"
 
-function emcc.update_flags(flags, _, cxxflags, attribute)
+function emcc.update_flags(flags, cflags, cxxflags, attribute, name)
+    cflags[#cflags+1] = emcc.get_c(name, attribute.c)
+    cxxflags[#cxxflags+1] = emcc.get_cxx(name, attribute.cxx)
+
     if attribute.lto ~= "off" then
         if attribute.lto == "thin" then
             flags[#flags+1] = "-flto=thin"

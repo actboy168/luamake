@@ -1,4 +1,5 @@
 local globals = require "globals"
+local log = require "log"
 
 local function format_path(path)
     if path:match " " then
@@ -27,27 +28,6 @@ local cl = {
         error  = "/W3 /WX",
         strict = "/W4 /WX",
     },
-    cxx = {
-        [""] = "",
-        ["c++11"] = "/std:c++11",
-        ["c++14"] = "/std:c++14",
-        ["c++17"] = "/std:c++17",
-        ["c++20"] = "/std:c++20",
-        ["c++23"] = "/std:c++23",
-        ["c++2a"] = "/std:c++20",
-        ["c++2b"] = "/std:c++latest",
-        ["c++latest"] = "/std:c++latest",
-    },
-    c = {
-        [""] = "",
-        ["c89"] = "",
-        ["c99"] = "",
-        ["c11"] = "/std:c11",
-        ["c17"] = "/std:c17",
-        ["c23"] = "/std:clatest",
-        ["c2x"] = "/std:clatest",
-        ["clatest"] = "/std:clatest",
-    },
     define = function (macro)
         if macro == "" then
             return
@@ -74,7 +54,48 @@ local cl = {
     end,
 }
 
-function cl.update_flags(flags, _, cxxflags, attribute, name)
+local function get_c(name, v)
+    if v == "" then
+        return
+    end
+    local Known = {
+        ["c89"] = "",
+        ["c99"] = "",
+        ["c23"] = "/std:clatest",
+        ["c2x"] = "/std:clatest",
+    }
+    if Known[v] then
+        return Known[v]
+    end
+    local what = v:match "^c(.*)$"
+    if what then
+        return "/std:c"..what
+    end
+    log.fatal("`%s`: unknown std c: `%s`", name, v)
+end
+
+local function get_cxx(name, v)
+    if v == "" then
+        return
+    end
+    local Known = {
+        ["c++2a"] = "/std:c++20",
+        ["c++2b"] = "/std:c++latest",
+    }
+    if Known[v] then
+        return Known[v]
+    end
+    local what = v:match "^c%+%+(.*)$"
+    if what then
+        return "/std:c++"..what
+    end
+    log.fatal("`%s`: unknown std c++: `%s`", name, v)
+end
+
+function cl.update_flags(flags, cflags, cxxflags, attribute, name)
+    cflags[#cflags+1] = get_c(name, attribute.c)
+    cxxflags[#cxxflags+1] = get_cxx(name, attribute.cxx)
+
     if attribute.permissive == "off" then
         flags[#flags+1] = "/permissive-"
     end

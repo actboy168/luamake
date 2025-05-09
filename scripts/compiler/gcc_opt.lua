@@ -1,4 +1,5 @@
 local globals = require "globals"
+local log = require "log"
 
 local function format_path(path)
     if path:match " " then
@@ -25,16 +26,6 @@ local gcc = {
         error  = "-Wall -Werror",
         strict = "-Wall -Wextra -Werror",
     },
-    cxx = {
-        [""] = "",
-        ["c++latest"] = "-std=c++2b",
-        ["gnu++latest"] = "-std=gnu++2b",
-    },
-    c = {
-        [""] = "",
-        ["clatest"] = "-std=c2x",
-        ["gnulatest"] = "-std=gnu2x",
-    },
     define = function (macro)
         if macro == "" then
             return
@@ -58,16 +49,56 @@ local gcc = {
     end,
 }
 
-for _, v in ipairs { "c++11", "c++14", "c++17", "c++20", "c++23", "c++2a", "c++2b" } do
-    local g = "gnu"..v:sub(2)
-    gcc.cxx[v] = "-std="..v
-    gcc.cxx[g] = "-std="..g
+function gcc.get_c(name, v)
+    if v == "" then
+        return
+    end
+    local Known = {
+        ["clatest"] = "-std=c2x",
+        ["gnulatest"] = "-std=gnu2x",
+    }
+    if Known[v] then
+        return Known[v]
+    end
+    do
+        local what = v:match "^c(.*)$"
+        if what then
+            return "-std=c"..what
+        end
+    end
+    do
+        local what = v:match "^gnu(.*)$"
+        if what then
+            return "-std=gun"..what
+        end
+    end
+    log.fatal("`%s`: unknown std c: `%s`", name, v)
 end
 
-for _, v in ipairs { "c89", "c99", "c11", "c17", "c23", "c2x" } do
-    local g = "gnu"..v:sub(2)
-    gcc.c[v] = "-std="..v
-    gcc.c[g] = "-std="..g
+function gcc.get_cxx(name, v)
+    if v == "" then
+        return
+    end
+    local Known = {
+        ["c++latest"] = "-std=c++2b",
+        ["gnu++latest"] = "-std=gnu++2b",
+    }
+    if Known[v] then
+        return Known[v]
+    end
+    do
+        local what = v:match "^c%+%+(.*)$"
+        if what then
+            return "-std=c++"..what
+        end
+    end
+    do
+        local what = v:match "^gnu%+%+(.*)$"
+        if what then
+            return "-std=gun++"..what
+        end
+    end
+    log.fatal("`%s`: unknown std c++: `%s`", name, v)
 end
 
 function gcc.rule_asm(w, name, flags)

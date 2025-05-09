@@ -1,7 +1,10 @@
 local gcc = require "compiler.gcc_opt"
 local globals = require "globals"
 
-function gcc.update_flags(flags, _, cxxflags, attribute, _)
+function gcc.update_flags(flags, cflags, cxxflags, attribute, name)
+    cflags[#cflags+1] = gcc.get_c(name, attribute.c)
+    cxxflags[#cxxflags+1] = gcc.get_cxx(name, attribute.cxx)
+
     if attribute.mode == "debug" then
         flags[#flags+1] = "-g"
     end

@@ -62,7 +62,10 @@ local function update_target(flags, attribute)
     attribute.__target = target
 end
 
-function clang.update_flags(flags, _, cxxflags, attribute)
+function clang.update_flags(flags, cflags, cxxflags, attribute, name)
+    cflags[#cflags+1] = clang.get_c(name, attribute.c)
+    cxxflags[#cxxflags+1] = clang.get_cxx(name, attribute.cxx)
+
     if attribute.mode == "debug" then
         flags[#flags+1] = "-g"
     end

@@ -37,6 +37,14 @@ local function fmtpath(p)
     return p:gsub("\\", "/")
 end
 
+local function init_single(attribute, attr_name, default)
+    local v = attribute[attr_name]
+    if v == nil then
+        attribute[attr_name] = default
+        v = default
+    end
+end
+
 local function init_enum(attribute, attr_name, default, allow)
     local v = attribute[attr_name]
     if v == nil then
@@ -144,10 +152,6 @@ local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
             flags[#flags+1] = "-fPIC"
         end
     end
-    log.assert(cc.c[attribute.c], "`%s`: unknown std c: `%s`", name, attribute.c)
-    log.assert(cc.cxx[attribute.cxx], "`%s`: unknown std c++: `%s`", name, attribute.cxx)
-    cflags[#cflags+1] = cc.c[attribute.c]
-    cxxflags[#cxxflags+1] = cc.cxx[attribute.cxx]
     cc.update_flags(flags, cflags, cxxflags, attribute, name)
 
     if attribute.includes then
@@ -261,10 +265,11 @@ local function generate(rule, attribute, name)
     local objargs = attribute.objdeps and { implicit_inputs = attribute.objdeps } or nil
     local implicit_inputs = {}
 
+    init_single(attribute, "c", "")
+    init_single(attribute, "cxx", "")
+
     init_enum(attribute, "mode", "release", enum_mode)
     init_enum(attribute, "crt", "dynamic", enum_crt)
-    init_enum(attribute, "c", "", cc.c)
-    init_enum(attribute, "cxx", "", cc.cxx)
     init_enum(attribute, "warnings", "on", cc.warnings)
     init_enum(attribute, "rtti", "on", enum_onoff)
     init_enum(attribute, "visibility", "hidden", enum_visibility)

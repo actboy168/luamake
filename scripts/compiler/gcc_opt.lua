@@ -69,7 +69,7 @@ function gcc.get_c(name, v)
     do
         local what = v:match "^gnu(.*)$"
         if what then
-            return "-std=gun"..what
+            return "-std=gnu"..what
         end
     end
     log.fatal("`%s`: unknown std c: `%s`", name, v)
@@ -95,7 +95,7 @@ function gcc.get_cxx(name, v)
     do
         local what = v:match "^gnu%+%+(.*)$"
         if what then
-            return "-std=gun++"..what
+            return "-std=gnu++"..what
         end
     end
     log.fatal("`%s`: unknown std c++: `%s`", name, v)

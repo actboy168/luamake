@@ -102,6 +102,9 @@ local traceback; do
             ::continue::
             depth = depth + 1
         end
+        if #s == 2 then
+            s[3] = "\tNo stack traceback available."
+        end
         return table.concat(s)
     end
 end

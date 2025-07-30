@@ -346,10 +346,16 @@ function m.createEnvConfig(arch, rebuild)
             return
         end
     end
-    local winsdk = find_winsdk()
-    local toolset = find_toolset()
-    globals.winsdk = winsdk
-    globals.toolset = toolset
+    local winsdk = globals.winsdk
+    if not winsdk then
+        winsdk = find_winsdk()
+        globals.winsdk = winsdk
+    end
+    local toolset = globals.toolset
+    if not toolset then
+        toolset = find_toolset()
+        globals.toolset = toolset
+    end
     env = environment(ArchAlias[arch], winsdk, toolset)
     msvc_deps_prefix = getMsvcDepsPrefix(env)
 

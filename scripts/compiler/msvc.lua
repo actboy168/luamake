@@ -92,7 +92,7 @@ local function get_cxx(name, v)
     log.fatal("`%s`: unknown std c++: `%s`", name, v)
 end
 
-function cl.update_flags(flags, cflags, cxxflags, attribute, name)
+function cl.update_flags(flags, cflags, cxxflags, attribute, name, rule)
     cflags[#cflags+1] = get_c(name, attribute.c)
     cxxflags[#cxxflags+1] = get_cxx(name, attribute.cxx)
 
@@ -117,8 +117,10 @@ function cl.update_flags(flags, cflags, cxxflags, attribute, name)
         flags[#flags+1] = "/Zi"
         flags[#flags+1] = ("/Fd$obj/%s/"):format(name)
     end
-    if globals.cc ~= "clang-cl" and attribute.lto ~= "off" then
-        flags[#flags+1] = "/GL"
+    if rule ~= "static_library" then
+        if globals.cc ~= "clang-cl" and attribute.lto ~= "off" then
+            flags[#flags+1] = "/GL"
+        end
     end
     if attribute.rtti == "off" then
         cxxflags[#cxxflags+1] = "/GR-"

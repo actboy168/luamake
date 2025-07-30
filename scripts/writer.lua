@@ -152,7 +152,7 @@ local function update_flags(flags, cflags, cxxflags, attribute, name, rule)
             flags[#flags+1] = "-fPIC"
         end
     end
-    cc.update_flags(flags, cflags, cxxflags, attribute, name)
+    cc.update_flags(flags, cflags, cxxflags, attribute, name, rule)
 
     if attribute.includes then
         for _, inc in ipairs(attribute.includes) do

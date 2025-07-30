@@ -22,7 +22,7 @@ local function execute(option)
 end
 
 local function ninja(args)
-    args[1] = { "ninja", "-f", globals.builddir.."/build.ninja", args[1] }
+    args[1] = { globals.ninja or "ninja", "-f", globals.builddir.."/build.ninja", args[1] }
     return execute(args)
 end
 

@@ -45,10 +45,10 @@ local function installpath()
     local result = strtrim(process.stdout:read "a")
     process.stdout:close()
     if process:wait() ~= 0 then
-        log.fastfail("[vswhere] %s", result)
+        log.fastfail("[vswhere] Error: %s", result)
     end
     if result == "" then
-        log.fastfail("[vswhere] VisualStudio not found. %s", result)
+        log.fastfail("[vswhere] VisualStudio not found.")
     end
     InstallDir = result
     return InstallDir

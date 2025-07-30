@@ -7,15 +7,15 @@ ml = ml64
 luamake = luamake
 rule c_source_lua
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua54 $
     /D_WIN32_WINNT=0x0602 /DMAKE_LIB /DLUA_BUILD_AS_DLL /DNDEBUG /utf-8 $
     /std:c11
   description = Compile C   $out
   deps = msvc
-build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua/onelua.c
+build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua54/onelua.c
 rule cxx_source_bee
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua54 $
     /D_WIN32_WINNT=0x0602 /DNDEBUG /utf-8 /wd4244 /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
@@ -30,7 +30,7 @@ rule cxx_source_bee_1
 build $obj/source_bee/format.obj: cxx_source_bee_1 bee.lua/3rd/fmt/format.cc
 rule cxx_source_bee_2
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua54 $
     /D_WIN32_WINNT=0x0602 /DNDEBUG /utf-8 /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
@@ -86,7 +86,7 @@ build $obj/source_bee/unicode.obj: cxx_source_bee_2 $
 build $obj/source_bee/wtf8.obj: cxx_source_bee_2 bee.lua/bee/win/wtf8.cpp
 rule c_source_bee
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua54 $
     /D_WIN32_WINNT=0x0602 /DBEE_STATIC /D_CRT_SECURE_NO_WARNINGS /DNDEBUG $
     /utf-8 /std:c11
   description = Compile C   $out
@@ -95,7 +95,7 @@ build $obj/source_bee/bee_newstate.obj: c_source_bee $
     bee.lua/3rd/lua-patch/bee_newstate.c
 rule cxx_source_bee_3
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua54 $
     /D_WIN32_WINNT=0x0602 /DBEE_STATIC /D_CRT_SECURE_NO_WARNINGS /DNDEBUG $
     /utf-8 /std:c++17 /GR-
   description = Compile C++ $out
@@ -164,8 +164,8 @@ rule test
   description = Run test.
   pool = console
 rule runlua
-  command = $luamake lua $script bee.lua/3rd/lua $out luamake.exe
-  description = lua $script bee.lua/3rd/lua $out luamake.exe
+  command = $luamake lua $script bee.lua/3rd/lua54 $out luamake.exe
+  description = lua $script bee.lua/3rd/lua54 $out luamake.exe
 rule c_lua54
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /O2 /Zc:inline /W3 /permissive- /MD /GL /DNDEBUG 
@@ -220,8 +220,8 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/test_windows.lua | $bin/bootstrap.exe copy_script
 build luamake.exe: copy | $bin/bootstrap.exe
   input = $bin/bootstrap.exe
-build compile/lua/forward_lua.c: runlua bee.lua/3rd/lua/lauxlib.h $
-    bee.lua/3rd/lua/lua.h bee.lua/3rd/lua/lualib.h | copy_luamake $
+build compile/lua/forward_lua.c: runlua bee.lua/3rd/lua54/lauxlib.h $
+    bee.lua/3rd/lua54/lua.h bee.lua/3rd/lua54/lualib.h | copy_luamake $
     compile/lua/forward_lua.lua
   script = compile/lua/forward_lua.lua
 build $bin/lua54.dll | $obj/lua54/lua54.lib: link_lua54 $

@@ -24,11 +24,11 @@ lm:copy "copy_luamake" {
 if isWindows then
     lm:runlua "forward_lua" {
         script = "compile/lua/forward_lua.lua",
-        args = { "@bee.lua/3rd/lua/", "$out", "luamake.exe" },
+        args = { "@bee.lua/3rd/lua54/", "$out", "luamake.exe" },
         inputs = {
-            "bee.lua/3rd/lua/lua.h",
-            "bee.lua/3rd/lua/lauxlib.h",
-            "bee.lua/3rd/lua/lualib.h",
+            "bee.lua/3rd/lua54/lua.h",
+            "bee.lua/3rd/lua54/lauxlib.h",
+            "bee.lua/3rd/lua54/lualib.h",
         },
         outputs = "compile/lua/forward_lua.c",
         deps = "copy_luamake",

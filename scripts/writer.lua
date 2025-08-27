@@ -281,6 +281,7 @@ local function generate(rule, attribute, name)
 
     if globals.compiler == "msvc" then
         init_enum(attribute, "permissive", "off", enum_onoff)
+        init_enum(attribute, "gl", "on", enum_onoff)
     end
 
     if attribute.luaversion ~= "" then

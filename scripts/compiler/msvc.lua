@@ -117,8 +117,8 @@ function cl.update_flags(flags, cflags, cxxflags, attribute, name, rule)
         flags[#flags+1] = "/Zi"
         flags[#flags+1] = ("/Fd$obj/%s/"):format(name)
     end
-    if rule ~= "static_library" then
-        if globals.cc ~= "clang-cl" and attribute.lto ~= "off" then
+    if globals.cc ~= "clang-cl" and attribute.lto ~= "off" then
+        if attribute.gl == "on" then
             flags[#flags+1] = "/GL"
         end
     end

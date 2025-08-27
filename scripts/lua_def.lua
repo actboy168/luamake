@@ -1,13 +1,21 @@
 local fs = require "bee.filesystem"
 
+local function getvalue(str, key)
+    local value = str:match("^%s*#%s*define%s*"..key.."%s*([0-9]+)%s*$")
+    if value then
+        return tonumber(value)
+    end
+end
+
 local function parse(folder)
     local version
+    local version_major
+    local version_minor
     local export = {}
     for line in io.lines(folder.."/lua.h") do
-        local verstr = line:match "^%s*#%s*define%s*LUA_VERSION_NUM%s*([0-9]+)%s*$"
-        if verstr then
-            version = tostring(tonumber(verstr:sub(1, -3)))..tostring(tonumber(verstr:sub(-2, -1)))
-        end
+        version = version or getvalue(line, "LUA_VERSION_NUM")
+        version_major = version_major or getvalue(line, "LUA_VERSION_MAJOR_N")
+        version_minor = version_minor or getvalue(line, "LUA_VERSION_MINOR_N")
         local api = line:match "^%s*LUA_API[%w%s%*_]+%(([%w_]+)%)"
         if api then
             export[#export+1] = api
@@ -26,7 +34,13 @@ local function parse(folder)
         end
     end
     table.sort(export)
-    return version, export
+    if version then
+        return version // 100 * 10 + version % 10, export
+    end
+    if version_major and version_minor then
+        return version_major * 10 + version_minor, export
+    end
+    return 0, export
 end
 
 return function (path)

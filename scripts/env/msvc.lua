@@ -129,6 +129,7 @@ local function vsdevcmd(arch, winsdk, toolset, f)
     if toolset then
         args[#args+1] = ("-vcvars_ver=%s"):format(toolset)
     end
+    local err = {}
     local process = assert(sp.spawn {
         args, "&&", "set",
         stderr = true,
@@ -139,16 +140,17 @@ local function vsdevcmd(arch, winsdk, toolset, f)
         }
     })
     for line in process.stdout:lines() do
+        err[#err+1] = line
         local name, value = parse_env(line)
         if name and value then
             f(name, value)
         end
     end
-    local err = process.stderr:read "a"
+    err[#err+1] = process.stderr:read "a"
     process.stdout:close()
     process.stderr:close()
     if process:wait() ~= 0 then
-        log.fastfail("Call `VsDevCmd.bat` error:\n%s", err)
+        log.fastfail("Call `VsDevCmd.bat` faild.\n%s\n%s", table.concat(args, " "), table.concat(err, "\n"))
     end
 end
 

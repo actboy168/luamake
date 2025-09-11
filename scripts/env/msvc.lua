@@ -233,9 +233,9 @@ local function vcrtpath(arch, optimize, toolset)
     return path.."/"..arch.."/Microsoft.VC"..ToolsetVersion..".CRT"
 end
 
-local function ucrtpath(arch, optimize)
+local function ucrtpath(arch, optimize, winsdk, toolset)
     local UniversalCRTSdkDir
-    vsdevcmd(arch, find_winsdk(), find_toolset(), function (name, value)
+    vsdevcmd(arch, winsdk, toolset, function (name, value)
         if name == "UniversalCRTSdkDir" then
             UniversalCRTSdkDir = value
         end

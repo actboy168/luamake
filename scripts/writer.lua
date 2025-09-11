@@ -688,7 +688,7 @@ function GEN.msvc_copydll(attribute, name)
             end
         end
     elseif attribute.type == "ucrt" then
-        local redist, bin = msvc.ucrtpath(archalias, attribute.optimize)
+        local redist, bin = msvc.ucrtpath(archalias, attribute.optimize, globals.winsdk, globals.toolset)
         if attribute.optimize == "off" then
             for dll in fs.pairs(redist) do
                 local filename = dll:filename():string()

@@ -137,6 +137,19 @@ rule test
   command = $bin/bootstrap bee.lua/test/test.lua --touch $out
   description = Run test.
   pool = console
+rule c_luamake
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -fvisibility=hidden $
+    -Itools/lua54 -DNDEBUG -o $out -c $in
+  description = Compile C   $out
+  deps = gcc
+  depfile = $out.d
+build $obj/luamake/lua2c.obj: c_luamake compile/lua/lua2c.c
+rule link_luamake
+  command = $cc $in -o $out -l:libinotify.a -L/usr/pkg/lib -pthread -lm $
+    -lstdc++ -s
+  description = Link    Exe $out
+rule build_luamake_test
+  command = $bin/luamake lua bee.lua/test/test.lua
 build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/nanoid.obj $
     $obj/source_bee/filewatch_bsd.obj $obj/source_bee/error.obj $
@@ -158,8 +171,7 @@ build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
     $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
     $obj/source_bee/lua_time.obj $obj/source_lua/onelua.obj $
     $obj/source_bootstrap/bootstrap_init.obj $obj/source_bootstrap/main.obj
-build $bin/main.lua: copy | $bin/bootstrap
-  input = bee.lua/bootstrap/main.lua
+build $bin/main.lua: copy bee.lua/bootstrap/main.lua
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/ltest.lua bee.lua/test/shell.lua $
     bee.lua/test/supported.lua bee.lua/test/test.lua $
@@ -170,11 +182,36 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/test_subprocess.lua bee.lua/test/test_sys.lua $
     bee.lua/test/test_thread.lua bee.lua/test/test_time.lua $
     bee.lua/test/test_windows.lua | $bin/bootstrap copy_script
-build luamake: copy | $bin/bootstrap
-  input = $bin/bootstrap
+build $bin/luamake: link_luamake $obj/luamake/lua2c.obj $
+    $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
+    $obj/source_bee/nanoid.obj $obj/source_bee/filewatch_bsd.obj $
+    $obj/source_bee/error.obj $obj/source_bee/file.obj $
+    $obj/source_bee/luaref.obj $obj/source_bee/bpoll_bsd.obj $
+    $obj/source_bee/endpoint.obj $obj/source_bee/event.obj $
+    $obj/source_bee/socket.obj $obj/source_bee/process_select.obj $
+    $obj/source_bee/subprocess_posix.obj $obj/source_bee/file_handle.obj $
+    $obj/source_bee/file_handle_bsd.obj $
+    $obj/source_bee/file_handle_posix.obj $obj/source_bee/path_bsd.obj $
+    $obj/source_bee/path_posix.obj $obj/source_bee/atomic_sync.obj $
+    $obj/source_bee/setname.obj $obj/source_bee/simplethread_posix.obj $
+    $obj/source_bee/spinlock.obj $obj/source_bee/version.obj $
+    $obj/source_bee/bee_newstate.obj $obj/source_bee/lua_channel.obj $
+    $obj/source_bee/lua_crash.obj $obj/source_bee/lua_debugging.obj $
+    $obj/source_bee/lua_epoll.obj $obj/source_bee/lua_filesystem.obj $
+    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
+    $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
+    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
+    $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
+    $obj/source_bee/lua_time.obj $obj/source_lua/onelua.obj $
+    $obj/source_bootstrap/bootstrap_init.obj $obj/source_bootstrap/main.obj
+build $builddir/_/luamake_test: build_luamake_test | $bin/luamake copy_mainlua
+build luamake: copy | $bin/luamake
+  input = $bin/luamake
 build bootstrap: phony $bin/bootstrap
 build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp
+build copy_mainlua: phony $bin/main.lua
+build luamake_test: phony $builddir/_/luamake_test
 build copy_luamake: phony luamake
 build notest: phony copy_luamake
-default test notest
+default luamake_test notest

@@ -7,3 +7,4 @@
 /.ninja_deps
 /tools/*/lua.def
 /compile/lua/forward_lua.c
+/compile/lua/lua2c.c

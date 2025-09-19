@@ -31,7 +31,7 @@ static int get_module(lua_State *L) {
 
 local code_bee_main <const> = [[
 LUA2C_API int _bee_main(lua_State *L) {
-    if (luaL_loadbuffer(L, $main, sizeof($main), $main) != LUA_OK) {
+    if (luaL_loadbuffer(L, (const char *)$main, sizeof($main), (const char *)$main) != LUA_OK) {
         return lua_error(L);
     }
     lua_call(L, 0, 0);

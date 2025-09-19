@@ -1,11 +1,11 @@
-luamake init -prebuilt -builddir build/msvc  -hostos windows
-luamake init -prebuilt -builddir build/mingw -hostos windows -hostshell sh
-luamake init -prebuilt -builddir build/linux -hostos linux
-luamake init -prebuilt -builddir build/macos -hostos macos
-luamake init -prebuilt -builddir build/android -hostos android
-luamake init -prebuilt -builddir build/netbsd -hostos netbsd
-luamake init -prebuilt -builddir build/freebsd -hostos freebsd
-luamake init -prebuilt -builddir build/openbsd -hostos openbsd
+luamake init -prebuilt -builddir build/msvc  -hostos windows $*
+luamake init -prebuilt -builddir build/mingw -hostos windows -hostshell sh $*
+luamake init -prebuilt -builddir build/linux -hostos linux $*
+luamake init -prebuilt -builddir build/macos -hostos macos $*
+luamake init -prebuilt -builddir build/android -hostos android $*
+luamake init -prebuilt -builddir build/netbsd -hostos netbsd $*
+luamake init -prebuilt -builddir build/freebsd -hostos freebsd $*
+luamake init -prebuilt -builddir build/openbsd -hostos openbsd $*
 
 cp -afv build/msvc/build.ninja  compile/ninja/msvc.ninja
 cp -afv build/mingw/build.ninja compile/ninja/mingw.ninja

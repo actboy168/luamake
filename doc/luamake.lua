@@ -122,7 +122,7 @@ end
 ---@field deps LmStrlist?
 ---@field inputs LmStrlist?
 ---@field outputs LmStrlist
----@field rule string
+---@field rule string?
 
 ---
 --- Same as the build in ninja.

@@ -6,11 +6,11 @@ if not exist compile\ninja (
 
 for %%a in (msvc mingw linux macos android netbsd freebsd openbsd) do (
 	if "%%a" == "msvc" (
-		luamake init -prebuilt -builddir build/msvc -hostos windows
+		luamake init -prebuilt -builddir build/msvc -hostos windows %*
 	) else if "%%a" == "mingw" (
-		luamake init -prebuilt -builddir build/mingw -hostos windows -hostshell sh
+		luamake init -prebuilt -builddir build/mingw -hostos windows -hostshell sh %*
 	) else (
-		luamake init -prebuilt -builddir build/%%a -hostos %%a
+		luamake init -prebuilt -builddir build/%%a -hostos %%a %*
 	)
 	copy /Y build\%%a\build.ninja compile\ninja\%%a.ninja 1>nul
 	echo Copied %%a.ninja

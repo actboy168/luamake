@@ -1,12 +1,9 @@
+local command = require "command"
+
 local t = {}
 local arguments = {}
 local targets = {}
 local what = "build"
-
-local function has_command(cmd)
-    local path = package.searchpath("command."..cmd, package.path)
-    return path ~= nil
-end
 
 local i = 1
 while i <= #arg do
@@ -29,7 +26,7 @@ while i <= #arg do
     i = i + 1
 end
 if #targets > 0 then
-    if has_command(targets[1]) then
+    if command.has(targets[1]) then
         what = table.remove(targets, 1)
     end
 end

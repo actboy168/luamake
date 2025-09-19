@@ -1,11 +1,8 @@
-local fs = require "bee.filesystem"
-local fsutil = require "fsutil"
+local command = require "command"
 
 local lst = {}
-for path in fs.pairs(fsutil.join(package.procdir, "scripts", "command")) do
-    if path:extension() == ".lua" then
-        lst[#lst+1] = path:stem():string()
-    end
+for name in pairs(command.list()) do
+    lst[#lst+1] = name
 end
 table.sort(lst)
 

@@ -1,3 +1,5 @@
+local command = require "command"
+
 local fs = require "bee.filesystem"
 
 local RawCommand = {
@@ -7,15 +9,10 @@ local RawCommand = {
     shell = true,
 }
 
-local function command(what)
-    local path = assert(package.searchpath("command."..what, package.path))
-    dofile(path)
-end
-
 WORKDIR = fs.current_path():string()
 
 if RawCommand[arg[1]] then
-    command(arg[1])
+    command.run(arg[1])
 else
     local fsutil = require "fsutil"
     local arguments = require "arguments"
@@ -23,5 +20,5 @@ else
         WORKDIR = fsutil.absolute(WORKDIR, arguments.C)
         fs.current_path(WORKDIR)
     end
-    command(arguments.what)
+    command.run(arguments.what)
 end

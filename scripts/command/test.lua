@@ -7,5 +7,5 @@ package.cpath = string.gsub([[${luamake}/?.${extension};./${builddir}/bin/?.${ex
 
 table.insert(arg, 2, "test.lua")
 
-local path = assert(package.searchpath("command.lua", package.path))
-dofile(path)
+local command = require "command"
+command.run "lua"

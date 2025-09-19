@@ -164,12 +164,6 @@ rule test
   description = Run test.
   pool = console
 build $obj/luamake/bootstrap.obj: rc_bootstrap bee.lua/bootstrap/bootstrap.rc
-rule c_luamake
-  command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Itools/lua54 /DNDEBUG 
-  description = Compile C   $out
-  deps = msvc
-build $obj/luamake/lua2c.obj: c_luamake compile/lua/lua2c.c
 rule link_luamake
   command = $cc /nologo @$out.rsp /link /IMPLIB:$obj/luamake.lib ntdll.lib $
     ws2_32.lib ole32.lib user32.lib version.lib synchronization.lib $
@@ -178,7 +172,7 @@ rule link_luamake
   rspfile = $out.rsp
   rspfile_content = $in_newline
 rule build_luamake_test
-  command = $bin/luamake.exe lua bee.lua/test/test.lua
+  command = luamake.exe lua bee.lua/test/test.lua
 rule runlua
   command = $luamake lua $script bee.lua/3rd/lua54 $out luamake.exe
   description = lua $script bee.lua/3rd/lua54 $out luamake.exe
@@ -234,36 +228,35 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/test_thread.lua bee.lua/test/test_time.lua $
     bee.lua/test/test_windows.lua | $bin/bootstrap.exe copy_script
 build $bin/luamake.exe: link_luamake $obj/luamake/bootstrap.obj $
-    $obj/luamake/lua2c.obj $obj/source_bee/lua-seri.obj $
-    $obj/source_bee/format.obj $obj/source_bee/handler_win.obj $
-    $obj/source_bee/nanoid.obj $obj/source_bee/stacktrace_win.obj $
-    $obj/source_bee/unwind_win.obj $obj/source_bee/filewatch_win.obj $
-    $obj/source_bee/error.obj $obj/source_bee/file.obj $
-    $obj/source_bee/luaref.obj $obj/source_bee/bpoll_win.obj $
-    $obj/source_bee/endpoint.obj $obj/source_bee/event.obj $
-    $obj/source_bee/socket.obj $obj/source_bee/uds_win.obj $
-    $obj/source_bee/process_select.obj $obj/source_bee/subprocess_win.obj $
-    $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_win.obj $
-    $obj/source_bee/path_win.obj $obj/source_bee/atomic_sync.obj $
-    $obj/source_bee/setname.obj $obj/source_bee/simplethread_win.obj $
-    $obj/source_bee/spinlock.obj $obj/source_bee/version.obj $
-    $obj/source_bee/afd.obj $obj/source_bee/poller.obj $
-    $obj/source_bee/poller_fd.obj $obj/source_bee/module_version.obj $
-    $obj/source_bee/unicode.obj $obj/source_bee/wtf8.obj $
-    $obj/source_bee/bee_newstate.obj $obj/source_bee/lua_channel.obj $
-    $obj/source_bee/lua_crash.obj $obj/source_bee/lua_debugging.obj $
-    $obj/source_bee/lua_epoll.obj $obj/source_bee/lua_filesystem.obj $
-    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
-    $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
-    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
-    $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
-    $obj/source_bee/lua_time.obj $obj/source_bee/lua_windows.obj $
-    $obj/source_lua/onelua.obj $obj/source_bootstrap/bootstrap_init.obj $
-    $obj/source_bootstrap/main.obj $obj/bee_utf8_crt/bee_utf8_crt.obj
-build $builddir/_/luamake_test: build_luamake_test | $bin/luamake.exe $
-    copy_mainlua
+    $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
+    $obj/source_bee/handler_win.obj $obj/source_bee/nanoid.obj $
+    $obj/source_bee/stacktrace_win.obj $obj/source_bee/unwind_win.obj $
+    $obj/source_bee/filewatch_win.obj $obj/source_bee/error.obj $
+    $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
+    $obj/source_bee/bpoll_win.obj $obj/source_bee/endpoint.obj $
+    $obj/source_bee/event.obj $obj/source_bee/socket.obj $
+    $obj/source_bee/uds_win.obj $obj/source_bee/process_select.obj $
+    $obj/source_bee/subprocess_win.obj $obj/source_bee/file_handle.obj $
+    $obj/source_bee/file_handle_win.obj $obj/source_bee/path_win.obj $
+    $obj/source_bee/atomic_sync.obj $obj/source_bee/setname.obj $
+    $obj/source_bee/simplethread_win.obj $obj/source_bee/spinlock.obj $
+    $obj/source_bee/version.obj $obj/source_bee/afd.obj $
+    $obj/source_bee/poller.obj $obj/source_bee/poller_fd.obj $
+    $obj/source_bee/module_version.obj $obj/source_bee/unicode.obj $
+    $obj/source_bee/wtf8.obj $obj/source_bee/bee_newstate.obj $
+    $obj/source_bee/lua_channel.obj $obj/source_bee/lua_crash.obj $
+    $obj/source_bee/lua_debugging.obj $obj/source_bee/lua_epoll.obj $
+    $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
+    $obj/source_bee/lua_platform.obj $obj/source_bee/lua_select.obj $
+    $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
+    $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_sys.obj $
+    $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
+    $obj/source_bee/lua_windows.obj $obj/source_lua/onelua.obj $
+    $obj/source_bootstrap/bootstrap_init.obj $obj/source_bootstrap/main.obj $
+    $obj/bee_utf8_crt/bee_utf8_crt.obj
 build luamake.exe: copy | $bin/luamake.exe
   input = $bin/luamake.exe
+build $builddir/_/luamake_test: build_luamake_test | copy_luamake copy_mainlua
 build compile/lua/forward_lua.c: runlua bee.lua/3rd/lua54/lauxlib.h $
     bee.lua/3rd/lua54/lua.h bee.lua/3rd/lua54/lualib.h | copy_luamake $
     compile/lua/forward_lua.lua
@@ -278,8 +271,8 @@ build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp
 build luamake: phony $bin/luamake.exe
 build copy_mainlua: phony $bin/main.lua
-build luamake_test: phony $builddir/_/luamake_test
 build copy_luamake: phony luamake.exe
+build luamake_test: phony $builddir/_/luamake_test
 build forward_lua: phony compile/lua/forward_lua.c
 build lua54: phony $bin/lua54.dll
 build copy_lua54: phony tools/lua54.dll

@@ -44,17 +44,17 @@ lm:copy "copy_mainlua" {
     outputs = "$bin/main.lua",
 }
 
-lm:build "luamake_test" {
-    args = { "$bin/luamake"..exe, "lua", "@bee.lua/test/test.lua" },
-    description = "Run test.",
-    pool = "console",
-    deps = { "luamake", "copy_mainlua" },
-}
-
 lm:copy "copy_luamake" {
     inputs = "$bin/luamake"..exe,
     outputs = "luamake"..exe,
     deps = "luamake",
+}
+
+lm:build "luamake_test" {
+    args = { "luamake"..exe, "lua", "@bee.lua/test/test.lua" },
+    description = "Run test.",
+    pool = "console",
+    deps = { "copy_luamake", "copy_mainlua" },
 }
 
 if isWindows then

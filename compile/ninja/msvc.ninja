@@ -3,7 +3,6 @@ builddir = build/msvc
 bin = $builddir/bin
 obj = $builddir/obj
 cc = cl
-ml = ml64
 luamake = luamake
 rule c_source_lua
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
@@ -172,7 +171,7 @@ rule link_luamake
   rspfile = $out.rsp
   rspfile_content = $in_newline
 rule build_luamake_test
-  command = luamake.exe lua bee.lua/test/test.lua
+  command = $bin/luamake.exe bee.lua/test/test.lua
 rule runlua
   command = $luamake lua $script bee.lua/3rd/lua54 $out luamake.exe
   description = lua $script bee.lua/3rd/lua54 $out luamake.exe

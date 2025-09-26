@@ -51,7 +51,9 @@ lm:copy "copy_luamake" {
 }
 
 lm:build "luamake_test" {
-    args = { "luamake"..exe, "lua", "@bee.lua/test/test.lua" },
+    args = lm.lua2c
+        and { "./luamake"..exe, "lua", "@bee.lua/test/test.lua" }
+        or { "$bin/luamake"..exe, "@bee.lua/test/test.lua" },
     description = "Run test.",
     pool = "console",
     deps = { "copy_luamake", "copy_mainlua" },

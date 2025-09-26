@@ -142,7 +142,7 @@ rule link_luamake
     -lstdc++ -s
   description = Link    Exe $out
 rule build_luamake_test
-  command = luamake lua bee.lua/test/test.lua
+  command = $bin/luamake bee.lua/test/test.lua
 build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/nanoid.obj $
     $obj/source_bee/filewatch_bsd.obj $obj/source_bee/error.obj $

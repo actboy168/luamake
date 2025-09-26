@@ -3,6 +3,7 @@ builddir = build/msvc
 bin = $builddir/bin
 obj = $builddir/obj
 cc = cl
+ml = ml64
 luamake = luamake
 rule c_source_lua
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $

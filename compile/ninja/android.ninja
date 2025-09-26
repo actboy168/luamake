@@ -212,5 +212,5 @@ build test: phony $obj/test.stamp
 build copy_mainlua: phony $bin/main.lua
 build copy_luamake: phony luamake
 build luamake_test: phony $builddir/_/luamake_test
-build notest: phony copy_luamake
+build notest: phony copy_luamake copy_mainlua
 default luamake_test notest

@@ -82,6 +82,7 @@ end
 lm:phony "notest" {
     deps = {
         "copy_luamake",
+        "copy_mainlua",
         isWindows and "copy_lua54",
     }
 }

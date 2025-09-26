@@ -11,9 +11,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules : recursive
-    - run: .\compile\build.bat notest
-    - run: .\compile\build.bat copy_script
-    - run: .\build\msvc\bin\bootstrap.exe .\bee.lua\test\test.lua -v
+    - run: .\compile\build.bat
     - run: .\luamake.exe version
   ubuntu:
     strategy:

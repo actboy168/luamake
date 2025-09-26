@@ -276,5 +276,5 @@ build luamake_test: phony $builddir/_/luamake_test
 build forward_lua: phony compile/lua/forward_lua.c
 build lua54: phony $bin/lua54.dll
 build copy_lua54: phony tools/lua54.dll
-build notest: phony copy_luamake copy_lua54
+build notest: phony copy_luamake copy_mainlua copy_lua54
 default luamake_test notest

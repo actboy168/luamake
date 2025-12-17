@@ -3,8 +3,8 @@
 /luamake
 /luamake.exe
 /tools/lua54.dll
+/tools/lua55.dll
 /.ninja_log
 /.ninja_deps
 /tools/*/lua.def
-/compile/lua/forward_lua.c
-/compile/lua/lua2c.c
+/compile/lua/*.c

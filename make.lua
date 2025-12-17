@@ -60,24 +60,25 @@ lm:build "luamake_test" {
 }
 
 if isWindows then
+    local lua <const> = "lua54"
     lm:runlua "forward_lua" {
         script = "compile/lua/forward_lua.lua",
-        args = { "@bee.lua/3rd/lua54/", "$out", "luamake.exe" },
+        args = { "@bee.lua/3rd/"..lua.."/", "$out", "luamake.exe" },
         inputs = {
-            "bee.lua/3rd/lua54/lua.h",
-            "bee.lua/3rd/lua54/lauxlib.h",
-            "bee.lua/3rd/lua54/lualib.h",
+            "bee.lua/3rd/"..lua.."/lua.h",
+            "bee.lua/3rd/"..lua.."/lauxlib.h",
+            "bee.lua/3rd/"..lua.."/lualib.h",
         },
         outputs = "compile/lua/forward_lua.c",
         deps = "copy_luamake",
     }
-    lm:dll "lua54" {
+    lm:dll(lua) {
         sources = "compile/lua/forward_lua.c",
     }
-    lm:copy "copy_lua54" {
-        inputs = "$bin/lua54.dll",
-        outputs = "tools/lua54.dll",
-        deps = "lua54"
+    lm:copy "copy_lua" {
+        inputs = "$bin/"..lua..".dll",
+        outputs = "tools/"..lua..".dll",
+        deps = lua
     }
 end
 
@@ -85,7 +86,7 @@ lm:phony "notest" {
     deps = {
         "copy_luamake",
         "copy_mainlua",
-        isWindows and "copy_lua54",
+        isWindows and "copy_lua",
     }
 }
 

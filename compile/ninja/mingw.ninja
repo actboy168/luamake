@@ -35,14 +35,14 @@ rule cxx_source_bee_2
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/handler_win.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/handler_win.cpp
 build $obj/source_bee/nanoid.obj: cxx_source_bee_2 $
     bee.lua/bee/crash/nanoid.cpp
+build $obj/source_bee/handler_win.obj: cxx_source_bee_2 $
+    bee.lua/bee/crash/windows/handler_win.cpp
 build $obj/source_bee/stacktrace_win.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/stacktrace_win.cpp
+    bee.lua/bee/crash/windows/stacktrace_win.cpp
 build $obj/source_bee/unwind_win.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/unwind_win.cpp
+    bee.lua/bee/crash/windows/unwind_win.cpp
 build $obj/source_bee/filewatch_win.obj: cxx_source_bee_2 $
     bee.lua/bee/filewatch/filewatch_win.cpp
 build $obj/source_bee/error.obj: cxx_source_bee_2 bee.lua/bee/lua/error.cpp
@@ -187,7 +187,7 @@ rule link_lua54
   description = Link    Dll $out
 build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
     $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
-    $obj/source_bee/handler_win.obj $obj/source_bee/nanoid.obj $
+    $obj/source_bee/nanoid.obj $obj/source_bee/handler_win.obj $
     $obj/source_bee/stacktrace_win.obj $obj/source_bee/unwind_win.obj $
     $obj/source_bee/filewatch_win.obj $obj/source_bee/error.obj $
     $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
@@ -225,7 +225,7 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/test_windows.lua | $bin/bootstrap.exe copy_script
 build $bin/luamake.exe: link_luamake $obj/luamake/bootstrap.obj $
     $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
-    $obj/source_bee/handler_win.obj $obj/source_bee/nanoid.obj $
+    $obj/source_bee/nanoid.obj $obj/source_bee/handler_win.obj $
     $obj/source_bee/stacktrace_win.obj $obj/source_bee/unwind_win.obj $
     $obj/source_bee/filewatch_win.obj $obj/source_bee/error.obj $
     $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
@@ -269,6 +269,6 @@ build copy_luamake: phony luamake.exe
 build luamake_test: phony $builddir/_/luamake_test
 build forward_lua: phony compile/lua/forward_lua.c
 build lua54: phony $bin/lua54.dll
-build copy_lua54: phony tools/lua54.dll
-build notest: phony copy_luamake copy_mainlua copy_lua54
+build copy_lua: phony tools/lua54.dll
+build notest: phony copy_luamake copy_mainlua copy_lua
 default luamake_test notest

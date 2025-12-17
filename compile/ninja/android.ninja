@@ -34,13 +34,13 @@ rule cxx_source_bee_2
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/handler_linux.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/handler_linux.cpp
+    bee.lua/bee/crash/linux/handler_linux.cpp
+build $obj/source_bee/stacktrace_linux.obj: cxx_source_bee_2 $
+    bee.lua/bee/crash/linux/stacktrace_linux.cpp
+build $obj/source_bee/unwind_linux.obj: cxx_source_bee_2 $
+    bee.lua/bee/crash/linux/unwind_linux.cpp
 build $obj/source_bee/nanoid.obj: cxx_source_bee_2 $
     bee.lua/bee/crash/nanoid.cpp
-build $obj/source_bee/stacktrace_linux.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/stacktrace_linux.cpp
-build $obj/source_bee/unwind_linux.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/unwind_linux.cpp
 build $obj/source_bee/filewatch_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/filewatch/filewatch_linux.cpp
 build $obj/source_bee/error.obj: cxx_source_bee_2 bee.lua/bee/lua/error.cpp
@@ -148,8 +148,8 @@ rule build_luamake_test
   command = $bin/luamake bee.lua/test/test.lua
 build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/handler_linux.obj $
-    $obj/source_bee/nanoid.obj $obj/source_bee/stacktrace_linux.obj $
-    $obj/source_bee/unwind_linux.obj $obj/source_bee/filewatch_linux.obj $
+    $obj/source_bee/stacktrace_linux.obj $obj/source_bee/unwind_linux.obj $
+    $obj/source_bee/nanoid.obj $obj/source_bee/filewatch_linux.obj $
     $obj/source_bee/error.obj $obj/source_bee/file.obj $
     $obj/source_bee/luaref.obj $obj/source_bee/bpoll_linux.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/event.obj $
@@ -182,8 +182,8 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/test_windows.lua | $bin/bootstrap copy_script
 build $bin/luamake: link_luamake $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/handler_linux.obj $
-    $obj/source_bee/nanoid.obj $obj/source_bee/stacktrace_linux.obj $
-    $obj/source_bee/unwind_linux.obj $obj/source_bee/filewatch_linux.obj $
+    $obj/source_bee/stacktrace_linux.obj $obj/source_bee/unwind_linux.obj $
+    $obj/source_bee/nanoid.obj $obj/source_bee/filewatch_linux.obj $
     $obj/source_bee/error.obj $obj/source_bee/file.obj $
     $obj/source_bee/luaref.obj $obj/source_bee/bpoll_linux.obj $
     $obj/source_bee/endpoint.obj $obj/source_bee/event.obj $

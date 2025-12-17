@@ -35,14 +35,8 @@ rule cxx_source_bee_2
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/handler_linux.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/handler_linux.cpp
 build $obj/source_bee/nanoid.obj: cxx_source_bee_2 $
     bee.lua/bee/crash/nanoid.cpp
-build $obj/source_bee/stacktrace_linux.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/stacktrace_linux.cpp
-build $obj/source_bee/unwind_linux.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/unwind_linux.cpp
 build $obj/source_bee/filewatch_linux.obj: cxx_source_bee_2 $
     bee.lua/bee/filewatch/filewatch_linux.cpp
 build $obj/source_bee/error.obj: cxx_source_bee_2 bee.lua/bee/lua/error.cpp
@@ -133,8 +127,8 @@ build $obj/source_bootstrap/bootstrap_init.obj: cxx_source_bootstrap $
 build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/main.cpp
 rule link_bootstrap
-  command = $cc $in -o $out -Wl,-E -static-libgcc -lstdc++fs -lunwind -lbfd $
-    -pthread -lm -ldl -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic -s
+  command = $cc $in -o $out -Wl,-E -static-libgcc -lstdc++fs -pthread -lm $
+    -ldl -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic -s
   description = Link    Exe $out
 rule copy
   command = cp -fv $in$input $out 1>/dev/null
@@ -145,21 +139,18 @@ rule test
   description = Run test.
   pool = console
 rule link_luamake
-  command = $cc $in -o $out -lstdc++fs -lunwind -lbfd -pthread -lm -ldl $
-    -lstdc++ -s
+  command = $cc $in -o $out -lstdc++fs -pthread -lm -ldl -lstdc++ -s
   description = Link    Exe $out
 rule build_luamake_test
   command = $bin/luamake bee.lua/test/test.lua
 build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
-    $obj/source_bee/format.obj $obj/source_bee/handler_linux.obj $
-    $obj/source_bee/nanoid.obj $obj/source_bee/stacktrace_linux.obj $
-    $obj/source_bee/unwind_linux.obj $obj/source_bee/filewatch_linux.obj $
-    $obj/source_bee/error.obj $obj/source_bee/file.obj $
-    $obj/source_bee/luaref.obj $obj/source_bee/bpoll_linux.obj $
-    $obj/source_bee/endpoint.obj $obj/source_bee/event.obj $
-    $obj/source_bee/socket.obj $obj/source_bee/process_select.obj $
-    $obj/source_bee/subprocess_posix.obj $obj/source_bee/file_handle.obj $
-    $obj/source_bee/file_handle_linux.obj $
+    $obj/source_bee/format.obj $obj/source_bee/nanoid.obj $
+    $obj/source_bee/filewatch_linux.obj $obj/source_bee/error.obj $
+    $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
+    $obj/source_bee/bpoll_linux.obj $obj/source_bee/endpoint.obj $
+    $obj/source_bee/event.obj $obj/source_bee/socket.obj $
+    $obj/source_bee/process_select.obj $obj/source_bee/subprocess_posix.obj $
+    $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_linux.obj $
     $obj/source_bee/file_handle_posix.obj $obj/source_bee/path_linux.obj $
     $obj/source_bee/path_posix.obj $obj/source_bee/atomic_sync.obj $
     $obj/source_bee/setname.obj $obj/source_bee/simplethread_posix.obj $
@@ -185,15 +176,13 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/test_thread.lua bee.lua/test/test_time.lua $
     bee.lua/test/test_windows.lua | $bin/bootstrap copy_script
 build $bin/luamake: link_luamake $obj/source_bee/lua-seri.obj $
-    $obj/source_bee/format.obj $obj/source_bee/handler_linux.obj $
-    $obj/source_bee/nanoid.obj $obj/source_bee/stacktrace_linux.obj $
-    $obj/source_bee/unwind_linux.obj $obj/source_bee/filewatch_linux.obj $
-    $obj/source_bee/error.obj $obj/source_bee/file.obj $
-    $obj/source_bee/luaref.obj $obj/source_bee/bpoll_linux.obj $
-    $obj/source_bee/endpoint.obj $obj/source_bee/event.obj $
-    $obj/source_bee/socket.obj $obj/source_bee/process_select.obj $
-    $obj/source_bee/subprocess_posix.obj $obj/source_bee/file_handle.obj $
-    $obj/source_bee/file_handle_linux.obj $
+    $obj/source_bee/format.obj $obj/source_bee/nanoid.obj $
+    $obj/source_bee/filewatch_linux.obj $obj/source_bee/error.obj $
+    $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
+    $obj/source_bee/bpoll_linux.obj $obj/source_bee/endpoint.obj $
+    $obj/source_bee/event.obj $obj/source_bee/socket.obj $
+    $obj/source_bee/process_select.obj $obj/source_bee/subprocess_posix.obj $
+    $obj/source_bee/file_handle.obj $obj/source_bee/file_handle_linux.obj $
     $obj/source_bee/file_handle_posix.obj $obj/source_bee/path_linux.obj $
     $obj/source_bee/path_posix.obj $obj/source_bee/atomic_sync.obj $
     $obj/source_bee/setname.obj $obj/source_bee/simplethread_posix.obj $

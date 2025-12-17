@@ -16,6 +16,7 @@ end
 local exe = isWindows and ".exe" or ""
 
 lm.fast_setjmp = "off"
+lm.lua = "54"
 
 lm:import "bee.lua/make.lua"
 
@@ -60,25 +61,24 @@ lm:build "luamake_test" {
 }
 
 if isWindows then
-    local lua <const> = "lua54"
     lm:runlua "forward_lua" {
         script = "compile/lua/forward_lua.lua",
-        args = { "@bee.lua/3rd/"..lua.."/", "$out", "luamake.exe" },
+        args = { "@bee.lua/3rd/lua"..lm.lua.."/", "$out", "luamake.exe" },
         inputs = {
-            "bee.lua/3rd/"..lua.."/lua.h",
-            "bee.lua/3rd/"..lua.."/lauxlib.h",
-            "bee.lua/3rd/"..lua.."/lualib.h",
+            "bee.lua/3rd/lua"..lm.lua.."/lua.h",
+            "bee.lua/3rd/lua"..lm.lua.."/lauxlib.h",
+            "bee.lua/3rd/lua"..lm.lua.."/lualib.h",
         },
         outputs = "compile/lua/forward_lua.c",
         deps = "copy_luamake",
     }
-    lm:dll(lua) {
+    lm:dll("lua"..lm.lua) {
         sources = "compile/lua/forward_lua.c",
     }
     lm:copy "copy_lua" {
-        inputs = "$bin/"..lua..".dll",
-        outputs = "tools/"..lua..".dll",
-        deps = lua
+        inputs = "$bin/lua"..lm.lua..".dll",
+        outputs = "tools/lua"..lm.lua..".dll",
+        deps = "lua"..lm.lua
     }
 end
 

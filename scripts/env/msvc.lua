@@ -10,6 +10,9 @@ local ProgramFiles = os_arch ~= "x86" and "ProgramFiles(x86)" or "ProgramFiles"
 local vswhere = os.getenv(ProgramFiles).."/Microsoft Visual Studio/Installer/vswhere.exe"
 local need = { LIB = true, LIBPATH = true, PATH = true, INCLUDE = true }
 
+local installationPath
+local UniversalCRTSdkDir
+
 local function writeall(filename, content)
     local f <close> = assert(io.open(filename, "w"))
     if content then
@@ -26,11 +29,7 @@ local function strtrim(str)
     return str:gsub("^%s*(.-)%s*$", "%1")
 end
 
-local InstallDir
 local function installpath()
-    if InstallDir then
-        return InstallDir
-    end
     local process = assert(sp.spawn {
         vswhere,
         "-nologo",
@@ -50,8 +49,7 @@ local function installpath()
     if result == "" then
         log.fastfail("[vswhere] VisualStudio not found.")
     end
-    InstallDir = result
-    return InstallDir
+    return result
 end
 
 local function parse_env(str)
@@ -110,7 +108,7 @@ local function find_winsdk()
 end
 
 local function find_toolset()
-    local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt"
+    local verfile = installationPath.."/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt"
     local raw = readall(verfile)
     local res = strtrim(raw)
     assert(res, ("`%s` parse failed."):format(raw))
@@ -118,7 +116,8 @@ local function find_toolset()
 end
 
 local function vsdevcmd(arch, winsdk, toolset, f)
-    local vsvars32 = installpath().."/Common7/Tools/VsDevCmd.bat"
+    installationPath = installpath()
+    local vsvars32 = installationPath.."/Common7/Tools/VsDevCmd.bat"
     local args = { vsvars32 }
     if arch then
         args[#args+1] = ("-arch=%s"):format(arch)
@@ -157,11 +156,20 @@ end
 local function environment(arch, winsdk, toolset)
     local env = {}
     vsdevcmd(arch, winsdk, toolset, function (name, value)
+        if name == "UniversalCRTSdkDir" then
+            UniversalCRTSdkDir = value
+        end
         name = name:upper()
         if need[name] then
             env[name] = value
         end
     end)
+    if not winsdk then
+        globals.winsdk = find_winsdk()
+    end
+    if not toolset then
+        globals.toolset = find_toolset()
+    end
     return env
 end
 
@@ -198,7 +206,7 @@ build test: showIncludes test.c
 end
 
 local function toolspath(toolset)
-    return installpath().."/VC/Tools/MSVC/"..toolset
+    return installationPath.."/VC/Tools/MSVC/"..toolset
 end
 
 local function binpath(arch, toolset)
@@ -217,7 +225,7 @@ end
 
 local function vcrtpath(arch, optimize, toolset)
     local RedistVersion = (function ()
-        local verfile = installpath().."/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt"
+        local verfile = installationPath.."/VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt"
         local r = readall(verfile)
         return strtrim(r)
     end)()
@@ -226,20 +234,14 @@ local function vcrtpath(arch, optimize, toolset)
         local r = readall(verfile)
         return r:match "#define%s+_MSVC_STL_VERSION%s+(%d+)"
     end)()
-    local path = installpath().."/VC/Redist/MSVC/"..RedistVersion
+    local path = installationPath.."/VC/Redist/MSVC/"..RedistVersion
     if optimize == "off" then
         return path.."/debug_nonredist/"..arch.."/Microsoft.VC"..ToolsetVersion..".DebugCRT"
     end
     return path.."/"..arch.."/Microsoft.VC"..ToolsetVersion..".CRT"
 end
 
-local function ucrtpath(arch, optimize, winsdk, toolset)
-    local UniversalCRTSdkDir
-    vsdevcmd(arch, winsdk, toolset, function (name, value)
-        if name == "UniversalCRTSdkDir" then
-            UniversalCRTSdkDir = value
-        end
-    end)
+local function ucrtpath(arch, optimize)
     if not UniversalCRTSdkDir then
         return
     end
@@ -273,7 +275,7 @@ local function ucrtpath(arch, optimize, winsdk, toolset)
 end
 
 local function llvmpath()
-    local path = installpath().."/VC/Tools/Llvm/x64/lib/clang/"
+    local path = installationPath.."/VC/Tools/Llvm/x64/lib/clang/"
     for p in fs.pairs(path) do
         local version = p:filename():string()
         return path..version.."/lib/windows/"
@@ -333,53 +335,6 @@ function m.cleanEnvConfig()
     fs.remove(EnvConfig)
 end
 
-function m.createEnvConfig(arch, rebuild)
-    local console_cp = getConsoleCP()
-    if not rebuild and m.hasEnvConfig() then
-        local config = readEnvConfig()
-        if config.arch == arch
-            and (not console_cp or config.console_cp == console_cp)
-            and config.toolset and fs.exists(toolspath(config.toolset))
-        then
-            env = config.env
-            msvc_deps_prefix = config.prefix
-            globals.winsdk = config.winsdk
-            globals.toolset = config.toolset
-            return
-        end
-    end
-    local winsdk = globals.winsdk
-    if not winsdk then
-        winsdk = find_winsdk()
-        globals.winsdk = winsdk
-    end
-    local toolset = globals.toolset
-    if not toolset then
-        toolset = find_toolset()
-        globals.toolset = toolset
-    end
-    env = environment(ArchAlias[arch], winsdk, toolset)
-    msvc_deps_prefix = getMsvcDepsPrefix(env)
-
-    local s = {}
-    s[#s+1] = "return {"
-    s[#s+1] = ("console_cp=%q,"):format(console_cp)
-    s[#s+1] = ("arch=%q,"):format(arch)
-    if winsdk then
-        s[#s+1] = ("winsdk=%q,"):format(winsdk)
-    end
-    s[#s+1] = ("toolset=%q,"):format(toolset)
-    s[#s+1] = ("prefix=%q,"):format(msvc_deps_prefix)
-    s[#s+1] = "env={"
-    for name, value in pairs(env) do
-        s[#s+1] = ("%s=%q,"):format(name, value)
-    end
-    s[#s+1] = "},"
-    s[#s+1] = "}"
-    s[#s+1] = ""
-    writeEnvConfig(table.concat(s, "\n"))
-end
-
 function m.getEnv()
     updateEnvConfig()
     return env
@@ -399,6 +354,47 @@ m.vcrtpath = vcrtpath
 m.ucrtpath = ucrtpath
 m.llvmpath = llvmpath
 
-m.createEnvConfig(globals.arch, arguments.what == "rebuild")
+do
+    local arch = globals.arch
+    local rebuild = arguments.what == "rebuild"
+    local console_cp = getConsoleCP()
+    if not rebuild and m.hasEnvConfig() then
+        local config = readEnvConfig()
+        if config.arch == arch
+            and (not console_cp or config.console_cp == console_cp)
+            and config.toolset
+            and config.installationPath
+            and fs.exists(config.installationPath.."/VC/Tools/MSVC/"..config.toolset)
+        then
+            installationPath = config.installationPath
+            env = config.env
+            msvc_deps_prefix = config.prefix
+            globals.winsdk = config.winsdk
+            globals.toolset = config.toolset
+            return
+        end
+    end
+    env = environment(ArchAlias[arch], globals.winsdk, globals.toolset)
+    msvc_deps_prefix = getMsvcDepsPrefix(env)
+
+    local s = {}
+    s[#s+1] = "return {"
+    s[#s+1] = ("installationPath=%q,"):format(installationPath)
+    s[#s+1] = ("console_cp=%q,"):format(console_cp)
+    s[#s+1] = ("arch=%q,"):format(arch)
+    if globals.winsdk then
+        s[#s+1] = ("winsdk=%q,"):format(globals.winsdk)
+    end
+    s[#s+1] = ("toolset=%q,"):format(globals.toolset)
+    s[#s+1] = ("prefix=%q,"):format(msvc_deps_prefix)
+    s[#s+1] = "env={"
+    for name, value in pairs(env) do
+        s[#s+1] = ("%s=%q,"):format(name, value)
+    end
+    s[#s+1] = "},"
+    s[#s+1] = "}"
+    s[#s+1] = ""
+    writeEnvConfig(table.concat(s, "\n"))
+end
 
 return m

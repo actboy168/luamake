@@ -29,11 +29,11 @@ local function strtrim(str)
     return str:gsub("^%s*(.-)%s*$", "%1")
 end
 
-local function installpath()
+local function getInstallationPath()
     local process = assert(sp.spawn {
         vswhere,
         "-nologo",
-        "-latest",
+        "-sort",
         "-prerelease",
         "-utf8",
         "-products", "*",
@@ -41,15 +41,18 @@ local function installpath()
         stdout = true,
         stderr = "stdout",
     })
-    local result = strtrim(process.stdout:read "a")
+    local results = {}
+    for line in process.stdout:lines() do
+        results[#results+1] = strtrim(line)
+    end
     process.stdout:close()
     if process:wait() ~= 0 then
-        log.fastfail("[vswhere] Error: %s", result)
+        log.fastfail("[vswhere] Error: %s", table.concat(results, "\n"))
     end
-    if result == "" then
+    if #results == 0 then
         log.fastfail("[vswhere] VisualStudio not found.")
     end
-    return result
+    return results
 end
 
 local function parse_env(str)
@@ -115,62 +118,73 @@ local function find_toolset()
     return res
 end
 
-local function vsdevcmd(arch, winsdk, toolset, f)
-    installationPath = installpath()
-    local vsvars32 = installationPath.."/Common7/Tools/VsDevCmd.bat"
-    local args = { vsvars32 }
-    if arch then
-        args[#args+1] = ("-arch=%s"):format(arch)
-    end
-    if winsdk then
-        args[#args+1] = ("-winsdk=%s"):format(winsdk)
-    end
-    if toolset then
-        args[#args+1] = ("-vcvars_ver=%s"):format(toolset)
-    end
-    local err = {}
-    local process = assert(sp.spawn {
-        args, "&&", "set",
-        stderr = true,
-        stdout = true,
-        searchPath = true,
-        env = {
-            VSCMD_SKIP_SENDTELEMETRY = "1"
-        }
-    })
-    for line in process.stdout:lines() do
-        err[#err+1] = line
-        local name, value = parse_env(line)
-        if name and value then
-            f(name, value)
+local function vsdevcmd(arch, winsdk, toolset)
+    local error = { "Call `VsDevCmd.bat` faild." }
+    for _, path in ipairs(getInstallationPath()) do
+        local env = {}
+        local vsvars32 = path.."/Common7/Tools/VsDevCmd.bat"
+        local args = { vsvars32 }
+        if arch then
+            args[#args+1] = ("-arch=%s"):format(arch)
         end
+        if winsdk then
+            args[#args+1] = ("-winsdk=%s"):format(winsdk)
+        end
+        if toolset then
+            args[#args+1] = ("-vcvars_ver=%s"):format(toolset)
+        end
+        local err = {}
+        local process = assert(sp.spawn {
+            args, "&&", "set",
+            stderr = true,
+            stdout = true,
+            searchPath = true,
+            env = {
+                VSCMD_SKIP_SENDTELEMETRY = "1"
+            }
+        })
+        for line in process.stdout:lines() do
+            err[#err+1] = line
+            local name, value = parse_env(line)
+            if name and value then
+                env[name] = value
+            end
+        end
+        err[#err+1] = process.stderr:read "a"
+        process.stdout:close()
+        process.stderr:close()
+        if process:wait() == 0 then
+            return path, env
+        end
+        error[#error+1] = table.concat(args, " ")
+        error[#error+1] = table.concat(err, "\n")
+        error[#error+1] = ""
     end
-    err[#err+1] = process.stderr:read "a"
-    process.stdout:close()
-    process.stderr:close()
-    if process:wait() ~= 0 then
-        log.fastfail("Call `VsDevCmd.bat` faild.\n%s\n%s", table.concat(args, " "), table.concat(err, "\n"))
-    end
+    log.fastfail(table.concat(error, "\n"))
 end
 
-local function environment(arch, winsdk, toolset)
-    local env = {}
-    vsdevcmd(arch, winsdk, toolset, function (name, value)
-        if name == "UniversalCRTSdkDir" then
-            UniversalCRTSdkDir = value
+local function getEnvironment(arch, winsdk, toolset)
+    local path, env = vsdevcmd(arch, winsdk, toolset)
+    if not path then
+        return
+    end
+    installationPath = path
+    UniversalCRTSdkDir = env.UniversalCRTSdkDir
+
+    local environment = {}
+    for name, value in pairs(env) do
+        local NAME = name:upper()
+        if need[NAME] then
+            environment[NAME] = value
         end
-        name = name:upper()
-        if need[name] then
-            env[name] = value
-        end
-    end)
+    end
     if not winsdk then
         globals.winsdk = find_winsdk()
     end
     if not toolset then
         globals.toolset = find_toolset()
     end
-    return env
+    return environment
 end
 
 local function getMsvcDepsPrefix(env)
@@ -374,7 +388,7 @@ do
             return m
         end
     end
-    env = environment(ArchAlias[arch], globals.winsdk, globals.toolset)
+    env = getEnvironment(ArchAlias[arch], globals.winsdk, globals.toolset)
     msvc_deps_prefix = getMsvcDepsPrefix(env)
 
     local s = {}

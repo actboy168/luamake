@@ -16,7 +16,7 @@ end
 local exe = isWindows and ".exe" or ""
 
 lm.fast_setjmp = "off"
-lm.lua = "54"
+lm.lua = "55"
 
 lm:import "bee.lua/make.lua"
 

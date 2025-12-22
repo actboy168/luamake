@@ -7,15 +7,15 @@ ar = ar
 luamake = luamake
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -mmacosx-version-min=10.15 -Ibee.lua/3rd/lua54 -DMAKE_LIB $
+    -mmacosx-version-min=10.15 -Ibee.lua/3rd/lua55 -DMAKE_LIB $
     -DLUA_USE_MACOSX -DNDEBUG -Wunguarded-availability -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
-build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua54/onelua.c
+build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua55/onelua.c
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -fvisibility=hidden -mmacosx-version-min=10.15 -Ibee.lua/3rd/lua54 $
+    -fvisibility=hidden -mmacosx-version-min=10.15 -Ibee.lua/3rd/lua55 $
     -DNDEBUG -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
   deps = gcc
@@ -33,7 +33,7 @@ build $obj/source_bee/format.obj: cxx_source_bee_1 bee.lua/3rd/fmt/format.cc
 rule cxx_source_bee_2
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -mmacosx-version-min=10.15 -Ibee.lua $
-    -Ibee.lua/3rd/lua54 -DNDEBUG -Wunguarded-availability -o $out -c $in
+    -Ibee.lua/3rd/lua55 -DNDEBUG -Wunguarded-availability -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
@@ -76,7 +76,7 @@ build $obj/source_bee/version.obj: cxx_source_bee_2 bee.lua/bee/version.cpp
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
     -fvisibility=hidden -mmacosx-version-min=10.15 -Ibee.lua $
-    -Ibee.lua/3rd/lua54 -DBEE_STATIC -DNDEBUG -Wunguarded-availability -o $
+    -Ibee.lua/3rd/lua55 -DBEE_STATIC -DNDEBUG -Wunguarded-availability -o $
     $out -c $in
   description = Compile C   $out
   deps = gcc
@@ -86,7 +86,7 @@ build $obj/source_bee/bee_newstate.obj: c_source_bee $
 rule cxx_source_bee_3
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -mmacosx-version-min=10.15 -Ibee.lua $
-    -Ibee.lua/3rd/lua54 -DBEE_STATIC -DNDEBUG -Wunguarded-availability -o $
+    -Ibee.lua/3rd/lua55 -DBEE_STATIC -DNDEBUG -Wunguarded-availability -o $
     $out -c $in
   description = Compile C++ $out
   deps = gcc
@@ -122,7 +122,7 @@ build $obj/source_bee/lua_time.obj: cxx_source_bee_3 $
 rule cxx_source_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -mmacosx-version-min=10.15 -Ibee.lua $
-    -Ibee.lua/3rd/lua54 -DLUA_USE_MACOSX -DNDEBUG -Wunguarded-availability $
+    -Ibee.lua/3rd/lua55 -DLUA_USE_MACOSX -DNDEBUG -Wunguarded-availability $
     -o $out -c $in
   description = Compile C++ $out
   deps = gcc

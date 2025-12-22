@@ -7,15 +7,15 @@ ml = ml64
 luamake = luamake
 rule c_source_lua
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua54 $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua55 $
     /D_WIN32_WINNT=0x0602 /DMAKE_LIB /DLUA_BUILD_AS_DLL /DNDEBUG /utf-8 $
     /std:c11
   description = Compile C   $out
   deps = msvc
-build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua54/onelua.c
+build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua55/onelua.c
 rule cxx_source_bee
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua54 $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua55 $
     /D_WIN32_WINNT=0x0602 /DNDEBUG /utf-8 /wd4244 /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
@@ -30,7 +30,7 @@ rule cxx_source_bee_1
 build $obj/source_bee/format.obj: cxx_source_bee_1 bee.lua/3rd/fmt/format.cc
 rule cxx_source_bee_2
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua54 $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua55 $
     /D_WIN32_WINNT=0x0602 /DNDEBUG /utf-8 /std:c++17 /GR-
   description = Compile C++ $out
   deps = msvc
@@ -86,7 +86,7 @@ build $obj/source_bee/unicode.obj: cxx_source_bee_2 $
 build $obj/source_bee/wtf8.obj: cxx_source_bee_2 bee.lua/bee/win/wtf8.cpp
 rule c_source_bee
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua54 $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua55 $
     /D_WIN32_WINNT=0x0602 /DBEE_STATIC /D_CRT_SECURE_NO_WARNINGS /DNDEBUG $
     /utf-8 /std:c11
   description = Compile C   $out
@@ -95,7 +95,7 @@ build $obj/source_bee/bee_newstate.obj: c_source_bee $
     bee.lua/3rd/lua-patch/bee_newstate.c
 rule cxx_source_bee_3
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
-    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua54 $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua /Ibee.lua/3rd/lua55 $
     /D_WIN32_WINNT=0x0602 /DBEE_STATIC /D_CRT_SECURE_NO_WARNINGS /DNDEBUG $
     /utf-8 /std:c++17 /GR-
   description = Compile C++ $out
@@ -174,15 +174,15 @@ rule link_luamake
 rule build_luamake_test
   command = $bin/luamake.exe bee.lua/test/test.lua
 rule runlua
-  command = $luamake lua $script bee.lua/3rd/lua54 $out luamake.exe
-  description = lua $script bee.lua/3rd/lua54 $out luamake.exe
-rule c_lua54
+  command = $luamake lua $script bee.lua/3rd/lua55 $out luamake.exe
+  description = lua $script bee.lua/3rd/lua55 $out luamake.exe
+rule c_lua55
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
     /O2 /Zc:inline /W3 /permissive- /MD /GL /DNDEBUG 
   description = Compile C   $out
   deps = msvc
-build $obj/lua54/forward_lua.obj: c_lua54 compile/lua/forward_lua.c
-rule link_lua54
+build $obj/lua55/forward_lua.obj: c_lua55 compile/lua/forward_lua.c
+rule link_lua55
   command = $cc /nologo @$out.rsp /link /DEBUG:NONE /INCREMENTAL:NO /LTCG $
     /out:$out /DLL /IMPLIB:$implib
   description = Link    Dll $out
@@ -257,15 +257,15 @@ build $bin/luamake.exe: link_luamake $obj/luamake/bootstrap.obj $
 build luamake.exe: copy | $bin/luamake.exe
   input = $bin/luamake.exe
 build $builddir/_/luamake_test: build_luamake_test | copy_luamake copy_mainlua
-build compile/lua/forward_lua.c: runlua bee.lua/3rd/lua54/lauxlib.h $
-    bee.lua/3rd/lua54/lua.h bee.lua/3rd/lua54/lualib.h | copy_luamake $
+build compile/lua/forward_lua.c: runlua bee.lua/3rd/lua55/lauxlib.h $
+    bee.lua/3rd/lua55/lua.h bee.lua/3rd/lua55/lualib.h | copy_luamake $
     compile/lua/forward_lua.lua
   script = compile/lua/forward_lua.lua
-build $bin/lua54.dll | $obj/lua54/lua54.lib: link_lua54 $
-    $obj/lua54/forward_lua.obj
-  implib = $obj/lua54/lua54.lib
-build tools/lua54.dll: copy | $obj/lua54/lua54.lib $bin/lua54.dll
-  input = $bin/lua54.dll
+build $bin/lua55.dll | $obj/lua55/lua55.lib: link_lua55 $
+    $obj/lua55/forward_lua.obj
+  implib = $obj/lua55/lua55.lib
+build tools/lua55.dll: copy | $obj/lua55/lua55.lib $bin/lua55.dll
+  input = $bin/lua55.dll
 build bootstrap: phony $bin/bootstrap.exe
 build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp
@@ -274,7 +274,7 @@ build copy_mainlua: phony $bin/main.lua
 build copy_luamake: phony luamake.exe
 build luamake_test: phony $builddir/_/luamake_test
 build forward_lua: phony compile/lua/forward_lua.c
-build lua54: phony $bin/lua54.dll
-build copy_lua: phony tools/lua54.dll
+build lua55: phony $bin/lua55.dll
+build copy_lua: phony tools/lua55.dll
 build notest: phony copy_luamake copy_mainlua copy_lua
 default luamake_test notest

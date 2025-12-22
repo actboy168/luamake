@@ -371,7 +371,7 @@ do
             msvc_deps_prefix = config.prefix
             globals.winsdk = config.winsdk
             globals.toolset = config.toolset
-            return
+            return m
         end
     end
     env = environment(ArchAlias[arch], globals.winsdk, globals.toolset)

@@ -183,14 +183,14 @@ return function (c)
             f:close()
             return load(str, "@"..path, "t", ENV or env)
         end
-        return nil, "Fail to open the file: " .. err
+        return nil, err
     end
     local function sandbox_openfile(name, mode)
         return openfile(absolute(name), mode)
     end
     local main, err = sandbox_loadlua(c.main)
     if not main then
-        log.fatal("%s", err)
+        log.fastfail("%s", err)
         return
     end
     debug.setupvalue(main, 1, sandbox_env(env, sandbox_loadlua, sandbox_openfile, c.preload, c.builddir))

@@ -25,12 +25,6 @@ local function parse(folder)
         local api = line:match "^%s*LUALIB_API[%w%s%*_]+%(([%w_]+)%)"
         if api then
             export[#export+1] = api
-        else
-            ---@TODO: 为lua55的luaL_makeseed做临时处理
-            api = line:match "^%s*LUALIB_API%s+[%w_]+%s+([%w_]+)"
-            if api then
-                export[#export+1] = api
-            end
         end
     end
     for line in io.lines(folder.."/lualib.h") do

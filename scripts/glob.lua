@@ -171,7 +171,7 @@ local function glob_compile(root, patterns)
             res[#res+1] = pattern_copy(v, 2)
         end
     end
-    return fsutil.normalize(table.unpack(gcd)), res, files
+    return table.concat(gcd, "/"), res, files
 end
 
 local function glob_match_dir(patterns, path)

@@ -1,6 +1,6 @@
-ARG GIT_REF=master
-
 FROM ubuntu:latest
+
+ARG GIT_REF=master
 
 RUN apt-get update && apt-get install -y \
     git ninja-build gcc g++ linux-headers-generic

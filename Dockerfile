@@ -11,6 +11,9 @@ RUN git submodule update --init
 
 RUN ninja -f "compile/ninja/linux.ninja"
 
+# Clean up files that are not needed at runtime (.github, .vscode, etc.)
+RUN rm -rf /luamake/.[!.]* /luamake/compile /luamake/doc /luamake/build
+
 FROM ubuntu:latest
 
 RUN apt-get update && apt-get install -y \

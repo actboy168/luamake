@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:latest AS builder
 
 ARG GIT_REF=master
 
@@ -10,5 +10,13 @@ RUN git clone --depth 1 --branch "${GIT_REF}" https://github.com/actboy168/luama
 RUN git submodule update --init
 
 RUN ninja -f "compile/ninja/linux.ninja"
+
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y \
+    ninja-build && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /luamake /luamake
 
 ENTRYPOINT ["/luamake/luamake"]

@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     git ninja-build gcc g++ linux-headers-generic
 
 WORKDIR /luamake
-RUN set -euo pipefail; \
+RUN set -eu; \
     git check-ref-format --branch "${GIT_REF}"; \
     git clone --depth 1 --branch "${GIT_REF}" -- https://github.com/actboy168/luamake.git .
 RUN git submodule update --init

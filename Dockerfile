@@ -1,4 +1,4 @@
-FROM ubuntu:latest AS builder
+FROM ubuntu:24.04 AS builder
 
 ARG GIT_REF=master
 
@@ -16,7 +16,7 @@ RUN ninja -f "compile/ninja/linux.ninja"
 # Clean up files that are not needed at runtime (.github, .vscode, etc.)
 RUN rm -rf /luamake/.[!.]* /luamake/compile /luamake/doc /luamake/build
 
-FROM ubuntu:latest
+FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y \
     ninja-build && \

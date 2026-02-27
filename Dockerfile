@@ -19,7 +19,7 @@ RUN rm -rf /luamake/.[!.]* /luamake/compile /luamake/doc /luamake/build
 FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y \
-    ninja-build && \
+    ninja-build gcc g++ && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /luamake /luamake

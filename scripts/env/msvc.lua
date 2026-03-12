@@ -37,6 +37,7 @@ local function getInstallationPath()
         "-prerelease",
         "-utf8",
         "-products", "*",
+        "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
         "-property", "installationPath",
         stdout = true,
         stderr = "stdout",

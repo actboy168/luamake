@@ -1,8 +1,7 @@
 ---
 name: luamake
-description: Luamake构建系统指南 - 基于Lua的构建系统，用于生成Ninja构建文件。当用户需要使用luamake进行项目构建、编写make.lua脚本、或需要了解luamake的API和用法时，使用此skill。
+description: Luamake 构建系统指南——用于当前项目的 `luamake` / `make.lua` / Ninja 生成流程。当用户需要编写、修改、排查或理解 `make.lua`、目标定义、`lm:conf`、`deps` / `objdeps`、代码生成、Lua C 模块、Bee 运行时集成，或需要解决当前项目中由 `luamake` 驱动的构建问题时，使用此 skill。即使用户没有明确提到 `luamake`，但上下文明显是在处理本项目的构建脚本、构建目录、目标依赖或 `luamake` 生成的 Ninja 流程，也应使用此 skill。不要把它用于纯通用的 C/C++ 编译知识、与本项目无关的 CMake / xmake / Bazel / Meson 问题，或仅讨论编译器理论而未涉及 `luamake` / `make.lua` 的请求。
 ---
-
 # Luamake Build System
 
 基于 Lua 的构建系统，生成 Ninja 构建文件。
@@ -34,8 +33,8 @@ luamake rebuild  # 重建
 | `lm:exe` | 可执行文件 | `app.exe` / `app` |
 | `lm:dll` | 动态库 | `lib.dll` / `lib.so` / `lib.dylib` |
 | `lm:lib` | 静态库 | `lib.lib` / `lib.a` |
-| `lm:source_set` | 源码集（不链接，用于复用） | 无 |
-| `lm:lua_src` | Lua C 模块（静态嵌入） | 无 |
+| `lm:source_set` | 源码集（不链接，用于复用，通过 `deps` 引用） | 无 |
+| `lm:lua_src` | Lua C 模块（静态嵌入到 `lm:lua_exe`） | 无 |
 | `lm:lua_dll` | Lua C 模块（动态加载） | `module.dll` / `module.so` |
 | `lm:lua_exe` | 内嵌 Lua 的可执行文件 | `app.exe` / `app` |
 | `lm:phony` | 伪目标（聚合依赖） | 无 |
@@ -53,6 +52,15 @@ luamake rebuild  # 重建
 | `sysincludes` | 系统包含目录（抑制警告） | `"/usr/local/include"` |
 | `defines` | 预处理器定义 | `{ "DEBUG", "VER=1" }` |
 | `objdeps` | 对象依赖（编译前必须生成） | `"generated_header"` |
+
+> **`objdeps` 用法**：当源文件依赖代码生成产物（如生成的头文件）时，需用 `objdeps` 声明依赖的目标名，确保生成步骤在编译前完成。`deps` 只控制链接顺序，不能保证编译前生成文件。
+> ```lua
+> lm:rule "gen_header" { ... }  -- 生成头文件的规则
+> lm:exe "app" {
+>     sources = "src/*.cpp",
+>     objdeps = "gen_header",  -- 编译 src/*.cpp 前先执行 gen_header
+> }
+> ```
 
 ### 链接
 
@@ -73,6 +81,50 @@ luamake rebuild  # 重建
 | `cxxflags` | C++ 编译器标志 | `"-std=c++20"` |
 | `confs` | 引用命名配置 | `"myconfig"` |
 
+> **注意**：`cflags`/`cxxflags` 直接传递给编译器命令行。在 `lm:conf` 中可用 `c = "c11"` / `cxx = "c++20"` 作为简写，luamake 会自动转换为对应编译器的标准标志（如 MSVC 的 `/std:c11`）。
+
+### 特殊目标用法
+
+**`lm:source_set`** — 将源文件组织为可复用的源码集，通过 `deps` 引用，不单独链接：
+
+```lua
+-- 定义共享源码集
+lm:source_set "common" {
+    includes = "include",
+    sources = { "src/common/*.cpp" },
+}
+
+-- 多个目标复用同一组源文件
+lm:exe "app1" { deps = "common", sources = "src/app1.cpp" }
+lm:exe "app2" { deps = "common", sources = "src/app2.cpp" }
+```
+
+**`lm:lua_src`** — 将 Lua C 模块静态嵌入到 `lm:lua_exe` 中：
+
+```lua
+lm:lua_src "mymodule" {
+    sources = "src/mymodule.c",
+}
+
+lm:lua_exe "app" {
+    deps = "mymodule",
+    sources = "src/main.cpp",
+}
+```
+
+**`lm:phony`** — 聚合多个目标为一个命名依赖，方便统一引用：
+
+```lua
+lm:phony "all_libs" {
+    deps = { "libfoo", "libbar", "libqux" },
+}
+
+lm:exe "app" {
+    deps = "all_libs",
+    sources = "main.cpp",
+}
+```
+
 ---
 
 ## 配置 (lm:conf)
@@ -86,9 +138,9 @@ luamake rebuild  # 重建
 ```lua
 -- 所有参数均为可选，按项目实际需要填写
 lm:conf {
-    c = "c11",
-    cxx = "c++20",
-    visibility = "hidden",
+    c = "c11",        -- C 标准："c89", "c99", "c11", "c17"
+    cxx = "c++20",    -- C++ 标准："c++11", "c++14", "c++17", "c++20"
+    visibility = "hidden",  -- 符号可见性："hidden"（默认隐藏）或 "default"（默认可见）
 }
 
 -- 以下目标自动继承上面的配置
@@ -187,23 +239,41 @@ luamake rebuild
 
 | 主题 | 文档 | 包含内容 |
 |------|------|----------|
-| 依赖管理 | `skills/references/best_practices/bp_dependency.md` | deps 定义顺序、源码集复用、增量源码集、动态模块发现 |
-| 条件编译与静态分析 | `skills/references/best_practices/bp_compilation.md` | 条件编译、静态分析集成 |
-| 代码生成与 objdeps | `skills/references/best_practices/bp_codegen.md` | 代码生成管道、objdeps 用法 |
-| Lua 模块与测试 | `skills/references/best_practices/bp_lua_and_test.md` | Lua C 模块、内置测试框架 |
+| 依赖管理 | `references/best_practices/bp_dependency.md` | deps 定义顺序、源码集复用、增量源码集、动态模块发现 |
+| 条件编译与静态分析 | `references/best_practices/bp_compilation.md` | 条件编译、静态分析集成 |
+| 代码生成与 objdeps | `references/best_practices/bp_codegen.md` | 代码生成管道、objdeps 用法 |
+| Lua 模块与测试 | `references/best_practices/bp_lua_and_test.md` | Lua C 模块、内置测试框架 |
 
 ---
 
 ## 详细文档
 
-以下主题的详细文档请参阅 references 目录：
+以下主题的详细资料请参阅当前 skill 中已经提供的 references 目录：
 
 | 主题 | 文档 |
 |------|------|
-| 平台/编译器特定配置 | `skills/references/build/platform_config.md` |
-| 高级 API（自定义规则、runlua、文件操作等） | `skills/references/build/advanced_api.md` |
-| 路径管理（workdir/rootdir、require vs import、lm:path） | `skills/references/build/path_management.md` |
-| Bee 运行时库（概览与模块详细 API） | `skills/references/bee/bee_runtime.md` |
+| Bee 运行时库概览 | `references/bee/bee_runtime.md` |
+| Bee 文件系统 API | `references/bee/bee_filesystem.md` |
+| Bee IO API | `references/bee/bee_io.md` |
+| Bee 子进程 API | `references/bee/bee_subprocess.md` |
+| Bee Socket API | `references/bee/bee_socket.md` |
+| Bee 系统 API | `references/bee/bee_system.md` |
+| Bee 线程 API | `references/bee/bee_thread.md` |
+| Bee Channel API | `references/bee/bee_channel.md` |
+
+### 适用边界
+
+优先在以下场景使用本 skill：
+
+- 当前仓库明确使用 `luamake` 或通过 `make.lua` 定义构建目标。
+- 用户正在修改 `make.lua`、排查 `luamake` 报错，或理解 `deps`、`objdeps`、`lm:conf`、目标类型、构建目录等机制。
+- 用户讨论的问题与当前项目的 Ninja 生成流程、Bee 集成或 Lua C 模块构建直接相关。
+
+以下场景通常不应使用本 skill：
+
+- 与当前项目无关的通用 C/C++ 编译、链接、优化理论问题。
+- 纯 `CMake`、`xmake`、`Bazel`、`Meson` 等其他构建系统的问题。
+- 只是在问编译器语法、语言标准或平台 API，而没有落到 `luamake` / `make.lua` 的构建脚本上。
 
 ---
 

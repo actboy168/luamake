@@ -1,6 +1,16 @@
 # Bee 运行时库
 
-`luamake lua script.lua` 运行脚本时预加载 bee 库。各模块的详细 API 文档见 `skills/references/bee/bee_*.md`。
+`luamake lua script.lua` 运行脚本时预加载 bee 库。各模块的详细 API 文档见对应文件：
+
+| 模块 | 文档 | 说明 |
+|------|------|------|
+| `bee.filesystem` | `references/bee/bee_filesystem.md` | 文件系统操作、路径操作、目录遍历 |
+| `bee.subprocess` | `references/bee/bee_subprocess.md` | 子进程创建与管理 |
+| `bee.socket` | `references/bee/bee_socket.md` | TCP/UDP 网络通信 |
+| `bee.thread` | `references/bee/bee_thread.md` | 多线程支持 |
+| `bee.channel` | `references/bee/bee_channel.md` | 线程间通信管道 |
+| `bee.io` | `references/bee/bee_io.md` | I/O 操作 |
+| `bee.system` | `references/bee/bee_system.md` | 系统信息与环境变量 |
 
 ## 文件系统示例
 

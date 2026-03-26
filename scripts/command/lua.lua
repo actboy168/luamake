@@ -34,7 +34,7 @@ local globals = require "globals"
 local sandbox = require "sandbox"
 
 if globals.os == "windows" then
-    local luadll = package.procdir.."/tools/lua54.dll"
+    local luadll = package.procdir.."/tools/lua55.dll"
     --local ok, err =
     package.loadlib(luadll, "*")
     --if not ok then

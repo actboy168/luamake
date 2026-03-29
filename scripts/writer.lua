@@ -849,7 +849,7 @@ for rule, origin_rule in pairs(lua_compile_target) do
         log.assert(type(name) == "string", "Name is not a string.")
         return function (local_attribute)
             local attribute = reslove_attributes(global_attribute, local_attribute)
-            attribute.luaversion = attribute.luaversion or "lua54"
+            attribute.luaversion = attribute.luaversion or "lua55"
             generate(origin_rule, attribute, name)
         end
     end
@@ -867,7 +867,7 @@ function api.lua_src(global_attribute, name)
     log.assert(type(name) == "string", "Name is not a string.")
     return function (local_attribute)
         local attribute = reslove_attributes_nolink(global_attribute, local_attribute)
-        attribute.luaversion = attribute.luaversion or "lua54"
+        attribute.luaversion = attribute.luaversion or "lua55"
         generate("source_set", attribute, name)
     end
 end

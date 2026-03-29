@@ -72,7 +72,7 @@ local function windows_deps(name, attribute, luaversion)
 end
 
 return function (ninja, loaded, rule, name, attribute)
-    local luaversion = attribute.luaversion or "lua54"
+    local luaversion = attribute.luaversion or "lua55"
     if rule == "shared_library" and globals.os == "windows" then
         local luadir = "$builddir/"..luaversion
         init_rule(ninja)

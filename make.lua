@@ -9,10 +9,6 @@ if lm.prebuilt == nil then
     return
 end
 
-if lm.lua2c then
-    require "compile.lua2c"
-end
-
 local exe = isWindows and ".exe" or ""
 
 lm.fast_setjmp = "off"
@@ -20,44 +16,15 @@ lm.lua = "55"
 
 lm:import "bee.lua/make.lua"
 
-lm:lua_exe "luamake" {
-    deps = {
-        "source_bee",
-        "source_lua",
-        "source_bootstrap",
-    },
-    sources = lm.lua2c and {
-        "compile/lua/lua2c.c"
-    },
-    windows = {
-        sources = "bee.lua/bootstrap/bootstrap.rc",
-    },
-    msvc = {
-        ldflags = "/IMPLIB:$obj/luamake.lib"
-    },
-    mingw = {
-        ldflags = "-Wl,--out-implib,$obj/luamake.lib"
-    },
-}
-
 lm:copy "copy_mainlua" {
     inputs = "bee.lua/bootstrap/main.lua",
     outputs = "$bin/main.lua",
 }
 
 lm:copy "copy_luamake" {
-    inputs = "$bin/luamake"..exe,
+    inputs = "$bin/bootstrap"..exe,
     outputs = "luamake"..exe,
-    deps = "luamake",
-}
-
-lm:build "luamake_test" {
-    args = lm.lua2c
-        and { "./luamake"..exe, "lua", "@bee.lua/test/test.lua" }
-        or { "$bin/luamake"..exe, "@bee.lua/test/test.lua" },
-    description = "Run test.",
-    pool = "console",
-    deps = { "copy_luamake", "copy_mainlua" },
+    deps = "bootstrap",
 }
 
 if isWindows then
@@ -91,6 +58,6 @@ lm:phony "notest" {
 }
 
 lm:default {
-    "luamake_test",
+    "test",
     "notest",
 }

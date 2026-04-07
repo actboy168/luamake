@@ -590,7 +590,9 @@ function GEN.build(attribute, name)
         })
     else
         local command = reslove_args(attribute.args)
-        ninja:rule("build_"..name, command)
+        ninja:rule("build_"..name, command, {
+            pool = attribute.pool,
+        })
         ninja:build(outname, inputs, {
             implicit_inputs = implicit_inputs,
         })

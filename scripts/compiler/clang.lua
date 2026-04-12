@@ -103,7 +103,9 @@ function clang.update_ldflags(ldflags, attribute)
             ldflags[#ldflags+1] = framework
         end
     end
-    if attribute.crt == "dynamic" then
+    if globals.os == "macos" or globals.os == "ios" then
+        ldflags[#ldflags+1] = "-lc++"
+    elseif attribute.crt == "dynamic" then
         ldflags[#ldflags+1] = "-lstdc++"
     else
         ldflags[#ldflags+1] = "-Wl,--push-state,-Bstatic"

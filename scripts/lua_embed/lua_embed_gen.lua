@@ -275,7 +275,7 @@ for _, e in ipairs(data_list) do
         "/* data: %s */\nstatic const unsigned char %s[] = {\n    ",
         e.name, id))
     emit_c_bytes(src)
-    emit("\n};\n\n")
+    emit("0x00\n};\n\n")  -- sentinel '\0' required by lua_pushexternalstring (lua 5.5+)
 end
 
 -- preload table

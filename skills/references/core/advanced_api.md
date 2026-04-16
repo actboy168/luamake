@@ -112,7 +112,7 @@ lm:runlua {
 将 Lua 文件嵌入到 C 源码中，生成一个 `source_set` 供其他目标通过 `deps` 引用。默认嵌入 Lua 源码，设置 `bytecode = true` 可改为嵌入字节码。支持两种嵌入方式：
 
 - **preload**：生成可用于预加载的 Lua 模块条目，可通过 `require()` 加载。设置 `bee_glue` 时会自动生成 `_bee_preload_module()` 将模块注入 `_PRELOAD` 表；否则需用户自行遍历 `lua_embed_get_preload()` 完成注入
-- **data**：文件作为原始字节嵌入，运行时通过 `lua_embed_get_data()` C API 查找
+- **data**：文件作为原始字节嵌入，运行时可通过 `lua_embed_get_data()` C API 查找；设置 `bee_glue` 时还可在 Lua 中通过 `require "bee.embed"` 访问
 
 ### 基本用法
 
@@ -149,6 +149,22 @@ lm:lua_embed "embedded" {
     data = { ... },
 }
 ```
+
+#### bee.embed 模块
+
+启用 `bee_glue` 后，Lua 代码可通过 `require "bee.embed"` 访问 `data` 条目。返回的 table 以嵌入文件名为键，索引时按需构造字符串并缓存，重复访问同一键不会重复构造：
+
+```lua
+local embed = require "bee.embed"
+
+-- 首次访问：触发构造并缓存
+local data = embed["assets/config.json"]  -- string 或 nil
+
+-- 再次访问：直接命中缓存，返回同一对象
+assert(embed["assets/config.json"] == data)
+```
+
+Lua 5.5 下使用 `lua_pushexternalstring`，字符串直接引用嵌入数组，零拷贝；低版本回退到 `lua_pushlstring`。
 
 ### 属性说明
 

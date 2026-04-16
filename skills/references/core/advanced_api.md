@@ -109,9 +109,9 @@ lm:runlua {
 
 ## lm:lua_embed — Lua 嵌入资源
 
-将 Lua 文件编译为字节码并嵌入到 C 源码中，生成一个 `source_set` 供其他目标通过 `deps` 引用。支持两种嵌入方式：
+将 Lua 文件嵌入到 C 源码中，生成一个 `source_set` 供其他目标通过 `deps` 引用。默认嵌入 Lua 源码，设置 `bytecode = true` 可改为嵌入字节码。支持两种嵌入方式：
 
-- **preload**：Lua 文件编译为字节码，运行时注入 `_PRELOAD` 表，可通过 `require()` 加载
+- **preload**：Lua 文件内容嵌入，运行时注入 `_PRELOAD` 表，可通过 `require()` 加载
 - **data**：文件作为原始字节嵌入，运行时通过 `lua_embed_find()` C API 查找
 
 ### 基本用法

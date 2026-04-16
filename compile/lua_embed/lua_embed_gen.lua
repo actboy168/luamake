@@ -44,19 +44,6 @@ local function to_c_bytes(data)
     return table.concat(parts)
 end
 
--- raw source → C string literal  "\xNN\xNN..."  (16 bytes per line)
-local function to_c_str(data)
-    local parts = {}
-    for i = 1, #data, 16 do
-        local chunk = {}
-        for j = i, math.min(i + 15, #data) do
-            chunk[#chunk+1] = string.format("\\x%02x", data:byte(j))
-        end
-        parts[#parts+1] = '    "' .. table.concat(chunk) .. '"'
-    end
-    return table.concat(parts, "\n")
-end
-
 local function to_c_ident(s)
     return s:gsub("[^%w]", "_")
 end
@@ -229,15 +216,15 @@ for _, e in ipairs(preload_list) do
         e.modname, id, to_c_bytes(bc)))
 end
 
--- data entries: raw source
+-- data entries: raw bytes
 local data_idents = {}
 for _, e in ipairs(data_list) do
     local src = readfile(e.path)
     local id  = "led_" .. to_c_ident(e.name)
     data_idents[#data_idents+1] = { name = e.name, id = id, size = #src }
     emit(string.format(
-        "/* data: %s */\nstatic const char %s[] =\n%s;\n\n",
-        e.name, id, to_c_str(src)))
+        "/* data: %s */\nstatic const unsigned char %s[] = {\n    %s\n};\n\n",
+        e.name, id, to_c_bytes(src)))
 end
 
 -- preload table
@@ -251,7 +238,7 @@ emit('    { NULL, NULL, 0 }\n};\n\n')
 -- data table
 emit("static const lua_embed_data lua_embed_data_table[] = {\n")
 for _, e in ipairs(data_idents) do
-    emit(string.format('    { "%s", %s, %d },\n', e.name, e.id, e.size))
+    emit(string.format('    { "%s", (const char*)%s, %d },\n', e.name, e.id, e.size))
 end
 emit('    { NULL, NULL, 0 }\n};\n\n')
 

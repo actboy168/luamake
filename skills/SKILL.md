@@ -37,6 +37,7 @@ luamake rebuild  # 重建
 | `lm:lua_src` | Lua C 模块（静态嵌入到 `lm:lua_exe`） | 无 |
 | `lm:lua_dll` | Lua C 模块（动态加载） | `module.dll` / `module.so` |
 | `lm:lua_exe` | 内嵌 Lua 的可执行文件 | `app.exe` / `app` |
+| `lm:lua_embed` | Lua 嵌入资源（将 Lua 文件嵌入为 C 源码集，默认嵌入源码，可选字节码） | 无（source_set） |
 | `lm:phony` | 伪目标（聚合依赖） | 无 |
 
 ---
@@ -108,6 +109,32 @@ lm:lua_src "mymodule" {
 
 lm:lua_exe "app" {
     deps = "mymodule",
+    sources = "src/main.cpp",
+}
+```
+
+**`lm:lua_embed`** — 将 Lua 文件嵌入到 C 源码中，生成一个 source_set 供其他目标依赖。默认嵌入 Lua 源码以保证跨 Lua 版本兼容；设置 `bytecode = true` 可嵌入字节码（体积更小、可隐藏源码，但要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致）：
+
+```lua
+lm:lua_embed "embedded_scripts" {
+    -- 可选：嵌入字节码而非源码（默认 false）
+    -- bytecode = true,
+    -- 将目录下的 Lua 文件嵌入，注入 _PRELOAD
+    preload = {
+        { dir = "scripts/modules", prefix = "app" },
+        { file = "scripts/init.lua", name = "app.init" },
+    },
+    -- 将文件作为原始数据嵌入
+    data = {
+        { dir = "assets", prefix = "assets/" },
+        { file = "main.lua", name = "main.lua" },
+    },
+    -- 可选：启用 bee 胶水层并指定入口文件
+    bee_glue = "main.lua",
+}
+
+lm:lua_exe "app" {
+    deps = "embedded_scripts",
     sources = "src/main.cpp",
 }
 ```

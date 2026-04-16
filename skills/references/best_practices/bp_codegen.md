@@ -114,8 +114,7 @@ lm:lua_embed "embedded_lua" {
 
 ```lua
 lm:lua_embed "bee_app" {
-    glue = "bee",
-    main = "main.lua",
+    bee_glue = "main.lua",
     preload = {
         { dir = "scripts", prefix = "app" },
     },

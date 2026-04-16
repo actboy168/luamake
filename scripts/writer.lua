@@ -893,7 +893,7 @@ function api.lua_embed(global_attribute, name)
         local out_c_ninja  = "$builddir/lua_embed/" .. name .. "/lua_embed.c"
         local gen_name     = name .. "-lua-embed-gen"
 
-        local use_bee = local_attribute.glue == "bee"
+        local use_bee = local_attribute.bee_glue ~= nil
 
         -- write config.lua for the generator
         local config_path = lua_embed.write_config(outdir, local_attribute, rootdir)
@@ -947,8 +947,7 @@ function api.lua_embed(global_attribute, name)
         -- lua_embed 专用字段不传入编译属性解析
         src_attr.preload = nil
         src_attr.data = nil
-        src_attr.glue = nil
-        src_attr.main = nil
+        src_attr.bee_glue = nil
         src_attr.bytecode = nil
         -- sources/objdeps 由 lua_embed 自己构造，不参与属性归一化
         src_attr.sources = nil

@@ -129,9 +129,8 @@ lm:lua_embed "embedded_scripts" {
         { dir = "assets", prefix = "assets/" },
         { file = "main.lua", name = "main.lua" },
     },
-    -- 可选：生成 bee.lua 胶水层
-    glue = "bee",
-    main = "main.lua",  -- glue="bee" 时必需
+    -- 可选：启用 bee 胶水层并指定入口文件
+    bee_glue = "main.lua",
 }
 
 lm:lua_exe "app" {

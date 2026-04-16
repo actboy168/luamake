@@ -64,10 +64,10 @@ function m.write_config(outdir, attribute, rootdir)
     lines[#lines+1] = "-- auto-generated lua_embed config"
     lines[#lines+1] = "return {"
 
-    if attribute.glue == "bee" and attribute.main then
-        -- main 文件路径写入配置，生成器会将其嵌入 lua_embed.c 中
+    if attribute.bee_glue then
+        -- bee_glue 文件路径写入配置，生成器会将其嵌入 lua_embed.c 中
         -- （通过 lua_embed_get_main() 访问，不暴露到 data_table）
-        local main_path = resolve_path(rootdir, attribute.main)
+        local main_path = resolve_path(rootdir, attribute.bee_glue)
         lines[#lines+1] = string.format("    main = %q,", main_path)
     end
 
@@ -144,7 +144,7 @@ end
 
 -- Collect all input files (for ninja dependency tracking).
 -- 除了 Lua 源文件和生成器脚本外，config.lua 也作为输入被追踪，
--- 这样当用户修改 lua_embed 选项（bytecode/pattern/prefix/glue 等）时，
+-- 这样当用户修改 lua_embed 选项（bytecode/pattern/prefix/bee_glue 等）时，
 -- Ninja 能检测到配置变化并重新生成 lua_embed.c。
 -- write_config 已做内容比对，内容不变时不会更新文件时间戳，
 -- 因此不会导致不必要的重建。
@@ -174,9 +174,9 @@ function m.collect_inputs(attribute, rootdir, config_path)
             inputs[#inputs+1] = resolve_path(rootdir, e.file)
         end
     end
-    -- main 文件也需要追踪（glue="bee" 时 main 会嵌入到 lua_embed.c 中）
-    if attribute.main then
-        inputs[#inputs+1] = resolve_path(rootdir, attribute.main)
+    -- bee_glue 文件也需要追踪（会嵌入到 lua_embed.c 中）
+    if attribute.bee_glue then
+        inputs[#inputs+1] = resolve_path(rootdir, attribute.bee_glue)
     end
     table.sort(inputs)
     return inputs

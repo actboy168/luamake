@@ -107,6 +107,82 @@ lm:runlua {
 
 ---
 
+## lm:lua_embed — Lua 嵌入资源
+
+将 Lua 文件编译为字节码并嵌入到 C 源码中，生成一个 `source_set` 供其他目标通过 `deps` 引用。支持两种嵌入方式：
+
+- **preload**：Lua 文件编译为字节码，运行时注入 `_PRELOAD` 表，可通过 `require()` 加载
+- **data**：文件作为原始字节嵌入，运行时通过 `lua_embed_find()` C API 查找
+
+### 基本用法
+
+```lua
+lm:lua_embed "embedded" {
+    preload = {
+        -- 扫描目录，自动推导模块名
+        { dir = "scripts/modules", prefix = "app" },
+        -- 单文件指定模块名
+        { file = "scripts/init.lua", name = "app.init" },
+    },
+    data = {
+        -- 扫描目录，嵌入所有文件
+        { dir = "assets", prefix = "assets/" },
+        -- 单文件
+        { file = "main.lua", name = "main.lua" },
+    },
+}
+
+lm:exe "myapp" {
+    deps = "embedded",
+    sources = "src/main.cpp",
+}
+```
+
+### 与 bee.lua 集成
+
+设置 `glue = "bee"` 时，额外生成 `bee_glue.c`，提供 `_bee_preload_module()` 和 `_bee_main()` 函数：
+
+```lua
+lm:lua_embed "embedded" {
+    glue = "bee",
+    main = "main.lua",      -- glue="bee" 时必需，指定入口文件（从 data 中查找）
+    -- no_main = true,      -- 可选：只生成 _bee_preload_module，不生成 _bee_main
+    preload = { ... },
+    data = { ... },
+}
+```
+
+### 属性说明
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `preload` | table | preload 条目列表 |
+| `preload[].dir` | string | 扫描目录路径 |
+| `preload[].prefix` | string | 模块名前缀（如 `"app"` → `app.xxx`） |
+| `preload[].pattern` | string | 匹配模式（默认 `"?.lua;?/init.lua"`） |
+| `preload[].file` | string | 单文件路径（需配合 `name`） |
+| `preload[].name` | string | 模块名（`file` 模式必需） |
+| `data` | table | data 条目列表 |
+| `data[].dir` | string | 扫描目录路径 |
+| `data[].prefix` | string | 名称前缀 |
+| `data[].file` | string | 单文件路径（需配合 `name`） |
+| `data[].name` | string | 查找键名（`file` 模式必需） |
+| `glue` | string | 设为 `"bee"` 生成 bee.lua 胶水层 |
+| `main` | string | 入口文件名（`glue="bee"` 时必需） |
+| `no_main` | boolean | 仅生成 `_bee_preload_module`，不生成 `_bee_main` |
+
+### C API（lua_embed.h）
+
+```c
+// 获取所有 preload 条目（NULL 终止数组）
+const lua_embed_preload* lua_embed_get_preload(void);
+
+// 按名称查找 data 条目，未找到返回 NULL
+const lua_embed_data* lua_embed_find(const char* name);
+```
+
+---
+
 ## lm:copy — 复制文件
 
 将文件从一个位置复制到另一个位置。`inputs` 和 `outputs` 必须数量一一对应。

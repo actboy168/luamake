@@ -70,3 +70,48 @@ lm:exe "server" {
 ```
 
 > **注意**：如果源文件 `#include` 了动态生成的头文件，但没有声明 `objdeps`，可能导致编译时找不到头文件而失败。
+
+## 3. 使用 lm:lua_embed 嵌入 Lua 资源
+
+当需要将 Lua 脚本或数据文件编译为字节码并嵌入到 C/C++ 可执行文件中时，推荐使用 `lm:lua_embed`。它封装了完整的代码生成管道：自动扫描文件 → 编译字节码 → 生成 C 源码 → 构建 source_set，无需手动编写 `lm:runlua` + `objdeps` 组合。
+
+### 典型场景：嵌入 Lua 模块到可执行文件
+
+```lua
+lm:lua_embed "embedded_lua" {
+    preload = {
+        { dir = "scripts/modules" },                    -- 自动扫描
+        { file = "scripts/config.lua", name = "config" }, -- 单文件
+    },
+    data = {
+        { file = "main.lua", name = "main.lua" },
+    },
+}
+
+lm:lua_exe "myapp" {
+    deps = "embedded_lua",
+    sources = "src/main.cpp",
+}
+```
+
+### 典型场景：与 bee.lua 集成
+
+```lua
+lm:lua_embed "bee_app" {
+    glue = "bee",
+    main = "main.lua",
+    preload = {
+        { dir = "scripts", prefix = "app" },
+    },
+    data = {
+        { file = "main.lua", name = "main.lua" },
+    },
+}
+
+lm:lua_exe "myapp" {
+    deps = "bee_app",
+    sources = "src/main.cpp",
+}
+```
+
+> **与手动 `lm:runlua` 的对比**：`lm:lua_embed` 自动处理了 ninja 依赖追踪、`objdeps` 声明、头文件复制等细节。对于简单的单文件代码生成仍可使用 `lm:runlua`，但批量嵌入 Lua 资源时 `lm:lua_embed` 更简洁可靠。

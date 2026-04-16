@@ -874,6 +874,71 @@ function api.lua_src(global_attribute, name)
     end
 end
 
+function api.lua_embed(global_attribute, name)
+    log.assert(type(name) == "string", "Name is not a string.")
+    return function (local_attribute)
+        local lua_embed = require "lua_embed"
+
+        local outdir       = globals.builddir .. "/lua_embed/" .. name
+        local out_c        = outdir .. "/lua_embed.c"
+        local out_c_ninja  = "$builddir/lua_embed/" .. name .. "/lua_embed.c"
+        local gen_name     = name .. "-lua-embed-gen"
+
+        local use_bee = local_attribute.glue == "bee"
+        local out_glue_c
+        local out_glue_c_ninja
+        if use_bee then
+            out_glue_c       = outdir .. "/bee_glue.c"
+            out_glue_c_ninja = "$builddir/lua_embed/" .. name .. "/bee_glue.c"
+        end
+
+        -- write config.lua for the generator
+        local config_path = lua_embed.write_config(outdir, local_attribute)
+
+        -- collect inputs for ninja tracking
+        local inputs = lua_embed.collect_inputs(local_attribute)
+
+        -- emit runlua rule + build edge
+        -- args are baked into the rule command so ninja tracks them correctly
+        local cmd = "$luamake lua " .. fsutil.quotearg(lua_embed.GEN_SCRIPT)
+                    .. " " .. fsutil.quotearg(config_path)
+                    .. " " .. fsutil.quotearg(out_c)
+        if use_bee then
+            cmd = cmd .. " " .. fsutil.quotearg(out_glue_c)
+        end
+        ninja:rule("lua_embed_" .. name, cmd, {
+            description = "lua_embed " .. name,
+            restat = 1,
+        })
+        local outputs = { out_c_ninja }
+        if use_bee then
+            outputs[#outputs+1] = out_glue_c_ninja
+        end
+        ninja:build(outputs, inputs)
+        ninja:phony(gen_name, outputs)
+        loaded_target[gen_name] = { implicit_inputs = gen_name }
+
+        -- copy lua_embed.h next to the generated .c so #include "lua_embed.h" works
+        local fs = require "bee.filesystem"
+        fs.copy_file(
+            fs.path(lua_embed.HEADER),
+            fs.path(outdir) / "lua_embed.h",
+            fs.copy_options.update_existing)
+
+        -- build the source_set that callers dep on
+        local sources = { out_c }
+        if use_bee then sources[#sources+1] = out_glue_c end
+
+        local attribute = reslove_attributes_nolink(global_attribute, {
+            luaversion = "lua55",
+            includes   = { outdir },
+            sources    = sources,
+            objdeps    = { gen_name },
+        })
+        generate("source_set", attribute, name)
+    end
+end
+
 local alias <const> = {
     exe = "executable",
     dll = "shared_library",

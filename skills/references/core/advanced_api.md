@@ -111,7 +111,7 @@ lm:runlua {
 
 将 Lua 文件嵌入到 C 源码中，生成一个 `source_set` 供其他目标通过 `deps` 引用。默认嵌入 Lua 源码，设置 `bytecode = true` 可改为嵌入字节码。支持两种嵌入方式：
 
-- **preload**：Lua 文件内容嵌入，运行时注入 `_PRELOAD` 表，可通过 `require()` 加载
+- **preload**：生成可用于预加载的 Lua 模块条目，可通过 `require()` 加载。使用 `glue = "bee"` 时会自动生成 `_bee_preload_module()` 将模块注入 `_PRELOAD` 表；否则需用户自行遍历 `lua_embed_get_preload()` 完成注入
 - **data**：文件作为原始字节嵌入，运行时通过 `lua_embed_find()` C API 查找
 
 ### 基本用法

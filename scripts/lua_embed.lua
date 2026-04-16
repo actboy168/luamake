@@ -35,6 +35,7 @@ function m.scan_inputs(dirpath, lua_only)
         end
     end
     recurse(root)
+    table.sort(result)
     return result
 end
 
@@ -152,6 +153,7 @@ function m.collect_inputs(attribute, rootdir)
             inputs[#inputs+1] = resolve_path(rootdir, e.file)
         end
     end
+    table.sort(inputs)
     return inputs
 end
 

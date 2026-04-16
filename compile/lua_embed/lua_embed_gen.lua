@@ -80,11 +80,22 @@ local function match_pattern(rel, pat)
     return mid:gsub("/", ".")
 end
 
+local function sorted_entries(dir)
+    local entries = {}
+    for entry in fs.pairs(dir) do
+        entries[#entries+1] = entry
+    end
+    table.sort(entries, function(a, b)
+        return a:filename():string() < b:filename():string()
+    end)
+    return entries
+end
+
 local function scan_preload_dir(dirpath, patterns, mod_prefix, result, seen)
     local root = fs.path(dirpath)
     if not fs.exists(root) then return end
     local function recurse(base, rel_base)
-        for entry in fs.pairs(base) do
+        for _, entry in ipairs(sorted_entries(base)) do
             local name = entry:filename():string()
             local rel  = rel_base ~= "" and (rel_base .. "/" .. name) or name
             if fs.is_directory(entry) then
@@ -178,7 +189,7 @@ local function scan_data_dir(dirpath, prefix, result)
     local root = fs.path(dirpath)
     if not fs.exists(root) then return end
     local function recurse(base, rel_base)
-        for entry in fs.pairs(base) do
+        for _, entry in ipairs(sorted_entries(base)) do
             local fname = entry:filename():string()
             local rel   = rel_base ~= "" and (rel_base .. "/" .. fname) or fname
             if fs.is_directory(entry) then

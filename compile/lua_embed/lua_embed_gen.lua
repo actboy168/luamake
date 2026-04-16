@@ -299,26 +299,48 @@ if output_bee_glue then
     gemit('#  define LUA_EMBED_EXPORT __attribute__((visibility("default")))\n')
     gemit('#endif\n\n')
 
+    -- C 辅助函数：luaL_loadbuffer 的 Lua 绑定
+    -- load_bytecode(lightuserdata buf, integer len, string name) -> function
     gemit([[
-static int preload_loader(lua_State* L) {
-    const char* buf = (const char*)lua_touserdata(L, lua_upvalueindex(1));
-    size_t len = (size_t)lua_tointeger(L, lua_upvalueindex(2));
-    const char* name = lua_tostring(L, lua_upvalueindex(3));
+static int load_bytecode(lua_State* L) {
+    const char* buf = (const char*)lua_touserdata(L, 1);
+    size_t len = (size_t)lua_tointeger(L, 2);
+    const char* name = lua_tostring(L, 3);
     if (luaL_loadbuffer(L, buf, len, name) != LUA_OK) return lua_error(L);
-    lua_pushvalue(L, 1);
-    lua_call(L, 1, 1);
     return 1;
 }
 
 ]])
 
+    -- preload_loader 的 Lua 版本
+    -- 接收 load_bytecode, buf, len, name 四个参数，返回一个 Lua closure
+    local preload_loader_lua = [[
+local load_bytecode, buf, len, name = ...
+return function(modname)
+    local fn = load_bytecode(buf, len, name)
+    return fn(modname)
+end
+]]
+    local preload_loader_bc = string.dump(assert(load(preload_loader_lua, "=preload_loader")))
+    local preload_loader_id = "preload_loader_bc"
+    gemit(string.format(
+        "static const unsigned char %s[] = {\n    %s\n};\n\n",
+        preload_loader_id, to_c_bytes(preload_loader_bc)))
+
     gemit('LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {\n')
     gemit('    luaL_getsubtable(L, LUA_REGISTRYINDEX, "_PRELOAD");\n')
     gemit('    for (const lua_embed_preload* e = lua_embed_get_preload(); e->name != NULL; e++) {\n')
+    -- 加载 preload_loader Lua bytecode
+    gemit(string.format(
+        '        if (luaL_loadbuffer(L, (const char*)%s, %d, "=preload_loader") != LUA_OK)\n',
+        preload_loader_id, #preload_loader_bc))
+    gemit('            return lua_error(L);\n')
+    -- 传入 4 个参数: load_bytecode, buf, len, name
+    gemit('        lua_pushcfunction(L, load_bytecode);\n')
     gemit('        lua_pushlightuserdata(L, (void*)e->data);\n')
     gemit('        lua_pushinteger(L, (lua_Integer)e->size);\n')
     gemit('        lua_pushstring(L, e->name);\n')
-    gemit('        lua_pushcclosure(L, preload_loader, 3);\n')
+    gemit('        lua_call(L, 4, 1);  /* -> lua closure */\n')
     gemit('        lua_setfield(L, -2, e->name);\n')
     gemit('    }\n')
     gemit('    lua_pop(L, 1);\n')

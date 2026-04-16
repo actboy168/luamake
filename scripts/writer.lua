@@ -263,7 +263,6 @@ local function generate_compile(rule, attribute, name, sources)
     end
 
     local bindir = attribute.bindir
-    local objargs = attribute.objdeps and { implicit_inputs = attribute.objdeps } or nil
     local implicit_inputs = {}
 
     init_single(attribute, "c", "")
@@ -297,6 +296,25 @@ local function generate_compile(rule, attribute, name, sources)
             deps = attribute.deps
         end
     end
+
+    -- 从 deps 中收集 export_objdeps 和 export_includes
+    if deps then
+        for _, dep in ipairs(deps) do
+            local t = loaded_target[dep]
+            if t then
+                if t.export_objdeps then
+                    attribute.objdeps = attribute.objdeps or {}
+                    tbl_append(attribute.objdeps, t.export_objdeps)
+                end
+                if t.export_includes then
+                    attribute.includes = attribute.includes or {}
+                    tbl_append(attribute.includes, t.export_includes)
+                end
+            end
+        end
+    end
+
+    local objargs = attribute.objdeps and { implicit_inputs = attribute.objdeps } or nil
 
     local flags = {}
     local cflags = {}
@@ -968,6 +986,13 @@ function api.lua_embed(global_attribute, name)
         attribute.objdeps[#attribute.objdeps+1] = gen_name
 
         generate_compile("source_set", attribute, name, sources)
+
+        -- 导出 includes 和 objdeps，让依赖 lua_embed 的目标自动获取
+        local t = loaded_target[name]
+        if t then
+            t.export_includes = { outdir }
+            t.export_objdeps = { copy_name }
+        end
     end
 end
 

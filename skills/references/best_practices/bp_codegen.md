@@ -129,6 +129,26 @@ lm:lua_exe "myapp" {
 }
 ```
 
+### 典型场景：其他目标通过 deps 自动获取 lua_embed 的 includes 和 objdeps
+
+`lm:lua_embed` 会自动导出 `export_includes`（生成的头文件目录）和 `export_objdeps`（头文件生成目标），其他目标只需通过 `deps` 依赖 `lua_embed` 目标，即可自动获取正确的头文件搜索路径和编译顺序依赖，**无需手动指定 `includes` 和 `objdeps`**。
+
+```lua
+-- ✅ 推荐：通过 deps 自动获取 includes 和 objdeps
+lm:lua_embed "my_embed" {
+    bee_glue = "src/main.lua",
+    preload = {
+        { dir = "lualib" },
+    },
+}
+
+lm:lua_src "my_glue" {
+    deps     = "my_embed",       -- 自动获取 includes 和 objdeps
+    includes = "3rd/bee.lua",    -- 只需写自己额外的 includes
+    sources  = "src/glue.cpp",   -- glue.cpp 中 #include <lua_embed.h>
+}
+```
+
 > **与手动 `lm:runlua` 的对比**：`lm:lua_embed` 自动处理了 ninja 依赖追踪、`objdeps` 声明、头文件复制等细节。对于简单的单文件代码生成仍可使用 `lm:runlua`，但批量嵌入 Lua 资源时 `lm:lua_embed` 更简洁可靠。
 
 > **`bytecode` 选项**：默认 `false`（嵌入源码），设为 `true` 时使用 `string.dump` 生成字节码嵌入。字节码体积更小且可隐藏源码，但生成的字节码绑定到 luamake 宿主的 Lua 版本，若目标项目通过 `luaversion` 指定了不同版本则会加载失败。

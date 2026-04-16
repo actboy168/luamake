@@ -104,3 +104,39 @@ lm:exe "main" {
     sources = "main.cpp",
 }
 ```
+
+## 5. deps 自动传递导出属性（export_includes / export_objdeps）
+
+某些目标（如 `lm:lua_embed`）会通过 `deps` 自动向依赖方导出编译级别的属性，包括头文件搜索路径（`export_includes`）和编译前置依赖（`export_objdeps`）。依赖方只需声明 `deps`，无需手动指定 `includes` 和 `objdeps`。
+
+### 典型场景：依赖 lua_embed 生成的头文件
+
+`lm:lua_embed` 会自动导出两个属性：
+- **`export_includes`**：生成的头文件所在目录，依赖方自动获得 `-I` 搜索路径
+- **`export_objdeps`**：头文件复制的 phony 目标，确保编译前头文件已就绪
+
+```lua
+lm:lua_embed "my_embed" {
+    preload = { { dir = "scripts" } },
+    data = { { file = "main.lua", name = "main.lua" } },
+}
+
+-- ✅ 推荐：通过 deps 自动获取 includes 和 objdeps
+lm:lua_src "my_glue" {
+    deps     = "my_embed",
+    includes = "3rd/bee.lua",          -- 只需写自己额外的 includes
+    sources  = "src/my_glue.cpp",      -- 该文件 #include <lua_embed.h>
+}
+
+-- ❌ 不推荐：手动硬编码内部路径和目标名
+lm:lua_src "my_glue" {
+    includes = {
+        "3rd/bee.lua",
+        "_build/lua_embed/my_embed",                -- 内部路径，不应硬编码
+    },
+    sources  = "src/my_glue.cpp",
+    objdeps  = "__lua_embed_hdr_my_embed__",         -- 内部目标名，不应硬编码
+}
+```
+
+> **原理**：`lm:lua_embed` 在 `loaded_target` 中设置了 `export_includes` 和 `export_objdeps` 字段。`generate_compile` 在处理 `deps` 时，会自动将这些导出属性合并到依赖方的 `attribute.includes` 和 `attribute.objdeps` 中。这是一个通用机制，未来其他代码生成目标也可以使用。

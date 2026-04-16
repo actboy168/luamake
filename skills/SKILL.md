@@ -37,7 +37,7 @@ luamake rebuild  # 重建
 | `lm:lua_src` | Lua C 模块（静态嵌入到 `lm:lua_exe`） | 无 |
 | `lm:lua_dll` | Lua C 模块（动态加载） | `module.dll` / `module.so` |
 | `lm:lua_exe` | 内嵌 Lua 的可执行文件 | `app.exe` / `app` |
-| `lm:lua_embed` | Lua 嵌入资源（将 Lua 文件嵌入为 C 源码集，默认嵌入源码，可选字节码） | 无（source_set） |
+| `lm:lua_embed` | Lua 嵌入资源（将 Lua 文件嵌入为 C 源码集，默认嵌入源码，可选字节码）。自动向依赖方导出 `includes` 和 `objdeps`，无需手动声明 | 无（source_set） |
 | `lm:phony` | 伪目标（聚合依赖） | 无 |
 
 ---
@@ -62,6 +62,8 @@ luamake rebuild  # 重建
 >     objdeps = "gen_header",  -- 编译 src/*.cpp 前先执行 gen_header
 > }
 > ```
+>
+> **注意**：`lm:lua_embed` 目标会自动导出 `includes` 和 `objdeps`，通过 `deps` 依赖它的目标无需手动声明这两项。详见下方 `lm:lua_embed` 用法。
 
 ### 链接
 
@@ -113,7 +115,9 @@ lm:lua_exe "app" {
 }
 ```
 
-**`lm:lua_embed`** — 将 Lua 文件嵌入到 C 源码中，生成一个 source_set 供其他目标依赖。默认嵌入 Lua 源码以保证跨 Lua 版本兼容；设置 `bytecode = true` 可嵌入字节码（体积更小、可隐藏源码，但要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致）：
+**`lm:lua_embed`** — 将 Lua 文件嵌入到 C 源码中，生成一个 source_set 供其他目标依赖。默认嵌入 Lua 源码以保证跨 Lua 版本兼容；设置 `bytecode = true` 可嵌入字节码（体积更小、可隐藏源码，但要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致）。
+
+`lua_embed` 会自动向依赖方导出 `includes`（生成的头文件目录）和 `objdeps`（头文件生成目标），因此通过 `deps` 依赖 `lua_embed` 的目标**无需手动声明** `includes` 路径和 `objdeps`：
 
 ```lua
 lm:lua_embed "embedded_scripts" {
@@ -133,8 +137,15 @@ lm:lua_embed "embedded_scripts" {
     bee_glue = "main.lua",
 }
 
+-- deps 依赖 lua_embed 时，includes 和 objdeps 自动传递
+lm:lua_src "glue" {
+    deps = "embedded_scripts",       -- 自动获取生成头文件的 includes 和 objdeps
+    includes = "3rd/bee.lua",        -- 只需声明自己额外的 includes
+    sources = "src/glue.cpp",
+}
+
 lm:lua_exe "app" {
-    deps = "embedded_scripts",
+    deps = { "glue", "embedded_scripts" },
     sources = "src/main.cpp",
 }
 ```

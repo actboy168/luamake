@@ -34,11 +34,12 @@ static const char preload_loader_src[] =
     "end\n";
 
 LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {
+    const lua_embed_preload* e;
     luaL_getsubtable(L, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);
     /* Load the preload_loader factory once, outside the loop */
     if (luaL_loadbuffer(L, preload_loader_src, sizeof(preload_loader_src) - 1, "=preload_loader") != LUA_OK)
         return lua_error(L);
-    for (const lua_embed_preload* e = lua_embed_get_preload(); e->name != NULL; e++) {
+    for (e = lua_embed_get_preload(); e->name != NULL; e++) {
         /* Reuse the factory function at the top of the stack */
         lua_pushvalue(L, -1);
         lua_pushcfunction(L, load_bytecode);
@@ -51,8 +52,9 @@ LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {
 }
 
 LUA_EMBED_EXPORT int _bee_main(lua_State* L) {
+    const lua_embed_data* f;
     _bee_preload_module(L);
-    const lua_embed_data* f = lua_embed_get_main();
+    f = lua_embed_get_main();
     if (!f) {
         lua_pushstring(L, "lua_embed: no main entry configured");
         return lua_error(L);

@@ -321,7 +321,8 @@ const lua_embed_preload* lua_embed_get_preload(void) {
 }
 
 const lua_embed_data* lua_embed_get_data(const char* name) {
-    for (const lua_embed_data* e = lua_embed_data_table; e->name != NULL; e++) {
+    const lua_embed_data* e;
+    for (e = lua_embed_data_table; e->name != NULL; e++) {
         if (strcmp(e->name, name) == 0) return e;
     }
     return NULL;

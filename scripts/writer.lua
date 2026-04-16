@@ -234,7 +234,9 @@ local enum_crt <const> = { dynamic = true, static = true }
 local enum_visibility <const> = { default = true, hidden = true }
 local enum_luaversion <const> = { [""] = true, lua53 = true, lua54 = true, lua55 = true }
 
-local function generate(rule, attribute, name)
+-- 核心编译函数：接受已经展开好的 sources 列表，跳过 glob 展开。
+-- lua_embed 等代码生成目标可以直接调用此函数，避免路径被 rootdir 错误归一化。
+local function generate_compile(rule, attribute, name, sources)
     local target = loaded_target[name]
     local input
     local ldflags
@@ -261,7 +263,6 @@ local function generate(rule, attribute, name)
     end
 
     local bindir = attribute.bindir
-    local sources = get_blob(attribute.rootdir, attribute.sources)
     local objargs = attribute.objdeps and { implicit_inputs = attribute.objdeps } or nil
     local implicit_inputs = {}
 
@@ -449,6 +450,11 @@ local function generate(rule, attribute, name)
         })
     end
     ninja:phony(name, binname)
+end
+
+local function generate(rule, attribute, name)
+    local sources = get_blob(attribute.rootdir, attribute.sources)
+    return generate_compile(rule, attribute, name, sources)
 end
 
 local function getImplicitInputs(name, attribute)
@@ -925,22 +931,14 @@ function api.lua_embed(global_attribute, name)
         loaded_target[gen_name] = { implicit_inputs = gen_name }
 
         -- build the source_set that callers dep on
-        -- 合并 local_attribute 中的通用编译属性（defines/flags/includes/confs 等），
-        -- 再叠加生成文件特有的 sources/includes/objdeps，确保调用方在 lua_embed 块
-        -- 里填写的编译属性能正确生效。
-        local sources = { out_c }
-        -- bee_glue.c 是静态文件，直接引用，不需要动态生成
-        if use_bee then sources[#sources+1] = lua_embed.BEE_GLUE end
-
+        -- 先用 reslove_attributes_nolink 归一化用户在 lua_embed 块中写的编译属性
+        -- （defines/flags/includes/confs 等），然后再追加 lua_embed 自己构造的
+        -- sources/includes/objdeps（已经是 WORKDIR 相对路径），直接调用
+        -- generate_compile 跳过 glob 展开，避免路径被 rootdir 错误归一化。
         local src_attr = {}
         for k, v in pairs(local_attribute) do
             src_attr[k] = v
         end
-        src_attr.sources = sources
-        -- luamake 允许属性值为单个字符串简写，需先转为 table 再合并
-        local function as_table(v) return type(v) == "table" and { table.unpack(v) } or (v and { v } or {}) end
-        local inc = as_table(src_attr.includes); table.insert(inc, 1, outdir);  src_attr.includes = inc
-        local dep = as_table(src_attr.objdeps); table.insert(dep, 1, gen_name); src_attr.objdeps = dep
         if src_attr.luaversion == nil then
             src_attr.luaversion = "lua55"
         end
@@ -949,9 +947,21 @@ function api.lua_embed(global_attribute, name)
         src_attr.data = nil
         src_attr.glue = nil
         src_attr.main = nil
+        -- sources/objdeps 由 lua_embed 自己构造，不参与属性归一化
+        src_attr.sources = nil
+        src_attr.objdeps = nil
 
         local attribute = reslove_attributes_nolink(global_attribute, src_attr)
-        generate("source_set", attribute, name)
+
+        -- 追加 lua_embed 自己构造的路径（已经是 WORKDIR 相对路径）
+        local sources = { out_c }
+        if use_bee then sources[#sources+1] = lua_embed.BEE_GLUE end
+
+        attribute.includes = attribute.includes or {}
+        table.insert(attribute.includes, 1, outdir)
+        attribute.objdeps = { gen_name }
+
+        generate_compile("source_set", attribute, name, sources)
     end
 end
 

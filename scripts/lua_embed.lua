@@ -60,10 +60,16 @@ function m.write_config(outdir, attribute, rootdir)
     f:write("return {\n")
 
     if attribute.glue == "bee" then
-        f:write(string.format("    main = %q,\n",
-            assert(attribute.main, "lua_embed glue='bee' requires 'main'")))
         if attribute.no_main then
+            -- no_main 模式：只生成 _bee_preload_module，不生成 _bee_main
+            -- 此时 main 可选（如果提供了也会写入配置，但不会用于生成 _bee_main）
             f:write("    no_main = true,\n")
+            if attribute.main then
+                f:write(string.format("    main = %q,\n", attribute.main))
+            end
+        else
+            f:write(string.format("    main = %q,\n",
+                assert(attribute.main, "lua_embed glue='bee' requires 'main' (or set no_main=true)")))
         end
     end
 

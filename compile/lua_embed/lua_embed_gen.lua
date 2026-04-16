@@ -297,9 +297,12 @@ emit_flush(output_c)
 -- ── optional bee.lua glue layer ───────────────────────────────────────────────
 if output_bee_glue then
     local main_key = cfg.main
-    -- When main_key is absent or no_main=true, only _bee_preload_module is emitted.
-    -- The caller is responsible for providing _bee_main.
-    local emit_main = main_key ~= nil and not cfg.no_main
+    -- By default, generating bee glue requires cfg.main so _bee_main can be emitted.
+    -- When no_main=true, only _bee_preload_module is emitted and the caller must
+    -- provide _bee_main separately.
+    assert(cfg.no_main or main_key ~= nil,
+        "cfg.main is required when generating bee glue unless cfg.no_main=true")
+    local emit_main = not cfg.no_main
 
     local gdir = output_bee_glue:match("^(.*)/[^/]+$")
     if gdir then fs.create_directories(gdir) end

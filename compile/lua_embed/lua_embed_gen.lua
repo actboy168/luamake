@@ -206,9 +206,10 @@ emit('#include "lua_embed.h"\n\n')
 -- preload entries: compiled to bytecode
 local preload_idents = {}
 for _, e in ipairs(preload_list) do
-    local src  = readfile(e.path)
-    local func = assert(load(src, "@" .. e.path), "syntax error in " .. e.path)
-    local bc   = string.dump(func)
+    local src       = readfile(e.path)
+    local func, err = load(src, "@" .. e.path)
+    if not func then error("syntax error in " .. e.path .. ": " .. tostring(err)) end
+    local bc        = string.dump(func)
     local id   = "lep_" .. to_c_ident(e.modname)
     preload_idents[#preload_idents+1] = { modname = e.modname, id = id, size = #bc }
     emit(string.format(

@@ -67,6 +67,10 @@ function m.write_config(outdir, attribute, rootdir)
         end
     end
 
+    if attribute.bytecode then
+        f:write("    bytecode = true,\n")
+    end
+
     -- preload
     f:write("    preload = {\n")
     for _, e in ipairs(attribute.preload or {}) do

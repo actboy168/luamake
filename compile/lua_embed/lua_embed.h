@@ -11,9 +11,12 @@
 extern "C" {
 #endif
 
-/* A Lua module compiled to bytecode, stored for injection into _PRELOAD.
+/* A Lua module stored for injection into _PRELOAD.
  * 'name' is the require() key, e.g. "http.httpc".
- * 'data' points to bytecode; 'size' is its length in bytes.
+ * 'data' points to Lua source code or bytecode; 'size' is its length in bytes.
+ * By default source code is embedded for cross-Lua-version compatibility;
+ * set bytecode=true in lm:lua_embed to embed bytecode instead (smaller, but
+ * requires the host luamake Lua version to match the target luaversion).
  */
 typedef struct lua_embed_preload {
     const char* name;

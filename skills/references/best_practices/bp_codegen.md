@@ -73,7 +73,9 @@ lm:exe "server" {
 
 ## 3. 使用 lm:lua_embed 嵌入 Lua 资源
 
-当需要将 Lua 脚本或数据文件编译为字节码并嵌入到 C/C++ 可执行文件中时，推荐使用 `lm:lua_embed`。它封装了完整的代码生成管道：自动扫描文件 → 编译字节码 → 生成 C 源码 → 构建 source_set，无需手动编写 `lm:runlua` + `objdeps` 组合。
+当需要将 Lua 脚本或数据文件嵌入到 C/C++ 可执行文件中时，推荐使用 `lm:lua_embed`。它封装了完整的代码生成管道：自动扫描文件 → 生成 C 源码 → 构建 source_set，无需手动编写 `lm:runlua` + `objdeps` 组合。
+
+默认嵌入 Lua **源码**，保证跨 Lua 版本兼容（luamake 宿主 Lua 版本可以与目标 `luaversion` 不同）。如果需要更小的体积或隐藏源码，可设置 `bytecode = true` 嵌入字节码，但此时要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致。
 
 ### 典型场景：嵌入 Lua 模块到可执行文件
 
@@ -91,6 +93,20 @@ lm:lua_embed "embedded_lua" {
 lm:lua_exe "myapp" {
     deps = "embedded_lua",
     sources = "src/main.cpp",
+}
+```
+
+### 典型场景：使用字节码嵌入（体积更小、隐藏源码）
+
+```lua
+lm:lua_embed "embedded_lua" {
+    bytecode = true,  -- 嵌入字节码而非源码（需 Lua 版本一致）
+    preload = {
+        { dir = "scripts/modules" },
+    },
+    data = {
+        { file = "main.lua", name = "main.lua" },
+    },
 }
 ```
 
@@ -115,3 +131,5 @@ lm:lua_exe "myapp" {
 ```
 
 > **与手动 `lm:runlua` 的对比**：`lm:lua_embed` 自动处理了 ninja 依赖追踪、`objdeps` 声明、头文件复制等细节。对于简单的单文件代码生成仍可使用 `lm:runlua`，但批量嵌入 Lua 资源时 `lm:lua_embed` 更简洁可靠。
+
+> **`bytecode` 选项**：默认 `false`（嵌入源码），设为 `true` 时使用 `string.dump` 生成字节码嵌入。字节码体积更小且可隐藏源码，但生成的字节码绑定到 luamake 宿主的 Lua 版本，若目标项目通过 `luaversion` 指定了不同版本则会加载失败。

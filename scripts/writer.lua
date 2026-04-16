@@ -947,6 +947,7 @@ function api.lua_embed(global_attribute, name)
         src_attr.data = nil
         src_attr.glue = nil
         src_attr.main = nil
+        src_attr.bytecode = nil
         -- sources/objdeps 由 lua_embed 自己构造，不参与属性归一化
         src_attr.sources = nil
         src_attr.objdeps = nil

@@ -37,6 +37,9 @@ rule cxx_source_bee_2
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
+build $obj/source_bee/async.obj: cxx_source_bee_2 bee.lua/bee/async/async.cpp
+build $obj/source_bee/async_osx.obj: cxx_source_bee_2 $
+    bee.lua/bee/async/async_osx.cpp
 build $obj/source_bee/nanoid.obj: cxx_source_bee_2 $
     bee.lua/bee/crash/nanoid.cpp
 build $obj/source_bee/filewatch_osx.obj: cxx_source_bee_2 $
@@ -91,6 +94,8 @@ rule cxx_source_bee_3
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
+build $obj/source_bee/lua_async.obj: cxx_source_bee_3 $
+    bee.lua/binding/lua_async.cpp
 build $obj/source_bee/lua_channel.obj: cxx_source_bee_3 $
     bee.lua/binding/lua_channel.cpp
 build $obj/source_bee/lua_crash.obj: cxx_source_bee_3 $
@@ -133,7 +138,7 @@ build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
     bee.lua/bootstrap/main.cpp
 rule link_bootstrap
   command = $cc $in -o $out -framework Foundation -framework CoreFoundation $
-    -framework CoreServices -lm -ldl -lstdc++ -Wl,-S,-x
+    -framework CoreServices -lm -ldl -lc++ -Wl,-S,-x
   description = Link    Exe $out
 rule copy
   command = ditto $in$input $out 1>/dev/null
@@ -144,7 +149,8 @@ rule test
   description = Run test.
   pool = console
 build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
-    $obj/source_bee/format.obj $obj/source_bee/nanoid.obj $
+    $obj/source_bee/format.obj $obj/source_bee/async.obj $
+    $obj/source_bee/async_osx.obj $obj/source_bee/nanoid.obj $
     $obj/source_bee/filewatch_osx.obj $obj/source_bee/error.obj $
     $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
     $obj/source_bee/bpoll_osx.obj $obj/source_bee/endpoint.obj $
@@ -155,26 +161,28 @@ build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
     $obj/source_bee/path_posix.obj $obj/source_bee/atomic_sync.obj $
     $obj/source_bee/setname.obj $obj/source_bee/simplethread_posix.obj $
     $obj/source_bee/spinlock.obj $obj/source_bee/version.obj $
-    $obj/source_bee/bee_newstate.obj $obj/source_bee/lua_channel.obj $
-    $obj/source_bee/lua_crash.obj $obj/source_bee/lua_debugging.obj $
-    $obj/source_bee/lua_epoll.obj $obj/source_bee/lua_filesystem.obj $
-    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
-    $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
-    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
-    $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
-    $obj/source_bee/lua_time.obj $obj/source_lua/onelua.obj $
-    $obj/source_bootstrap/bootstrap_init.obj $obj/source_bootstrap/main.obj
+    $obj/source_bee/bee_newstate.obj $obj/source_bee/lua_async.obj $
+    $obj/source_bee/lua_channel.obj $obj/source_bee/lua_crash.obj $
+    $obj/source_bee/lua_debugging.obj $obj/source_bee/lua_epoll.obj $
+    $obj/source_bee/lua_filesystem.obj $obj/source_bee/lua_filewatch.obj $
+    $obj/source_bee/lua_platform.obj $obj/source_bee/lua_select.obj $
+    $obj/source_bee/lua_serialization.obj $obj/source_bee/lua_socket.obj $
+    $obj/source_bee/lua_subprocess.obj $obj/source_bee/lua_sys.obj $
+    $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
+    $obj/source_lua/onelua.obj $obj/source_bootstrap/bootstrap_init.obj $
+    $obj/source_bootstrap/main.obj
 build $bin/main.lua: copy bee.lua/bootstrap/main.lua
 build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/ltest.lua bee.lua/test/shell.lua $
     bee.lua/test/supported.lua bee.lua/test/test.lua $
-    bee.lua/test/test_channel.lua bee.lua/test/test_epoll.lua $
-    bee.lua/test/test_filesystem.lua bee.lua/test/test_filewatch.lua $
-    bee.lua/test/test_lua.lua bee.lua/test/test_serialization.lua $
-    bee.lua/test/test_skip.lua bee.lua/test/test_socket.lua $
-    bee.lua/test/test_subprocess.lua bee.lua/test/test_sys.lua $
-    bee.lua/test/test_thread.lua bee.lua/test/test_time.lua $
-    bee.lua/test/test_windows.lua | $bin/bootstrap copy_script
+    bee.lua/test/test_async.lua bee.lua/test/test_channel.lua $
+    bee.lua/test/test_epoll.lua bee.lua/test/test_filesystem.lua $
+    bee.lua/test/test_filewatch.lua bee.lua/test/test_lua.lua $
+    bee.lua/test/test_serialization.lua bee.lua/test/test_skip.lua $
+    bee.lua/test/test_socket.lua bee.lua/test/test_subprocess.lua $
+    bee.lua/test/test_sys.lua bee.lua/test/test_thread.lua $
+    bee.lua/test/test_time.lua bee.lua/test/test_windows.lua | $
+    $bin/bootstrap copy_script
 build luamake: copy | $bin/bootstrap
   input = $bin/bootstrap
 build bootstrap: phony $bin/bootstrap

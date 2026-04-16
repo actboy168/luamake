@@ -270,8 +270,6 @@ const lua_embed_data* lua_embed_find(const char* name) {
 ]])
 
 writefile(output_c, table.concat(buf))
-io.write(string.format("lua_embed: %d preload + %d data -> %s\n",
-    #preload_idents, #data_idents, output_c))
 
 -- ── optional bee.lua glue layer ───────────────────────────────────────────────
 if output_bee_glue then
@@ -337,5 +335,4 @@ static int preload_loader(lua_State* L) {
     end
 
     writefile(output_bee_glue, table.concat(gb))
-    io.write(string.format("lua_embed: bee glue -> %s\n", output_bee_glue))
 end

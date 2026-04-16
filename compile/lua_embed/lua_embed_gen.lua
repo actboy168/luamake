@@ -40,6 +40,12 @@ end
 local fmt16 = ("0x%02x,"):rep(16) .. "\n    "
 local function emit_c_bytes(data)
     local len = #data
+    if len == 0 then
+        -- 空数据时输出一个哨兵字节，避免生成空初始化列表（标准 C 不允许）
+        -- 调用方记录的 size 仍为 0，运行时按长度读取不受影响
+        emit("0x00\n    ")
+        return
+    end
     -- 完整的 16 字节行
     local n = len - len % 16
     for i = 1, n, 16 do

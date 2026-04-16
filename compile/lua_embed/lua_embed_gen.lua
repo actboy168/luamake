@@ -366,7 +366,7 @@ end
     emit("\n};\n\n")
 
     emit('LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {\n')
-    emit('    luaL_getsubtable(L, LUA_REGISTRYINDEX, "_PRELOAD");\n')
+    emit('    luaL_getsubtable(L, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);\n')
     -- 在循环外加载一次 preload_loader factory 函数，避免每次迭代重复 luaL_loadbuffer
     emit(string.format(
         '    if (luaL_loadbuffer(L, (const char*)%s, %d, "=preload_loader") != LUA_OK)\n',

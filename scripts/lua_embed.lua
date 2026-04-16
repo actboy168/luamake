@@ -7,7 +7,7 @@ local fsutil = require "fsutil"
 local pathutil = require "pathutil"
 
 -- Directory containing lua_embed_gen.lua, lua_embed.h, etc.
-local EMBED_DIR  = fsutil.join(package.procdir, "compile", "lua_embed")
+local EMBED_DIR  = fsutil.join(package.procdir, "scripts", "lua_embed")
 local GEN_SCRIPT = fsutil.join(EMBED_DIR, "lua_embed_gen.lua")
 local HEADER     = fsutil.join(EMBED_DIR, "lua_embed.h")
 

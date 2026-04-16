@@ -929,15 +929,30 @@ function api.lua_embed(global_attribute, name)
             fs.copy_options.update_existing)
 
         -- build the source_set that callers dep on
+        -- 合并 local_attribute 中的通用编译属性（defines/flags/includes/confs 等），
+        -- 再叠加生成文件特有的 sources/includes/objdeps，确保调用方在 lua_embed 块
+        -- 里填写的编译属性能正确生效。
         local sources = { out_c }
         if use_bee then sources[#sources+1] = out_glue_c end
 
-        local attribute = reslove_attributes_nolink(global_attribute, {
-            luaversion = "lua55",
-            includes   = { outdir },
-            sources    = sources,
-            objdeps    = { gen_name },
-        })
+        local src_attr = {}
+        for k, v in pairs(local_attribute) do
+            src_attr[k] = v
+        end
+        src_attr.sources = sources
+        src_attr.includes = src_attr.includes and { outdir, table.unpack(src_attr.includes) } or { outdir }
+        src_attr.objdeps = src_attr.objdeps and { gen_name, table.unpack(src_attr.objdeps) } or { gen_name }
+        if src_attr.luaversion == nil then
+            src_attr.luaversion = "lua55"
+        end
+        -- lua_embed 专用字段不传入编译属性解析
+        src_attr.preload = nil
+        src_attr.data = nil
+        src_attr.glue = nil
+        src_attr.main = nil
+        src_attr.no_main = nil
+
+        local attribute = reslove_attributes_nolink(global_attribute, src_attr)
         generate("source_set", attribute, name)
     end
 end

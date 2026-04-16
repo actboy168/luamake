@@ -45,7 +45,11 @@ local function to_c_bytes(data)
 end
 
 local function to_c_ident(s)
-    return s:gsub("[^%w]", "_")
+    local ident = s:gsub("[^%w]", "_")
+    if ident:match("^[0-9]") then
+        ident = "_" .. ident
+    end
+    return ident
 end
 
 -- ── scan a directory and collect preload entries ──────────────────────────────
@@ -205,12 +209,19 @@ emit('#include "lua_embed.h"\n\n')
 
 -- preload entries: compiled to bytecode
 local preload_idents = {}
+local seen_idents = {}  -- 检测标识符冲突
 for _, e in ipairs(preload_list) do
     local src       = readfile(e.path)
     local func, err = load(src, "@" .. e.path)
     if not func then error("syntax error in " .. e.path .. ": " .. tostring(err)) end
     local bc        = string.dump(func)
     local id   = "lep_" .. to_c_ident(e.modname)
+    if seen_idents[id] then
+        error(string.format(
+            "C identifier collision: %q and %q both map to %s",
+            seen_idents[id], e.modname, id))
+    end
+    seen_idents[id] = e.modname
     preload_idents[#preload_idents+1] = { modname = e.modname, id = id, size = #bc }
     emit(string.format(
         "/* preload: %s */\nstatic const unsigned char %s[] = {\n    %s\n};\n\n",
@@ -222,6 +233,12 @@ local data_idents = {}
 for _, e in ipairs(data_list) do
     local src = readfile(e.path)
     local id  = "led_" .. to_c_ident(e.name)
+    if seen_idents[id] then
+        error(string.format(
+            "C identifier collision: %q and %q both map to %s",
+            seen_idents[id], e.name, id))
+    end
+    seen_idents[id] = e.name
     data_idents[#data_idents+1] = { name = e.name, id = id, size = #src }
     emit(string.format(
         "/* data: %s */\nstatic const unsigned char %s[] = {\n    %s\n};\n\n",

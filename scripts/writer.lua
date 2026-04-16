@@ -891,7 +891,7 @@ function api.lua_embed(global_attribute, name)
         local outdir       = globals.builddir .. "/lua_embed/" .. name
         local out_c        = outdir .. "/lua_embed.c"
         local out_c_ninja  = "$builddir/lua_embed/" .. name .. "/lua_embed.c"
-        local gen_name     = name .. "-lua-embed-gen"
+        local gen_name     = "__lua_embed_gen_" .. name .. "__"
 
         local use_bee = local_attribute.bee_glue ~= nil
 
@@ -919,7 +919,7 @@ function api.lua_embed(global_attribute, name)
         -- if builddir is cleaned or the header is updated, ninja will re-copy.
         local header_src = lua_embed.HEADER
         local header_dst_ninja = "$builddir/lua_embed/" .. name .. "/lua_embed.h"
-        local copy_name = name .. "-lua-embed-hdr"
+        local copy_name = "__lua_embed_hdr_" .. name .. "__"
         log.assert(loaded_target[copy_name] == nil, "`%s`: redefinition.", copy_name)
         generate_copy({}, { header_src }, { header_dst_ninja })
         ninja:phony(copy_name, header_dst_ninja)

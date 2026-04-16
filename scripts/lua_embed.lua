@@ -54,81 +54,106 @@ end
 -- attribute: the lm:lua_embed attribute table.
 -- rootdir: (optional) root directory for resolving relative paths in attribute.
 -- Returns the path of the written config file.
+--
+-- 只在内容实际变化时才写入文件，避免时间戳更新导致 Ninja 不必要的重建。
 function m.write_config(outdir, attribute, rootdir)
     fs.create_directories(outdir)
     local config_path = outdir .. "/config.lua"
-    local f = assert(io.open(config_path, "wb"),
-        "cannot write config: " .. config_path)
 
-    f:write("-- auto-generated lua_embed config\n")
-    f:write("return {\n")
+    local lines = {}
+    lines[#lines+1] = "-- auto-generated lua_embed config"
+    lines[#lines+1] = "return {"
 
     if attribute.glue == "bee" and attribute.main then
         -- main 文件路径写入配置，生成器会将其嵌入 lua_embed.c 中
         -- （通过 lua_embed_get_main() 访问，不暴露到 data_table）
         local main_path = resolve_path(rootdir, attribute.main)
-        f:write(string.format("    main = %q,\n", main_path))
+        lines[#lines+1] = string.format("    main = %q,", main_path)
     end
 
     if attribute.bytecode then
-        f:write("    bytecode = true,\n")
+        lines[#lines+1] = "    bytecode = true,"
     end
 
     -- preload
-    f:write("    preload = {\n")
+    lines[#lines+1] = "    preload = {"
     for _, e in ipairs(attribute.preload or {}) do
         if e.dir then
             local dir = resolve_path(rootdir, e.dir)
-            f:write("        { dir = " .. string.format("%q", dir))
+            local s = "        { dir = " .. string.format("%q", dir)
             if e.prefix and e.prefix ~= "" then
-                f:write(", prefix = " .. string.format("%q", e.prefix))
+                s = s .. ", prefix = " .. string.format("%q", e.prefix)
             end
             if e.pattern then
-                f:write(", pattern = " .. string.format("%q", e.pattern))
+                s = s .. ", pattern = " .. string.format("%q", e.pattern)
             end
-            f:write(" },\n")
+            s = s .. " },"
+            lines[#lines+1] = s
         elseif e.file then
             local file = resolve_path(rootdir, e.file)
-            f:write("        { file = " .. string.format("%q", file)
+            lines[#lines+1] = "        { file = " .. string.format("%q", file)
                 .. ", name = " .. string.format("%q",
                     assert(e.name, "preload file entry requires 'name'"))
-                .. " },\n")
+                .. " },"
         end
     end
-    f:write("    },\n")
+    lines[#lines+1] = "    },"
 
     -- data
-    f:write("    data = {\n")
+    lines[#lines+1] = "    data = {"
     for _, e in ipairs(attribute.data or {}) do
         if e.dir then
             local dir = resolve_path(rootdir, e.dir)
-            f:write("        { dir = " .. string.format("%q", dir))
+            local s = "        { dir = " .. string.format("%q", dir)
             if e.prefix then
-                f:write(", prefix = " .. string.format("%q", e.prefix))
+                s = s .. ", prefix = " .. string.format("%q", e.prefix)
             end
-            f:write(" },\n")
+            s = s .. " },"
+            lines[#lines+1] = s
         elseif e.file then
             local file = resolve_path(rootdir, e.file)
-            f:write("        { file = " .. string.format("%q", file)
+            lines[#lines+1] = "        { file = " .. string.format("%q", file)
                 .. ", name = " .. string.format("%q",
                     assert(e.name, "data file entry requires 'name'"))
-                .. " },\n")
+                .. " },"
         end
     end
-    f:write("    },\n")
+    lines[#lines+1] = "    },"
 
-    f:write("}\n")
+    lines[#lines+1] = "}"
+    lines[#lines+1] = ""  -- 末尾换行
+
+    local new_content = table.concat(lines, "\n")
+
+    -- 只在内容变化时写入，避免时间戳更新导致不必要的重建
+    local old_f = io.open(config_path, "rb")
+    if old_f then
+        local old_content = old_f:read "*a"
+        old_f:close()
+        if old_content == new_content then
+            return config_path
+        end
+    end
+
+    local f = assert(io.open(config_path, "wb"),
+        "cannot write config: " .. config_path)
+    f:write(new_content)
     f:close()
     return config_path
 end
 
 -- Collect all input files (for ninja dependency tracking).
--- config.lua is a configure-time artifact; only Lua source files and the
--- generator script itself are listed as inputs so ninja only reruns when
--- the actual source content changes.
+-- 除了 Lua 源文件和生成器脚本外，config.lua 也作为输入被追踪，
+-- 这样当用户修改 lua_embed 选项（bytecode/pattern/prefix/glue 等）时，
+-- Ninja 能检测到配置变化并重新生成 lua_embed.c。
+-- write_config 已做内容比对，内容不变时不会更新文件时间戳，
+-- 因此不会导致不必要的重建。
 -- rootdir: (optional) root directory for resolving relative paths in attribute.
-function m.collect_inputs(attribute, rootdir)
+function m.collect_inputs(attribute, rootdir, config_path)
     local inputs = { GEN_SCRIPT }
+    if config_path then
+        inputs[#inputs+1] = config_path
+    end
     for _, e in ipairs(attribute.preload or {}) do
         if e.dir then
             local dir = resolve_path(rootdir, e.dir)

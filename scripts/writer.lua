@@ -899,7 +899,7 @@ function api.lua_embed(global_attribute, name)
         local config_path = lua_embed.write_config(outdir, local_attribute, rootdir)
 
         -- collect inputs for ninja tracking
-        local inputs = lua_embed.collect_inputs(local_attribute, rootdir)
+        local inputs = lua_embed.collect_inputs(local_attribute, rootdir, config_path)
 
         -- emit runlua rule + build edge
         local cmd = "$luamake lua " .. fsutil.quotearg(lua_embed.GEN_SCRIPT)

@@ -918,15 +918,24 @@ function api.lua_embed(global_attribute, name)
             outputs[#outputs+1] = out_glue_c_ninja
         end
         ninja:build(outputs, inputs)
-        ninja:phony(gen_name, outputs)
-        loaded_target[gen_name] = { implicit_inputs = gen_name }
 
-        -- copy lua_embed.h next to the generated .c so #include "lua_embed.h" works
-        local fs = require "bee.filesystem"
-        fs.copy_file(
-            fs.path(lua_embed.HEADER),
-            fs.path(outdir) / "lua_embed.h",
-            fs.copy_options.update_existing)
+        -- copy lua_embed.h via ninja build edge so it is tracked in the DAG;
+        -- if builddir is cleaned or the header is updated, ninja will re-copy.
+        local header_src = lua_embed.HEADER
+        local header_dst_ninja = "$builddir/lua_embed/" .. name .. "/lua_embed.h"
+        local copy_name = name .. "-lua-embed-hdr"
+        generate_copy({}, { header_src }, { header_dst_ninja })
+        ninja:phony(copy_name, header_dst_ninja)
+        loaded_target[copy_name] = { implicit_inputs = copy_name }
+
+        -- gen_name aggregates both the generated .c and the copied header
+        local gen_all = {}
+        for _, o in ipairs(outputs) do
+            gen_all[#gen_all+1] = o
+        end
+        gen_all[#gen_all+1] = header_dst_ninja
+        ninja:phony(gen_name, gen_all)
+        loaded_target[gen_name] = { implicit_inputs = gen_name }
 
         -- build the source_set that callers dep on
         -- 合并 local_attribute 中的通用编译属性（defines/flags/includes/confs 等），

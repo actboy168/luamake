@@ -353,21 +353,23 @@ end
 
     emit('LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {\n')
     emit('    luaL_getsubtable(L, LUA_REGISTRYINDEX, "_PRELOAD");\n')
-    emit('    for (const lua_embed_preload* e = lua_embed_get_preload(); e->name != NULL; e++) {\n')
-    -- 加载 preload_loader Lua bytecode
+    -- 在循环外加载一次 preload_loader factory 函数，避免每次迭代重复 luaL_loadbuffer
     emit(string.format(
-        '        if (luaL_loadbuffer(L, (const char*)%s, %d, "=preload_loader") != LUA_OK)\n',
+        '    if (luaL_loadbuffer(L, (const char*)%s, %d, "=preload_loader") != LUA_OK)\n',
         preload_loader_id, #preload_loader_payload))
-    emit('            return lua_error(L);\n')
+    emit('        return lua_error(L);\n')
+    emit('    for (const lua_embed_preload* e = lua_embed_get_preload(); e->name != NULL; e++) {\n')
+    -- 复用栈顶的 factory 函数
+    emit('        lua_pushvalue(L, -1);\n')
     -- 传入 4 个参数: load_bytecode, buf, len, name
     emit('        lua_pushcfunction(L, load_bytecode);\n')
     emit('        lua_pushlightuserdata(L, (void*)e->data);\n')
     emit('        lua_pushinteger(L, (lua_Integer)e->size);\n')
     emit('        lua_pushstring(L, e->name);\n')
     emit('        lua_call(L, 4, 1);  /* -> lua closure */\n')
-    emit('        lua_setfield(L, -2, e->name);\n')
+    emit('        lua_setfield(L, -3, e->name);\n')
     emit('    }\n')
-    emit('    lua_pop(L, 1);\n')
+    emit('    lua_pop(L, 2);\n')
     emit('    return 0;\n')
     emit('}\n\n')
 

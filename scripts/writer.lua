@@ -917,6 +917,7 @@ function api.lua_embed(global_attribute, name)
         local header_src = lua_embed.HEADER
         local header_dst_ninja = "$builddir/lua_embed/" .. name .. "/lua_embed.h"
         local copy_name = name .. "-lua-embed-hdr"
+        log.assert(loaded_target[copy_name] == nil, "`%s`: redefinition.", copy_name)
         generate_copy({}, { header_src }, { header_dst_ninja })
         ninja:phony(copy_name, header_dst_ninja)
         loaded_target[copy_name] = { implicit_inputs = copy_name }
@@ -927,6 +928,7 @@ function api.lua_embed(global_attribute, name)
             gen_all[#gen_all+1] = o
         end
         gen_all[#gen_all+1] = header_dst_ninja
+        log.assert(loaded_target[gen_name] == nil, "`%s`: redefinition.", gen_name)
         ninja:phony(gen_name, gen_all)
         loaded_target[gen_name] = { implicit_inputs = gen_name }
 

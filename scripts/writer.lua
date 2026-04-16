@@ -949,8 +949,10 @@ function api.lua_embed(global_attribute, name)
             src_attr[k] = v
         end
         src_attr.sources = sources
-        src_attr.includes = src_attr.includes and { outdir, table.unpack(src_attr.includes) } or { outdir }
-        src_attr.objdeps = src_attr.objdeps and { gen_name, table.unpack(src_attr.objdeps) } or { gen_name }
+        -- luamake 允许属性值为单个字符串简写，需先转为 table 再合并
+        local function as_table(v) return type(v) == "table" and { table.unpack(v) } or (v and { v } or {}) end
+        local inc = as_table(src_attr.includes); table.insert(inc, 1, outdir);  src_attr.includes = inc
+        local dep = as_table(src_attr.objdeps); table.insert(dep, 1, gen_name); src_attr.objdeps = dep
         if src_attr.luaversion == nil then
             src_attr.luaversion = "lua55"
         end

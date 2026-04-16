@@ -38,7 +38,13 @@ typedef struct lua_embed_data {
 const lua_embed_preload* lua_embed_get_preload(void);
 
 /* Finds a data entry by name; returns NULL if not found. */
-const lua_embed_data* lua_embed_find(const char* name);
+const lua_embed_data* lua_embed_get_data(const char* name);
+
+/* Returns the embedded main entry point, or NULL if none was configured.
+ * The main entry is stored separately from the data table and cannot be
+ * accessed via lua_embed_get_data().
+ */
+const lua_embed_data* lua_embed_get_main(void);
 
 #ifdef __cplusplus
 }

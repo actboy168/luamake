@@ -112,7 +112,7 @@ lm:runlua {
 将 Lua 文件嵌入到 C 源码中，生成一个 `source_set` 供其他目标通过 `deps` 引用。默认嵌入 Lua 源码，设置 `bytecode = true` 可改为嵌入字节码。支持两种嵌入方式：
 
 - **preload**：生成可用于预加载的 Lua 模块条目，可通过 `require()` 加载。使用 `glue = "bee"` 时会自动生成 `_bee_preload_module()` 将模块注入 `_PRELOAD` 表；否则需用户自行遍历 `lua_embed_get_preload()` 完成注入
-- **data**：文件作为原始字节嵌入，运行时通过 `lua_embed_find()` C API 查找
+- **data**：文件作为原始字节嵌入，运行时通过 `lua_embed_get_data()` C API 查找
 
 ### 基本用法
 
@@ -140,13 +140,12 @@ lm:exe "myapp" {
 
 ### 与 bee.lua 集成
 
-设置 `glue = "bee"` 时，额外生成 `bee_glue.c`，提供 `_bee_preload_module()` 和 `_bee_main()` 函数：
+设置 `glue = "bee"` 时，链接静态的 `bee_glue.c`，提供 `_bee_preload_module()` 和 `_bee_main()` 函数。`main` 文件嵌入到 `lua_embed.c` 中，通过 `lua_embed_get_main()` 访问，外部无法通过 `lua_embed_get_data()` 查找到它：
 
 ```lua
 lm:lua_embed "embedded" {
     glue = "bee",
-    main = "main.lua",      -- glue="bee" 时必需，指定入口文件（从 data 中查找）
-    -- no_main = true,      -- 可选：只生成 _bee_preload_module，不生成 _bee_main
+    main = "main.lua",      -- glue="bee" 时必需，指定入口文件
     preload = { ... },
     data = { ... },
 }
@@ -168,8 +167,7 @@ lm:lua_embed "embedded" {
 | `data[].file` | string | 单文件路径（需配合 `name`） |
 | `data[].name` | string | 查找键名（`file` 模式必需） |
 | `glue` | string | 设为 `"bee"` 生成 bee.lua 胶水层 |
-| `main` | string | 入口文件名（`glue="bee"` 时必需） |
-| `no_main` | boolean | 仅生成 `_bee_preload_module`，不生成 `_bee_main` |
+| `main` | string | 入口文件路径（`glue="bee"` 时必需），嵌入到 `lua_embed.c` 中 |
 
 ### C API（lua_embed.h）
 
@@ -178,7 +176,10 @@ lm:lua_embed "embedded" {
 const lua_embed_preload* lua_embed_get_preload(void);
 
 // 按名称查找 data 条目，未找到返回 NULL
-const lua_embed_data* lua_embed_find(const char* name);
+const lua_embed_data* lua_embed_get_data(const char* name);
+
+// 获取嵌入的 main 入口（glue="bee" 时配置），未配置返回 NULL
+const lua_embed_data* lua_embed_get_main(void);
 ```
 
 ---

@@ -11,10 +11,13 @@ local EMBED_DIR  = fsutil.join(package.procdir, "compile", "lua_embed")
 local GEN_SCRIPT = fsutil.join(EMBED_DIR, "lua_embed_gen.lua")
 local HEADER     = fsutil.join(EMBED_DIR, "lua_embed.h")
 
+local BEE_GLUE = fsutil.join(EMBED_DIR, "bee_glue.c")
+
 local m = {}
 m.GEN_SCRIPT = GEN_SCRIPT
 m.HEADER     = HEADER
 m.EMBED_DIR  = EMBED_DIR
+m.BEE_GLUE   = BEE_GLUE
 
 -- Recursively collect files under dirpath.
 -- When lua_only=true, only *.lua files are collected.
@@ -60,18 +63,11 @@ function m.write_config(outdir, attribute, rootdir)
     f:write("-- auto-generated lua_embed config\n")
     f:write("return {\n")
 
-    if attribute.glue == "bee" then
-        if attribute.no_main then
-            -- no_main 模式：只生成 _bee_preload_module，不生成 _bee_main
-            -- 此时 main 可选（如果提供了也会写入配置，但不会用于生成 _bee_main）
-            f:write("    no_main = true,\n")
-            if attribute.main then
-                f:write(string.format("    main = %q,\n", attribute.main))
-            end
-        else
-            f:write(string.format("    main = %q,\n",
-                assert(attribute.main, "lua_embed glue='bee' requires 'main' (or set no_main=true)")))
-        end
+    if attribute.glue == "bee" and attribute.main then
+        -- main 文件路径写入配置，生成器会将其嵌入 lua_embed.c 中
+        -- （通过 lua_embed_get_main() 访问，不暴露到 data_table）
+        local main_path = resolve_path(rootdir, attribute.main)
+        f:write(string.format("    main = %q,\n", main_path))
     end
 
     if attribute.bytecode then
@@ -152,6 +148,10 @@ function m.collect_inputs(attribute, rootdir)
         elseif e.file then
             inputs[#inputs+1] = resolve_path(rootdir, e.file)
         end
+    end
+    -- main 文件也需要追踪（glue="bee" 时 main 会嵌入到 lua_embed.c 中）
+    if attribute.main then
+        inputs[#inputs+1] = resolve_path(rootdir, attribute.main)
     end
     table.sort(inputs)
     return inputs

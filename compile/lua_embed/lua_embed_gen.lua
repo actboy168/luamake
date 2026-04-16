@@ -1,13 +1,11 @@
 -- lua_embed_gen.lua
--- Called by luamake runlua to generate lua_embed.c (and optionally bee_glue.c)
--- Args: <config_file> <output_c> [output_bee_glue_c]
---   config_file      : Lua file (dofile), describes preload/data/glue options
---   output_c         : path to write the generated lua_embed.c
---   output_bee_glue_c: (optional) path to write bee_glue.c when glue="bee"
+-- Called by luamake runlua to generate lua_embed.c
+-- Args: <config_file> <output_c>
+--   config_file : Lua file (dofile), describes preload/data/main options
+--   output_c    : path to write the generated lua_embed.c
 
-local config_file      = assert(arg[1], "arg[1]: config file required")
-local output_c         = assert(arg[2], "arg[2]: output .c path required")
-local output_bee_glue  = arg[3]  -- optional
+local config_file = assert(arg[1], "arg[1]: config file required")
+local output_c    = assert(arg[2], "arg[2]: output .c path required")
 
 local cfg = assert(dofile(config_file))
 
@@ -289,13 +287,34 @@ for _, e in ipairs(data_idents) do
 end
 emit('    { NULL, NULL, 0 }\n};\n\n')
 
+-- main entry: embedded separately from data_table, accessible only via lua_embed_get_main()
+local main_path = cfg.main
+if main_path then
+    local src = readfile(main_path)
+    local func, err = load(src, "@" .. main_path)
+    if not func then error("syntax error in " .. main_path .. ": " .. tostring(err)) end
+    local payload
+    if use_bytecode then
+        payload = string.dump(func)
+    else
+        payload = src
+    end
+    emit(string.format(
+        "/* main entry (private, not in data_table) */\nstatic const unsigned char lua_embed_main_data[] = {\n    "))
+    emit_c_bytes(payload)
+    emit("\n};\n\n")
+    emit(string.format(
+        'static const lua_embed_data lua_embed_main_entry = { "=main", (const char*)lua_embed_main_data, %d };\n\n',
+        #payload))
+end
+
 -- lookup functions
 emit([[
 const lua_embed_preload* lua_embed_get_preload(void) {
     return lua_embed_preload_table;
 }
 
-const lua_embed_data* lua_embed_find(const char* name) {
+const lua_embed_data* lua_embed_get_data(const char* name) {
     for (const lua_embed_data* e = lua_embed_data_table; e->name != NULL; e++) {
         if (strcmp(e->name, name) == 0) return e;
     }
@@ -303,106 +322,18 @@ const lua_embed_data* lua_embed_find(const char* name) {
 }
 ]])
 
-emit_flush(output_c)
-
--- ── optional bee.lua glue layer ───────────────────────────────────────────────
-if output_bee_glue then
-    local main_key = cfg.main
-    -- By default, generating bee glue requires cfg.main so _bee_main can be emitted.
-    -- When no_main=true, only _bee_preload_module is emitted and the caller must
-    -- provide _bee_main separately.
-    assert(cfg.no_main or main_key ~= nil,
-        "cfg.main is required when generating bee glue unless cfg.no_main=true")
-    local emit_main = not cfg.no_main
-
-    local gdir = output_bee_glue:match("^(.*)/[^/]+$")
-    if gdir then fs.create_directories(gdir) end
-
-    emit('/* Auto-generated bee.lua glue -- DO NOT EDIT */\n')
-    emit('#include "lua_embed.h"\n')
-    emit('#include <lua.h>\n')
-    emit('#include <lauxlib.h>\n\n')
-    emit('#if defined(_WIN32)\n')
-    emit('#  define LUA_EMBED_EXPORT __declspec(dllexport)\n')
-    emit('#else\n')
-    emit('#  define LUA_EMBED_EXPORT __attribute__((visibility("default")))\n')
-    emit('#endif\n\n')
-
-    -- C 辅助函数：luaL_loadbuffer 的 Lua 绑定
-    -- load_bytecode(lightuserdata buf, integer len, string name) -> function
+if main_path then
     emit([[
-static int load_bytecode(lua_State* L) {
-    const char* buf = (const char*)lua_touserdata(L, 1);
-    size_t len = (size_t)lua_tointeger(L, 2);
-    const char* name = lua_tostring(L, 3);
-    if (luaL_loadbuffer(L, buf, len, name) != LUA_OK) return lua_error(L);
-    return 1;
+const lua_embed_data* lua_embed_get_main(void) {
+    return &lua_embed_main_entry;
 }
-
 ]])
-
-    -- preload_loader 的 Lua 版本
-    -- 接收 load_bytecode, buf, len, name 四个参数，返回一个 Lua closure
-    local preload_loader_lua = [[
-local load_bytecode, buf, len, name = ...
-return function(modname)
-    local fn = load_bytecode(buf, len, name)
-    return fn(modname)
+else
+    emit([[
+const lua_embed_data* lua_embed_get_main(void) {
+    return NULL;
+}
+]])
 end
-]]
-    local preload_loader_payload
-    local preload_loader_id
-    if use_bytecode then
-        preload_loader_payload = string.dump(assert(load(preload_loader_lua, "=preload_loader")))
-        preload_loader_id = "preload_loader_bc"
-    else
-        preload_loader_payload = preload_loader_lua
-        preload_loader_id = "preload_loader_src"
-    end
-    emit(string.format(
-        "static const unsigned char %s[] = {\n    ",
-        preload_loader_id))
-    emit_c_bytes(preload_loader_payload)
-    emit("\n};\n\n")
 
-    emit('LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {\n')
-    emit('    luaL_getsubtable(L, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);\n')
-    -- 在循环外加载一次 preload_loader factory 函数，避免每次迭代重复 luaL_loadbuffer
-    emit(string.format(
-        '    if (luaL_loadbuffer(L, (const char*)%s, %d, "=preload_loader") != LUA_OK)\n',
-        preload_loader_id, #preload_loader_payload))
-    emit('        return lua_error(L);\n')
-    emit('    for (const lua_embed_preload* e = lua_embed_get_preload(); e->name != NULL; e++) {\n')
-    -- 复用栈顶的 factory 函数
-    emit('        lua_pushvalue(L, -1);\n')
-    -- 传入 4 个参数: load_bytecode, buf, len, name
-    emit('        lua_pushcfunction(L, load_bytecode);\n')
-    emit('        lua_pushlightuserdata(L, (void*)e->data);\n')
-    emit('        lua_pushinteger(L, (lua_Integer)e->size);\n')
-    emit('        lua_pushstring(L, e->name);\n')
-    emit('        lua_call(L, 4, 1);  /* -> lua closure */\n')
-    emit('        lua_setfield(L, -3, e->name);\n')
-    emit('    }\n')
-    emit('    lua_pop(L, 2);\n')
-    emit('    return 0;\n')
-    emit('}\n\n')
-
-    if emit_main then
-        emit('LUA_EMBED_EXPORT int _bee_main(lua_State* L) {\n')
-        emit('    _bee_preload_module(L);\n')
-        emit(string.format('    const lua_embed_data* f = lua_embed_find(%q);\n', main_key))
-        emit('    if (!f) {\n')
-        emit(string.format(
-            '        lua_pushstring(L, "lua_embed: entry not found: " %q);\n', main_key))
-        emit('        return lua_error(L);\n')
-        emit('    }\n')
-        emit('    if (luaL_loadbuffer(L, f->data, f->size, f->name) != LUA_OK)\n')
-        emit('        return lua_error(L);\n')
-        emit('    if (lua_pcall(L, 0, 0, 0) != LUA_OK)\n')
-        emit('        return lua_error(L);\n')
-        emit('    return 0;\n')
-        emit('}\n')
-    end
-
-    emit_flush(output_bee_glue)
-end
+emit_flush(output_c)

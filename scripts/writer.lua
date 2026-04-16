@@ -888,12 +888,6 @@ function api.lua_embed(global_attribute, name)
         local gen_name     = name .. "-lua-embed-gen"
 
         local use_bee = local_attribute.glue == "bee"
-        local out_glue_c
-        local out_glue_c_ninja
-        if use_bee then
-            out_glue_c       = outdir .. "/bee_glue.c"
-            out_glue_c_ninja = "$builddir/lua_embed/" .. name .. "/bee_glue.c"
-        end
 
         -- write config.lua for the generator
         local config_path = lua_embed.write_config(outdir, local_attribute, rootdir)
@@ -902,21 +896,14 @@ function api.lua_embed(global_attribute, name)
         local inputs = lua_embed.collect_inputs(local_attribute, rootdir)
 
         -- emit runlua rule + build edge
-        -- args are baked into the rule command so ninja tracks them correctly
         local cmd = "$luamake lua " .. fsutil.quotearg(lua_embed.GEN_SCRIPT)
                     .. " " .. fsutil.quotearg(config_path)
                     .. " " .. fsutil.quotearg(out_c)
-        if use_bee then
-            cmd = cmd .. " " .. fsutil.quotearg(out_glue_c)
-        end
         ninja:rule("lua_embed_" .. name, cmd, {
             description = "lua_embed " .. name,
             restat = 1,
         })
         local outputs = { out_c_ninja }
-        if use_bee then
-            outputs[#outputs+1] = out_glue_c_ninja
-        end
         ninja:build(outputs, inputs)
 
         -- copy lua_embed.h via ninja build edge so it is tracked in the DAG;
@@ -942,7 +929,8 @@ function api.lua_embed(global_attribute, name)
         -- 再叠加生成文件特有的 sources/includes/objdeps，确保调用方在 lua_embed 块
         -- 里填写的编译属性能正确生效。
         local sources = { out_c }
-        if use_bee then sources[#sources+1] = out_glue_c end
+        -- bee_glue.c 是静态文件，直接引用，不需要动态生成
+        if use_bee then sources[#sources+1] = lua_embed.BEE_GLUE end
 
         local src_attr = {}
         for k, v in pairs(local_attribute) do
@@ -961,7 +949,6 @@ function api.lua_embed(global_attribute, name)
         src_attr.data = nil
         src_attr.glue = nil
         src_attr.main = nil
-        src_attr.no_main = nil
 
         local attribute = reslove_attributes_nolink(global_attribute, src_attr)
         generate("source_set", attribute, name)

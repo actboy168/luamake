@@ -285,8 +285,10 @@ if output_bee_glue then
 static int preload_loader(lua_State* L) {
     const char* buf = (const char*)lua_touserdata(L, lua_upvalueindex(1));
     size_t len = (size_t)lua_tointeger(L, lua_upvalueindex(2));
-    if (luaL_loadbuffer(L, buf, len, buf) != LUA_OK) return lua_error(L);
-    lua_call(L, 0, 1);
+    const char* name = lua_tostring(L, lua_upvalueindex(3));
+    if (luaL_loadbuffer(L, buf, len, name) != LUA_OK) return lua_error(L);
+    lua_pushvalue(L, 1);
+    lua_call(L, 1, 1);
     return 1;
 }
 
@@ -297,7 +299,8 @@ static int preload_loader(lua_State* L) {
     gemit('    for (const lua_embed_preload* e = lua_embed_get_preload(); e->name != NULL; e++) {\n')
     gemit('        lua_pushlightuserdata(L, (void*)e->data);\n')
     gemit('        lua_pushinteger(L, (lua_Integer)e->size);\n')
-    gemit('        lua_pushcclosure(L, preload_loader, 2);\n')
+    gemit('        lua_pushstring(L, e->name);\n')
+    gemit('        lua_pushcclosure(L, preload_loader, 3);\n')
     gemit('        lua_setfield(L, -2, e->name);\n')
     gemit('    }\n')
     gemit('    lua_pop(L, 1);\n')

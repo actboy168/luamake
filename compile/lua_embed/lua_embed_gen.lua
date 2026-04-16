@@ -231,14 +231,14 @@ end
 emit("static const lua_embed_preload lua_embed_preload_table[] = {\n")
 for _, e in ipairs(preload_idents) do
     emit(string.format(
-        '    { "%s", (const char*)%s, %d },\n', e.modname, e.id, e.size))
+        '    { %q, (const char*)%s, %d },\n', e.modname, e.id, e.size))
 end
 emit('    { NULL, NULL, 0 }\n};\n\n')
 
 -- data table
 emit("static const lua_embed_data lua_embed_data_table[] = {\n")
 for _, e in ipairs(data_idents) do
-    emit(string.format('    { "%s", (const char*)%s, %d },\n', e.name, e.id, e.size))
+    emit(string.format('    { %q, (const char*)%s, %d },\n', e.name, e.id, e.size))
 end
 emit('    { NULL, NULL, 0 }\n};\n\n')
 
@@ -313,7 +313,7 @@ static int preload_loader(lua_State* L) {
         gemit(string.format('    const lua_embed_data* f = lua_embed_find(%q);\n', main_key))
         gemit('    if (!f) {\n')
         gemit(string.format(
-            '        lua_pushstring(L, "lua_embed: entry not found: %s");\n', main_key))
+            '        lua_pushstring(L, "lua_embed: entry not found: " %q);\n', main_key))
         gemit('        return lua_error(L);\n')
         gemit('    }\n')
         gemit('    if (luaL_loadbuffer(L, f->data, f->size, f->name) != LUA_OK)\n')

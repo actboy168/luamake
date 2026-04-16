@@ -901,16 +901,19 @@ function api.lua_embed(global_attribute, name)
         -- collect inputs for ninja tracking
         local inputs = lua_embed.collect_inputs(local_attribute, rootdir, config_path)
 
-        -- emit runlua rule + build edge
-        local cmd = "$luamake lua " .. fsutil.quotearg(lua_embed.GEN_SCRIPT)
-                    .. " " .. fsutil.quotearg(config_path)
-                    .. " " .. fsutil.quotearg(out_c)
-        ninja:rule("lua_embed_" .. name, cmd, {
-            description = "lua_embed " .. name,
+        -- emit shared rule + build edge; config/output passed via Ninja variables
+        -- so all lua_embed targets reuse a single rule definition.
+        ninja:rule("lua_embed", "$luamake lua " .. fsutil.quotearg(lua_embed.GEN_SCRIPT) .. " $config $out_c", {
+            description = "lua_embed $config",
             restat = 1,
         })
         local outputs = { out_c_ninja }
-        ninja:build(outputs, inputs)
+        ninja:build(outputs, inputs, {
+            variables = {
+                config = fsutil.quotearg(config_path),
+                out_c  = fsutil.quotearg(out_c),
+            },
+        })
 
         -- copy lua_embed.h via ninja build edge so it is tracked in the DAG;
         -- if builddir is cleaned or the header is updated, ninja will re-copy.

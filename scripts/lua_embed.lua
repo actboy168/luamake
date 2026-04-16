@@ -4,6 +4,7 @@
 
 local fs     = require "bee.filesystem"
 local fsutil = require "fsutil"
+local pathutil = require "pathutil"
 
 -- Directory containing lua_embed_gen.lua, lua_embed.h, etc.
 local EMBED_DIR  = fsutil.join(package.procdir, "compile", "lua_embed")
@@ -37,10 +38,19 @@ function m.scan_inputs(dirpath, lua_only)
     return result
 end
 
+-- 将 dir/file 路径相对于 rootdir 解析为绝对路径
+local function resolve_path(rootdir, p)
+    if rootdir then
+        return pathutil.tostr(rootdir, p)
+    end
+    return p
+end
+
 -- Write a config.lua file for lua_embed_gen.lua to dofile().
 -- attribute: the lm:lua_embed attribute table.
+-- rootdir: (optional) root directory for resolving relative paths in attribute.
 -- Returns the path of the written config file.
-function m.write_config(outdir, attribute)
+function m.write_config(outdir, attribute, rootdir)
     fs.create_directories(outdir)
     local config_path = outdir .. "/config.lua"
     local f = assert(io.open(config_path, "wb"),
@@ -61,7 +71,8 @@ function m.write_config(outdir, attribute)
     f:write("    preload = {\n")
     for _, e in ipairs(attribute.preload or {}) do
         if e.dir then
-            f:write("        { dir = " .. string.format("%q", e.dir))
+            local dir = resolve_path(rootdir, e.dir)
+            f:write("        { dir = " .. string.format("%q", dir))
             if e.prefix and e.prefix ~= "" then
                 f:write(", prefix = " .. string.format("%q", e.prefix))
             end
@@ -70,7 +81,8 @@ function m.write_config(outdir, attribute)
             end
             f:write(" },\n")
         elseif e.file then
-            f:write("        { file = " .. string.format("%q", e.file)
+            local file = resolve_path(rootdir, e.file)
+            f:write("        { file = " .. string.format("%q", file)
                 .. ", name = " .. string.format("%q",
                     assert(e.name, "preload file entry requires 'name'"))
                 .. " },\n")
@@ -82,13 +94,15 @@ function m.write_config(outdir, attribute)
     f:write("    data = {\n")
     for _, e in ipairs(attribute.data or {}) do
         if e.dir then
-            f:write("        { dir = " .. string.format("%q", e.dir))
+            local dir = resolve_path(rootdir, e.dir)
+            f:write("        { dir = " .. string.format("%q", dir))
             if e.prefix then
                 f:write(", prefix = " .. string.format("%q", e.prefix))
             end
             f:write(" },\n")
         elseif e.file then
-            f:write("        { file = " .. string.format("%q", e.file)
+            local file = resolve_path(rootdir, e.file)
+            f:write("        { file = " .. string.format("%q", file)
                 .. ", name = " .. string.format("%q",
                     assert(e.name, "data file entry requires 'name'"))
                 .. " },\n")
@@ -105,24 +119,27 @@ end
 -- config.lua is a configure-time artifact; only Lua source files and the
 -- generator script itself are listed as inputs so ninja only reruns when
 -- the actual source content changes.
-function m.collect_inputs(attribute)
+-- rootdir: (optional) root directory for resolving relative paths in attribute.
+function m.collect_inputs(attribute, rootdir)
     local inputs = { GEN_SCRIPT }
     for _, e in ipairs(attribute.preload or {}) do
         if e.dir then
-            for _, p in ipairs(m.scan_inputs(e.dir, true)) do
+            local dir = resolve_path(rootdir, e.dir)
+            for _, p in ipairs(m.scan_inputs(dir, true)) do
                 inputs[#inputs+1] = p
             end
         elseif e.file then
-            inputs[#inputs+1] = e.file
+            inputs[#inputs+1] = resolve_path(rootdir, e.file)
         end
     end
     for _, e in ipairs(attribute.data or {}) do
         if e.dir then
-            for _, p in ipairs(m.scan_inputs(e.dir, false)) do
+            local dir = resolve_path(rootdir, e.dir)
+            for _, p in ipairs(m.scan_inputs(dir, false)) do
                 inputs[#inputs+1] = p
             end
         elseif e.file then
-            inputs[#inputs+1] = e.file
+            inputs[#inputs+1] = resolve_path(rootdir, e.file)
         end
     end
     return inputs

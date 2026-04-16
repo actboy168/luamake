@@ -879,6 +879,9 @@ function api.lua_embed(global_attribute, name)
     return function (local_attribute)
         local lua_embed = require "lua_embed"
 
+        -- 解析 rootdir，使 preload/data 中的相对路径能正确定位到子工程目录
+        local rootdir = normalize_rootdir(global_attribute.workdir, local_attribute.rootdir or global_attribute.rootdir)
+
         local outdir       = globals.builddir .. "/lua_embed/" .. name
         local out_c        = outdir .. "/lua_embed.c"
         local out_c_ninja  = "$builddir/lua_embed/" .. name .. "/lua_embed.c"
@@ -893,10 +896,10 @@ function api.lua_embed(global_attribute, name)
         end
 
         -- write config.lua for the generator
-        local config_path = lua_embed.write_config(outdir, local_attribute)
+        local config_path = lua_embed.write_config(outdir, local_attribute, rootdir)
 
         -- collect inputs for ninja tracking
-        local inputs = lua_embed.collect_inputs(local_attribute)
+        local inputs = lua_embed.collect_inputs(local_attribute, rootdir)
 
         -- emit runlua rule + build edge
         -- args are baked into the rule command so ninja tracks them correctly

@@ -95,7 +95,6 @@ LUA_EMBED_EXPORT int _bee_main(lua_State* L) {
         lua_pushstring(L, "lua_embed: no main entry configured");
         return lua_error(L);
     }
-    _bee_preload_module(L);
     if (luaL_loadbuffer(L, m->data, m->size, m->name) != LUA_OK)
         return lua_error(L);
     if (lua_pcall(L, 0, 0, 0) != LUA_OK)

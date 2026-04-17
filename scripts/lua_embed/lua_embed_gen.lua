@@ -346,10 +346,18 @@ for _, grp in ipairs(cfg.groups) do
     group_idents[#group_idents+1] = { name = grp_name, entries_id = entries_id }
 end
 
--- bundle struct instance
+-- bundle struct instance.
+-- When there are no groups the initializer must still contain something,
+-- because the struct in the .h carries a placeholder `_reserved` member
+-- (an empty struct is non-standard C / rejected by MSVC). See the .h
+-- generation below for the matching placeholder declaration.
 emit("const lua_embed_bundle lua_embed = {\n")
-for _, g in ipairs(group_idents) do
-    emit(string.format("    /* .%s */ %s,\n", g.name, g.entries_id))
+if #group_idents == 0 then
+    emit("    0 /* _reserved */\n")
+else
+    for _, g in ipairs(group_idents) do
+        emit(string.format("    /* .%s */ %s,\n", g.name, g.entries_id))
+    end
 end
 emit("};\n")
 
@@ -371,8 +379,16 @@ hemit('    size_t      size;\n')
 hemit('} lua_embed_entry;\n\n')
 
 hemit('typedef struct lua_embed_bundle {\n')
-for _, g in ipairs(group_idents) do
-    hemit(string.format('    const lua_embed_entry* %s; /* NULL-terminated */\n', g.name))
+if #group_idents == 0 then
+    -- An empty struct is non-standard C (MSVC: error C2016). Emit a
+    -- placeholder member so the generated header always compiles, even
+    -- when the target declares no data groups (e.g. `data = {}` without
+    -- bee_glue). The .c initializer has a matching `0 /* _reserved */`.
+    hemit('    char _reserved; /* placeholder: no groups declared */\n')
+else
+    for _, g in ipairs(group_idents) do
+        hemit(string.format('    const lua_embed_entry* %s; /* NULL-terminated */\n', g.name))
+    end
 end
 hemit('} lua_embed_bundle;\n\n')
 

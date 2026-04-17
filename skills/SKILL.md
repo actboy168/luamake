@@ -135,7 +135,7 @@ lm:lua_src "glue" {
 ```
 
 lm:lua_exe "app" {
-    deps = { "glue", "cloudagent_embed" },
+    deps = { "glue", "myembed" },
     sources = "src/main.cpp",
 }
 ```

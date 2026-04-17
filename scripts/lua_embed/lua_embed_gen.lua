@@ -1,8 +1,9 @@
 -- lua_embed_gen.lua
--- Called by luamake runlua to generate lua_embed.c
+-- Called by luamake runlua to generate lua_embed.c and lua_embed_data.h
 -- Args: <config_file> <output_c>
 --   config_file : Lua file (dofile), describes data groups
 --   output_c    : path to write the generated lua_embed.c
+--                 (lua_embed_data.h is written alongside, in the same dir)
 
 local fs = require "bee.filesystem"
 

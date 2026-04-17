@@ -83,6 +83,21 @@ static int luaopen_bee_embed(lua_State* L) {
 
 /* ── exported entry points ────────────────────────────────────────────────── */
 
+/* Host-driven contract (two independent atomic ops; call order is up to host):
+ *
+ *   _bee_preload_module(L)   install package.preload entries + bee.embed
+ *   _bee_main(L)             load + pcall the main[0] script
+ *
+ * The typical sequence is preload → main, so that require() inside the main
+ * script can see the embedded modules. These are intentionally kept separate
+ * so the host can:
+ *   - preload once and run multiple chunks of its own,
+ *   - override / inject entries into package.preload between the two calls,
+ *   - run preload on worker lua_States that never execute main,
+ *   - or run a self-contained main that does not need preload at all.
+ * Do NOT fold preload into _bee_main; callers rely on this separation.
+ */
+
 LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {
     const lua_embed_entry* e;
     luaL_getsubtable(L, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);

@@ -167,7 +167,7 @@ lua_embed: bee_glue requires group "main" to be defined (use an empty table {} i
 
 | 组 | 行为 |
 |---|---|
-| `main`    | 导出 `_bee_main(L)`：以 `main[0]` 作为入口脚本，`luaL_loadbuffer` + `lua_pcall(0, 0, 0)` 执行 |
+| `main`    | 导出 `_bee_main(L)`：以 `main` 组的第一个条目（Lua 配置侧 `main[1]` / C 侧 `main[0]`）作为入口脚本，`luaL_loadbuffer` + `lua_pcall(0, 0, 0)` 执行 |
 | `preload` | 导出 `_bee_preload_module(L)`：遍历全部条目，以 `name` 为键注入 `_PRELOAD`，每个 loader 是一个轻量闭包，`require` 触发时才 `luaL_loadbuffer` |
 | `data`    | 注册 `require "bee.embed"`：返回一个带 `__index` 的 table，按字符串键线性查找 `lua_embed.data`，命中后缓存到 table 本体（后续 O(1)）。Lua 5.5 下用 `lua_pushexternalstring` 零拷贝，旧版本回退为 `lua_pushlstring` |
 

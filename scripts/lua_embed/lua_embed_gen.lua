@@ -63,12 +63,54 @@ local function emit_c_bytes(data)
     end
 end
 
-local function to_c_ident(s)
-    local ident = s:gsub("[^%w]", "_")
-    if ident:match("^[0-9]") then
-        ident = "_" .. ident
+-- Map an arbitrary string to a valid C identifier.
+-- Non [A-Za-z0-9_] characters are collapsed to '_', so distinct inputs can
+-- collide (e.g. "foo.bar" and "foo_bar" both -> "foo_bar"; this is common
+-- for Lua module names where '.' is a separator). To keep the mapping a
+-- pure function *and* injective across a single run, we append a short
+-- deterministic hash suffix when a collision is detected.
+--
+-- Cache keeps the mapping stable for the same input inside one generation.
+local to_c_ident
+do
+    local str_to_id   = {}  -- original string -> produced C identifier
+    local id_to_str   = {}  -- produced C identifier -> original string (reverse)
+
+    -- djb2-style hash; output is a short lowercase hex string.
+    local function short_hash(s)
+        local h = 5381
+        for i = 1, #s do
+            h = (h * 33 + s:byte(i)) % 0x100000000
+        end
+        return string.format("%08x", h)
     end
-    return ident
+
+    local function sanitize(s)
+        local ident = s:gsub("[^%w]", "_")
+        if ident:match("^[0-9]") then
+            ident = "_" .. ident
+        end
+        return ident
+    end
+
+    function to_c_ident(s)
+        local cached = str_to_id[s]
+        if cached then return cached end
+        local base = sanitize(s)
+        local id   = base
+        local owner = id_to_str[id]
+        if owner ~= nil and owner ~= s then
+            -- collision: fall back to base + short hash of the original string.
+            id = base .. "_" .. short_hash(s)
+            -- If even that collides (astronomically unlikely), keep extending.
+            while id_to_str[id] ~= nil and id_to_str[id] ~= s do
+                id = id .. "_" .. short_hash(id)
+            end
+        end
+        str_to_id[s] = id
+        id_to_str[id] = s
+        return id
+    end
 end
 
 -- validate that a group name is a valid C identifier
@@ -230,11 +272,11 @@ for _, grp in ipairs(cfg.groups) do
             payload = src
         end
         local id = "le_" .. to_c_ident(grp_name) .. "_" .. to_c_ident(f.name)
-        if seen_c_idents[id] then
-            error(string.format(
-                "C identifier collision: %q and %q both map to %s",
-                seen_c_idents[id], f.name, id))
-        end
+        -- to_c_ident guarantees uniqueness across the whole run, but we still
+        -- assert here so any future refactor that breaks that invariant is
+        -- caught immediately instead of producing silently mis-linked C.
+        assert(not seen_c_idents[id],
+            string.format("internal error: duplicate C identifier %s", id))
         seen_c_idents[id] = f.name
         entry_idents[#entry_idents+1] = { name = f.name, id = id, size = #payload }
         emit(string.format(

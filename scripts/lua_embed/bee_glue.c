@@ -37,7 +37,20 @@ static const char preload_factory_src[] =
 
 /* ── bee.embed ────────────────────────────────────────────────────────────── */
 
-/* __index(t, name): look up name in lua_embed.data, cache result in t. */
+/* __index(t, name): look up name in lua_embed.data, cache result in t.
+ *
+ * Design note: the lookup is a deliberate O(N) linear scan (strcmp per entry).
+ * Each successful key is cached into the module table via rawset below, so
+ * subsequent accesses hit Lua's native hash table in O(1). Total cost over a
+ * process lifetime is bounded by O(N * distinct_keys_accessed), which in
+ * practice is negligible for the small-to-medium resource sets this API is
+ * intended for. Switching to a generated perfect hash or a sorted+bsearch
+ * table is possible but would force the generator to emit additional data
+ * structures and complicate the contract between lua_embed.c and this glue;
+ * do that only when profiling shows this scan is a real bottleneck (e.g.
+ * thousands of entries *and* many cold accesses). For very large asset sets,
+ * splitting the data into multiple groups or moving them to a filesystem /
+ * archive-backed loader is usually the better answer. */
 static int l_embed_index(lua_State* L) {
     const char* name = luaL_checkstring(L, 2);
     const lua_embed_entry* e;

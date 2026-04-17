@@ -88,7 +88,7 @@ static int luaopen_bee_embed(lua_State* L) {
  *   _bee_preload_module(L)   install package.preload entries + bee.embed
  *   _bee_main(L)             load + pcall the main[0] script
  *
- * The typical sequence is preload → main, so that require() inside the main
+ * The typical sequence is preload -> main, so that require() inside the main
  * script can see the embedded modules. These are intentionally kept separate
  * so the host can:
  *   - preload once and run multiple chunks of its own,

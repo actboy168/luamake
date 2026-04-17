@@ -1,22 +1,27 @@
 -- lua_embed_gen.lua
--- Called by luamake runlua to generate lua_embed.c
+-- Called by luamake runlua to generate lua_embed.c and lua_embed_data.h
 -- Args: <config_file> <output_c>
---   config_file : Lua file (dofile), describes preload/data/main options
+--   config_file : Lua file (dofile), describes data groups
 --   output_c    : path to write the generated lua_embed.c
+--                 (lua_embed_data.h is written alongside, in the same dir)
+
+local fs = require "bee.filesystem"
 
 local config_file = assert(arg[1], "arg[1]: config file required")
 local output_c    = assert(arg[2], "arg[2]: output .c path required")
+-- lua_embed_data.h is written to the same directory as output_c.
+-- Use bee.filesystem to split the path so both '/' and '\\' work, and the
+-- "no directory component" case (e.g. just "foo.c") naturally yields ".".
+local output_c_path = fs.path(output_c)
+local output_dir    = output_c_path:parent_path()
+if output_dir:string() == "" then
+    output_dir = fs.path(".")
+end
+local output_h      = (output_dir / "lua_embed_data.h"):string()
 
 local cfg = assert(dofile(config_file))
 
--- bytecode=true 时使用 string.dump 生成字节码（体积更小、可隐藏源码），
--- 但要求 luamake 宿主 Lua 版本与目标 luaversion 一致。
--- 默认 false，嵌入源码以保证跨 Lua 版本兼容。
-local use_bytecode = cfg.bytecode or false
-
 -- ── helpers ──────────────────────────────────────────────────────────────────
-
-local fs = require "bee.filesystem"
 
 local function readfile(path)
     local f, err = io.open(path, "rb")
@@ -42,7 +47,6 @@ local function emit_c_bytes(data)
     local len = #data
     if len == 0 then
         -- 空数据时输出一个哨兵字节，避免生成空初始化列表（标准 C 不允许）
-        -- 调用方记录的 size 仍为 0，运行时按长度读取不受影响
         emit("0x00\n    ")
         return
     end
@@ -60,12 +64,60 @@ local function emit_c_bytes(data)
     end
 end
 
-local function to_c_ident(s)
-    local ident = s:gsub("[^%w]", "_")
-    if ident:match("^[0-9]") then
-        ident = "_" .. ident
+-- Map an arbitrary string to a valid C identifier.
+-- Non [A-Za-z0-9_] characters are collapsed to '_', so distinct inputs can
+-- collide (e.g. "foo.bar" and "foo_bar" both -> "foo_bar"; this is common
+-- for Lua module names where '.' is a separator). To keep the mapping a
+-- pure function *and* injective across a single run, we append a short
+-- deterministic hash suffix when a collision is detected.
+--
+-- Cache keeps the mapping stable for the same input inside one generation.
+local to_c_ident
+do
+    local str_to_id   = {}  -- original string -> produced C identifier
+    local id_to_str   = {}  -- produced C identifier -> original string (reverse)
+
+    -- djb2-style hash; output is a short lowercase hex string.
+    local function short_hash(s)
+        local h = 5381
+        for i = 1, #s do
+            h = (h * 33 + s:byte(i)) % 0x100000000
+        end
+        return string.format("%08x", h)
     end
-    return ident
+
+    local function sanitize(s)
+        local ident = s:gsub("[^%w]", "_")
+        if ident:match("^[0-9]") then
+            ident = "_" .. ident
+        end
+        return ident
+    end
+
+    function to_c_ident(s)
+        local cached = str_to_id[s]
+        if cached then return cached end
+        local base = sanitize(s)
+        local id   = base
+        local owner = id_to_str[id]
+        if owner ~= nil and owner ~= s then
+            -- collision: fall back to base + short hash of the original string.
+            id = base .. "_" .. short_hash(s)
+            -- If even that collides (astronomically unlikely), keep extending.
+            while id_to_str[id] ~= nil and id_to_str[id] ~= s do
+                id = id .. "_" .. short_hash(id)
+            end
+        end
+        str_to_id[s] = id
+        id_to_str[id] = s
+        return id
+    end
+end
+
+-- validate that a group name is a valid C identifier
+local function check_c_ident(name)
+    assert(name:match("^[%a_][%w_]*$"),
+        string.format("group name %q is not a valid C identifier", name))
 end
 
 -- ── scan a directory and collect preload entries ──────────────────────────────
@@ -73,14 +125,11 @@ end
 -- returns list of { modname, abspath }
 
 local function match_pattern(rel, pat)
-    -- pat uses '?' as placeholder for module path (slashes), suffix is literal
     local prefix, suffix = pat:match("^(.-)%?(.*)$")
     if not prefix or not suffix then return nil end
-    -- rel must start with prefix and end with suffix
     if rel:sub(1, #prefix) ~= prefix then return nil end
     if rel:sub(-#suffix) ~= suffix and #suffix > 0 then return nil end
     local mid = rel:sub(#prefix + 1, #suffix > 0 and -#suffix - 1 or #rel)
-    -- mid is the '?' part, e.g. "http/httpc" or "tui"
     return mid:gsub("/", ".")
 end
 
@@ -95,9 +144,16 @@ local function sorted_entries(dir)
     return entries
 end
 
-local function scan_preload_dir(dirpath, patterns, mod_prefix, result, seen)
+local function scan_lua_dir(dirpath, patterns, mod_prefix, result, seen)
     local root = fs.path(dirpath)
     if not fs.exists(root) then return end
+    -- A unique token for this scan_lua_dir invocation. Two entries matched in
+    -- the *same* directory scan can be compared by pat_idx (mirroring Lua's
+    -- package.path priority). Across different scan_lua_dir calls we fall
+    -- back to "first one wins" (i.e. earlier entries in the config have
+    -- priority over later ones), because pat_idx values from different
+    -- pattern lists are not comparable.
+    local scan_token = {}
     local function recurse(base, rel_base)
         for _, entry in ipairs(sorted_entries(base)) do
             local name = entry:filename():string()
@@ -105,23 +161,51 @@ local function scan_preload_dir(dirpath, patterns, mod_prefix, result, seen)
             if fs.is_directory(entry) then
                 recurse(entry, rel)
             elseif name:match("%.lua$") then
-                local modname
-                for _, pat in ipairs(patterns) do
+                local modname, pat_idx
+                for i, pat in ipairs(patterns) do
                     local m = match_pattern(rel, pat)
                     if m then
                         modname = (mod_prefix ~= "" and (mod_prefix .. "." .. m) or m)
+                        pat_idx = i
                         break
                     end
                 end
                 if modname then
                     local abspath = entry:string():gsub("\\", "/")
-                    if seen[modname] then
-                        io.write(string.format(
-                            "[lua_embed] warning: preload %q overridden by %s\n",
-                            modname, abspath))
+                    local prev = seen[modname]
+                    if prev then
+                        -- Duplicate module name. Deterministic tie-breaker:
+                        --   * same scan + lower pat_idx  -> new wins (mirrors
+                        --     Lua's package.path left-to-right priority,
+                        --     e.g. "?.lua" beats "?/init.lua")
+                        --   * otherwise                  -> first one wins
+                        -- Either way we *replace in place* rather than
+                        -- appending, so the generated C never contains two
+                        -- entries with the same name (which would collide in
+                        -- to_c_ident()).
+                        local new_wins =
+                            prev.scan == scan_token and pat_idx < prev.pat_idx
+                        if new_wins then
+                            io.write(string.format(
+                                "[lua_embed] warning: module %q: %s overrides %s\n",
+                                modname, abspath, prev.path))
+                            result[prev.index] = { name = modname, path = abspath }
+                            seen[modname] = {
+                                index = prev.index, path = abspath,
+                                pat_idx = pat_idx, scan = scan_token,
+                            }
+                        else
+                            io.write(string.format(
+                                "[lua_embed] warning: module %q: %s kept, %s skipped\n",
+                                modname, prev.path, abspath))
+                        end
+                    else
+                        result[#result+1] = { name = modname, path = abspath }
+                        seen[modname] = {
+                            index = #result, path = abspath,
+                            pat_idx = pat_idx, scan = scan_token,
+                        }
                     end
-                    seen[modname] = true
-                    result[#result+1] = { modname = modname, path = abspath }
                 else
                     io.write(string.format(
                         "[lua_embed] warning: %s/%s does not match any pattern, skipped\n",
@@ -132,62 +216,6 @@ local function scan_preload_dir(dirpath, patterns, mod_prefix, result, seen)
     end
     recurse(root, "")
 end
-
--- ── collect preload entries ───────────────────────────────────────────────────
-
-local preload_map   = {}  -- modname → path  (for override detection)
-local preload_list  = {}  -- ordered { modname, path }
-
-for _, entry in ipairs(cfg.preload or {}) do
-    local patterns_str = entry.pattern or "?.lua;?/init.lua"
-    local patterns = {}
-    for p in patterns_str:gmatch("[^;]+") do
-        patterns[#patterns+1] = p
-    end
-    local mod_prefix = entry.prefix or ""
-
-    if entry.dir then
-        local tmp_seen = {}
-        local tmp = {}
-        scan_preload_dir(entry.dir, patterns, mod_prefix, tmp, tmp_seen)
-        for _, e in ipairs(tmp) do
-            if preload_map[e.modname] then
-                io.write(string.format(
-                    "[lua_embed] warning: preload %q overridden by %s\n",
-                    e.modname, e.path))
-                -- 更新已有条目的路径
-                for _, existing in ipairs(preload_list) do
-                    if existing.modname == e.modname then
-                        existing.path = e.path
-                        break
-                    end
-                end
-            else
-                preload_list[#preload_list+1] = e
-            end
-            preload_map[e.modname] = e.path
-        end
-    elseif entry.file then
-        local modname = assert(entry.name,
-            "preload entry with 'file' requires 'name': " .. tostring(entry.file))
-        local abspath = entry.file:gsub("\\", "/")
-        if preload_map[modname] then
-            io.write(string.format(
-                "[lua_embed] warning: preload %q overridden by %s\n",
-                modname, abspath))
-            for _, e in ipairs(preload_list) do
-                if e.modname == modname then e.path = abspath; break end
-            end
-        else
-            preload_list[#preload_list+1] = { modname = modname, path = abspath }
-        end
-        preload_map[modname] = abspath
-    end
-end
-
--- ── collect data entries ──────────────────────────────────────────────────────
-
-local data_list = {}  -- { name, path }
 
 local function scan_data_dir(dirpath, prefix, result)
     local root = fs.path(dirpath)
@@ -209,138 +237,165 @@ local function scan_data_dir(dirpath, prefix, result)
     recurse(root, "")
 end
 
-for _, entry in ipairs(cfg.data or {}) do
-    if entry.dir then
-        scan_data_dir(entry.dir, entry.prefix or "", data_list)
-    elseif entry.file then
-        data_list[#data_list+1] = {
-            name = assert(entry.name,
-                "data entry with 'file' requires 'name': " .. tostring(entry.file)),
-            path = entry.file:gsub("\\", "/"),
-        }
+-- ── process groups ────────────────────────────────────────────────────────────
+-- cfg.groups is an ordered list of { name, bytecode, entries[] }
+-- each entry is { dir=, prefix=, pattern= } or { file=, name= }
+
+local function collect_group_files(group_cfg)
+    -- group_cfg.entries is the array part of the group table from config
+    -- group_cfg.lua_only: true means scan only .lua files (preload-style naming)
+    -- For simplicity: if entry has pattern field or dir with lua files → use lua scan
+    -- In the new unified model every entry is raw bytes; naming is caller's concern.
+    -- We use two sub-helpers based on whether 'pattern' key is present.
+    local result = {}
+    local seen   = {}
+    for _, e in ipairs(group_cfg.entries) do
+        if e.dir then
+            if e.pattern ~= nil or group_cfg.lua_mode then
+                -- lua module scan
+                local patterns_str = e.pattern or "?.lua;?/init.lua"
+                local patterns = {}
+                for p in patterns_str:gmatch("[^;]+") do
+                    patterns[#patterns+1] = p
+                end
+                scan_lua_dir(e.dir, patterns, e.prefix or "", result, seen)
+            else
+                scan_data_dir(e.dir, e.prefix or "", result)
+            end
+        elseif e.file then
+            result[#result+1] = {
+                name = assert(e.name, "entry with 'file' requires 'name'"),
+                path = e.file,
+            }
+        end
     end
+    return result
 end
 
 -- ── ensure output directory exists ───────────────────────────────────────────
 
-local outdir = output_c:match("^(.*)/[^/]+$")
-if outdir then fs.create_directories(outdir) end
+if output_dir:string() ~= "." then
+    fs.create_directories(output_dir)
+end
 
 -- ── generate .c file ─────────────────────────────────────────────────────────
 
 emit('/* Auto-generated by lua_embed_gen.lua -- DO NOT EDIT */\n')
-emit('#include "lua_embed.h"\n\n')
+emit('#include "lua_embed_data.h"\n\n')
 
--- preload entries: embed source code or bytecode depending on cfg.bytecode
-local preload_idents = {}
-local seen_idents = {}  -- 检测标识符冲突
-for _, e in ipairs(preload_list) do
-    local src       = readfile(e.path)
-    local func, err = load(src, "@" .. e.path)
-    if not func then error("syntax error in " .. e.path .. ": " .. tostring(err)) end
-    local payload
-    if use_bytecode then
-        payload = string.dump(func)
-    else
-        payload = src
+-- group_idents: ordered list of { name, entries_id }
+local group_idents = {}
+local seen_c_idents = {}
+
+for _, grp in ipairs(cfg.groups) do
+    local grp_name  = grp.name
+    check_c_ident(grp_name)
+    local use_bytecode = grp.bytecode or false
+    local lua_mode     = grp.lua_mode or false
+
+    local files = collect_group_files({ entries = grp.entries, lua_mode = lua_mode })
+
+    -- per-entry byte arrays
+    local entry_idents = {}
+    for _, f in ipairs(files) do
+        local src = readfile(f.path)
+        local payload
+        if use_bytecode then
+            local func, err = load(src, "@" .. f.path)
+            if not func then error("syntax error in " .. f.path .. ": " .. tostring(err)) end
+            payload = string.dump(func)
+        else
+            payload = src
+        end
+        -- Feed the *full* logical name to to_c_ident in one shot, instead of
+        -- stitching per-segment results with '_'. Because '_' is also a legal
+        -- identifier char, piecewise sanitisation can collide across segment
+        -- boundaries: group "a_b" + file "c" and group "a" + file "b_c" would
+        -- both produce "le_a_b_c". Using '.' as the segment separator makes
+        -- the two raw strings distinct ("le_a_b.c" vs "le_a.b_c"), so
+        -- to_c_ident's internal collision path (hash suffix) can actually
+        -- fire on the unlikely case that sanitising them yields the same
+        -- base. to_c_ident guarantees uniqueness across the whole run, but
+        -- we still assert here so any future refactor that breaks that
+        -- invariant is caught immediately instead of producing silently
+        -- mis-linked C.
+        local id = to_c_ident("le_" .. grp_name .. "." .. f.name)
+        assert(not seen_c_idents[id],
+            string.format("internal error: duplicate C identifier %s", id))
+        seen_c_idents[id] = f.name
+        entry_idents[#entry_idents+1] = { name = f.name, id = id, size = #payload }
+        emit(string.format(
+            "/* %s: %s */\nstatic const unsigned char %s[] = {\n    ",
+            grp_name, f.name, id))
+        emit_c_bytes(payload)
+        -- sentinel '\0' for lua_pushexternalstring (lua 5.5+)
+        emit("0x00\n};\n\n")
     end
-    local id   = "lep_" .. to_c_ident(e.modname)
-    if seen_idents[id] then
-        error(string.format(
-            "C identifier collision: %q and %q both map to %s",
-            seen_idents[id], e.modname, id))
+
+    -- entries array for this group.
+    -- grp_name is already validated as a legal C identifier by check_c_ident
+    -- above, so we can concatenate it directly without going through
+    -- to_c_ident. The "lg_entries_" prefix also guarantees there is no
+    -- collision with the "le_..." per-entry symbols.
+    local entries_id = "lg_entries_" .. grp_name
+    emit(string.format("static const lua_embed_entry %s[] = {\n", entries_id))
+    for _, e in ipairs(entry_idents) do
+        emit(string.format('    { %q, (const char*)%s, %d },\n', e.name, e.id, e.size))
     end
-    seen_idents[id] = e.modname
-    preload_idents[#preload_idents+1] = { modname = e.modname, id = id, size = #payload }
-    emit(string.format(
-        "/* preload: %s */\nstatic const unsigned char %s[] = {\n    ",
-        e.modname, id))
-    emit_c_bytes(payload)
-    emit("\n};\n\n")
+    emit('    { NULL, NULL, 0 }\n};\n\n')
+
+    group_idents[#group_idents+1] = { name = grp_name, entries_id = entries_id }
 end
 
--- data entries: raw bytes
-local data_idents = {}
-for _, e in ipairs(data_list) do
-    local src = readfile(e.path)
-    local id  = "led_" .. to_c_ident(e.name)
-    if seen_idents[id] then
-        error(string.format(
-            "C identifier collision: %q and %q both map to %s",
-            seen_idents[id], e.name, id))
-    end
-    seen_idents[id] = e.name
-    data_idents[#data_idents+1] = { name = e.name, id = id, size = #src }
-    emit(string.format(
-        "/* data: %s */\nstatic const unsigned char %s[] = {\n    ",
-        e.name, id))
-    emit_c_bytes(src)
-    emit("0x00\n};\n\n")  -- sentinel '\0' required by lua_pushexternalstring (lua 5.5+)
-end
-
--- preload table
-emit("static const lua_embed_preload lua_embed_preload_table[] = {\n")
-for _, e in ipairs(preload_idents) do
-    emit(string.format(
-        '    { %q, (const char*)%s, %d },\n', e.modname, e.id, e.size))
-end
-emit('    { NULL, NULL, 0 }\n};\n\n')
-
--- data table
-emit("static const lua_embed_data lua_embed_data_table[] = {\n")
-for _, e in ipairs(data_idents) do
-    emit(string.format('    { %q, (const char*)%s, %d },\n', e.name, e.id, e.size))
-end
-emit('    { NULL, NULL, 0 }\n};\n\n')
-
--- main entry: embedded separately from data_table, accessible only via lua_embed_get_main()
-local main_path = cfg.main
-if main_path then
-    local src = readfile(main_path)
-    local func, err = load(src, "@" .. main_path)
-    if not func then error("syntax error in " .. main_path .. ": " .. tostring(err)) end
-    local payload
-    if use_bytecode then
-        payload = string.dump(func)
-    else
-        payload = src
-    end
-    emit(string.format(
-        "/* main entry (private, not in data_table) */\nstatic const unsigned char lua_embed_main_data[] = {\n    "))
-    emit_c_bytes(payload)
-    emit("\n};\n\n")
-    emit(string.format(
-        'static const lua_embed_data lua_embed_main_entry = { "=main", (const char*)lua_embed_main_data, %d };\n\n',
-        #payload))
-end
-
--- lookup functions
-emit([[
-const lua_embed_preload* lua_embed_get_preload(void) {
-    return lua_embed_preload_table;
-}
-
-const lua_embed_data* lua_embed_get_data(const char* name) {
-    const lua_embed_data* e;
-    for (e = lua_embed_data_table; e->name != NULL; e++) {
-        if (strcmp(e->name, name) == 0) return e;
-    }
-    return NULL;
-}
-]])
-
-if main_path then
-    emit([[
-const lua_embed_data* lua_embed_get_main(void) {
-    return &lua_embed_main_entry;
-}
-]])
+-- bundle struct instance.
+-- When there are no groups the initializer must still contain something,
+-- because the struct in the .h carries a placeholder `_reserved` member
+-- (an empty struct is non-standard C / rejected by MSVC). See the .h
+-- generation below for the matching placeholder declaration.
+emit("const lua_embed_bundle lua_embed = {\n")
+if #group_idents == 0 then
+    emit("    0 /* _reserved */\n")
 else
-    emit([[
-const lua_embed_data* lua_embed_get_main(void) {
-    return NULL;
-}
-]])
+    for _, g in ipairs(group_idents) do
+        emit(string.format("    /* .%s */ %s,\n", g.name, g.entries_id))
+    end
 end
+emit("};\n")
 
 emit_flush(output_c)
+
+-- ── generate lua_embed_data.h ─────────────────────────────────────────────────
+
+local hbuf = {}
+local function hemit(s) hbuf[#hbuf+1] = s end
+hemit('/* Auto-generated by lua_embed_gen.lua -- DO NOT EDIT */\n')
+hemit('#pragma once\n')
+hemit('#include <stddef.h>\n\n')
+hemit('#ifdef __cplusplus\nextern "C" {\n#endif\n\n')
+
+hemit('typedef struct lua_embed_entry {\n')
+hemit('    const char* name;\n')
+hemit('    const char* data;\n')
+hemit('    size_t      size;\n')
+hemit('} lua_embed_entry;\n\n')
+
+hemit('typedef struct lua_embed_bundle {\n')
+if #group_idents == 0 then
+    -- An empty struct is non-standard C (MSVC: error C2016). Emit a
+    -- placeholder member so the generated header always compiles, even
+    -- when the target declares no data groups (e.g. `data = {}` without
+    -- bee_glue). The .c initializer has a matching `0 /* _reserved */`.
+    hemit('    char _reserved; /* placeholder: no groups declared */\n')
+else
+    for _, g in ipairs(group_idents) do
+        hemit(string.format('    const lua_embed_entry* %s; /* NULL-terminated */\n', g.name))
+    end
+end
+hemit('} lua_embed_bundle;\n\n')
+
+hemit('extern const lua_embed_bundle lua_embed;\n')
+hemit('\n#ifdef __cplusplus\n}\n#endif\n')
+
+local hout = assert(io.open(output_h, "wb"), "cannot write: " .. output_h)
+hout:write(table.concat(hbuf))
+hout:close()

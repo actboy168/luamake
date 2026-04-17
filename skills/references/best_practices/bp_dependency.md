@@ -112,20 +112,26 @@ lm:exe "main" {
 ### 典型场景：依赖 lua_embed 生成的头文件
 
 `lm:lua_embed` 会自动导出两个属性：
-- **`export_includes`**：生成的头文件所在目录，依赖方自动获得 `-I` 搜索路径
-- **`export_objdeps`**：头文件复制的 phony 目标，确保编译前头文件已就绪
+- **`export_includes`**：生成的头文件所在目录（含 `lua_embed_data.h`），依赖方自动获得 `-I` 搜索路径
+- **`export_objdeps`**：代码生成 phony 目标（聚合 `lua_embed.c` 和 `lua_embed_data.h` 两个输出），确保编译前生成的源码与头文件都已就绪
 
 ```lua
 lm:lua_embed "my_embed" {
-    preload = { { dir = "scripts" } },
-    data = { { file = "main.lua", name = "main.lua" } },
+    data = {
+        preload = {
+            { dir = "scripts" },
+        },
+        main = {
+            { file = "main.lua", name = "main.lua" },
+        },
+    },
 }
 
 -- ✅ 推荐：通过 deps 自动获取 includes 和 objdeps
 lm:lua_src "my_glue" {
     deps     = "my_embed",
     includes = "3rd/bee.lua",          -- 只需写自己额外的 includes
-    sources  = "src/my_glue.cpp",      -- 该文件 #include <lua_embed.h>
+    sources  = "src/my_glue.cpp",      -- 该文件 #include <lua_embed_data.h>
 }
 
 -- ❌ 不推荐：手动硬编码内部路径和目标名
@@ -135,8 +141,10 @@ lm:lua_src "my_glue" {
         "_build/lua_embed/my_embed",                -- 内部路径，不应硬编码
     },
     sources  = "src/my_glue.cpp",
-    objdeps  = "__lua_embed_hdr_my_embed__",         -- 内部目标名，不应硬编码
+    objdeps  = "__lua_embed_gen_my_embed__",         -- 内部目标名，不应硬编码
 }
 ```
 
 > **原理**：`lm:lua_embed` 在 `loaded_target` 中设置了 `export_includes` 和 `export_objdeps` 字段。`generate_compile` 在处理 `deps` 时，会自动将这些导出属性合并到依赖方的 `attribute.includes` 和 `attribute.objdeps` 中。这是一个通用机制，未来其他代码生成目标也可以使用。
+
+> `lm:lua_embed` 本身的完整规则（分组语义、`pattern` 语法、字节码约束、`bee_glue` 契约、C API 等）见 [`references/advanced/lua_embed.md`](../advanced/lua_embed.md)。

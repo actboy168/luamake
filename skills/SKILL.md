@@ -37,7 +37,7 @@ luamake rebuild  # 重建
 | `lm:lua_src` | Lua C 模块（静态嵌入到 `lm:lua_exe`） | 无 |
 | `lm:lua_dll` | Lua C 模块（动态加载） | `module.dll` / `module.so` |
 | `lm:lua_exe` | 内嵌 Lua 的可执行文件 | `app.exe` / `app` |
-| `lm:lua_embed` | Lua 嵌入资源（将 Lua 文件嵌入为 C 源码集，默认嵌入源码，可选字节码）。自动向依赖方导出 `includes` 和 `objdeps`，无需手动声明 | 无（source_set） |
+| `lm:lua_embed` | Lua 嵌入资源（按命名组嵌入 Lua 文件，生成 source_set；自动导出 `includes`/`objdeps`） | 无（source_set） |
 | `lm:phony` | 伪目标（聚合依赖） | 无 |
 
 ---
@@ -115,37 +115,27 @@ lm:lua_exe "app" {
 }
 ```
 
-**`lm:lua_embed`** — 将 Lua 文件嵌入到 C 源码中，生成一个 source_set 供其他目标依赖。默认嵌入 Lua 源码以保证跨 Lua 版本兼容；设置 `bytecode = true` 可嵌入字节码（体积更小、可隐藏源码，但要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致）。
-
-`lua_embed` 会自动向依赖方导出 `includes`（生成的头文件目录）和 `objdeps`（头文件生成目标），因此通过 `deps` 依赖 `lua_embed` 的目标**无需手动声明** `includes` 路径和 `objdeps`：
+**`lm:lua_embed`** — 将 Lua 文件按命名组嵌入到 C 源码中，生成一个 source_set 供其他目标依赖。`data` 下每个 key 是一个组，组名直接成为生成的 `lua_embed_bundle` 结构体的字段名。每组可独立设置 `bytecode = true`。`bee_glue = true` 启用 bee 胶水层，约定 `data.preload` 注入 `_PRELOAD`、`data.main[1]` 作为入口。自动向依赖方导出 `includes` 和 `objdeps`，通过 `deps` 依赖时无需手动声明。**完整规则（分组语义、`pattern` 语法、字节码取舍、bee_glue 契约、无胶水时的接入姿势）见 `references/advanced/lua_embed.md`**：
 
 ```lua
-lm:lua_embed "embedded_scripts" {
-    -- 可选：嵌入字节码而非源码（默认 false）
-    -- bytecode = true,
-    -- 将目录下的 Lua 文件嵌入，注入 _PRELOAD
-    preload = {
-        { dir = "scripts/modules", prefix = "app" },
-        { file = "scripts/init.lua", name = "app.init" },
-    },
-    -- 将文件作为原始数据嵌入
+lm:lua_embed "myembed" {
+    bee_glue = true,
     data = {
-        { dir = "assets", prefix = "assets/" },
-        { file = "main.lua", name = "main.lua" },
+        main    = { bytecode = true, "src/main.lua" },
+        preload = { bytecode = true, { dir = "lualib" } },
+        data    = { { name = "config.json", file = "assets/config.json" } },
     },
-    -- 可选：启用 bee 胶水层并指定入口文件
-    bee_glue = "main.lua",
 }
 
--- deps 依赖 lua_embed 时，includes 和 objdeps 自动传递
 lm:lua_src "glue" {
-    deps = "embedded_scripts",       -- 自动获取生成头文件的 includes 和 objdeps
-    includes = "3rd/bee.lua",        -- 只需声明自己额外的 includes
-    sources = "src/glue.cpp",
+    deps     = "myembed",       -- 自动获取 includes 和 objdeps
+    includes = "3rd/bee.lua",
+    sources  = "src/glue.cpp",
 }
+```
 
 lm:lua_exe "app" {
-    deps = { "glue", "embedded_scripts" },
+    deps = { "glue", "myembed" },
     sources = "src/main.cpp",
 }
 ```
@@ -299,6 +289,7 @@ luamake rebuild
 | Bee 系统 API | `references/bee/bee_system.md` |
 | Bee 线程 API | `references/bee/bee_thread.md` |
 | Bee Channel API | `references/bee/bee_channel.md` |
+| `lm:lua_embed` 权威参考（分组 / pattern / bytecode / bee_glue / 自定义接入） | `references/advanced/lua_embed.md` |
 
 ### 适用边界
 

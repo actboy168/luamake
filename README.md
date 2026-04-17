@@ -96,3 +96,7 @@ Run lua file.
 > luamake test
 
 Equivalent to `luamake lua test.lua`
+
+## Documentation
+
+See [`skills/SKILL.md`](skills/SKILL.md) for the full guide on writing `make.lua`.

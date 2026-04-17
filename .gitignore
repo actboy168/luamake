@@ -8,3 +8,4 @@
 /.ninja_deps
 /tools/*/lua.def
 /compile/lua/*.c
+/.claude/

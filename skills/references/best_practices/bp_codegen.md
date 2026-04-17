@@ -73,82 +73,52 @@ lm:exe "server" {
 
 ## 3. 使用 lm:lua_embed 嵌入 Lua 资源
 
-当需要将 Lua 脚本或数据文件嵌入到 C/C++ 可执行文件中时，推荐使用 `lm:lua_embed`。它封装了完整的代码生成管道：自动扫描文件 → 生成 C 源码 → 构建 source_set，无需手动编写 `lm:runlua` + `objdeps` 组合。
+当需要将 Lua 脚本或数据文件嵌入到 C/C++ 可执行文件中时，推荐使用 `lm:lua_embed`。它封装了完整的代码生成管道：自动扫描文件 → 生成 C 源码（`lua_embed.c`）与头文件（`lua_embed_data.h`）→ 构建 source_set → 自动导出 `includes` / `objdeps`。相比手动 `lm:runlua` + `objdeps` 更简洁、可靠。
 
-默认嵌入 Lua **源码**，保证跨 Lua 版本兼容（luamake 宿主 Lua 版本可以与目标 `luaversion` 不同）。如果需要更小的体积或隐藏源码，可设置 `bytecode = true` 嵌入字节码，但此时要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致。
+默认嵌入 Lua **源码**（跨 Lua 版本兼容）；需要体积更小或隐藏源码时，在组内设置 `bytecode = true` 嵌入字节码（此时要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致）。
 
-### 典型场景：嵌入 Lua 模块到可执行文件
+### 最常见形态
 
 ```lua
+-- 场景 A：不用 bee_glue，自己决定怎么用数据
 lm:lua_embed "embedded_lua" {
-    preload = {
-        { dir = "scripts/modules" },                    -- 自动扫描
-        { file = "scripts/config.lua", name = "config" }, -- 单文件
-    },
     data = {
-        { file = "main.lua", name = "main.lua" },
+        preload = {
+            -- 无 bee_glue 时，preload 组要显式写 pattern 才能得到模块名作键
+            { dir = "scripts/modules", pattern = "?.lua;?/init.lua" },
+            { file = "scripts/config.lua", name = "config" },
+        },
+        main = {
+            "scripts/main.lua",
+        },
     },
 }
 
-lm:lua_exe "myapp" {
-    deps = "embedded_lua",
-    sources = "src/main.cpp",
-}
-```
-
-### 典型场景：使用字节码嵌入（体积更小、隐藏源码）
-
-```lua
-lm:lua_embed "embedded_lua" {
-    bytecode = true,  -- 嵌入字节码而非源码（需 Lua 版本一致）
-    preload = {
-        { dir = "scripts/modules" },
-    },
-    data = {
-        { file = "main.lua", name = "main.lua" },
-    },
-}
-```
-
-### 典型场景：与 bee.lua 集成
-
-```lua
+-- 场景 B：bee.lua 集成（自动 _PRELOAD / main 入口 / require "bee.embed"）
 lm:lua_embed "bee_app" {
-    bee_glue = "main.lua",
-    preload = {
-        { dir = "scripts", prefix = "app" },
-    },
+    bee_glue = true,
     data = {
-        { file = "main.lua", name = "main.lua" },
+        preload = { bytecode = true, { dir = "scripts" } },   -- bee_glue 下 preload 自动 lua_mode
+        main    = { bytecode = true, "src/main.lua" },
+        data    = {},
     },
 }
 
+-- 依赖方：只写 deps，不要重复指定 includes / objdeps
 lm:lua_exe "myapp" {
-    deps = "bee_app",
-    sources = "src/main.cpp",
+    deps    = "bee_app",
+    sources = "src/main.cpp",   -- 该文件可 #include "lua_embed_data.h"
 }
 ```
 
-### 典型场景：其他目标通过 deps 自动获取 lua_embed 的 includes 和 objdeps
+### 关键要点
 
-`lm:lua_embed` 会自动导出 `export_includes`（生成的头文件目录）和 `export_objdeps`（头文件生成目标），其他目标只需通过 `deps` 依赖 `lua_embed` 目标，即可自动获取正确的头文件搜索路径和编译顺序依赖，**无需手动指定 `includes` 和 `objdeps`**。
+- **组（group）** 组织：`data` 下每个 string key 是一个组，组名直接成为生成的 `lua_embed_bundle` 结构体字段；
+- **`bytecode`** 是每个组独立的开关，默认 `false`；
+- **`lua_mode` 启用**：组内任一 `dir` 带 `pattern` → 整组切到 Lua 模块名扫描；`bee_glue = true` 时 `preload` 组自动切到该模式；
+- **`bee_glue = true`** 硬约定：必须定义 `main` / `preload` / `data` 三组（可空表 `{}`）；
+- 自动导出 `export_includes`（含 `lua_embed_data.h`）与 `export_objdeps`（聚合 `.c` 和 `.h` 两个产物的 phony），**依赖方只需 `deps = "xxx"`**。
 
-```lua
--- ✅ 推荐：通过 deps 自动获取 includes 和 objdeps
-lm:lua_embed "my_embed" {
-    bee_glue = "src/main.lua",
-    preload = {
-        { dir = "lualib" },
-    },
-}
+> **完整规则（`pattern` 语法、字节码版本约束、模块名冲突处理、bee.embed 运行时契约、不启用 `bee_glue` 时的三种接入姿势、C API、C 标识符碰撞等）请参阅** [`references/advanced/lua_embed.md`](../advanced/lua_embed.md)。
 
-lm:lua_src "my_glue" {
-    deps     = "my_embed",       -- 自动获取 includes 和 objdeps
-    includes = "3rd/bee.lua",    -- 只需写自己额外的 includes
-    sources  = "src/glue.cpp",   -- glue.cpp 中 #include <lua_embed.h>
-}
-```
-
-> **与手动 `lm:runlua` 的对比**：`lm:lua_embed` 自动处理了 ninja 依赖追踪、`objdeps` 声明、头文件复制等细节。对于简单的单文件代码生成仍可使用 `lm:runlua`，但批量嵌入 Lua 资源时 `lm:lua_embed` 更简洁可靠。
-
-> **`bytecode` 选项**：默认 `false`（嵌入源码），设为 `true` 时使用 `string.dump` 生成字节码嵌入。字节码体积更小且可隐藏源码，但生成的字节码绑定到 luamake 宿主的 Lua 版本，若目标项目通过 `luaversion` 指定了不同版本则会加载失败。
+> 与手动 `lm:runlua` 的对比：`lm:lua_embed` 自动处理 Ninja 依赖追踪、`objdeps` 声明、`.c` 与 `lua_embed_data.h` 联合产出等细节；简单的单文件代码生成可继续用 `lm:runlua`，批量嵌入 Lua 资源时优先 `lm:lua_embed`。

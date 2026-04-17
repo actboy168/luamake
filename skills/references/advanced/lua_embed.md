@@ -22,7 +22,7 @@
 
 **依赖方只需 `deps = "xxx"`**，无需手动写 `includes` / `objdeps`。内部 phony 名（例如 `__lua_embed_gen_xxx__`）与内部路径为实现细节，**不要在用户脚本中硬编码**。
 
-> 启用 `bee_glue = true` 时，会额外把 [scripts/lua_embed/bee_glue.c](e:\Github\luamake\scripts\lua_embed\bee_glue.c) 也加入该 source_set 一起编译。
+> 启用 `bee_glue = true` 时，会额外把 [scripts/lua_embed/bee_glue.c](../../../scripts/lua_embed/bee_glue.c) 也加入该 source_set 一起编译。
 
 ---
 
@@ -90,7 +90,7 @@ lm:lua_embed "myembed" {
 - **普通模式**：`dir` 条目按 **原始相对路径** 作为 `name`（例如 `sub/bar.lua`）；
 - **lua_mode**：`dir` 条目按 **Lua 模块名** 作为 `name`（例如 `sub.bar`）。
 
-触发 `lua_mode` 的条件（见 [lua_embed.lua](e:\Github\luamake\scripts\lua_embed.lua) `group_lua_mode`）**任一满足即可**：
+触发 `lua_mode` 的条件（见 [lua_embed.lua](../../../scripts/lua_embed.lua) `group_lua_mode`）**任一满足即可**：
 
 1. 组内任何一个 `dir` 条目带了 `pattern` 字段 → **整组** 切到 lua_mode；
 2. `bee_glue = true` 且组名 = `preload` → 自动切到 lua_mode（因为 `_PRELOAD` 以模块名作键）；
@@ -145,7 +145,7 @@ lm:lua_embed "myembed" {
 
 ## 6. `bee_glue = true`：bee.lua 胶水层
 
-启用后 [bee_glue.c](e:\Github\luamake\scripts\lua_embed\bee_glue.c) 会被一并编译进来，并强制要求以下三个组存在（即使为空）：
+启用后 [bee_glue.c](../../../scripts/lua_embed/bee_glue.c) 会被一并编译进来，并强制要求以下三个组存在（即使为空）：
 
 ```lua
 data = {
@@ -293,7 +293,7 @@ for (const lua_embed_entry* e = lua_embed.data; e->name != NULL; ++e)
     if (strcmp(e->name, "config.json") == 0) { /* ... */ }
 ```
 
-**查找复杂度**：线性扫描 O(N)。[bee_glue.c](e:\Github\luamake\scripts\lua_embed\bee_glue.c) 中的 `bee.embed` 通过 **命中后缓存到 Lua table** 摊销为 O(1)；自定义实现若需要高频查找，建议采用相同模式，或在资产量非常大时拆分多个组 / 改用文件系统后端。
+**查找复杂度**：线性扫描 O(N)。[bee_glue.c](../../../scripts/lua_embed/bee_glue.c) 中的 `bee.embed` 通过 **命中后缓存到 Lua table** 摊销为 O(1)；自定义实现若需要高频查找，建议采用相同模式，或在资产量非常大时拆分多个组 / 改用文件系统后端。
 
 ---
 
@@ -364,7 +364,7 @@ lm:lua_src "my_glue" {
 
 ## 参考实现
 
-- [scripts/lua_embed.lua](e:\Github\luamake\scripts\lua_embed.lua) — 配置写出、输入收集、`lua_mode` 判定
-- [scripts/lua_embed/lua_embed_gen.lua](e:\Github\luamake\scripts\lua_embed\lua_embed_gen.lua) — 实际扫描、字节码转换、C 代码生成
-- [scripts/lua_embed/bee_glue.c](e:\Github\luamake\scripts\lua_embed\bee_glue.c) — `bee_glue = true` 时的运行时胶水
-- [scripts/writer.lua](e:\Github\luamake\scripts\writer.lua) `api.lua_embed` — 目标注册与 `export_includes` / `export_objdeps` 导出
+- [scripts/lua_embed.lua](../../../scripts/lua_embed.lua) — 配置写出、输入收集、`lua_mode` 判定
+- [scripts/lua_embed/lua_embed_gen.lua](../../../scripts/lua_embed/lua_embed_gen.lua) — 实际扫描、字节码转换、C 代码生成
+- [scripts/lua_embed/bee_glue.c](../../../scripts/lua_embed/bee_glue.c) — `bee_glue = true` 时的运行时胶水
+- [scripts/writer.lua](../../../scripts/writer.lua) `api.lua_embed` — 目标注册与 `export_includes` / `export_objdeps` 导出

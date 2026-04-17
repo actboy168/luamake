@@ -18,7 +18,7 @@
 #  define LUA_EMBED_EXPORT __attribute__((visibility("default")))
 #endif
 
-/* ── preload ──────────────────────────────────────────────────────────────── */
+/* -- preload -------------------------------------------------------------- */
 
 /* Load a lua_embed_entry (passed as lightuserdata) and return a function. */
 static int load_entry(lua_State* L) {
@@ -35,7 +35,7 @@ static const char preload_factory_src[] =
     "    return load_entry(entry)(modname)\n"
     "end\n";
 
-/* ── bee.embed ────────────────────────────────────────────────────────────── */
+/* -- bee.embed ------------------------------------------------------------ */
 
 /* __index(t, name): look up name in lua_embed.data, cache result in t.
  *
@@ -81,7 +81,7 @@ static int luaopen_bee_embed(lua_State* L) {
     return 1;
 }
 
-/* ── exported entry points ────────────────────────────────────────────────── */
+/* -- exported entry points ------------------------------------------------ */
 
 /* Host-driven contract (two independent atomic ops; call order is up to host):
  *

@@ -909,6 +909,7 @@ function api.lua_embed(global_attribute, name)
         local outdir       = globals.builddir .. "/lua_embed/" .. name
         local out_c        = outdir .. "/lua_embed.c"
         local out_c_ninja  = "$builddir/lua_embed/" .. name .. "/lua_embed.c"
+        local out_h_ninja  = "$builddir/lua_embed/" .. name .. "/lua_embed_data.h"
         local gen_name     = "__lua_embed_gen_" .. name .. "__"
 
         local use_bee = local_attribute.bee_glue ~= nil
@@ -925,7 +926,7 @@ function api.lua_embed(global_attribute, name)
             description = "lua_embed $config",
             restat = 1,
         })
-        local outputs = { out_c_ninja }
+        local outputs = { out_c_ninja, out_h_ninja }
         ninja:build(outputs, inputs, {
             variables = {
                 config = fsutil.quotearg(config_path),
@@ -933,24 +934,9 @@ function api.lua_embed(global_attribute, name)
             },
         })
 
-        -- copy lua_embed.h via ninja build edge so it is tracked in the DAG;
-        -- if builddir is cleaned or the header is updated, ninja will re-copy.
-        local header_src = lua_embed.HEADER
-        local header_dst_ninja = "$builddir/lua_embed/" .. name .. "/lua_embed.h"
-        local copy_name = "__lua_embed_hdr_" .. name .. "__"
-        log.assert(loaded_target[copy_name] == nil, "`%s`: redefinition.", copy_name)
-        generate_copy({}, { header_src }, { header_dst_ninja })
-        ninja:phony(copy_name, header_dst_ninja)
-        loaded_target[copy_name] = { implicit_inputs = copy_name }
-
-        -- gen_name aggregates both the generated .c and the copied header
-        local gen_all = {}
-        for _, o in ipairs(outputs) do
-            gen_all[#gen_all+1] = o
-        end
-        gen_all[#gen_all+1] = header_dst_ninja
+        -- gen_name aggregates both generated outputs (.c and .h)
         log.assert(loaded_target[gen_name] == nil, "`%s`: redefinition.", gen_name)
-        ninja:phony(gen_name, gen_all)
+        ninja:phony(gen_name, outputs)
         loaded_target[gen_name] = { implicit_inputs = gen_name }
 
         -- build the source_set that callers dep on
@@ -977,7 +963,9 @@ function api.lua_embed(global_attribute, name)
 
         -- 追加 lua_embed 自己构造的路径（已经是 WORKDIR 相对路径）
         local sources = { out_c }
-        if use_bee then sources[#sources+1] = lua_embed.BEE_GLUE end
+        if use_bee then
+            sources[#sources+1] = lua_embed.BEE_GLUE
+        end
 
         attribute.includes = attribute.includes or {}
         table.insert(attribute.includes, 1, outdir)

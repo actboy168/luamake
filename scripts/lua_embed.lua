@@ -6,16 +6,14 @@ local fs     = require "bee.filesystem"
 local fsutil = require "fsutil"
 local pathutil = require "pathutil"
 
--- Directory containing lua_embed_gen.lua, lua_embed.h, etc.
+-- Directory containing lua_embed_gen.lua, etc.
 local EMBED_DIR  = fsutil.join(package.procdir, "scripts", "lua_embed")
 local GEN_SCRIPT = fsutil.join(EMBED_DIR, "lua_embed_gen.lua")
-local HEADER     = fsutil.join(EMBED_DIR, "lua_embed.h")
 
 local BEE_GLUE = fsutil.join(EMBED_DIR, "bee_glue.c")
 
 local m = {}
 m.GEN_SCRIPT = GEN_SCRIPT
-m.HEADER     = HEADER
 m.EMBED_DIR  = EMBED_DIR
 m.BEE_GLUE   = BEE_GLUE
 

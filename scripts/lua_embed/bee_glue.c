@@ -4,9 +4,10 @@
  * generated lua_embed.c for actual embedded data.
  */
 
-#include "lua_embed.h"
+#include "lua_embed_data.h"
 #include <lua.h>
 #include <lauxlib.h>
+#include <string.h>
 
 #if defined(_WIN32)
 #  define LUA_EMBED_EXPORT __declspec(dllexport)
@@ -14,11 +15,11 @@
 #  define LUA_EMBED_EXPORT __attribute__((visibility("default")))
 #endif
 
-/* C helper: load a lua_embed_preload entry from a lightuserdata pointer.
+/* C helper: load a lua_embed_entry entry from a lightuserdata pointer.
  * Signature: load_bytecode(lightuserdata entry) -> function
  */
 static int load_bytecode(lua_State* L) {
-    const lua_embed_preload* e = (const lua_embed_preload*)lua_touserdata(L, 1);
+    const lua_embed_entry* e = (const lua_embed_entry*)lua_touserdata(L, 1);
     if (luaL_loadbuffer(L, e->data, e->size, e->name) != LUA_OK) return lua_error(L);
     return 1;
 }
@@ -41,8 +42,11 @@ static const char preload_loader_src[] =
 static int l_embed_index(lua_State* L) {
     /* L: table, name */
     const char* name = luaL_checkstring(L, 2);
-    const lua_embed_data* d = lua_embed_get_data(name);
-    if (!d) {
+    const lua_embed_entry* d;
+    for (d = lua_embed_data_table; d->name != NULL; d++) {
+        if (strcmp(d->name, name) == 0) break;
+    }
+    if (d->name == NULL) {
         lua_pushnil(L);
         return 1;
     }
@@ -70,7 +74,7 @@ static int luaopen_bee_embed(lua_State* L) {
 }
 
 LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {
-    const lua_embed_preload* e;
+    const lua_embed_entry* e;
     luaL_getsubtable(L, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);
     /* Register bee.embed */
     lua_pushcfunction(L, luaopen_bee_embed);
@@ -78,7 +82,7 @@ LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {
     /* Load the preload_loader factory once, outside the loop */
     if (luaL_loadbuffer(L, preload_loader_src, sizeof(preload_loader_src) - 1, "=preload_loader") != LUA_OK)
         return lua_error(L);
-    for (e = lua_embed_get_preload(); e->name != NULL; e++) {
+    for (e = lua_embed_preload_table; e->name != NULL; e++) {
         /* Reuse the factory function at the top of the stack */
         lua_pushvalue(L, -1);
         lua_pushcfunction(L, load_bytecode);
@@ -91,14 +95,12 @@ LUA_EMBED_EXPORT int _bee_preload_module(lua_State* L) {
 }
 
 LUA_EMBED_EXPORT int _bee_main(lua_State* L) {
-    const lua_embed_data* f;
     _bee_preload_module(L);
-    f = lua_embed_get_main();
-    if (!f) {
+    if (!lua_embed_main_entry.name) {
         lua_pushstring(L, "lua_embed: no main entry configured");
         return lua_error(L);
     }
-    if (luaL_loadbuffer(L, f->data, f->size, f->name) != LUA_OK)
+    if (luaL_loadbuffer(L, lua_embed_main_entry.data, lua_embed_main_entry.size, lua_embed_main_entry.name) != LUA_OK)
         return lua_error(L);
     if (lua_pcall(L, 0, 0, 0) != LUA_OK)
         return lua_error(L);

@@ -123,6 +123,8 @@ lm:lua_embed "myembed" {
         },
         preload = {
             bytecode = true,
+            -- bee_glue = true 时，preload 组自动启用 lua 模块名扫描，
+            -- 所以这里不需要手写 pattern。
             { dir = "lualib" },
             { file = "scripts/init.lua", name = "init" },
         },
@@ -146,8 +148,13 @@ lm:exe "myapp" {
 - 可选的 `bytecode = true`：该组独立的字节码开关，嵌入字节码而非源码
 - 数组部分（条目列表），每项可以是：
   - 裸字符串：单文件路径，name 取文件名
-  - `{ dir=, prefix=, pattern= }`：扫描目录；有 `pattern` 字段时启用 lua 模块名扫描（`?.lua;?/init.lua`），否则按原始文件名扫描
+  - `{ dir=, prefix=, pattern= }`：扫描目录；**有 `pattern` 字段时启用 lua 模块名扫描**（按 `?.lua;?/init.lua` 这种 `?` 占位符语法，`/` 会替换成 `.`，得到 `foo`、`foo.bar` 这样的模块名），否则按原始文件名扫描（键形如 `foo.lua`、`sub/bar.lua`）
   - `{ file=, name= }`：单文件，显式指定名称
+
+> **lua_mode 的启用规则**：
+> 1. 组内任一 `dir` 条目带了 `pattern` → 整组切到 lua 模块名扫描；
+> 2. `bee_glue = true` 时，`preload` 组自动启用 lua 模块名扫描（因为 `_PRELOAD` 要求模块名作键），条目无需手写 `pattern`，但仍可显式写 `pattern` 来自定义搜索模式；
+> 3. 其余情况使用原始文件名扫描。
 
 ### 与 bee.lua 集成
 

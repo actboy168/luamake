@@ -77,7 +77,7 @@ lm:exe "server" {
 
 默认嵌入 Lua **源码**，保证跨 Lua 版本兼容（luamake 宿主 Lua 版本可以与目标 `luaversion` 不同）。如果需要更小的体积或隐藏源码，可在组内设置 `bytecode = true` 嵌入字节码，但此时要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致。
 
-所有文件条目通过顶层 `data` 字段按**组**（任意合法 C 标识符）组织，每个组独立控制 `bytecode` 开关。`{ dir = "..." }` 条目若带 `pattern` 字段则按 Lua 模块名扫描，否则按原始文件名。
+所有文件条目通过顶层 `data` 字段按**组**（任意合法 C 标识符）组织，每个组独立控制 `bytecode` 开关。`{ dir = "..." }` 条目若带 `pattern` 字段则按 Lua 模块名扫描，否则按原始文件名；此外，当 `bee_glue = true` 时，`preload` 组会自动启用 Lua 模块名扫描（因为 `_PRELOAD` 要求模块名作键），无需手写 `pattern`。
 
 ### 典型场景：嵌入 Lua 模块到可执行文件
 
@@ -85,11 +85,13 @@ lm:exe "server" {
 lm:lua_embed "embedded_lua" {
     data = {
         preload = {
-            { dir = "scripts/modules" },                       -- 扫描目录，按模块名
-            { file = "scripts/config.lua", name = "config" }, -- 单文件
+            -- 没有 bee_glue 时，preload 目录必须显式写 pattern，
+            -- 否则键名会是 "foo.lua" 而不是模块名 "foo"。
+            { dir = "scripts/modules", pattern = "?.lua;?/init.lua" },  -- 按 Lua 模块名扫描
+            { file = "scripts/config.lua", name = "config" },          -- 单文件，显式指定名称
         },
         main = {
-            "scripts/main.lua",                                -- 按原始文件名
+            "scripts/main.lua",                                           -- 按原始文件名
         },
     },
 }
@@ -107,7 +109,8 @@ lm:lua_embed "embedded_lua" {
     data = {
         preload = {
             bytecode = true,   -- 该组嵌入字节码（需 Lua 版本一致）
-            { dir = "scripts/modules" },
+            -- 没有 bee_glue 时，preload 目录需显式指定 pattern 才能得到模块名作键。
+            { dir = "scripts/modules", pattern = "?.lua;?/init.lua" },
         },
         main = {
             bytecode = true,
@@ -125,6 +128,7 @@ lm:lua_embed "bee_app" {
     data = {
         preload = {
             bytecode = true,
+            -- bee_glue = true 时，preload 组自动按 Lua 模块名扫描，无需写 pattern。
             { dir = "scripts" },
         },
         main = {

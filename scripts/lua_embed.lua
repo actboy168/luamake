@@ -59,8 +59,13 @@ local function serialize_entry(e, rootdir)
     return "                { " .. table.concat(parts, ", ") .. " },"
 end
 
--- A group uses lua_mode (module-name scanning) when any dir-entry has 'pattern'.
-local function group_lua_mode(grp)
+-- A group uses lua_mode (module-name scanning) when:
+--   1. any dir-entry in the group has 'pattern', or
+--   2. bee_glue is enabled and this is the 'preload' group
+--      (the _PRELOAD hard-coded contract requires lua module names,
+--       not raw filenames, as keys).
+local function group_lua_mode(grp, grp_name, bee_glue)
+    if bee_glue and grp_name == "preload" then return true end
     for _, e in ipairs(grp) do
         if type(e) == "table" and e.pattern then return true end
     end
@@ -112,7 +117,7 @@ function m.write_config(outdir, attribute, rootdir)
         if grp.bytecode then
             lines[#lines+1] = "            bytecode = true,"
         end
-        if group_lua_mode(grp) then
+        if group_lua_mode(grp, grp_name, attribute.bee_glue ~= nil) then
             lines[#lines+1] = "            lua_mode = true,"
         end
         lines[#lines+1] = "            entries = {"
@@ -158,9 +163,10 @@ function m.collect_inputs(attribute, rootdir, config_path)
     end
 
     local data = attribute.data or {}
+    local bee_glue = attribute.bee_glue ~= nil
     for grp_name, grp in pairs(data) do
         if type(grp_name) ~= "string" or type(grp) ~= "table" then goto continue end
-        local lua_mode = group_lua_mode(grp)
+        local lua_mode = group_lua_mode(grp, grp_name, bee_glue)
         for _, e in ipairs(grp) do
             if type(e) == "string" then
                 inputs[#inputs+1] = resolve_path(rootdir, e)

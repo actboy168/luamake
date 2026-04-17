@@ -75,18 +75,22 @@ lm:exe "server" {
 
 当需要将 Lua 脚本或数据文件嵌入到 C/C++ 可执行文件中时，推荐使用 `lm:lua_embed`。它封装了完整的代码生成管道：自动扫描文件 → 生成 C 源码 → 构建 source_set，无需手动编写 `lm:runlua` + `objdeps` 组合。
 
-默认嵌入 Lua **源码**，保证跨 Lua 版本兼容（luamake 宿主 Lua 版本可以与目标 `luaversion` 不同）。如果需要更小的体积或隐藏源码，可设置 `bytecode = true` 嵌入字节码，但此时要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致。
+默认嵌入 Lua **源码**，保证跨 Lua 版本兼容（luamake 宿主 Lua 版本可以与目标 `luaversion` 不同）。如果需要更小的体积或隐藏源码，可在组内设置 `bytecode = true` 嵌入字节码，但此时要求 luamake 宿主 Lua 版本与目标 `luaversion` 一致。
+
+所有文件条目通过顶层 `data` 字段按**组**（任意合法 C 标识符）组织，每个组独立控制 `bytecode` 开关。`{ dir = "..." }` 条目若带 `pattern` 字段则按 Lua 模块名扫描，否则按原始文件名。
 
 ### 典型场景：嵌入 Lua 模块到可执行文件
 
 ```lua
 lm:lua_embed "embedded_lua" {
-    preload = {
-        { dir = "scripts/modules" },                    -- 自动扫描
-        { file = "scripts/config.lua", name = "config" }, -- 单文件
-    },
     data = {
-        { file = "main.lua", name = "main.lua" },
+        preload = {
+            { dir = "scripts/modules" },                       -- 扫描目录，按模块名
+            { file = "scripts/config.lua", name = "config" }, -- 单文件
+        },
+        main = {
+            "scripts/main.lua",                                -- 按原始文件名
+        },
     },
 }
 
@@ -100,12 +104,15 @@ lm:lua_exe "myapp" {
 
 ```lua
 lm:lua_embed "embedded_lua" {
-    bytecode = true,  -- 嵌入字节码而非源码（需 Lua 版本一致）
-    preload = {
-        { dir = "scripts/modules" },
-    },
     data = {
-        { file = "main.lua", name = "main.lua" },
+        preload = {
+            bytecode = true,   -- 该组嵌入字节码（需 Lua 版本一致）
+            { dir = "scripts/modules" },
+        },
+        main = {
+            bytecode = true,
+            "scripts/main.lua",
+        },
     },
 }
 ```
@@ -114,12 +121,16 @@ lm:lua_embed "embedded_lua" {
 
 ```lua
 lm:lua_embed "bee_app" {
-    bee_glue = "main.lua",
-    preload = {
-        { dir = "scripts", prefix = "app" },
-    },
+    bee_glue = true,           -- 生成 bee.lua 胶水代码（布尔值）
     data = {
-        { file = "main.lua", name = "main.lua" },
+        preload = {
+            bytecode = true,
+            { dir = "scripts" },
+        },
+        main = {
+            bytecode = true,
+            "src/main.lua",
+        },
     },
 }
 
@@ -136,9 +147,11 @@ lm:lua_exe "myapp" {
 ```lua
 -- ✅ 推荐：通过 deps 自动获取 includes 和 objdeps
 lm:lua_embed "my_embed" {
-    bee_glue = "src/main.lua",
-    preload = {
-        { dir = "lualib" },
+    bee_glue = true,
+    data = {
+        preload = {
+            { dir = "lualib" },
+        },
     },
 }
 
@@ -151,4 +164,4 @@ lm:lua_src "my_glue" {
 
 > **与手动 `lm:runlua` 的对比**：`lm:lua_embed` 自动处理了 ninja 依赖追踪、`objdeps` 声明、头文件复制等细节。对于简单的单文件代码生成仍可使用 `lm:runlua`，但批量嵌入 Lua 资源时 `lm:lua_embed` 更简洁可靠。
 
-> **`bytecode` 选项**：默认 `false`（嵌入源码），设为 `true` 时使用 `string.dump` 生成字节码嵌入。字节码体积更小且可隐藏源码，但生成的字节码绑定到 luamake 宿主的 Lua 版本，若目标项目通过 `luaversion` 指定了不同版本则会加载失败。
+> **`bytecode` 选项**：每个组独立控制，默认 `false`（嵌入源码），设为 `true` 时使用 `string.dump` 生成字节码嵌入。字节码体积更小且可隐藏源码，但生成的字节码绑定到 luamake 宿主的 Lua 版本，若目标项目通过 `luaversion` 指定了不同版本则会加载失败。

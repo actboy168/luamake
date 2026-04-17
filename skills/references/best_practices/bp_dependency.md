@@ -117,8 +117,14 @@ lm:exe "main" {
 
 ```lua
 lm:lua_embed "my_embed" {
-    preload = { { dir = "scripts" } },
-    data = { { file = "main.lua", name = "main.lua" } },
+    data = {
+        preload = {
+            { dir = "scripts" },
+        },
+        main = {
+            { file = "main.lua", name = "main.lua" },
+        },
+    },
 }
 
 -- ✅ 推荐：通过 deps 自动获取 includes 和 objdeps

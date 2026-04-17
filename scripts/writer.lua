@@ -903,7 +903,7 @@ function api.lua_embed(global_attribute, name)
     return function (local_attribute)
         local lua_embed = require "lua_embed"
 
-        -- 解析 rootdir，使 preload/data 中的相对路径能正确定位到子工程目录
+        -- 解析 rootdir，使 data 中的相对路径能正确定位到子工程目录
         local rootdir = normalize_rootdir(global_attribute.workdir, local_attribute.rootdir or global_attribute.rootdir)
 
         local outdir       = globals.builddir .. "/lua_embed/" .. name
@@ -920,8 +920,7 @@ function api.lua_embed(global_attribute, name)
         -- collect inputs for ninja tracking
         local inputs = lua_embed.collect_inputs(local_attribute, rootdir, config_path)
 
-        -- emit shared rule + build edge; config/output passed via Ninja variables
-        -- so all lua_embed targets reuse a single rule definition.
+        -- emit shared rule + build edge
         ninja:rule("lua_embed", "$luamake lua " .. fsutil.quotearg(lua_embed.GEN_SCRIPT) .. " $config $out_c", {
             description = "lua_embed $config",
             restat = 1,
@@ -940,10 +939,6 @@ function api.lua_embed(global_attribute, name)
         loaded_target[gen_name] = { implicit_inputs = gen_name }
 
         -- build the source_set that callers dep on
-        -- 先用 reslove_attributes_nolink 归一化用户在 lua_embed 块中写的编译属性
-        -- （defines/flags/includes/objdeps/confs 等），然后再追加 lua_embed 自己构造的
-        -- sources/includes/objdeps（已经是 WORKDIR 相对路径），直接调用
-        -- generate_compile 跳过 glob 展开，避免路径被 rootdir 错误归一化。
         local src_attr = {}
         for k, v in pairs(local_attribute) do
             src_attr[k] = v
@@ -952,12 +947,9 @@ function api.lua_embed(global_attribute, name)
             src_attr.luaversion = "lua55"
         end
         -- lua_embed 专用字段不传入编译属性解析
-        src_attr.preload = nil
-        src_attr.data = nil
+        src_attr.data     = nil
         src_attr.bee_glue = nil
-        src_attr.bytecode = nil
-        -- sources 由 lua_embed 自己构造，不参与属性归一化
-        src_attr.sources = nil
+        src_attr.sources  = nil
 
         local attribute = reslove_attributes_nolink(global_attribute, src_attr)
 
@@ -969,7 +961,6 @@ function api.lua_embed(global_attribute, name)
 
         attribute.includes = attribute.includes or {}
         table.insert(attribute.includes, 1, outdir)
-        -- 保留用户指定的 objdeps，追加 lua_embed 生成目标的依赖
         attribute.objdeps = attribute.objdeps or {}
         attribute.objdeps[#attribute.objdeps+1] = gen_name
 
@@ -979,7 +970,7 @@ function api.lua_embed(global_attribute, name)
         local t = loaded_target[name]
         if t then
             t.export_includes = { outdir }
-            t.export_objdeps = { copy_name }
+            t.export_objdeps  = { gen_name }
         end
     end
 end

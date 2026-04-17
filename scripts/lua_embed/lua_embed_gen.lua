@@ -306,10 +306,19 @@ for _, grp in ipairs(cfg.groups) do
         else
             payload = src
         end
-        local id = "le_" .. to_c_ident(grp_name) .. "_" .. to_c_ident(f.name)
-        -- to_c_ident guarantees uniqueness across the whole run, but we still
-        -- assert here so any future refactor that breaks that invariant is
-        -- caught immediately instead of producing silently mis-linked C.
+        -- Feed the *full* logical name to to_c_ident in one shot, instead of
+        -- stitching per-segment results with '_'. Because '_' is also a legal
+        -- identifier char, piecewise sanitisation can collide across segment
+        -- boundaries: group "a_b" + file "c" and group "a" + file "b_c" would
+        -- both produce "le_a_b_c". Using '.' as the segment separator makes
+        -- the two raw strings distinct ("le_a_b.c" vs "le_a.b_c"), so
+        -- to_c_ident's internal collision path (hash suffix) can actually
+        -- fire on the unlikely case that sanitising them yields the same
+        -- base. to_c_ident guarantees uniqueness across the whole run, but
+        -- we still assert here so any future refactor that breaks that
+        -- invariant is caught immediately instead of producing silently
+        -- mis-linked C.
+        local id = to_c_ident("le_" .. grp_name .. "." .. f.name)
         assert(not seen_c_idents[id],
             string.format("internal error: duplicate C identifier %s", id))
         seen_c_idents[id] = f.name
@@ -322,8 +331,12 @@ for _, grp in ipairs(cfg.groups) do
         emit("0x00\n};\n\n")
     end
 
-    -- entries array for this group
-    local entries_id = "lg_entries_" .. to_c_ident(grp_name)
+    -- entries array for this group.
+    -- grp_name is already validated as a legal C identifier by check_c_ident
+    -- above, so we can concatenate it directly without going through
+    -- to_c_ident. The "lg_entries_" prefix also guarantees there is no
+    -- collision with the "le_..." per-entry symbols.
+    local entries_id = "lg_entries_" .. grp_name
     emit(string.format("static const lua_embed_entry %s[] = {\n", entries_id))
     for _, e in ipairs(entry_idents) do
         emit(string.format('    { %q, (const char*)%s, %d },\n', e.name, e.id, e.size))

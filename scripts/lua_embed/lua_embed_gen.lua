@@ -146,6 +146,13 @@ end
 local function scan_lua_dir(dirpath, patterns, mod_prefix, result, seen)
     local root = fs.path(dirpath)
     if not fs.exists(root) then return end
+    -- A unique token for this scan_lua_dir invocation. Two entries matched in
+    -- the *same* directory scan can be compared by pat_idx (mirroring Lua's
+    -- package.path priority). Across different scan_lua_dir calls we fall
+    -- back to "first one wins" (i.e. earlier entries in the config have
+    -- priority over later ones), because pat_idx values from different
+    -- pattern lists are not comparable.
+    local scan_token = {}
     local function recurse(base, rel_base)
         for _, entry in ipairs(sorted_entries(base)) do
             local name = entry:filename():string()
@@ -153,23 +160,51 @@ local function scan_lua_dir(dirpath, patterns, mod_prefix, result, seen)
             if fs.is_directory(entry) then
                 recurse(entry, rel)
             elseif name:match("%.lua$") then
-                local modname
-                for _, pat in ipairs(patterns) do
+                local modname, pat_idx
+                for i, pat in ipairs(patterns) do
                     local m = match_pattern(rel, pat)
                     if m then
                         modname = (mod_prefix ~= "" and (mod_prefix .. "." .. m) or m)
+                        pat_idx = i
                         break
                     end
                 end
                 if modname then
                     local abspath = entry:string():gsub("\\", "/")
-                    if seen[modname] then
-                        io.write(string.format(
-                            "[lua_embed] warning: %q overridden by %s\n",
-                            modname, abspath))
+                    local prev = seen[modname]
+                    if prev then
+                        -- Duplicate module name. Deterministic tie-breaker:
+                        --   * same scan + lower pat_idx  -> new wins (mirrors
+                        --     Lua's package.path left-to-right priority,
+                        --     e.g. "?.lua" beats "?/init.lua")
+                        --   * otherwise                  -> first one wins
+                        -- Either way we *replace in place* rather than
+                        -- appending, so the generated C never contains two
+                        -- entries with the same name (which would collide in
+                        -- to_c_ident()).
+                        local new_wins =
+                            prev.scan == scan_token and pat_idx < prev.pat_idx
+                        if new_wins then
+                            io.write(string.format(
+                                "[lua_embed] warning: module %q: %s overrides %s\n",
+                                modname, abspath, prev.path))
+                            result[prev.index] = { name = modname, path = abspath }
+                            seen[modname] = {
+                                index = prev.index, path = abspath,
+                                pat_idx = pat_idx, scan = scan_token,
+                            }
+                        else
+                            io.write(string.format(
+                                "[lua_embed] warning: module %q: %s kept, %s skipped\n",
+                                modname, prev.path, abspath))
+                        end
+                    else
+                        result[#result+1] = { name = modname, path = abspath }
+                        seen[modname] = {
+                            index = #result, path = abspath,
+                            pat_idx = pat_idx, scan = scan_token,
+                        }
                     end
-                    seen[modname] = true
-                    result[#result+1] = { name = modname, path = abspath }
                 else
                     io.write(string.format(
                         "[lua_embed] warning: %s/%s does not match any pattern, skipped\n",

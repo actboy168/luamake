@@ -81,6 +81,20 @@ function m.write_config(outdir, attribute, rootdir)
     }
 
     local data = attribute.data or {}
+
+    -- When bee_glue is enabled, bee_glue.c references lua_embed.{main,preload,data}
+    -- by name. These groups must be declared (even if empty) so the generated
+    -- lua_embed_bundle struct contains the corresponding fields; otherwise
+    -- bee_glue.c will fail to compile with "struct has no member" errors.
+    if attribute.bee_glue ~= nil then
+        for _, required in ipairs({ "main", "preload", "data" }) do
+            assert(type(data[required]) == "table",
+                string.format(
+                    "lua_embed: bee_glue requires group %q to be defined (use an empty table {} if unused)",
+                    required))
+        end
+    end
+
     local order = {}
     for k in pairs(data) do
         if type(k) == "string" then order[#order+1] = k end

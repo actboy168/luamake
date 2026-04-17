@@ -273,23 +273,18 @@ luamake rebuild
 | 代码生成与 objdeps | `references/best_practices/bp_codegen.md` | 代码生成管道、objdeps 用法 |
 | Lua 模块与测试 | `references/best_practices/bp_lua_and_test.md` | Lua C 模块、内置测试框架 |
 
----
-
-## 详细文档
-
-以下主题的详细资料请参阅当前 skill 中已经提供的 references 目录：
+### 其他详细文档
 
 | 主题 | 文档 |
 |------|------|
-| Bee 运行时库概览 | `references/bee/bee_runtime.md` |
-| Bee 文件系统 API | `references/bee/bee_filesystem.md` |
-| Bee IO API | `references/bee/bee_io.md` |
-| Bee 子进程 API | `references/bee/bee_subprocess.md` |
-| Bee Socket API | `references/bee/bee_socket.md` |
-| Bee 系统 API | `references/bee/bee_system.md` |
-| Bee 线程 API | `references/bee/bee_thread.md` |
-| Bee Channel API | `references/bee/bee_channel.md` |
+| Bee 运行时库（API 参考来源、模块列表、Meta 文件用法） | `references/advanced/bee_runtime.md` |
 | `lm:lua_embed` 权威参考（分组 / pattern / bytecode / bee_glue / 自定义接入） | `references/advanced/lua_embed.md` |
+
+---
+
+## Bee 运行时库
+
+`luamake lua script.lua` 运行脚本时预加载 bee 库。API 参考来源及模块列表详见 `references/advanced/bee_runtime.md`。
 
 ### 适用边界
 

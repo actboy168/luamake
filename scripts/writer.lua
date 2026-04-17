@@ -912,7 +912,10 @@ function api.lua_embed(global_attribute, name)
         local out_h_ninja  = "$builddir/lua_embed/" .. name .. "/lua_embed_data.h"
         local gen_name     = "__lua_embed_gen_" .. name .. "__"
 
-        local use_bee = local_attribute.bee_glue ~= nil
+        -- bee_glue accepts boolean only; nil = disabled. Type validation and
+        -- normalization is done inside lua_embed.write_config below, but we
+        -- need the boolean here to decide whether to compile bee_glue.c.
+        local use_bee = local_attribute.bee_glue == true
 
         -- write config.lua for the generator
         local config_path = lua_embed.write_config(outdir, local_attribute, rootdir)

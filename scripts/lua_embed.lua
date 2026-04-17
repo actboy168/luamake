@@ -87,11 +87,18 @@ function m.write_config(outdir, attribute, rootdir)
 
     local data = attribute.data or {}
 
+    -- Normalize bee_glue: accept only boolean / nil. Anything else (string,
+    -- number, table, ...) is almost certainly a user mistake, so fail fast
+    -- with a clear message instead of silently (mis)interpreting it.
+    local bee_glue = attribute.bee_glue
+    assert(bee_glue == nil or type(bee_glue) == "boolean",
+        string.format("lua_embed: bee_glue must be a boolean, got %s", type(bee_glue)))
+
     -- When bee_glue is enabled, bee_glue.c references lua_embed.{main,preload,data}
     -- by name. These groups must be declared (even if empty) so the generated
     -- lua_embed_bundle struct contains the corresponding fields; otherwise
     -- bee_glue.c will fail to compile with "struct has no member" errors.
-    if attribute.bee_glue ~= nil then
+    if bee_glue == true then
         for _, required in ipairs({ "main", "preload", "data" }) do
             assert(type(data[required]) == "table",
                 string.format(
@@ -117,7 +124,7 @@ function m.write_config(outdir, attribute, rootdir)
         if grp.bytecode then
             lines[#lines+1] = "            bytecode = true,"
         end
-        if group_lua_mode(grp, grp_name, attribute.bee_glue ~= nil) then
+        if group_lua_mode(grp, grp_name, bee_glue == true) then
             lines[#lines+1] = "            lua_mode = true,"
         end
         lines[#lines+1] = "            entries = {"
@@ -163,7 +170,7 @@ function m.collect_inputs(attribute, rootdir, config_path)
     end
 
     local data = attribute.data or {}
-    local bee_glue = attribute.bee_glue ~= nil
+    local bee_glue = attribute.bee_glue == true
     for grp_name, grp in pairs(data) do
         if type(grp_name) ~= "string" or type(grp) ~= "table" then goto continue end
         local lua_mode = group_lua_mode(grp, grp_name, bee_glue)

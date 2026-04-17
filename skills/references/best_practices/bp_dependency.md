@@ -146,3 +146,5 @@ lm:lua_src "my_glue" {
 ```
 
 > **原理**：`lm:lua_embed` 在 `loaded_target` 中设置了 `export_includes` 和 `export_objdeps` 字段。`generate_compile` 在处理 `deps` 时，会自动将这些导出属性合并到依赖方的 `attribute.includes` 和 `attribute.objdeps` 中。这是一个通用机制，未来其他代码生成目标也可以使用。
+
+> `lm:lua_embed` 本身的完整规则（分组语义、`pattern` 语法、字节码约束、`bee_glue` 契约、C API 等）见 [`references/advanced/lua_embed.md`](../advanced/lua_embed.md)。

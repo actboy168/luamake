@@ -109,128 +109,29 @@ lm:runlua {
 
 ## lm:lua_embed — Lua 嵌入资源
 
-将 Lua 文件嵌入到 C 源码中，生成一个 `source_set` 供其他目标通过 `deps` 引用。嵌入内容通过 `data` 字段下的**组**（group）组织，每个组名直接成为生成的 `lua_embed_bundle` 结构体的字段名，按字母序排列。
-
-### 基本用法
+将 Lua 文件（或任意二进制资源）嵌入到 C 源码中，生成一个 `source_set` 供其他目标通过 `deps` 引用。自动导出 `export_includes` 与 `export_objdeps`，依赖方无需再写 `includes` / `objdeps`。
 
 ```lua
 lm:lua_embed "myembed" {
     bee_glue = true,
     data = {
-        main = {
-            bytecode = true,
-            "src/main.lua",
-        },
-        preload = {
-            bytecode = true,
-            -- bee_glue = true 时，preload 组自动启用 lua 模块名扫描，
-            -- 所以这里不需要手写 pattern。
-            { dir = "lualib" },
-            { file = "scripts/init.lua", name = "init" },
-        },
-        data = {
-            { name = "config.json", file = "assets/config.json" },
-            { dir = "assets/data",  prefix = "data/" },
-        },
-    }
+        main    = { bytecode = true, "src/main.lua" },
+        preload = { bytecode = true, { dir = "lualib" } },
+        data    = { { file = "assets/config.json", name = "config.json" } },
+    },
 }
 
-lm:exe "myapp" {
-    deps = "myembed",
-    sources = "src/main.cpp",
-}
+lm:exe "myapp" { deps = "myembed", sources = "src/main.cpp" }
 ```
 
-### 组（group）规则
+关键概念速览：
 
-`data` 下每个 string key 为一个组，组名须为合法 C 标识符。每个组是一个 table，包含：
+- 所有条目通过顶层 `data` 的 **组**（group，合法 C 标识符）组织，组名即生成的 `lua_embed_bundle` 结构体字段；
+- 每组可独立 `bytecode = true` 嵌入字节码；
+- `{ dir, pattern }` 条目指定 `pattern` 时启用 **Lua 模块名扫描**；`bee_glue = true` 时 `preload` 组自动启用；
+- `bee_glue = true` 硬约定：必须定义 `main` / `preload` / `data` 三组（可空表），`preload` 注入 `_PRELOAD`、`main[1]` 为入口、`data` 通过 `require "bee.embed"` 暴露。
 
-- 可选的 `bytecode = true`：该组独立的字节码开关，嵌入字节码而非源码
-- 数组部分（条目列表），每项可以是：
-  - 裸字符串：单文件路径，name 取文件名
-  - `{ dir=, prefix=, pattern= }`：扫描目录；**有 `pattern` 字段时启用 lua 模块名扫描**（按 `?.lua;?/init.lua` 这种 `?` 占位符语法，`/` 会替换成 `.`，得到 `foo`、`foo.bar` 这样的模块名），否则按原始文件名扫描（键形如 `foo.lua`、`sub/bar.lua`）
-  - `{ file=, name= }`：单文件，显式指定名称
-
-> **lua_mode 的启用规则**：
-> 1. 组内任一 `dir` 条目带了 `pattern` → 整组切到 lua 模块名扫描；
-> 2. `bee_glue = true` 时，`preload` 组自动启用 lua 模块名扫描（因为 `_PRELOAD` 要求模块名作键），条目无需手写 `pattern`，但仍可显式写 `pattern` 来自定义搜索模式；
-> 3. 其余情况使用原始文件名扫描。
-
-### 与 bee.lua 集成
-
-设置 `bee_glue = true` 时启用 bee 胶水层，硬编码约定：
-
-- `data.preload` 组自动注入 `_PRELOAD` 表
-- `data.main[1]`（第一个条目）作为程序入口
-
-#### bee.embed 模块
-
-启用 `bee_glue` 后，Lua 代码可通过 `require "bee.embed"` 访问 `data.data` 组中的条目。返回的 table 以嵌入文件名为键，索引时按需构造字符串并缓存，重复访问同一键不会重复构造：
-
-```lua
-local embed = require "bee.embed"
-
--- 首次访问：触发构造并缓存
-local cfg = embed["config.json"]  -- string 或 nil
-
--- 再次访问：直接命中缓存，返回同一对象
-assert(embed["config.json"] == cfg)
-```
-
-Lua 5.5 下使用 `lua_pushexternalstring`，字符串直接引用嵌入数组，零拷贝；低版本回退到 `lua_pushlstring`。
-
-### 属性说明
-
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `bee_glue` | bool | 启用 bee 胶水层；约定 `data.preload` 注入 `_PRELOAD`，`data.main[1]` 为入口 |
-| `data` | table | 组的集合，string key 为组名（合法 C 标识符），按字母序生成结构体字段 |
-| `data.<group>.bytecode` | bool | 该组嵌入字节码而非源码（默认 false） |
-| `data.<group>[]` | string | 裸字符串：单文件路径，name 取文件名 |
-| `data.<group>[].dir` | string | 扫描目录；有 `pattern` 时按 lua 模块名扫描，否则按原始文件名 |
-| `data.<group>[].prefix` | string | 名称前缀 |
-| `data.<group>[].pattern` | string | 模块名匹配模式（默认 `"?.lua;?/init.lua"`），有此字段则启用 lua 扫描 |
-| `data.<group>[].file` | string | 单文件路径（需配合 `name`） |
-| `data.<group>[].name` | string | 条目名（`file` 模式必需） |
-
-### C API（lua_embed_data.h）
-
-生成的结构体字段由组名决定（按字母序）：
-
-```c
-#include "lua_embed_data.h"
-
-typedef struct lua_embed_entry {
-    const char* name;
-    const char* data;
-    size_t      size;
-} lua_embed_entry;
-
-// 结构体字段由组名决定（按字母序），以下是示例：
-typedef struct lua_embed_bundle {
-    const lua_embed_entry* data;     /* NULL-terminated */
-    const lua_embed_entry* main;     /* NULL-terminated */
-    const lua_embed_entry* preload;  /* NULL-terminated */
-} lua_embed_bundle;
-
-extern const lua_embed_bundle lua_embed;
-```
-
-直接访问全局结构体字段，无需调用函数：
-
-```c
-// 遍历 preload 组
-const lua_embed_entry* e;
-for (e = lua_embed.preload; e->name != NULL; e++) { ... }
-
-// 访问 main 入口（第一个元素）
-const lua_embed_entry* m = lua_embed.main;
-
-// 按名查找 data 组
-for (e = lua_embed.data; e->name != NULL; e++) {
-    if (strcmp(e->name, "config.json") == 0) { ... }
-}
-```
+> **完整规则、`pattern` 语法、字节码版本约束、bee.embed 运行时行为、不使用 `bee_glue` 时的三种自定义接入方式、C API 使用、碰撞处理等**，参见 [`references/advanced/lua_embed.md`](../advanced/lua_embed.md)。
 
 ---
 

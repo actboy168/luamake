@@ -115,7 +115,7 @@ lm:lua_exe "app" {
 }
 ```
 
-**`lm:lua_embed`** — 将 Lua 文件按命名组嵌入到 C 源码中，生成一个 source_set 供其他目标依赖。`data` 下每个 key 是一个组，组名直接成为生成的 `lua_embed_bundle` 结构体的字段名。每组可独立设置 `bytecode = true`。`bee_glue = true` 启用 bee 胶水层，约定 `data.preload` 注入 `_PRELOAD`、`data.main[1]` 作为入口。自动向依赖方导出 `includes` 和 `objdeps`，通过 `deps` 依赖时无需手动声明：
+**`lm:lua_embed`** — 将 Lua 文件按命名组嵌入到 C 源码中，生成一个 source_set 供其他目标依赖。`data` 下每个 key 是一个组，组名直接成为生成的 `lua_embed_bundle` 结构体的字段名。每组可独立设置 `bytecode = true`。`bee_glue = true` 启用 bee 胶水层，约定 `data.preload` 注入 `_PRELOAD`、`data.main[1]` 作为入口。自动向依赖方导出 `includes` 和 `objdeps`，通过 `deps` 依赖时无需手动声明。**完整规则（分组语义、`pattern` 语法、字节码取舍、bee_glue 契约、无胶水时的接入姿势）见 `references/advanced/lua_embed.md`**：
 
 ```lua
 lm:lua_embed "myembed" {
@@ -289,6 +289,7 @@ luamake rebuild
 | Bee 系统 API | `references/bee/bee_system.md` |
 | Bee 线程 API | `references/bee/bee_thread.md` |
 | Bee Channel API | `references/bee/bee_channel.md` |
+| `lm:lua_embed` 权威参考（分组 / pattern / bytecode / bee_glue / 自定义接入） | `references/advanced/lua_embed.md` |
 
 ### 适用边界
 

@@ -4,16 +4,23 @@
 --   config_file : Lua file (dofile), describes data groups
 --   output_c    : path to write the generated lua_embed.c
 
+local fs = require "bee.filesystem"
+
 local config_file = assert(arg[1], "arg[1]: config file required")
 local output_c    = assert(arg[2], "arg[2]: output .c path required")
--- lua_embed_data.h is written to the same directory as output_c
-local output_h    = output_c:match("^(.*)/[^/]+$") .. "/lua_embed_data.h"
+-- lua_embed_data.h is written to the same directory as output_c.
+-- Use bee.filesystem to split the path so both '/' and '\\' work, and the
+-- "no directory component" case (e.g. just "foo.c") naturally yields ".".
+local output_c_path = fs.path(output_c)
+local output_dir    = output_c_path:parent_path()
+if output_dir:string() == "" then
+    output_dir = fs.path(".")
+end
+local output_h      = (output_dir / "lua_embed_data.h"):string()
 
 local cfg = assert(dofile(config_file))
 
 -- ── helpers ──────────────────────────────────────────────────────────────────
-
-local fs = require "bee.filesystem"
 
 local function readfile(path)
     local f, err = io.open(path, "rb")
@@ -189,8 +196,9 @@ end
 
 -- ── ensure output directory exists ───────────────────────────────────────────
 
-local outdir = output_c:match("^(.*)/[^/]+$")
-if outdir then fs.create_directories(outdir) end
+if output_dir:string() ~= "." then
+    fs.create_directories(output_dir)
+end
 
 -- ── generate .c file ─────────────────────────────────────────────────────────
 

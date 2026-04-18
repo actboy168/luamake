@@ -12,7 +12,14 @@ globals.hostos = globals.hostos or require "bee.platform".os
 globals.hostshell = globals.hostshell or (function ()
     if globals.hostos == "windows" then
         if os.getenv "MSYSTEM" then
-            return "sh"
+            local function has_gcc()
+                return os.execute("command -v gcc >nul 2>&1")
+            end
+            if has_gcc() then
+                return "sh"
+            else
+                return "cmd"
+            end
         end
         return "cmd"
     end

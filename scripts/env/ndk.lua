@@ -1,6 +1,7 @@
 local globals = require "globals"
 local log = require "log"
 local fs = require "bee.filesystem"
+local fsutil = require "fsutil"
 
 local function parse_version(str)
     local version = {}
@@ -29,7 +30,7 @@ local function find_ndk()
                 local max
                 local max_ver
                 for path in fs.pairs(rootdir) do
-                    local version = path:filename():string()
+                    local version = fsutil.filename(path:string())
                     local ver = parse_version(version)
                     if not max_ver or compare_version(ver, max_ver) == 1 then
                         max_ver = ver

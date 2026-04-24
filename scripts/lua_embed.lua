@@ -21,21 +21,21 @@ end
 -- Recursively collect files under dirpath (lua_only filters to *.lua).
 function m.scan_inputs(dirpath, lua_only)
     local result = {}
-    local root = fs.path(dirpath)
-    if not fs.exists(root) then return result end
+    if not fs.exists(dirpath) then return result end
     local function recurse(base)
         for entry in fs.pairs(base) do
-            if fs.is_directory(entry) then
-                recurse(entry)
+            local estr = entry:string()
+            if fs.is_directory(estr) then
+                recurse(estr)
             else
-                local name = entry:filename():string()
+                local name = fsutil.filename(estr)
                 if not lua_only or name:match("%.lua$") then
-                    result[#result+1] = entry:string():gsub("\\", "/")
+                    result[#result+1] = estr:gsub("\\", "/")
                 end
             end
         end
     end
-    recurse(root)
+    recurse(dirpath)
     table.sort(result)
     return result
 end

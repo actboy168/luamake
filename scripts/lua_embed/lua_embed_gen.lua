@@ -6,18 +6,18 @@
 --                 (lua_embed_data.h is written alongside, in the same dir)
 
 local fs = require "bee.filesystem"
+local fsutil = require "fsutil"
 
 local config_file = assert(arg[1], "arg[1]: config file required")
 local output_c    = assert(arg[2], "arg[2]: output .c path required")
 -- lua_embed_data.h is written to the same directory as output_c.
 -- Use bee.filesystem to split the path so both '/' and '\\' work, and the
 -- "no directory component" case (e.g. just "foo.c") naturally yields ".".
-local output_c_path = fs.path(output_c)
-local output_dir    = output_c_path:parent_path()
-if output_dir:string() == "" then
-    output_dir = fs.path(".")
+local output_dir    = fsutil.parent_path(output_c)
+if not output_dir or output_dir == "" then
+    output_dir = "."
 end
-local output_h      = (output_dir / "lua_embed_data.h"):string()
+local output_h      = output_dir .. "/lua_embed_data.h"
 
 local cfg = assert(dofile(config_file))
 
@@ -136,17 +136,16 @@ end
 local function sorted_entries(dir)
     local entries = {}
     for entry in fs.pairs(dir) do
-        entries[#entries+1] = entry
+        entries[#entries+1] = entry:string()
     end
     table.sort(entries, function(a, b)
-        return a:filename():string() < b:filename():string()
+        return fsutil.filename(a) < fsutil.filename(b)
     end)
     return entries
 end
 
 local function scan_lua_dir(dirpath, patterns, mod_prefix, result, seen)
-    local root = fs.path(dirpath)
-    if not fs.exists(root) then return end
+    if not fs.exists(dirpath) then return end
     -- A unique token for this scan_lua_dir invocation. Two entries matched in
     -- the *same* directory scan can be compared by pat_idx (mirroring Lua's
     -- package.path priority). Across different scan_lua_dir calls we fall
@@ -156,7 +155,7 @@ local function scan_lua_dir(dirpath, patterns, mod_prefix, result, seen)
     local scan_token = {}
     local function recurse(base, rel_base)
         for _, entry in ipairs(sorted_entries(base)) do
-            local name = entry:filename():string()
+            local name = fsutil.filename(entry)
             local rel  = rel_base ~= "" and (rel_base .. "/" .. name) or name
             if fs.is_directory(entry) then
                 recurse(entry, rel)
@@ -171,7 +170,7 @@ local function scan_lua_dir(dirpath, patterns, mod_prefix, result, seen)
                     end
                 end
                 if modname then
-                    local abspath = entry:string():gsub("\\", "/")
+                    local abspath = entry:gsub("\\", "/")
                     local prev = seen[modname]
                     if prev then
                         -- Duplicate module name. Deterministic tie-breaker:
@@ -214,27 +213,26 @@ local function scan_lua_dir(dirpath, patterns, mod_prefix, result, seen)
             end
         end
     end
-    recurse(root, "")
+    recurse(dirpath, "")
 end
 
 local function scan_data_dir(dirpath, prefix, result)
-    local root = fs.path(dirpath)
-    if not fs.exists(root) then return end
+    if not fs.exists(dirpath) then return end
     local function recurse(base, rel_base)
         for _, entry in ipairs(sorted_entries(base)) do
-            local fname = entry:filename():string()
+            local fname = fsutil.filename(entry)
             local rel   = rel_base ~= "" and (rel_base .. "/" .. fname) or fname
             if fs.is_directory(entry) then
                 recurse(entry, rel)
             else
                 result[#result+1] = {
                     name = prefix .. rel,
-                    path = entry:string():gsub("\\", "/"),
+                    path = entry:gsub("\\", "/"),
                 }
             end
         end
     end
-    recurse(root, "")
+    recurse(dirpath, "")
 end
 
 -- ── process groups ────────────────────────────────────────────────────────────
@@ -274,7 +272,7 @@ end
 
 -- ── ensure output directory exists ───────────────────────────────────────────
 
-if output_dir:string() ~= "." then
+if output_dir ~= "." then
     fs.create_directories(output_dir)
 end
 

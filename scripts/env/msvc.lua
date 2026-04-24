@@ -80,8 +80,9 @@ local function find_winsdk()
     local function find(dir)
         local max
         for file in fs.pairs(dir.."/include") do
-            if fs.exists(file / "um" / "winsdkver.h") then
-                local version = file:filename():string()
+            local fstr = file:string()
+            if fs.exists(fsutil.join(fstr, "um", "winsdkver.h")) then
+                local version = fsutil.filename(fstr)
                 if version:sub(1, 3) == "10." then
                     if max then
                         if max < version then
@@ -272,7 +273,7 @@ local function ucrtpath(arch, optimize)
     end
     accept(path, 0)
     for p in fs.pairs(path) do
-        local version = p:filename():string():gsub("10%.0%.([0-9]+)%.0", "%1")
+        local version = fsutil.filename(p:string()):gsub("10%.0%.([0-9]+)%.0", "%1")
         version = tonumber(version)
         accept(p:string(), version)
     end
@@ -292,7 +293,7 @@ end
 local function llvmpath()
     local path = installationPath.."/VC/Tools/Llvm/x64/lib/clang/"
     for p in fs.pairs(path) do
-        local version = p:filename():string()
+        local version = fsutil.filename(p:string())
         return path..version.."/lib/windows/"
     end
 end

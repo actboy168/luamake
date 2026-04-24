@@ -1,6 +1,6 @@
 local globals = require "globals"
 local sp = require "bee.subprocess"
-local fs = require "bee.filesystem"
+local fsutil = require "fsutil"
 local writer = require "writer"
 local arguments = require "arguments"
 
@@ -12,7 +12,7 @@ local function execute(option)
         local msvc = require "env.msvc"
         option.env = msvc.getEnv()
         option.env.VS_UNICODE_OUTPUT = false
-        option.env.TMP = (fs.absolute(globals.builddir) / "tmp"):string()
+        option.env.TMP = fsutil.join(fsutil.absolute(WORKDIR, globals.builddir), "tmp")
     end
     if globals.hostshell == "cmd" then
         option[1] = { "cmd", "/c", option[1] }

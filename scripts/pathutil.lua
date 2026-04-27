@@ -14,9 +14,11 @@ local function is(path)
     return type(path) == "userdata" or (type(path) == "table" and path.__path)
 end
 
-local path_mt = {
+local path_mt
+path_mt = {
     __div = function(a, b)
-        return fsutil.join(tostring(a), tostring(b))
+        local p = fsutil.join(tostring(a), tostring(b))
+        return setmetatable({ __path = p }, path_mt)
     end,
     __tostring = function(self)
         return self.__path

@@ -1,4 +1,5 @@
-local fsutil = require "fsutil"
+local quotearg = require "quotearg"
+local platform = require "bee.platform"
 
 local function find_exe()
     local i = 0
@@ -25,26 +26,33 @@ local function update_arg()
     table.remove(arg, 1)
 
     local idx = find_exe()
-    arg[idx] = fsutil.quotearg(arg[idx]).." lua"
+    arg[idx] = quotearg(arg[idx]).." lua"
 end
 
 update_arg()
 
-local globals = require "globals"
-local sandbox = require "sandbox"
+local workdir <const> = WORKDIR
+local procdir <const> = package.procdir
+local ext = package.cpath:match("%.([a-z]+)$")
 
-if globals.os == "windows" then
-    local luadll = package.procdir.."/tools/lua55.dll"
-    --local ok, err =
-    package.loadlib(luadll, "*")
-    --if not ok then
-    --    error(("could not be found: %s\n\t%s"):format(luadll, err))
-    --end
+if platform.os == "windows" then
+    package.loadlib(procdir.."/tools/lua55.dll", "*")
 end
 
-sandbox {
-    rootdir = WORKDIR,
-    builddir = globals.builddir,
-    main = arg[0],
-    args = arg,
-}
+package.path = table.concat({
+    workdir.."/?.lua",
+    workdir.."/?/init.lua",
+    procdir.."/libs/?.lua",
+    package.path
+}, ";")
+package.cpath = table.concat({
+    workdir.."/build/bin/?."..ext,
+    package.cpath
+}, ";")
+
+local f, err = loadfile(arg[0])
+if not f then
+    error(err)
+end
+
+f(table.unpack(arg))

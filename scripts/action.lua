@@ -106,9 +106,11 @@ if globals.perf then
     end
     return {
         init = perf_init,
+        import = import,
         generate = perf_generate,
         build = perf_build,
         clean = perf_clean,
+        execute = execute,
     }
 end
 

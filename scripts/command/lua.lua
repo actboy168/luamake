@@ -50,7 +50,12 @@ package.cpath = table.concat({
     package.cpath
 }, ";")
 
-local f, err = loadfile(arg[0])
+local fs = require "bee.filesystem"
+local script = fs.path(arg[0])
+if script:is_relative() then
+    script = fs.absolute(fs.path(workdir) / script)
+end
+local f, err = loadfile(script:string())
 if not f then
     error(err)
 end

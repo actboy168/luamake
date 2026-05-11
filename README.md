@@ -52,6 +52,12 @@ msvc > compile/build.bat -t clean
 other> compile/build.sh -t clean
 ```
 
+compile lua2c (single binary with embedded scripts)
+```
+msvc > compile/build.bat lua2c
+other> compile/build.sh lua2c
+```
+
 ## Quick Start
 
 Create file `make.lua`. For example, this is a `make.lua` to compile lua:

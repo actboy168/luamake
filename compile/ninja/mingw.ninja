@@ -4,7 +4,7 @@ bin = $builddir/bin
 obj = $builddir/obj
 cc = gcc
 ar = ar
-luamake = luamake
+luamake = $bin/bootstrap.exe
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
     -Ibee.lua/3rd/lua55 -D_WIN32_WINNT=0x0602 -DMAKE_LIB -DLUA_BUILD_AS_DLL $
@@ -169,7 +169,7 @@ rule test
   description = Run test.
   pool = console
 rule runlua
-  command = $luamake lua $script bee.lua/3rd/lua55 $out luamake.exe
+  command = $luamake $script bee.lua/3rd/lua55 $out luamake.exe
   description = lua $script bee.lua/3rd/lua55 $out luamake.exe
 rule c_lua55
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -DNDEBUG -o $out -c $in
@@ -180,6 +180,41 @@ build $obj/lua55/forward_lua.obj: c_lua55 compile/lua/forward_lua.c
 rule link_lua55
   command = $cc --shared $in -o $out -lstdc++ -s
   description = Link    Dll $out
+rule lua_embed
+  command = $luamake scripts/lua_embed/lua_embed_gen.lua $config $out_c
+  description = lua_embed $config
+  restat = 1
+rule c_luamake_embed
+  command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall $
+    -Ibuild/mingw/lua_embed/luamake_embed -Itools/lua55 -DNDEBUG -o $out -c $
+    $in
+  description = Compile C   $out
+  deps = gcc
+  depfile = $out.d
+build $obj/luamake_embed/lua_embed.obj: c_luamake_embed $
+    build/mingw/lua_embed/luamake_embed/lua_embed.c | $
+    __lua_embed_gen_luamake_embed__
+build $obj/luamake_embed/bee_glue.obj: c_luamake_embed $
+    scripts/lua_embed/bee_glue.c | __lua_embed_gen_luamake_embed__
+build $obj/standalone/bootstrap.obj: rc_bootstrap $
+    bee.lua/bootstrap/bootstrap.rc | __lua_embed_gen_luamake_embed__
+rule cxx_standalone
+  command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
+    -Ibee.lua/3rd/lua55 -Ibee.lua -Icompile/ninja $
+    -Ibuild/mingw/lua_embed/luamake_embed -DNDEBUG -o $out -c $in
+  description = Compile C++ $out
+  deps = gcc
+  depfile = $out.d
+build $obj/standalone/bootstrap_init.obj: cxx_standalone $
+    bee.lua/bootstrap/bootstrap_init.cpp | __lua_embed_gen_luamake_embed__
+build $obj/standalone/main.obj: cxx_standalone bee.lua/bootstrap/main.cpp | $
+    __lua_embed_gen_luamake_embed__
+rule link_standalone
+  command = sh -c "$cc @$out.rsp -o $out -lntdll -lws2_32 -lole32 -luser32 $
+    -lversion -lsynchronization -luuid -lstdc++fs -lstdc++ -s"
+  description = Link    Exe $out
+  rspfile = $out.rsp
+  rspfile_content = $in
 build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
     $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
     $obj/source_bee/async.obj $obj/source_bee/async_win.obj $
@@ -224,11 +259,64 @@ build luamake.exe: copy | $bin/bootstrap.exe
   input = $bin/bootstrap.exe
 build compile/lua/forward_lua.c: runlua bee.lua/3rd/lua55/lauxlib.h $
     bee.lua/3rd/lua55/lua.h bee.lua/3rd/lua55/lualib.h | copy_luamake $
-    compile/lua/forward_lua.lua
+    compile/lua/forward_lua.lua bootstrap
   script = compile/lua/forward_lua.lua
 build $bin/lua55.dll: link_lua55 $obj/lua55/forward_lua.obj
 build tools/lua55.dll: copy | $bin/lua55.dll
   input = $bin/lua55.dll
+build $builddir/lua_embed/luamake_embed/lua_embed.c $
+    $builddir/lua_embed/luamake_embed/lua_embed_data.h: lua_embed $
+    build/mingw/lua_embed/luamake_embed/config.lua main.lua $
+    scripts/action.lua scripts/arguments.lua scripts/command.lua $
+    scripts/command/build.lua scripts/command/clean.lua $
+    scripts/command/help.lua scripts/command/init.lua $
+    scripts/command/lua.lua scripts/command/rebuild.lua $
+    scripts/command/shell.lua scripts/command/test.lua $
+    scripts/command/version.lua scripts/compiler/clang.lua $
+    scripts/compiler/emcc.lua scripts/compiler/gcc.lua $
+    scripts/compiler/gcc_opt.lua scripts/compiler/msvc.lua $
+    scripts/compiler/wasi.lua scripts/env/msvc.lua scripts/env/ndk.lua $
+    scripts/env/wasi.lua scripts/fsutil.lua scripts/glob.lua $
+    scripts/globals.lua scripts/log.lua scripts/lua_def.lua $
+    scripts/lua_embed.lua scripts/lua_embed/lua_embed_gen.lua $
+    scripts/lua_embed/lua_embed_gen.lua scripts/lua_support.lua $
+    scripts/main.lua scripts/ninja_syntax.lua scripts/ninja_writer.lua $
+    scripts/os_arch.lua scripts/pathutil.lua scripts/perf.lua $
+    scripts/quotearg.lua scripts/sandbox.lua scripts/version.lua $
+    scripts/workspace.lua scripts/writer.lua | bootstrap
+  config = build/mingw/lua_embed/luamake_embed/config.lua
+  out_c = build/mingw/lua_embed/luamake_embed/lua_embed.c
+build $bin/standalone.exe: link_standalone $obj/standalone/bootstrap.obj $
+    $obj/standalone/bootstrap_init.obj $obj/standalone/main.obj $
+    $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
+    $obj/source_bee/async.obj $obj/source_bee/async_win.obj $
+    $obj/source_bee/nanoid.obj $obj/source_bee/handler_win.obj $
+    $obj/source_bee/stacktrace_win.obj $obj/source_bee/unwind_win.obj $
+    $obj/source_bee/filewatch_win.obj $obj/source_bee/error.obj $
+    $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
+    $obj/source_bee/bpoll_win.obj $obj/source_bee/endpoint.obj $
+    $obj/source_bee/event.obj $obj/source_bee/socket.obj $
+    $obj/source_bee/uds_win.obj $obj/source_bee/process_select.obj $
+    $obj/source_bee/subprocess_win.obj $obj/source_bee/file_handle.obj $
+    $obj/source_bee/file_handle_win.obj $obj/source_bee/path_win.obj $
+    $obj/source_bee/atomic_sync.obj $obj/source_bee/setname.obj $
+    $obj/source_bee/simplethread_win.obj $obj/source_bee/spinlock.obj $
+    $obj/source_bee/version.obj $obj/source_bee/afd.obj $
+    $obj/source_bee/poller.obj $obj/source_bee/poller_fd.obj $
+    $obj/source_bee/module_version.obj $obj/source_bee/unicode.obj $
+    $obj/source_bee/wtf8.obj $obj/source_bee/bee_newstate.obj $
+    $obj/source_bee/lua_async.obj $obj/source_bee/lua_channel.obj $
+    $obj/source_bee/lua_crash.obj $obj/source_bee/lua_debugging.obj $
+    $obj/source_bee/lua_epoll.obj $obj/source_bee/lua_filesystem.obj $
+    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
+    $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
+    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
+    $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
+    $obj/source_bee/lua_time.obj $obj/source_bee/lua_windows.obj $
+    $obj/source_lua/onelua.obj $obj/luamake_embed/lua_embed.obj $
+    $obj/luamake_embed/bee_glue.obj $obj/bee_utf8_crt/bee_utf8_crt.obj
+build luamake_lua2c.exe: copy | $bin/standalone.exe
+  input = $bin/standalone.exe
 build bootstrap: phony $bin/bootstrap.exe
 build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp
@@ -238,4 +326,10 @@ build forward_lua: phony compile/lua/forward_lua.c
 build lua55: phony $bin/lua55.dll
 build copy_lua: phony tools/lua55.dll
 build notest: phony copy_luamake copy_mainlua copy_lua
+build __lua_embed_gen_luamake_embed__: phony $
+    $builddir/lua_embed/luamake_embed/lua_embed.c $
+    $builddir/lua_embed/luamake_embed/lua_embed_data.h
+build standalone: phony $bin/standalone.exe
+build copy_standalone: phony luamake_lua2c.exe
+build lua2c: phony copy_standalone copy_mainlua copy_lua
 default test notest

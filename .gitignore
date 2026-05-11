@@ -2,6 +2,8 @@
 /build/
 /luamake
 /luamake.exe
+/luamake_lua2c
+/luamake_lua2c.exe
 /tools/lua54.dll
 /tools/lua55.dll
 /.ninja_log

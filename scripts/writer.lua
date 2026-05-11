@@ -552,14 +552,24 @@ function GEN.runlua(attribute, name)
     local outputs = attribute.outputs or {}
     local implicit_inputs = getImplicitInputs(name, attribute)
     implicit_inputs[#implicit_inputs+1] = script
+    if globals.prebuilt then
+        implicit_inputs[#implicit_inputs+1] = "bootstrap"
+    end
 
+    -- In prebuilt mode $luamake = $bin/bootstrap, which is a generic Lua
+    -- runner (bee.lua/bootstrap/main.lua) that executes scripts via loadfile.
+    -- Calling it as "$luamake lua $script" would fail because the bootstrap
+    -- main.lua would try loadfile("lua").  Pass the script directly instead.
+    -- In non-prebuilt mode $luamake is a full luamake binary that needs the
+    -- "lua" subcommand to dispatch into scripts/command/lua.lua.
+    local lua_prefix = globals.prebuilt and "" or "lua "
     if attribute.args then
         local command = reslove_args(attribute.args)
-        ninja:rule("runlua", "$luamake lua $script "..command, {
+        ninja:rule("runlua", "$luamake " .. lua_prefix .. "$script "..command, {
             description = "lua $script "..command
         })
     else
-        ninja:rule("runlua", "$luamake lua $script", {
+        ninja:rule("runlua", "$luamake " .. lua_prefix .. "$script", {
             description = "lua $script"
         })
     end
@@ -837,7 +847,8 @@ function m.generate()
     end
 
     if globals.prebuilt then
-        ninja:variable("luamake", "luamake")
+        local exe = globals.os == "windows" and ".exe" or ""
+        ninja:variable("luamake", "$bin/bootstrap" .. exe)
     else
         ninja:variable("luamake", get_luamake())
         ninja:rule("configure", "$luamake init "..configure_args(), { generator = 1 })
@@ -921,20 +932,27 @@ function api.lua_embed(global_attribute, name)
         local config_path = lua_embed.write_config(outdir, local_attribute, rootdir)
 
         -- collect inputs for ninja tracking
-        local inputs = lua_embed.collect_inputs(local_attribute, rootdir, config_path)
+        local inputs = lua_embed.collect_inputs(local_attribute, rootdir, config_path, globals.workdir)
 
         -- emit shared rule + build edge
-        ninja:rule("lua_embed", "$luamake lua " .. fsutil.quotearg(lua_embed.GEN_SCRIPT) .. " $config $out_c", {
+        -- Same bootstrap/luamake dispatch as runlua (see comment there).
+        local lua_prefix = globals.prebuilt and "" or "lua "
+        local gen_script_rel = fsutil.relative(lua_embed.GEN_SCRIPT, globals.workdir)
+        ninja:rule("lua_embed", "$luamake " .. lua_prefix .. fsutil.quotearg(gen_script_rel) .. " $config $out_c", {
             description = "lua_embed $config",
             restat = 1,
         })
         local outputs = { out_c_ninja, out_h_ninja }
-        ninja:build(outputs, inputs, {
+        local build_args = {
             variables = {
                 config = fsutil.quotearg(config_path),
                 out_c  = fsutil.quotearg(out_c),
             },
-        })
+        }
+        if globals.prebuilt then
+            build_args.implicit_inputs = "bootstrap"
+        end
+        ninja:build(outputs, inputs, build_args)
 
         -- gen_name aggregates both generated outputs (.c and .h)
         log.assert(loaded_target[gen_name] == nil, "`%s`: redefinition.", gen_name)
@@ -959,7 +977,7 @@ function api.lua_embed(global_attribute, name)
         -- 追加 lua_embed 自己构造的路径（已经是 WORKDIR 相对路径）
         local sources = { out_c }
         if use_bee then
-            sources[#sources+1] = lua_embed.BEE_GLUE
+            sources[#sources+1] = fsutil.relative(lua_embed.BEE_GLUE, globals.workdir)
         end
 
         attribute.includes = attribute.includes or {}

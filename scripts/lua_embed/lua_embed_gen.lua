@@ -6,17 +6,12 @@
 --                 (lua_embed_data.h is written alongside, in the same dir)
 
 local fs = require "bee.filesystem"
-local fsutil = require "fsutil"
 
 local config_file = assert(arg[1], "arg[1]: config file required")
 local output_c    = assert(arg[2], "arg[2]: output .c path required")
 -- lua_embed_data.h is written to the same directory as output_c.
--- Use bee.filesystem to split the path so both '/' and '\\' work, and the
--- "no directory component" case (e.g. just "foo.c") naturally yields ".".
-local output_dir    = fsutil.parent_path(output_c)
-if not output_dir or output_dir == "" then
-    output_dir = "."
-end
+-- Pure-Lua path split: works with both '/' and '\\' separators.
+local output_dir    = output_c:match("^(.*)[/\\][^/\\]+$") or "."
 local output_h      = output_dir .. "/lua_embed_data.h"
 
 local cfg = assert(dofile(config_file))
@@ -139,7 +134,9 @@ local function sorted_entries(dir)
         entries[#entries+1] = entry:string()
     end
     table.sort(entries, function(a, b)
-        return fsutil.filename(a) < fsutil.filename(b)
+        local fa = a:match("[^/\\]+$") or a
+        local fb = b:match("[^/\\]+$") or b
+        return fa < fb
     end)
     return entries
 end
@@ -155,7 +152,7 @@ local function scan_lua_dir(dirpath, patterns, mod_prefix, result, seen)
     local scan_token = {}
     local function recurse(base, rel_base)
         for _, entry in ipairs(sorted_entries(base)) do
-            local name = fsutil.filename(entry)
+            local name = entry:match("[^/\\]+$") or entry
             local rel  = rel_base ~= "" and (rel_base .. "/" .. name) or name
             if fs.is_directory(entry) then
                 recurse(entry, rel)
@@ -220,7 +217,7 @@ local function scan_data_dir(dirpath, prefix, result)
     if not fs.exists(dirpath) then return end
     local function recurse(base, rel_base)
         for _, entry in ipairs(sorted_entries(base)) do
-            local fname = fsutil.filename(entry)
+            local fname = entry:match("[^/\\]+$") or entry
             local rel   = rel_base ~= "" and (rel_base .. "/" .. fname) or fname
             if fs.is_directory(entry) then
                 recurse(entry, rel)

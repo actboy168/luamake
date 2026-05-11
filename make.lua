@@ -62,32 +62,18 @@ lm:default {
     "notest",
 }
 
--- Standalone build: single binary with scripts embedded.
-if lm.prebuilt then
-    lm:source_set "luamake_embed" {
-        includes = {
-            "compile/ninja",
-            "bee.lua/3rd/lua"..lm.lua,
+lm:lua_embed "luamake_embed" {
+    bee_glue = true,
+    data = {
+        main = {
+            "main.lua",
         },
-        sources = {
-            "compile/ninja/lua_embed.c",
-            "scripts/lua_embed/bee_glue.c",
+        preload = {
+            { dir = "scripts", prefix = "", pattern = "?.lua;?/init.lua" },
         },
-    }
-else
-    lm:lua_embed "luamake_embed" {
-        bee_glue = true,
-        data = {
-            main = {
-                "main.lua",
-            },
-            preload = {
-                { dir = "scripts", prefix = "", pattern = "?.lua;?/init.lua" },
-            },
-            data = {},
-        },
-    }
-end
+        data = {},
+    },
+}
 
 lm:executable "standalone" {
     bindir = "$bin",
@@ -112,9 +98,24 @@ lm:executable "standalone" {
         defines = "LUA_USE_MACOSX",
     },
     windows = {
+        deps = "bee_utf8_crt",
         sources = "bee.lua/bootstrap/bootstrap.rc",
     },
     msvc = {
         ldflags = "/IMPLIB:$obj/standalone.lib",
     },
+}
+
+lm:copy "copy_standalone" {
+    inputs = "$bin/standalone"..exe,
+    outputs = "luamake_lua2c"..exe,
+    deps = "standalone",
+}
+
+lm:phony "lua2c" {
+    deps = {
+        "copy_standalone",
+        "copy_mainlua",
+        isWindows and "copy_lua",
+    }
 }

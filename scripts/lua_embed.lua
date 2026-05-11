@@ -163,8 +163,14 @@ function m.write_config(outdir, attribute, rootdir)
 end
 
 -- Collect all input files for Ninja dependency tracking.
-function m.collect_inputs(attribute, rootdir, config_path)
-    local inputs = { GEN_SCRIPT }
+function m.collect_inputs(attribute, rootdir, config_path, workdir)
+    local function torel(p)
+        if workdir then
+            return fsutil.relative(p, workdir)
+        end
+        return p
+    end
+    local inputs = { torel(GEN_SCRIPT) }
     if config_path then
         inputs[#inputs+1] = config_path
     end

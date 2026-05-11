@@ -4,7 +4,7 @@ bin = $builddir/bin
 obj = $builddir/obj
 cc = clang
 ar = ar
-luamake = luamake
+luamake = $bin/bootstrap
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
     -Ibee.lua/3rd/lua55 -DMAKE_LIB -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
@@ -142,26 +142,33 @@ rule test
   command = $bin/bootstrap bee.lua/test/test.lua --touch $out
   description = Run test.
   pool = console
+rule lua_embed
+  command = $luamake scripts/lua_embed/lua_embed_gen.lua $config $out_c
+  description = lua_embed $config
+  restat = 1
 rule c_luamake_embed
   command = $cc -MMD -MT $out -MF $out.d  -O2 -Wall -fvisibility=hidden $
-    -Icompile/ninja -Ibee.lua/3rd/lua55 -DNDEBUG -o $out -c $in
+    -Ibuild/openbsd/lua_embed/luamake_embed -Itools/lua55 -DNDEBUG -o $out $
+    -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
 build $obj/luamake_embed/lua_embed.obj: c_luamake_embed $
-    compile/ninja/lua_embed.c
+    build/openbsd/lua_embed/luamake_embed/lua_embed.c | $
+    __lua_embed_gen_luamake_embed__
 build $obj/luamake_embed/bee_glue.obj: c_luamake_embed $
-    scripts/lua_embed/bee_glue.c
+    scripts/lua_embed/bee_glue.c | __lua_embed_gen_luamake_embed__
 rule cxx_standalone
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -Ibee.lua/3rd/lua55 -Ibee.lua -Icompile/ninja $
-    -DNDEBUG -o $out -c $in
+    -Ibuild/openbsd/lua_embed/luamake_embed -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
 build $obj/standalone/bootstrap_init.obj: cxx_standalone $
-    bee.lua/bootstrap/bootstrap_init.cpp
-build $obj/standalone/main.obj: cxx_standalone bee.lua/bootstrap/main.cpp
+    bee.lua/bootstrap/bootstrap_init.cpp | __lua_embed_gen_luamake_embed__
+build $obj/standalone/main.obj: cxx_standalone bee.lua/bootstrap/main.cpp | $
+    __lua_embed_gen_luamake_embed__
 rule link_standalone
   command = $cc $in -o $out -l:libinotify.a -L/usr/local/lib/inotify $
     -pthread -lstdc++ -Wl,-S,-x
@@ -203,6 +210,28 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     $bin/bootstrap copy_script
 build luamake: copy | $bin/bootstrap
   input = $bin/bootstrap
+build $builddir/lua_embed/luamake_embed/lua_embed.c $
+    $builddir/lua_embed/luamake_embed/lua_embed_data.h: lua_embed $
+    build/openbsd/lua_embed/luamake_embed/config.lua main.lua $
+    scripts/action.lua scripts/arguments.lua scripts/command.lua $
+    scripts/command/build.lua scripts/command/clean.lua $
+    scripts/command/help.lua scripts/command/init.lua $
+    scripts/command/lua.lua scripts/command/rebuild.lua $
+    scripts/command/shell.lua scripts/command/test.lua $
+    scripts/command/version.lua scripts/compiler/clang.lua $
+    scripts/compiler/emcc.lua scripts/compiler/gcc.lua $
+    scripts/compiler/gcc_opt.lua scripts/compiler/msvc.lua $
+    scripts/compiler/wasi.lua scripts/env/msvc.lua scripts/env/ndk.lua $
+    scripts/env/wasi.lua scripts/fsutil.lua scripts/glob.lua $
+    scripts/globals.lua scripts/log.lua scripts/lua_def.lua $
+    scripts/lua_embed.lua scripts/lua_embed/lua_embed_gen.lua $
+    scripts/lua_embed/lua_embed_gen.lua scripts/lua_support.lua $
+    scripts/main.lua scripts/ninja_syntax.lua scripts/ninja_writer.lua $
+    scripts/os_arch.lua scripts/pathutil.lua scripts/perf.lua $
+    scripts/quotearg.lua scripts/sandbox.lua scripts/version.lua $
+    scripts/workspace.lua scripts/writer.lua | bootstrap
+  config = build/openbsd/lua_embed/luamake_embed/config.lua
+  out_c = build/openbsd/lua_embed/luamake_embed/lua_embed.c
 build $bin/standalone: link_standalone $obj/standalone/bootstrap_init.obj $
     $obj/standalone/main.obj $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/async.obj $
@@ -227,11 +256,18 @@ build $bin/standalone: link_standalone $obj/standalone/bootstrap_init.obj $
     $obj/source_bee/lua_thread.obj $obj/source_bee/lua_time.obj $
     $obj/source_lua/onelua.obj $obj/luamake_embed/lua_embed.obj $
     $obj/luamake_embed/bee_glue.obj
+build luamake_lua2c: copy | $bin/standalone
+  input = $bin/standalone
 build bootstrap: phony $bin/bootstrap
 build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp
 build copy_mainlua: phony $bin/main.lua
 build copy_luamake: phony luamake
 build notest: phony copy_luamake copy_mainlua
+build __lua_embed_gen_luamake_embed__: phony $
+    $builddir/lua_embed/luamake_embed/lua_embed.c $
+    $builddir/lua_embed/luamake_embed/lua_embed_data.h
 build standalone: phony $bin/standalone
+build copy_standalone: phony luamake_lua2c
+build lua2c: phony copy_standalone copy_mainlua
 default test notest

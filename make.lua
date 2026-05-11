@@ -61,3 +61,60 @@ lm:default {
     "test",
     "notest",
 }
+
+-- Standalone build: single binary with scripts embedded.
+if lm.prebuilt then
+    lm:source_set "luamake_embed" {
+        includes = {
+            "compile/ninja",
+            "bee.lua/3rd/lua"..lm.lua,
+        },
+        sources = {
+            "compile/ninja/lua_embed.c",
+            "scripts/lua_embed/bee_glue.c",
+        },
+    }
+else
+    lm:lua_embed "luamake_embed" {
+        bee_glue = true,
+        data = {
+            main = {
+                "main.lua",
+            },
+            preload = {
+                { dir = "scripts", prefix = "", pattern = "?.lua;?/init.lua" },
+            },
+            data = {},
+        },
+    }
+end
+
+lm:executable "standalone" {
+    bindir = "$bin",
+    deps = { "source_bee", "source_lua", "luamake_embed" },
+    includes = {
+        "bee.lua/3rd/lua"..lm.lua,
+        "bee.lua",
+        lm.prebuilt and "compile/ninja",
+    },
+    sources = {
+        "bee.lua/bootstrap/main.cpp",
+        "bee.lua/bootstrap/bootstrap_init.cpp",
+    },
+    cxx = "c++17",
+    rtti = "off",
+    linux = {
+        defines = "LUA_USE_LINUX",
+        links = { "m", "dl" },
+        ldflags = "-Wl,-E",
+    },
+    macos = {
+        defines = "LUA_USE_MACOSX",
+    },
+    windows = {
+        sources = "bee.lua/bootstrap/bootstrap.rc",
+    },
+    msvc = {
+        ldflags = "/IMPLIB:$obj/standalone.lib",
+    },
+}

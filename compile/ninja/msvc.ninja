@@ -3,7 +3,6 @@ builddir = build/msvc
 bin = $builddir/bin
 obj = $builddir/obj
 cc = cl
-ml = ml64
 luamake = luamake
 rule c_source_lua
   command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
@@ -184,6 +183,34 @@ rule link_lua55
   restat = 1
   rspfile = $out.rsp
   rspfile_content = $in_newline
+rule c_luamake_embed
+  command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Icompile/ninja $
+    /Ibee.lua/3rd/lua55 /DNDEBUG 
+  description = Compile C   $out
+  deps = msvc
+build $obj/luamake_embed/lua_embed.obj: c_luamake_embed $
+    compile/ninja/lua_embed.c
+build $obj/luamake_embed/bee_glue.obj: c_luamake_embed $
+    scripts/lua_embed/bee_glue.c
+build $obj/standalone/bootstrap.obj: rc_bootstrap $
+    bee.lua/bootstrap/bootstrap.rc
+rule cxx_standalone
+  command = $cc /nologo /showIncludes -c $in /Fo$out /EHsc /Zc:__cplusplus $
+    /O2 /Zc:inline /W3 /permissive- /MD /GL /Ibee.lua/3rd/lua55 /Ibee.lua $
+    /Icompile/ninja /DNDEBUG /std:c++17 /GR-
+  description = Compile C++ $out
+  deps = msvc
+build $obj/standalone/bootstrap_init.obj: cxx_standalone $
+    bee.lua/bootstrap/bootstrap_init.cpp
+build $obj/standalone/main.obj: cxx_standalone bee.lua/bootstrap/main.cpp
+rule link_standalone
+  command = $cc /nologo @$out.rsp /link /IMPLIB:$obj/standalone.lib $
+    ntdll.lib ws2_32.lib ole32.lib user32.lib version.lib $
+    synchronization.lib /DEBUG:NONE /INCREMENTAL:NO /LTCG /out:$out
+  description = Link    Exe $out
+  rspfile = $out.rsp
+  rspfile_content = $in_newline
 build $bin/bootstrap.exe: link_bootstrap $obj/bootstrap/bootstrap.obj $
     $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
     $obj/source_bee/async.obj $obj/source_bee/async_win.obj $
@@ -235,6 +262,35 @@ build $bin/lua55.dll | $obj/lua55/lua55.lib: link_lua55 $
   implib = $obj/lua55/lua55.lib
 build tools/lua55.dll: copy | $obj/lua55/lua55.lib $bin/lua55.dll
   input = $bin/lua55.dll
+build $bin/standalone.exe: link_standalone $obj/standalone/bootstrap.obj $
+    $obj/standalone/bootstrap_init.obj $obj/standalone/main.obj $
+    $obj/source_bee/lua-seri.obj $obj/source_bee/format.obj $
+    $obj/source_bee/async.obj $obj/source_bee/async_win.obj $
+    $obj/source_bee/nanoid.obj $obj/source_bee/handler_win.obj $
+    $obj/source_bee/stacktrace_win.obj $obj/source_bee/unwind_win.obj $
+    $obj/source_bee/filewatch_win.obj $obj/source_bee/error.obj $
+    $obj/source_bee/file.obj $obj/source_bee/luaref.obj $
+    $obj/source_bee/bpoll_win.obj $obj/source_bee/endpoint.obj $
+    $obj/source_bee/event.obj $obj/source_bee/socket.obj $
+    $obj/source_bee/uds_win.obj $obj/source_bee/process_select.obj $
+    $obj/source_bee/subprocess_win.obj $obj/source_bee/file_handle.obj $
+    $obj/source_bee/file_handle_win.obj $obj/source_bee/path_win.obj $
+    $obj/source_bee/atomic_sync.obj $obj/source_bee/setname.obj $
+    $obj/source_bee/simplethread_win.obj $obj/source_bee/spinlock.obj $
+    $obj/source_bee/version.obj $obj/source_bee/afd.obj $
+    $obj/source_bee/poller.obj $obj/source_bee/poller_fd.obj $
+    $obj/source_bee/module_version.obj $obj/source_bee/unicode.obj $
+    $obj/source_bee/wtf8.obj $obj/source_bee/bee_newstate.obj $
+    $obj/source_bee/lua_async.obj $obj/source_bee/lua_channel.obj $
+    $obj/source_bee/lua_crash.obj $obj/source_bee/lua_debugging.obj $
+    $obj/source_bee/lua_epoll.obj $obj/source_bee/lua_filesystem.obj $
+    $obj/source_bee/lua_filewatch.obj $obj/source_bee/lua_platform.obj $
+    $obj/source_bee/lua_select.obj $obj/source_bee/lua_serialization.obj $
+    $obj/source_bee/lua_socket.obj $obj/source_bee/lua_subprocess.obj $
+    $obj/source_bee/lua_sys.obj $obj/source_bee/lua_thread.obj $
+    $obj/source_bee/lua_time.obj $obj/source_bee/lua_windows.obj $
+    $obj/source_lua/onelua.obj $obj/luamake_embed/lua_embed.obj $
+    $obj/luamake_embed/bee_glue.obj
 build bootstrap: phony $bin/bootstrap.exe
 build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp
@@ -244,4 +300,5 @@ build forward_lua: phony compile/lua/forward_lua.c
 build lua55: phony $bin/lua55.dll
 build copy_lua: phony tools/lua55.dll
 build notest: phony copy_luamake copy_mainlua copy_lua
+build standalone: phony $bin/standalone.exe
 default test notest

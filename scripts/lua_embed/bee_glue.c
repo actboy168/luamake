@@ -23,8 +23,10 @@
 /* Load a lua_embed_entry (passed as lightuserdata) and return a function. */
 static int load_entry(lua_State* L) {
     const lua_embed_entry* e = (const lua_embed_entry*)lua_touserdata(L, 1);
-    if (luaL_loadbuffer(L, e->data, e->size, e->name) != LUA_OK)
+    lua_pushfstring(L, "@%s", e->name);
+    if (luaL_loadbuffer(L, e->data, e->size, lua_tostring(L, -1)) != LUA_OK)
         return lua_error(L);
+    lua_remove(L, -2);
     return 1;
 }
 
@@ -123,8 +125,10 @@ LUA_EMBED_EXPORT int _bee_main(lua_State* L) {
         lua_pushstring(L, "lua_embed: no main entry configured");
         return lua_error(L);
     }
-    if (luaL_loadbuffer(L, m->data, m->size, m->name) != LUA_OK)
+    lua_pushfstring(L, "@%s", m->name);
+    if (luaL_loadbuffer(L, m->data, m->size, lua_tostring(L, -1)) != LUA_OK)
         return lua_error(L);
+    lua_remove(L, -2);
     if (lua_pcall(L, 0, 0, 0) != LUA_OK)
         return lua_error(L);
     return 0;

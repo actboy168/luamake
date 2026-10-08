@@ -5,21 +5,27 @@ obj = $builddir/obj
 cc = gcc
 ar = ar
 luamake = $bin/bootstrap
+rule copy
+  command = cp -fv $in$input $out 1>/dev/null
+  description = Copy $in$input $out
+  restat = 1
 rule c_source_lua
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -Ibee.lua/3rd/lua55 -DMAKE_LIB -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
+    -I$builddir/patched/lua55 -Ibee.lua/3rd/lua-patch -DMAKE_LIB $
+    -DLUA_USE_LINUX -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
-build $obj/source_lua/onelua.obj: c_source_lua bee.lua/3rd/lua55/onelua.c
+build $obj/source_lua/onelua.obj: c_source_lua $
+    $builddir/patched/lua55/onelua.c | apply_lua_patch
 rule cxx_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -fvisibility=hidden -Ibee.lua/3rd/lua55 -DNDEBUG -o $out -c $in
+    -fvisibility=hidden -I$builddir/patched/lua55 -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/lua-seri.obj: cxx_source_bee $
-    bee.lua/3rd/lua-seri/lua-seri.cpp
+    bee.lua/3rd/lua-seri/lua-seri.cpp | apply_lua_patch
 rule cxx_source_bee_1
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
     -fvisibility=hidden -DNDEBUG -o $out -c $in
@@ -29,115 +35,118 @@ rule cxx_source_bee_1
 build $obj/source_bee/format.obj: cxx_source_bee_1 bee.lua/3rd/fmt/format.cc
 rule cxx_source_bee_2
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -fvisibility=hidden -Ibee.lua -Ibee.lua/3rd/lua55 -isystem $
+    -fvisibility=hidden -Ibee.lua -I$builddir/patched/lua55 -isystem $
     /usr/pkg/include -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
-build $obj/source_bee/async.obj: cxx_source_bee_2 bee.lua/bee/async/async.cpp
+build $obj/source_bee/async.obj: cxx_source_bee_2 $
+    bee.lua/bee/async/async.cpp | apply_lua_patch
 build $obj/source_bee/async_bsd.obj: cxx_source_bee_2 $
-    bee.lua/bee/async/async_bsd.cpp
+    bee.lua/bee/async/async_bsd.cpp | apply_lua_patch
 build $obj/source_bee/nanoid.obj: cxx_source_bee_2 $
-    bee.lua/bee/crash/nanoid.cpp
+    bee.lua/bee/crash/nanoid.cpp | apply_lua_patch
 build $obj/source_bee/filewatch_bsd.obj: cxx_source_bee_2 $
-    bee.lua/bee/filewatch/filewatch_bsd.cpp
-build $obj/source_bee/error.obj: cxx_source_bee_2 bee.lua/bee/lua/error.cpp
-build $obj/source_bee/file.obj: cxx_source_bee_2 bee.lua/bee/lua/file.cpp
-build $obj/source_bee/luaref.obj: cxx_source_bee_2 bee.lua/bee/lua/luaref.cpp
+    bee.lua/bee/filewatch/filewatch_bsd.cpp | apply_lua_patch
+build $obj/source_bee/error.obj: cxx_source_bee_2 bee.lua/bee/lua/error.cpp $
+    | apply_lua_patch
+build $obj/source_bee/file.obj: cxx_source_bee_2 bee.lua/bee/lua/file.cpp | $
+    apply_lua_patch
+build $obj/source_bee/luaref.obj: cxx_source_bee_2 $
+    bee.lua/bee/lua/luaref.cpp | apply_lua_patch
 build $obj/source_bee/bpoll_bsd.obj: cxx_source_bee_2 $
-    bee.lua/bee/net/bpoll_bsd.cpp
+    bee.lua/bee/net/bpoll_bsd.cpp | apply_lua_patch
 build $obj/source_bee/endpoint.obj: cxx_source_bee_2 $
-    bee.lua/bee/net/endpoint.cpp
-build $obj/source_bee/event.obj: cxx_source_bee_2 bee.lua/bee/net/event.cpp
-build $obj/source_bee/socket.obj: cxx_source_bee_2 bee.lua/bee/net/socket.cpp
+    bee.lua/bee/net/endpoint.cpp | apply_lua_patch
+build $obj/source_bee/event.obj: cxx_source_bee_2 bee.lua/bee/net/event.cpp $
+    | apply_lua_patch
+build $obj/source_bee/socket.obj: cxx_source_bee_2 $
+    bee.lua/bee/net/socket.cpp | apply_lua_patch
 build $obj/source_bee/process_select.obj: cxx_source_bee_2 $
-    bee.lua/bee/subprocess/process_select.cpp
+    bee.lua/bee/subprocess/process_select.cpp | apply_lua_patch
 build $obj/source_bee/subprocess_posix.obj: cxx_source_bee_2 $
-    bee.lua/bee/subprocess/subprocess_posix.cpp
+    bee.lua/bee/subprocess/subprocess_posix.cpp | apply_lua_patch
 build $obj/source_bee/file_handle.obj: cxx_source_bee_2 $
-    bee.lua/bee/sys/file_handle.cpp
+    bee.lua/bee/sys/file_handle.cpp | apply_lua_patch
 build $obj/source_bee/file_handle_bsd.obj: cxx_source_bee_2 $
-    bee.lua/bee/sys/file_handle_bsd.cpp
+    bee.lua/bee/sys/file_handle_bsd.cpp | apply_lua_patch
 build $obj/source_bee/file_handle_posix.obj: cxx_source_bee_2 $
-    bee.lua/bee/sys/file_handle_posix.cpp
+    bee.lua/bee/sys/file_handle_posix.cpp | apply_lua_patch
 build $obj/source_bee/path_bsd.obj: cxx_source_bee_2 $
-    bee.lua/bee/sys/path_bsd.cpp
+    bee.lua/bee/sys/path_bsd.cpp | apply_lua_patch
 build $obj/source_bee/path_posix.obj: cxx_source_bee_2 $
-    bee.lua/bee/sys/path_posix.cpp
+    bee.lua/bee/sys/path_posix.cpp | apply_lua_patch
 build $obj/source_bee/atomic_sync.obj: cxx_source_bee_2 $
-    bee.lua/bee/thread/atomic_sync.cpp
+    bee.lua/bee/thread/atomic_sync.cpp | apply_lua_patch
 build $obj/source_bee/setname.obj: cxx_source_bee_2 $
-    bee.lua/bee/thread/setname.cpp
+    bee.lua/bee/thread/setname.cpp | apply_lua_patch
 build $obj/source_bee/simplethread_posix.obj: cxx_source_bee_2 $
-    bee.lua/bee/thread/simplethread_posix.cpp
+    bee.lua/bee/thread/simplethread_posix.cpp | apply_lua_patch
 build $obj/source_bee/spinlock.obj: cxx_source_bee_2 $
-    bee.lua/bee/thread/spinlock.cpp
-build $obj/source_bee/version.obj: cxx_source_bee_2 bee.lua/bee/version.cpp
+    bee.lua/bee/thread/spinlock.cpp | apply_lua_patch
+build $obj/source_bee/version.obj: cxx_source_bee_2 bee.lua/bee/version.cpp $
+    | apply_lua_patch
 rule c_source_bee
   command = $cc -MMD -MT $out -MF $out.d -std=c11 -O2 -Wall $
-    -fvisibility=hidden -Ibee.lua -Ibee.lua/3rd/lua55 -DBEE_STATIC -DNDEBUG $
-    -o $out -c $in
+    -fvisibility=hidden -Ibee.lua -I$builddir/patched/lua55 -DBEE_STATIC $
+    -DNDEBUG -o $out -c $in
   description = Compile C   $out
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/bee_newstate.obj: c_source_bee $
-    bee.lua/3rd/lua-patch/bee_newstate.c
+    bee.lua/3rd/lua-patch/bee_newstate.c | apply_lua_patch
 rule cxx_source_bee_3
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -fvisibility=hidden -Ibee.lua -Ibee.lua/3rd/lua55 -DBEE_STATIC -DNDEBUG $
-    -o $out -c $in
+    -fvisibility=hidden -Ibee.lua -I$builddir/patched/lua55 -DBEE_STATIC $
+    -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
 build $obj/source_bee/lua_async.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_async.cpp
+    bee.lua/binding/lua_async.cpp | apply_lua_patch
 build $obj/source_bee/lua_channel.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_channel.cpp
+    bee.lua/binding/lua_channel.cpp | apply_lua_patch
 build $obj/source_bee/lua_crash.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_crash.cpp
+    bee.lua/binding/lua_crash.cpp | apply_lua_patch
 build $obj/source_bee/lua_debugging.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_debugging.cpp
+    bee.lua/binding/lua_debugging.cpp | apply_lua_patch
 build $obj/source_bee/lua_epoll.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_epoll.cpp
+    bee.lua/binding/lua_epoll.cpp | apply_lua_patch
 build $obj/source_bee/lua_filesystem.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_filesystem.cpp
+    bee.lua/binding/lua_filesystem.cpp | apply_lua_patch
 build $obj/source_bee/lua_filewatch.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_filewatch.cpp
+    bee.lua/binding/lua_filewatch.cpp | apply_lua_patch
 build $obj/source_bee/lua_platform.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_platform.cpp
+    bee.lua/binding/lua_platform.cpp | apply_lua_patch
 build $obj/source_bee/lua_select.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_select.cpp
+    bee.lua/binding/lua_select.cpp | apply_lua_patch
 build $obj/source_bee/lua_serialization.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_serialization.cpp
+    bee.lua/binding/lua_serialization.cpp | apply_lua_patch
 build $obj/source_bee/lua_socket.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_socket.cpp
+    bee.lua/binding/lua_socket.cpp | apply_lua_patch
 build $obj/source_bee/lua_subprocess.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_subprocess.cpp
+    bee.lua/binding/lua_subprocess.cpp | apply_lua_patch
 build $obj/source_bee/lua_sys.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_sys.cpp
+    bee.lua/binding/lua_sys.cpp | apply_lua_patch
 build $obj/source_bee/lua_thread.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_thread.cpp
+    bee.lua/binding/lua_thread.cpp | apply_lua_patch
 build $obj/source_bee/lua_time.obj: cxx_source_bee_3 $
-    bee.lua/binding/lua_time.cpp
+    bee.lua/binding/lua_time.cpp | apply_lua_patch
 rule cxx_source_bootstrap
   command = $cc -MMD -MT $out -MF $out.d -std=c++17 -fno-rtti -O2 -Wall $
-    -fvisibility=hidden -Ibee.lua -Ibee.lua/3rd/lua55 -DLUA_USE_LINUX $
+    -fvisibility=hidden -Ibee.lua -I$builddir/patched/lua55 -DLUA_USE_LINUX $
     -DNDEBUG -o $out -c $in
   description = Compile C++ $out
   deps = gcc
   depfile = $out.d
 build $obj/source_bootstrap/bootstrap_init.obj: cxx_source_bootstrap $
-    bee.lua/bootstrap/bootstrap_init.cpp
+    bee.lua/bootstrap/bootstrap_init.cpp | apply_lua_patch
 build $obj/source_bootstrap/main.obj: cxx_source_bootstrap $
-    bee.lua/bootstrap/main.cpp
+    bee.lua/bootstrap/main.cpp | apply_lua_patch
 rule link_bootstrap
   command = $cc $in -o $out -Wl,-E -l:libinotify.a -L/usr/pkg/lib -pthread $
     -lm -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic -s
   description = Link    Exe $out
-rule copy
-  command = cp -fv $in$input $out 1>/dev/null
-  description = Copy $in$input $out
-  restat = 1
 rule test
   command = $bin/bootstrap bee.lua/test/test.lua --touch $out
   description = Run test.
@@ -173,6 +182,69 @@ rule link_standalone
   command = $cc $in -o $out -l:libinotify.a -L/usr/pkg/lib -pthread $
     -lstdc++ -s
   description = Link    Exe $out
+build $builddir/patched/lua55/lapi.c: copy bee.lua/3rd/lua55/lapi.c
+build $builddir/patched/lua55/lapi.h: copy bee.lua/3rd/lua55/lapi.h
+build $builddir/patched/lua55/lauxlib.c: copy bee.lua/3rd/lua55/lauxlib.c
+build $builddir/patched/lua55/lauxlib.h: copy bee.lua/3rd/lua55/lauxlib.h
+build $builddir/patched/lua55/lbaselib.c: copy bee.lua/3rd/lua55/lbaselib.c
+build $builddir/patched/lua55/lcode.c: copy bee.lua/3rd/lua55/lcode.c
+build $builddir/patched/lua55/lcode.h: copy bee.lua/3rd/lua55/lcode.h
+build $builddir/patched/lua55/lcorolib.c: copy bee.lua/3rd/lua55/lcorolib.c
+build $builddir/patched/lua55/lctype.c: copy bee.lua/3rd/lua55/lctype.c
+build $builddir/patched/lua55/lctype.h: copy bee.lua/3rd/lua55/lctype.h
+build $builddir/patched/lua55/ldblib.c: copy bee.lua/3rd/lua55/ldblib.c
+build $builddir/patched/lua55/ldebug.c: copy bee.lua/3rd/lua55/ldebug.c
+build $builddir/patched/lua55/ldebug.h: copy bee.lua/3rd/lua55/ldebug.h
+build $builddir/patched/lua55/ldo.c: copy bee.lua/3rd/lua55/ldo.c
+build $builddir/patched/lua55/ldo.h: copy bee.lua/3rd/lua55/ldo.h
+build $builddir/patched/lua55/ldump.c: copy bee.lua/3rd/lua55/ldump.c
+build $builddir/patched/lua55/lfunc.c: copy bee.lua/3rd/lua55/lfunc.c
+build $builddir/patched/lua55/lfunc.h: copy bee.lua/3rd/lua55/lfunc.h
+build $builddir/patched/lua55/lgc.c: copy bee.lua/3rd/lua55/lgc.c
+build $builddir/patched/lua55/lgc.h: copy bee.lua/3rd/lua55/lgc.h
+build $builddir/patched/lua55/linit.c: copy bee.lua/3rd/lua55/linit.c
+build $builddir/patched/lua55/liolib.c: copy bee.lua/3rd/lua55/liolib.c
+build $builddir/patched/lua55/ljumptab.h: copy bee.lua/3rd/lua55/ljumptab.h
+build $builddir/patched/lua55/llex.c: copy bee.lua/3rd/lua55/llex.c
+build $builddir/patched/lua55/llex.h: copy bee.lua/3rd/lua55/llex.h
+build $builddir/patched/lua55/llimits.h: copy bee.lua/3rd/lua55/llimits.h
+build $builddir/patched/lua55/lmathlib.c: copy bee.lua/3rd/lua55/lmathlib.c
+build $builddir/patched/lua55/lmem.c: copy bee.lua/3rd/lua55/lmem.c
+build $builddir/patched/lua55/lmem.h: copy bee.lua/3rd/lua55/lmem.h
+build $builddir/patched/lua55/loadlib.c: copy bee.lua/3rd/lua55/loadlib.c
+build $builddir/patched/lua55/lobject.c: copy bee.lua/3rd/lua55/lobject.c
+build $builddir/patched/lua55/lobject.h: copy bee.lua/3rd/lua55/lobject.h
+build $builddir/patched/lua55/lopcodes.c: copy bee.lua/3rd/lua55/lopcodes.c
+build $builddir/patched/lua55/lopcodes.h: copy bee.lua/3rd/lua55/lopcodes.h
+build $builddir/patched/lua55/lopnames.h: copy bee.lua/3rd/lua55/lopnames.h
+build $builddir/patched/lua55/loslib.c: copy bee.lua/3rd/lua55/loslib.c
+build $builddir/patched/lua55/lparser.c: copy bee.lua/3rd/lua55/lparser.c
+build $builddir/patched/lua55/lparser.h: copy bee.lua/3rd/lua55/lparser.h
+build $builddir/patched/lua55/lprefix.h: copy bee.lua/3rd/lua55/lprefix.h
+build $builddir/patched/lua55/lstate.c: copy bee.lua/3rd/lua55/lstate.c
+build $builddir/patched/lua55/lstate.h: copy bee.lua/3rd/lua55/lstate.h
+build $builddir/patched/lua55/lstring.c: copy bee.lua/3rd/lua55/lstring.c
+build $builddir/patched/lua55/lstring.h: copy bee.lua/3rd/lua55/lstring.h
+build $builddir/patched/lua55/lstrlib.c: copy bee.lua/3rd/lua55/lstrlib.c
+build $builddir/patched/lua55/ltable.c: copy bee.lua/3rd/lua55/ltable.c
+build $builddir/patched/lua55/ltable.h: copy bee.lua/3rd/lua55/ltable.h
+build $builddir/patched/lua55/ltablib.c: copy bee.lua/3rd/lua55/ltablib.c
+build $builddir/patched/lua55/ltm.c: copy bee.lua/3rd/lua55/ltm.c
+build $builddir/patched/lua55/ltm.h: copy bee.lua/3rd/lua55/ltm.h
+build $builddir/patched/lua55/lua.c: copy bee.lua/3rd/lua55/lua.c
+build $builddir/patched/lua55/lua.h: copy bee.lua/3rd/lua55/lua.h
+build $builddir/patched/lua55/lua.hpp: copy bee.lua/3rd/lua55/lua.hpp
+build $builddir/patched/lua55/luac.c: copy bee.lua/3rd/lua55/luac.c
+build $builddir/patched/lua55/luaconf.h: copy bee.lua/3rd/lua55/luaconf.h
+build $builddir/patched/lua55/lualib.h: copy bee.lua/3rd/lua55/lualib.h
+build $builddir/patched/lua55/lundump.c: copy bee.lua/3rd/lua55/lundump.c
+build $builddir/patched/lua55/lundump.h: copy bee.lua/3rd/lua55/lundump.h
+build $builddir/patched/lua55/lutf8lib.c: copy bee.lua/3rd/lua55/lutf8lib.c
+build $builddir/patched/lua55/lvm.c: copy bee.lua/3rd/lua55/lvm.c
+build $builddir/patched/lua55/lvm.h: copy bee.lua/3rd/lua55/lvm.h
+build $builddir/patched/lua55/lzio.c: copy bee.lua/3rd/lua55/lzio.c
+build $builddir/patched/lua55/lzio.h: copy bee.lua/3rd/lua55/lzio.h
+build $builddir/patched/lua55/onelua.c: copy bee.lua/3rd/lua55/onelua.c
 build $bin/bootstrap: link_bootstrap $obj/source_bee/lua-seri.obj $
     $obj/source_bee/format.obj $obj/source_bee/async.obj $
     $obj/source_bee/async_bsd.obj $obj/source_bee/nanoid.obj $
@@ -203,6 +275,7 @@ build $obj/test.stamp: test bee.lua/test/glibc-version.lua $
     bee.lua/test/test_async.lua bee.lua/test/test_channel.lua $
     bee.lua/test/test_epoll.lua bee.lua/test/test_filesystem.lua $
     bee.lua/test/test_filewatch.lua bee.lua/test/test_lua.lua $
+    bee.lua/test/test_optional_chain.lua $
     bee.lua/test/test_serialization.lua bee.lua/test/test_skip.lua $
     bee.lua/test/test_socket.lua bee.lua/test/test_subprocess.lua $
     bee.lua/test/test_sys.lua bee.lua/test/test_thread.lua $
@@ -258,6 +331,39 @@ build $bin/standalone: link_standalone $obj/standalone/bootstrap_init.obj $
     $obj/luamake_embed/bee_glue.obj
 build luamake_lua2c: copy | $bin/standalone
   input = $bin/standalone
+build lua_src: phony $builddir/patched/lua55/lapi.c $
+    $builddir/patched/lua55/lapi.h $builddir/patched/lua55/lauxlib.c $
+    $builddir/patched/lua55/lauxlib.h $builddir/patched/lua55/lbaselib.c $
+    $builddir/patched/lua55/lcode.c $builddir/patched/lua55/lcode.h $
+    $builddir/patched/lua55/lcorolib.c $builddir/patched/lua55/lctype.c $
+    $builddir/patched/lua55/lctype.h $builddir/patched/lua55/ldblib.c $
+    $builddir/patched/lua55/ldebug.c $builddir/patched/lua55/ldebug.h $
+    $builddir/patched/lua55/ldo.c $builddir/patched/lua55/ldo.h $
+    $builddir/patched/lua55/ldump.c $builddir/patched/lua55/lfunc.c $
+    $builddir/patched/lua55/lfunc.h $builddir/patched/lua55/lgc.c $
+    $builddir/patched/lua55/lgc.h $builddir/patched/lua55/linit.c $
+    $builddir/patched/lua55/liolib.c $builddir/patched/lua55/ljumptab.h $
+    $builddir/patched/lua55/llex.c $builddir/patched/lua55/llex.h $
+    $builddir/patched/lua55/llimits.h $builddir/patched/lua55/lmathlib.c $
+    $builddir/patched/lua55/lmem.c $builddir/patched/lua55/lmem.h $
+    $builddir/patched/lua55/loadlib.c $builddir/patched/lua55/lobject.c $
+    $builddir/patched/lua55/lobject.h $builddir/patched/lua55/lopcodes.c $
+    $builddir/patched/lua55/lopcodes.h $builddir/patched/lua55/lopnames.h $
+    $builddir/patched/lua55/loslib.c $builddir/patched/lua55/lparser.c $
+    $builddir/patched/lua55/lparser.h $builddir/patched/lua55/lprefix.h $
+    $builddir/patched/lua55/lstate.c $builddir/patched/lua55/lstate.h $
+    $builddir/patched/lua55/lstring.c $builddir/patched/lua55/lstring.h $
+    $builddir/patched/lua55/lstrlib.c $builddir/patched/lua55/ltable.c $
+    $builddir/patched/lua55/ltable.h $builddir/patched/lua55/ltablib.c $
+    $builddir/patched/lua55/ltm.c $builddir/patched/lua55/ltm.h $
+    $builddir/patched/lua55/lua.c $builddir/patched/lua55/lua.h $
+    $builddir/patched/lua55/lua.hpp $builddir/patched/lua55/luac.c $
+    $builddir/patched/lua55/luaconf.h $builddir/patched/lua55/lualib.h $
+    $builddir/patched/lua55/lundump.c $builddir/patched/lua55/lundump.h $
+    $builddir/patched/lua55/lutf8lib.c $builddir/patched/lua55/lvm.c $
+    $builddir/patched/lua55/lvm.h $builddir/patched/lua55/lzio.c $
+    $builddir/patched/lua55/lzio.h $builddir/patched/lua55/onelua.c
+build apply_lua_patch: phony lua_src
 build bootstrap: phony $bin/bootstrap
 build copy_script: phony $bin/main.lua
 build test: phony $obj/test.stamp

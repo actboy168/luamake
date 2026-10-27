@@ -31,8 +31,8 @@ luamake rebuild  # 重建
 | API | 说明 | 输出 |
 |-----|------|------|
 | `lm:exe` | 可执行文件 | `app.exe` / `app` |
-| `lm:dll` | 动态库 | `lib.dll` / `lib.so` / `lib.dylib` |
-| `lm:lib` | 静态库 | `lib.lib` / `lib.a` |
+| `lm:dll` | 动态库 | `foo.dll` / `foo.so` |
+| `lm:lib` | 静态库 | `foo.lib` / `libfoo.a` |
 | `lm:source_set` | 源码集（不链接，用于复用，通过 `deps` 引用） | 无 |
 | `lm:lua_src` | Lua C 模块（静态嵌入到 `lm:lua_exe`） | 无 |
 | `lm:lua_dll` | Lua C 模块（动态加载） | `module.dll` / `module.so` |
@@ -54,12 +54,16 @@ luamake rebuild  # 重建
 | `defines` | 预处理器定义 | `{ "DEBUG", "VER=1" }` |
 | `objdeps` | 对象依赖（编译前必须生成） | `"generated_header"` |
 
-> **`objdeps` 用法**：当源文件依赖代码生成产物（如生成的头文件）时，需用 `objdeps` 声明依赖的目标名，确保生成步骤在编译前完成。`deps` 只控制链接顺序，不能保证编译前生成文件。
+> **`objdeps` 用法**：当源文件依赖代码生成产物（如生成的头文件）时，需用 `objdeps` 声明依赖的目标名，确保生成步骤在编译前完成。生成目标用 `lm:runlua` / `lm:build` 定义并声明 `outputs`，再把目标名写入 `objdeps`。`deps` 只控制链接顺序，不能保证编译前生成文件。
 > ```lua
-> lm:rule "gen_header" { ... }  -- 生成头文件的规则
+> lm:runlua "gen_header" {
+>     script = "tools/gen_header.lua",
+>     outputs = "$builddir/generated/header.h",
+> }
 > lm:exe "app" {
 >     sources = "src/*.cpp",
->     objdeps = "gen_header",  -- 编译 src/*.cpp 前先执行 gen_header
+>     includes = "$builddir/generated",
+>     objdeps = "gen_header",  -- 编译 src/*.cpp 前先完成 gen_header
 > }
 > ```
 >
@@ -79,12 +83,12 @@ luamake rebuild  # 重建
 
 | 属性 | 说明 | 示例 |
 |------|------|------|
-| `flags` | 编译器标志 | `{ "-Wall", "-O2" }` |
-| `cflags` | C 编译器标志 | `"-std=c11"` |
-| `cxxflags` | C++ 编译器标志 | `"-std=c++20"` |
+| `flags` | 通用编译器标志 | `{ "-Wall", "-O2" }` |
+| `c` | C 标准（自动转为 `-std=` / `/std:`） | `"c11"` |
+| `cxx` | C++ 标准（自动转为 `-std=` / `/std:`） | `"c++20"` |
 | `confs` | 引用命名配置 | `"myconfig"` |
 
-> **注意**：`cflags`/`cxxflags` 直接传递给编译器命令行。在 `lm:conf` 中可用 `c = "c11"` / `cxx = "c++20"` 作为简写，luamake 会自动转换为对应编译器的标准标志（如 MSVC 的 `/std:c11`）。
+> `c` / `cxx` 会自动转换为对应编译器的标准标志（如 MSVC 的 `/std:c11`）；目标级与 `lm:conf` 均可用。
 
 ### 特殊目标用法
 
@@ -132,7 +136,6 @@ lm:lua_src "glue" {
     includes = "3rd/bee.lua",
     sources  = "src/glue.cpp",
 }
-```
 
 lm:lua_exe "app" {
     deps = { "glue", "myembed" },
@@ -215,10 +218,8 @@ lm:exe "app" {
 | 变量 | 说明 | 示例 |
 |------|------|------|
 | `$builddir` | 构建目录（默认 `build`，可自定义） | `build` |
-| `$bindir` | 二进制输出目录 | `build/bin` |
-| `$objdir` | 对象文件目录 | `build/obj` |
-| `$bin` | `$bindir` 别名 | |
-| `$obj` | `$objdir` 别名 | |
+| `$bin` | 二进制输出目录（默认 `$builddir/bin`；Lua 字段 `lm.bindir`） | `build/bin` |
+| `$obj` | 对象文件目录（默认 `$builddir/obj`；Lua 字段 `lm.objdir`） | `build/obj` |
 | `$in` | 输入文件 (规则中) | |
 | `$out` | 输出文件 (规则中) | |
 
@@ -226,7 +227,7 @@ lm:exe "app" {
 > ```lua
 > lm.builddir = "_build"   -- 构建产物将输出到 _build/ 目录
 > ```
-> `$bindir` 和 `$objdir` 默认基于 `$builddir`，修改后会自动跟随变化。
+> `lm.bindir` / `lm.objdir` 默认引用 `$builddir`，修改后会自动跟随变化。
 
 ### 全局变量
 

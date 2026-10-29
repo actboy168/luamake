@@ -567,11 +567,13 @@ function GEN.runlua(attribute, name)
         local command = reslove_args(attribute.args)
         ninja:rule("runlua", "$luamake " .. lua_prefix .. "$script "..command, {
             description = "lua $script "..command,
+            pool = attribute.pool,
             restat = attribute.restat,
         })
     else
         ninja:rule("runlua", "$luamake " .. lua_prefix .. "$script", {
             description = "lua $script",
+            pool = attribute.pool,
             restat = attribute.restat,
         })
     end

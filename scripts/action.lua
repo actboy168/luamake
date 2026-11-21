@@ -12,7 +12,7 @@ local function execute(option)
         local msvc = require "env.msvc"
         option.env = msvc.getEnv()
         option.env.VS_UNICODE_OUTPUT = false
-        option.env.TMP = fsutil.join(fsutil.absolute(WORKDIR, globals.builddir), "tmp")
+        option.env.TMP = fsutil.join(fsutil.absolute(WORKDIR, globals.builddir), "tmp"):gsub("/", "\\")
     end
     if globals.hostshell == "cmd" then
         option[1] = { "cmd", "/c", option[1] }

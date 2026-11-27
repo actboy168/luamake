@@ -63,6 +63,32 @@ local function parse_env(str)
     end
     return strtrim(str:sub(1, pos - 1)), strtrim(str:sub(pos + 1))
 end
+--TODO: export w2u from bee library
+local function utf16le_to_utf8(data)
+    local out = {}
+    local i, n = 1, #data
+    while i + 1 <= n do
+        local u = data:byte(i) | (data:byte(i + 1) << 8)
+        i = i + 2
+        if u >= 0xD800 and u <= 0xDBFF and i + 1 <= n then
+            local u2 = data:byte(i) | (data:byte(i + 1) << 8)
+            if u2 >= 0xDC00 and u2 <= 0xDFFF then
+                u = 0x10000 + ((u - 0xD800) << 10) + (u2 - 0xDC00)
+                i = i + 2
+            end
+        end
+        if u < 0x80 then
+            out[#out + 1] = string.char(u)
+        elseif u < 0x800 then
+            out[#out + 1] = string.char(0xC0 | (u >> 6), 0x80 | (u & 0x3F))
+        elseif u < 0x10000 then
+            out[#out + 1] = string.char(0xE0 | (u >> 12), 0x80 | ((u >> 6) & 0x3F), 0x80 | (u & 0x3F))
+        else
+            out[#out + 1] = string.char(0xF0 | (u >> 18), 0x80 | ((u >> 12) & 0x3F), 0x80 | ((u >> 6) & 0x3F), 0x80 | (u & 0x3F))
+        end
+    end
+    return table.concat(out)
+end
 
 local function find_winsdk()
     local function query(command)
@@ -125,7 +151,7 @@ local function vsdevcmd(arch, winsdk, toolset)
     for _, path in ipairs(getInstallationPath()) do
         local env = {}
         local vsvars32 = path.."/Common7/Tools/VsDevCmd.bat"
-        local args = { vsvars32 }
+        local args = { "cmd", "/u", "/d", "/c", "call", vsvars32 }
         if arch then
             args[#args+1] = ("-arch=%s"):format(arch)
         end
@@ -135,9 +161,14 @@ local function vsdevcmd(arch, winsdk, toolset)
         if toolset then
             args[#args+1] = ("-vcvars_ver=%s"):format(toolset)
         end
+
         local err = {}
+        -- drop VsDevCmd output so only `set`'s UTF-16LE reaches the pipe
+        args[#args+1] = ">nul"
+        args[#args+1] = "&&"
+        args[#args+1] = "set"
         local process = assert(sp.spawn {
-            args, "&&", "set",
+            args,
             stderr = true,
             stdout = true,
             searchPath = true,
@@ -145,20 +176,23 @@ local function vsdevcmd(arch, winsdk, toolset)
                 VSCMD_SKIP_SENDTELEMETRY = "1"
             }
         })
-        for line in process.stdout:lines() do
-            err[#err+1] = line
-            local name, value = parse_env(line)
-            if name and value then
-                env[name] = value
-            end
-        end
-        err[#err+1] = process.stderr:read "a"
+        local data = process.stdout:read "a" or ""
+        err[#err+1] = data
+        err[#err+1] = process.stderr:read "a" or ""
         process.stdout:close()
         process.stderr:close()
-        if process:wait() == 0 then
+        local code = process:wait()
+        if code == 0 and #data > 0 then
+            for line in utf16le_to_utf8(data):gmatch "[^\r\n]+" do
+                local name, value = parse_env(line)
+                if name and value then
+                    env[name] = value
+                end
+            end
             return path, env
         end
         error[#error+1] = table.concat(args, " ")
+        error[#error+1] = ("exit code: %s"):format(code)
         error[#error+1] = table.concat(err, "\n")
         error[#error+1] = ""
     end
